@@ -198,15 +198,28 @@ void app_main(void)
         /* Try to run the command */
         int ret;
         esp_err_t err = esp_console_run(line, &ret);
-        if (err == ESP_ERR_NOT_FOUND) {
+
+        switch (err)
+	{
+        case ESP_ERR_NOT_FOUND:
             printf("Unrecognized command\n");
-        } else if (err == ESP_ERR_INVALID_ARG) {
+            break;
+
+        case ESP_ERR_INVALID_ARG:
             // command was empty
-        } else if (err == ESP_OK && ret != ESP_OK) {
-            printf("Command returned non-zero error code: 0x%x (%s)\n", ret, esp_err_to_name(ret));
-        } else if (err != ESP_OK) {
+            printf("Command was empty or invalid argument of execution\n");
+            break;
+
+        case ESP_OK:
+            if (ret != ESP_OK)
+		printf("Command returned non-zero error code: 0x%x (%s)\n", ret, esp_err_to_name(ret));
+            break;
+
+        default:
+            // if err != ESP_OK
             printf("Internal error: %s\n", esp_err_to_name(err));
-        }
+	}; /* switch err */
+
         /* linenoise allocates line buffer on the heap, so need to free it */
         linenoiseFree(line);
     }
