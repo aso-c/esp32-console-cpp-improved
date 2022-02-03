@@ -203,24 +203,23 @@ void app_main(void)
 
         switch (err)
 	{
-//        if (err == ESP_ERR_NOT_FOUND) {
         case ESP_ERR_NOT_FOUND:
             printf("Unrecognized command\n");
             break;
-//        } else if (err == ESP_ERR_INVALID_ARG) {
+
         case ESP_ERR_INVALID_ARG:
             // command was empty
+            printf("Command was empty or invalid argument of execution\n");
             break;
-//        } else if (err == ESP_OK && ret != ESP_OK) {
+
         case ESP_OK:
             if (ret != ESP_OK)
 		printf("Command returned non-zero error code: 0x%x (%s)\n", ret, esp_err_to_name(ret));
             break;
-//        } else if (err != ESP_OK) {
+
         default:
             // if err != ESP_OK
             printf("Internal error: %s\n", esp_err_to_name(err));
-//        }
 	}; /* switch err */
 
 #else
