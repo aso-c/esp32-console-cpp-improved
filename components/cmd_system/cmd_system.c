@@ -23,6 +23,7 @@
 #include "freertos/task.h"
 #include "cmd_system.h"
 #include "sdkconfig.h"
+#include "../../main/console_prj.cfg.h"
 
 #ifdef CONFIG_FREERTOS_USE_STATS_FORMATTING_FUNCTIONS
 #define WITH_TASKS_INFO 1
@@ -68,7 +69,10 @@ static int get_version(int argc, char **argv)
 {
     esp_chip_info_t info;
     esp_chip_info(&info);
-    printf("IDF Version:%s\r\n", esp_get_idf_version());
+    printf("ESP Console Example, Version: %s of %s\r\n", str(VER_prj-VER_sfx), str(DATE_prj));
+    printf("\t\t     modified by %s\r\n", str(MODIFIER_prj));
+    //    printf("IDF Version:%s\r\n", esp_get_idf_version());
+    printf("IDF Version: %s\r\n", esp_get_idf_version());
     printf("Chip info:\r\n");
     printf("\tmodel:%s\r\n", info.model == CHIP_ESP32 ? "ESP32" : "Unknow");
     printf("\tcores:%d\r\n", info.cores);
@@ -116,7 +120,7 @@ static void register_restart(void)
 
 static int free_mem(int argc, char **argv)
 {
-    printf("%d\n", esp_get_free_heap_size());
+    printf("free memory size: %d\n", esp_get_free_heap_size());
     return 0;
 }
 

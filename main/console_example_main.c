@@ -7,7 +7,7 @@
    CONDITIONS OF ANY KIND, either express or implied.
 */
 
-#include "console.h"
+#include "console_prj.cfg.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -158,7 +158,7 @@ void app_main(void)
 
     printf("\n"
            "This is an example of ESP-IDF console component.\n"
-           "Version " str(VER_prj) " of " str(DATE_prj) ", modified by " str(MODIFIER_prj) ".\n"
+           "Version " str(VER_prj-VER_sfx) " of " str(DATE_prj) ", modified by " str(MODIFIER_prj) ".\n"
            "Type 'help' to get the list of commands.\n"
            "Use UP/DOWN arrows to navigate through command history.\n"
            "Press TAB when typing command name to auto-complete.\n"
