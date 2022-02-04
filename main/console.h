@@ -19,9 +19,12 @@
 #ifndef MAIN_CONSOLE_H_
 #define MAIN_CONSOLE_H_
 
-#define VER_prj "v.1.1.1"
-#define DATE_prj "03.02.22."
-#define MODIFIER_prj "aso"
+#define quote(a) #a
+#define str(a) quote(a)
+
+#define VER_prj v.1.1.3
+#define DATE_prj 04.02.22.
+#define MODIFIER_prj aso
 
 
 

@@ -158,8 +158,7 @@ void app_main(void)
 
     printf("\n"
            "This is an example of ESP-IDF console component.\n"
-           "Version " VER_prj " of " DATE_prj ", modified by " MODIFIER_prj ".\n"
-//           "Version " "v.1.1" " of " "03.02.22." ", modified by " "aso" ".\n"
+           "Version " str(VER_prj) " of " str(DATE_prj) ", modified by " str(MODIFIER_prj) ".\n"
            "Type 'help' to get the list of commands.\n"
            "Use UP/DOWN arrows to navigate through command history.\n"
            "Press TAB when typing command name to auto-complete.\n"
