@@ -117,17 +117,13 @@ static void register_restart(void)
 
 
 /* Print int value with pretty fprmat & in bytes/megabytes etc. */
-static int sz_prettyprn(char* prompt, uint32_t size)
-{
-    printf("%s: %d bytes\n", prompt, size);
-    return 0;
-}; /* sz_prettyprn */
+static int pretty_size_prn(char* prompt, uint32_t size);
 
 /** 'free' command prints available heap memory */
 static int free_mem(int argc, char **argv)
 {
-//    printf("free memory size: %d\n", esp_get_free_heap_size());
-    sz_prettyprn("free memory size", esp_get_free_heap_size());
+    printf("free memory size: %d\n", esp_get_free_heap_size());
+    pretty_size_prn("Test free memory size prn", 8);
     return 0;
 }
 
@@ -146,8 +142,8 @@ static void register_free(void)
 static int heap_size(int argc, char **argv)
 {
     uint32_t heap_size = heap_caps_get_minimum_free_size(MALLOC_CAP_DEFAULT);
-//    printf("min heap size: %u\n", heap_size);
-    sz_prettyprn("min heap size", heap_size);
+    printf("min heap size: %u\n", heap_size);
+//    pretty_size_prn("min heap size", heap_size);
     return 0;
 }
 
@@ -378,3 +374,20 @@ static void register_light_sleep(void)
     };
     ESP_ERROR_CHECK( esp_console_cmd_register(&cmd) );
 }
+
+
+void pretty_bytes(uint32_t size);
+
+/* Print int value with pretty fprmat & in bytes/megabytes etc. */
+static int pretty_size_prn(char* prompt, uint32_t size)
+{
+    printf("%s: %d bytes (", prompt, size);
+    pretty_bytes(size);
+    printf(")\n");
+    return 0;
+}; /* pretty_size_prn */
+
+void pretty_bytes(uint32_t size)
+{
+    printf("%d bytes", size);
+}; /* pretty_bytes */

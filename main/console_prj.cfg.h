@@ -22,7 +22,7 @@
 #define quote(a) #a
 #define str(a) quote(a)
 
-#define VER_prj v.1.1.8
+#define VER_prj v.1.1.9
 #define VER_sfx encrypt
 #define DATE_prj 04.02.22.
 #define MODIFIER_prj aso
