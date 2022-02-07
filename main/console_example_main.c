@@ -27,6 +27,8 @@
 #error This example is incompatible with USB CDC console. Please try "console_usb" example instead.
 #endif // CONFIG_ESP_CONSOLE_USB_CDC
 
+#define VERSION_STRING	"Version " str(VER_prj-VER_sfx) " of " str(DATE_prj) ", modified by " str(MODIFIER_prj) ".\n"
+
 static const char* TAG = "example";
 #define PROMPT_STR CONFIG_IDF_TARGET
 
@@ -159,6 +161,7 @@ void app_main(void)
     printf("\n"
            "This is an example of ESP-IDF console component.\n"
            "Version " str(VER_prj-VER_sfx) " of " str(DATE_prj) ", modified by " str(MODIFIER_prj) ".\n"
+	   VERSION_STRING
            "Type 'help' to get the list of commands.\n"
            "Use UP/DOWN arrows to navigate through command history.\n"
            "Press TAB when typing command name to auto-complete.\n"
