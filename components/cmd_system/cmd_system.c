@@ -387,13 +387,17 @@ void prn_KMbytes(uint32_t size);
 // in pretty format: group digits by 3 cifer,
 // and divide fractional part from integer
 
-#define DIGDELIM '_'
+#define DIGDELIM '.'
 #define FRACTDELIM ','
+#define Knum 1024
 
 /* Print int value with pretty fprmat & in bytes/megabytes etc. */
 static int pretty_size_prn(char* prompt, uint32_t size)
 {
-    printf("%s: %d bytes (", prompt, size);
+//    printf("%s: %d bytes (", prompt, size);
+    printf("%s: ", prompt);
+    prn_KMbytes(size);
+    printf(" (");
     pretty_bytes(size);
     printf(" bytes)\n");
     return 0;
@@ -417,23 +421,32 @@ void prn_KMbytes(uint32_t size)
 {
 
 
-    if (size < 10 * 1024)
+    if (size < 10 * Knum)
     {
 	// Printout of bytes
-	printf("%u bytes", size);
-    }
-    else if (size < 1024 * 1024)
+	pretty_bytes(size);
+	printf(" bytes");
+    } /* if size < 10 * Knum */
+    else if (size < Knum * Knum)
     {
 	// Printout of Kbytes
+//	printf("%u bytes", size);
+	printf("%u Kbytes", size / Knum);
 	;
-    }
-    else if (size < 1024 * 1024 * 1024)
+    } /* else if size < Knum^2 */
+    else if (size < Knum * Knum * Knum)
     {
 	// Printout of Mbytes
+//		printf("%u bytes", size);
+		printf("%u Mbytes", size / Knum / Knum);
 	;
-    }
+    } /* else if size < Knum^3 */
     else
+    {
 	// all other
-	printf("%u bytes", size);
+//	printf("%u bytes", size);
+	pretty_bytes(size);
+	printf(" bytes");
+    }; /* else */
 
 }; /* prn_KMbytes */
