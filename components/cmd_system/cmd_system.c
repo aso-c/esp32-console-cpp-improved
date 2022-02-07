@@ -122,9 +122,9 @@ static int pretty_size_prn(char* prompt, uint32_t size);
 /** 'free' command prints available heap memory */
 static int free_mem(int argc, char **argv)
 {
-//    printf("free memory size: %d\n", esp_get_free_heap_size());
-    pretty_size_prn("free memory size", esp_get_free_heap_size());
-//    pretty_size_prn("Test free memory size prn", 15003748);
+    printf("free memory size: %d\n", esp_get_free_heap_size());
+//    pretty_size_prn("free memory size", esp_get_free_heap_size());
+    pretty_size_prn("Test free memory size prn", 15003748);
     return 0;
 }
 
@@ -143,8 +143,8 @@ static void register_free(void)
 static int heap_size(int argc, char **argv)
 {
     uint32_t heap_size = heap_caps_get_minimum_free_size(MALLOC_CAP_DEFAULT);
-//    printf("min heap size: %u\n", heap_size);
-    pretty_size_prn("min heap size", heap_size);
+    printf("min heap size: %u\n", heap_size);
+//    pretty_size_prn("min heap size", heap_size);
     return 0;
 }
 
@@ -376,8 +376,19 @@ static void register_light_sleep(void)
     ESP_ERROR_CHECK( esp_console_cmd_register(&cmd) );
 }
 
-
+// Print bytes count in groups by 3 digits
 void pretty_bytes(uint32_t size);
+
+// Print bytes count in Kb, Mb as needed
+void prn_KMbytes(uint32_t size);
+
+
+// Procedures for output memory size/numbers
+// in pretty format: group digits by 3 cifer,
+// and divide fractional part from integer
+
+#define DIGDELIM '_'
+#define FRACTDELIM ','
 
 /* Print int value with pretty fprmat & in bytes/megabytes etc. */
 static int pretty_size_prn(char* prompt, uint32_t size)
@@ -388,6 +399,7 @@ static int pretty_size_prn(char* prompt, uint32_t size)
     return 0;
 }; /* pretty_size_prn */
 
+// Print bytes count in groups by 3 digits
 void pretty_bytes(uint32_t size)
 {
 	uint32_t head = size / 1000;
@@ -395,8 +407,33 @@ void pretty_bytes(uint32_t size)
     if (head > 0)
     {
 	pretty_bytes(head);
-	printf("_%03d", size % 1000);
+	printf("%c%03u", DIGDELIM, size % 1000);
     }
     else
-	printf("%d", size);
+	printf("%u", size);
 }; /* pretty_bytes */
+
+void prn_KMbytes(uint32_t size)
+{
+
+
+    if (size < 10 * 1024)
+    {
+	// Printout of bytes
+	printf("%u bytes", size);
+    }
+    else if (size < 1024 * 1024)
+    {
+	// Printout of Kbytes
+	;
+    }
+    else if (size < 1024 * 1024 * 1024)
+    {
+	// Printout of Mbytes
+	;
+    }
+    else
+	// all other
+	printf("%u bytes", size);
+
+}; /* prn_KMbytes */
