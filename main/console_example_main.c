@@ -27,18 +27,20 @@
 #error This example is incompatible with USB CDC console. Please try "console_usb" example instead.
 #endif // CONFIG_ESP_CONSOLE_USB_CDC
 
-#define VERSION_STRING	"Version " quote(VER_prj-VER_sfx) " of " quote(DATE_prj) ", modified by " quote(MODIFIER_prj) ".\n"
+#define VERSION_STRING	"Version " str(VER_prj-VER_sfx) " of " str(DATE_prj) ", modified by " str(MODIFIER_prj) ".\n"
 
 static const char* TAG = "example";
 #define PROMPT_STR CONFIG_IDF_TARGET
 
-
-const char* get_version(void)
+/*
+ * @brief Get string with version information of project current state
+ * @return string containing the current version of project.
+ */
+const char* version_str(void)
 {
-    return "Version "
-	    quote(VER_prj-VER_sfx)
-	    " of " quote(DATE_prj) ","
-	    " modified by " quote(MODIFIER_prj) ".";
+    return "Version " str(VER_prj-VER_sfx)
+	    " of " str(DATE_prj) ","
+	    " modified by " str(MODIFIER_prj) ".";
 }; /* get_version */
 
 /* Console command history can be stored to and loaded from a file.
@@ -144,6 +146,30 @@ static void initialize_console(void)
 }
 
 
+
+/**
+ * @brief Fake command only for output version information in a 'help' command
+ *
+ * Own 'help' command implementation first run default 'help' command,
+ * and then prints the version string of a program.
+ */
+
+static void register_info(void)
+{
+    const esp_console_cmd_t cmd = {
+//        .command = "version",
+        .command = "info",
+//        .help = "Get version of chip and SDK",
+        .help = version_str(),
+        .hint = NULL,
+//        .func = &get_version,
+        .func = NULL,
+    };
+    ESP_ERROR_CHECK( esp_console_cmd_register(&cmd) );
+}; /* register_info */
+
+
+
 /**
  * @brief Register a 'help' command for a console example project
  *
@@ -158,6 +184,7 @@ esp_err_t console_example_register_help_command(void)
 {
     return esp_console_register_help_command();;
 }; /* console_example_register_help_command */
+
 
 void app_main(void)
 {
@@ -178,6 +205,7 @@ void app_main(void)
     register_system();
     register_wifi();
     register_nvs();
+    register_info();
 
     /* Prompt to be printed before each line.
      * This can be customized, made dynamic, etc.
@@ -186,8 +214,8 @@ void app_main(void)
 
     printf("\n"
            "This is an example of ESP-IDF console component.\n"
-           "Version " str(VER_prj-VER_sfx) " of " str(DATE_prj) ", modified by " str(MODIFIER_prj) ".\n"
-//#define VERMACRO
+//           "Version " str(VER_prj-VER_sfx) " of " str(DATE_prj) ", modified by " str(MODIFIER_prj) ".\n"
+#define VERMACRO
 #ifdef VERMACRO
 	   VERSION_STRING
 #else
@@ -196,8 +224,12 @@ void app_main(void)
            "Type 'help' to get the list of commands.\n"
            "Use UP/DOWN arrows to navigate through command history.\n"
            "Press TAB when typing command name to auto-complete.\n"
-           "Press Enter or Ctrl+C will terminate the console environment.\n",
-	   get_version());
+#ifdef VERMACRO
+           "Press Enter or Ctrl+C will terminate the console environment.\n");
+#else
+	   "Press Enter or Ctrl+C will terminate the console environment.\n",
+	   version_str());
+#endif
 
     /* Figure out if the terminal supports escape sequences */
     int probe_status = linenoiseProbe();
