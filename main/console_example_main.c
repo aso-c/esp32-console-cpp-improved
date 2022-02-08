@@ -161,7 +161,7 @@ static void register_info(void)
         .command = "info",
 //        .help = "Get version of chip and SDK",
         .help = version_str(),
-        .hint = NULL,
+        .hint = "ESP32 Console Component Example Project",
 //        .func = &get_version,
         .func = NULL,
     };
@@ -214,22 +214,12 @@ void app_main(void)
 
     printf("\n"
            "This is an example of ESP-IDF console component.\n"
-//           "Version " str(VER_prj-VER_sfx) " of " str(DATE_prj) ", modified by " str(MODIFIER_prj) ".\n"
-#define VERMACRO
-#ifdef VERMACRO
-	   VERSION_STRING
-#else
 	   "%s\n"
-#endif
            "Type 'help' to get the list of commands.\n"
            "Use UP/DOWN arrows to navigate through command history.\n"
            "Press TAB when typing command name to auto-complete.\n"
-#ifdef VERMACRO
-           "Press Enter or Ctrl+C will terminate the console environment.\n");
-#else
 	   "Press Enter or Ctrl+C will terminate the console environment.\n",
 	   version_str());
-#endif
 
     /* Figure out if the terminal supports escape sequences */
     int probe_status = linenoiseProbe();
