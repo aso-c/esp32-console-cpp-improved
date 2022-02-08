@@ -27,7 +27,7 @@
 #error This example is incompatible with USB CDC console. Please try "console_usb" example instead.
 #endif // CONFIG_ESP_CONSOLE_USB_CDC
 
-#define VERSION_STRING	"Version " str(VER_prj-VER_sfx) " of " str(DATE_prj) ", modified by " str(MODIFIER_prj) ".\n"
+#define VERSION_STRING	"Version " quote(VER_prj-VER_sfx) " of " quote(DATE_prj) ", modified by " quote(MODIFIER_prj) ".\n"
 
 static const char* TAG = "example";
 #define PROMPT_STR CONFIG_IDF_TARGET
