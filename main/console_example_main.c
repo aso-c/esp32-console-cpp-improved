@@ -32,6 +32,15 @@
 static const char* TAG = "example";
 #define PROMPT_STR CONFIG_IDF_TARGET
 
+
+const char* get_version(void)
+{
+    return "Version "
+	    quote(VER_prj-VER_sfx)
+	    " of " quote(DATE_prj) ","
+	    " modified by " quote(MODIFIER_prj) ".";
+}; /* get_version */
+
 /* Console command history can be stored to and loaded from a file.
  * The easiest way to do this is to use FATFS filesystem on top of
  * wear_levelling library.
@@ -134,6 +143,22 @@ static void initialize_console(void)
 #endif
 }
 
+
+/**
+ * @brief Register a 'help' command for a console example project
+ *
+ * Own 'help' command implementation first run default 'help' command,
+ * and then prints the version string of a program.
+ *
+ * @return
+ *      - ESP_OK on success
+ *      - ESP_ERR_INVALID_STATE, if esp_console_init wasn't called
+ */
+esp_err_t console_example_register_help_command(void)
+{
+    return esp_console_register_help_command();;
+}; /* console_example_register_help_command */
+
 void app_main(void)
 {
     initialize_nvs();
@@ -148,7 +173,8 @@ void app_main(void)
     initialize_console();
 
     /* Register commands */
-    esp_console_register_help_command();
+    //esp_console_register_help_command();
+    console_example_register_help_command();
     register_system();
     register_wifi();
     register_nvs();
@@ -161,11 +187,17 @@ void app_main(void)
     printf("\n"
            "This is an example of ESP-IDF console component.\n"
            "Version " str(VER_prj-VER_sfx) " of " str(DATE_prj) ", modified by " str(MODIFIER_prj) ".\n"
+//#define VERMACRO
+#ifdef VERMACRO
 	   VERSION_STRING
+#else
+	   "%s\n"
+#endif
            "Type 'help' to get the list of commands.\n"
            "Use UP/DOWN arrows to navigate through command history.\n"
            "Press TAB when typing command name to auto-complete.\n"
-           "Press Enter or Ctrl+C will terminate the console environment.\n");
+           "Press Enter or Ctrl+C will terminate the console environment.\n",
+	   get_version());
 
     /* Figure out if the terminal supports escape sequences */
     int probe_status = linenoiseProbe();
