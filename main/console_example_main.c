@@ -148,6 +148,24 @@ static void initialize_console(void)
 
 
 /**
+ * @brief Info command about a version information of a project
+ *
+ * Printout version info $ small description,
+ * about this project
+ *
+ * @return
+ *      - ESP_OK on success
+ *      - ESP_ERR_INVALID_STATE, if esp_console_init wasn't called
+ */
+
+/* 'version' command */
+static int get_info(int argc, char **argv)
+{
+    printf("ESP Console Example, Version: %s of %s\r\n", str(VER_prj-VER_sfx), str(DATE_prj));
+    return ESP_OK;
+}
+
+/**
  * @brief Fake command only for output version information in a 'help' command
  *
  * Own 'help' command implementation first run default 'help' command,
@@ -157,13 +175,10 @@ static void initialize_console(void)
 static void register_info(void)
 {
     const esp_console_cmd_t cmd = {
-//        .command = "version",
         .command = "info",
-//        .help = "Get version of chip and SDK",
         .help = version_str(),
         .hint = "ESP32 Console Component Example Project",
-//        .func = &get_version,
-        .func = NULL,
+        .func = &get_info,
     };
     ESP_ERROR_CHECK( esp_console_cmd_register(&cmd) );
 }; /* register_info */
