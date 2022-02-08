@@ -7,8 +7,7 @@
    CONDITIONS OF ANY KIND, either express or implied.
 */
 
-#include "console_prj.cfg.h"
-
+#include <console_example.h>
 #include <stdio.h>
 #include <string.h>
 #include "esp_system.h"
@@ -161,7 +160,7 @@ static void initialize_console(void)
 /* 'version' command */
 static int get_info(int argc, char **argv)
 {
-    printf("ESP Console Example, Version: %s of %s\r\n", str(VER_prj-VER_sfx), str(DATE_prj));
+    printf("ESP Console Example Project, Version: %s of %s\r\n", str(VER_prj-VER_sfx), str(DATE_prj));
     return ESP_OK;
 }
 
@@ -177,7 +176,8 @@ static void register_info(void)
     const esp_console_cmd_t cmd = {
         .command = "info",
         .help = version_str(),
-        .hint = "ESP32 Console Component Example Project",
+        .hint = "about this project",
+//        .hint = "ESP32 Console Component Example Project",
         .func = &get_info,
     };
     ESP_ERROR_CHECK( esp_console_cmd_register(&cmd) );
