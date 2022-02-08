@@ -23,8 +23,8 @@
 #include "freertos/task.h"
 #include "cmd_system.h"
 #include "sdkconfig.h"
+#include "console_example.h"
 
-#include "../../main/console_example.h"
 
 #ifdef CONFIG_FREERTOS_USE_STATS_FORMATTING_FUNCTIONS
 #define WITH_TASKS_INFO 1
