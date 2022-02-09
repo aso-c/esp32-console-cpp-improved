@@ -29,4 +29,7 @@ void register_system_sleep(void);
 #define str(a) quote(a)
 #define quote(a) #a
 
-#define VERSION_STRING	"Version " str(VER_prj-VER_sfx) " of " str(DATE_prj) ", modified by " str(MODIFIER_prj) ".\n"
+#define VERSION_STRING	"Version " str(VER_prj-VER_sfx) \
+    " of " str(DATE_prj) "," \
+    " modified by " str(MODIFIER_prj) "."
+

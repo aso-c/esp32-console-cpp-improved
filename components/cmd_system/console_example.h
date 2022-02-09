@@ -20,12 +20,10 @@
 #define MAIN_CONSOLE_H_
 
 
-#define VER_prj v.1.4.5
+#define VER_prj v.1.4.6.1
 #define VER_sfx encrypt
 #define DATE_prj 09.02.22.
 #define MODIFIER_prj aso
-
-
 
 
 #endif /* MAIN_CONSOLE_H_ */
