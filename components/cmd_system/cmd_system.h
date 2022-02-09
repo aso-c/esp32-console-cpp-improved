@@ -24,3 +24,8 @@ void register_system_sleep(void);
 #ifdef __cplusplus
 }
 #endif
+
+// Enclose an argument in quotas
+#define str(a) quote(a)
+#define quote(a) #a
+
