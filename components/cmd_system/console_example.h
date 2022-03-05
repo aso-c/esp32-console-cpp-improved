@@ -22,7 +22,7 @@
 
 //#define VER_prj v.1.4.6.2
 #define VER_prj CONFIG_APP_PROJECT_VER
-#define VER_sfx unencrypted
+#define PRJ_flavour unencrypted
 #define DATE_prj 05.03.22.
 #define BUILD_DATE CONFIG_APP_COMPILE_TIME_DATE
 #define MODIFIER_prj aso

@@ -35,7 +35,7 @@ static const char* TAG = "example";
 // */
 //const char* version_str(void)
 //{
-//    return "Version " str(VER_prj-VER_sfx)
+//    return "Version " VER_prj str(-PRJ_flavour)
 //	    " of " str(DATE_prj) ","
 //	    " modified by " str(MODIFIER_prj) ".";
 //}; /* get_version */
@@ -158,7 +158,7 @@ static void initialize_console(void)
 /* 'version' command */
 static int get_info(int argc, char **argv)
 {
-    printf("ESP Console Example Project, Version: %s of %s\r\n", str(VER_prj-VER_sfx), str(DATE_prj));
+    printf("ESP Console Example Project, Version: %s of %s\r\n", VER_prj str(-PRJ_flavour), str(DATE_prj));
     return ESP_OK;
 }
 
