@@ -23,7 +23,8 @@
 #include "freertos/task.h"
 #include "cmd_system.h"
 #include "sdkconfig.h"
-#include "../../main/console_prj.cfg.h"
+#include "console_example.h"
+
 
 #ifdef CONFIG_FREERTOS_USE_STATS_FORMATTING_FUNCTIONS
 #define WITH_TASKS_INFO 1
@@ -69,9 +70,8 @@ static int get_version(int argc, char **argv)
 {
     esp_chip_info_t info;
     esp_chip_info(&info);
-    printf("ESP Console Example, Version: %s of %s\r\n", str(VER_prj-VER_sfx), str(DATE_prj));
+    printf("ESP Console Example, Version: %s of %s\r\n", VER_prj str(-VER_sfx)/*str(VER_prj-VER_sfx)*/, str(DATE_prj));
     printf("\t\t     modified by %s\r\n", str(MODIFIER_prj));
-    //    printf("IDF Version:%s\r\n", esp_get_idf_version());
     printf("IDF Version: %s\r\n", esp_get_idf_version());
     printf("Chip info:\r\n");
     printf("\tmodel:%s\r\n", info.model == CHIP_ESP32 ? "ESP32" : "Unknow");
@@ -116,11 +116,16 @@ static void register_restart(void)
     ESP_ERROR_CHECK( esp_console_cmd_register(&cmd) );
 }
 
-/** 'free' command prints available heap memory */
 
+/* Print int value with pretty fprmat & in bytes/megabytes etc. */
+static int pretty_size_prn(char* prompt, uint32_t size);
+
+/** 'free' command prints available heap memory */
 static int free_mem(int argc, char **argv)
 {
     printf("free memory size: %d\n", esp_get_free_heap_size());
+//    pretty_size_prn("free memory size", esp_get_free_heap_size());
+    pretty_size_prn("Test free memory size prn", 15003748);
     return 0;
 }
 
@@ -140,6 +145,7 @@ static int heap_size(int argc, char **argv)
 {
     uint32_t heap_size = heap_caps_get_minimum_free_size(MALLOC_CAP_DEFAULT);
     printf("min heap size: %u\n", heap_size);
+//    pretty_size_prn("min heap size", heap_size);
     return 0;
 }
 
@@ -370,3 +376,92 @@ static void register_light_sleep(void)
     };
     ESP_ERROR_CHECK( esp_console_cmd_register(&cmd) );
 }
+
+
+
+/*
+ * @brief Get string with version information of project current state
+ * @return string containing the current version of project.
+ */
+const char* version_str(void)
+{
+    return "Version " str(VER_prj-VER_sfx)
+	    " of " str(DATE_prj) ","
+	    " modified by " str(MODIFIER_prj) ".";
+}; /* get_version */
+
+
+// Print bytes count in groups by 3 digits
+void pretty_bytes(uint32_t size);
+
+// Print bytes count in Kb, Mb as needed
+void prn_KMbytes(uint32_t size);
+
+
+// Procedures for output memory size/numbers
+// in pretty format: group digits by 3 cifer,
+// and divide fractional part from integer
+
+#define DIGDELIM '.'
+#define FRACTDELIM ','
+#define Knum 1024
+
+/* Print int value with pretty fprmat & in bytes/megabytes etc. */
+static int pretty_size_prn(char* prompt, uint32_t size)
+{
+//    printf("%s: %d bytes (", prompt, size);
+    printf("%s: ", prompt);
+    prn_KMbytes(size);
+    printf(" (");
+    pretty_bytes(size);
+    printf(" bytes)\n");
+    return 0;
+}; /* pretty_size_prn */
+
+// Print bytes count in groups by 3 digits
+void pretty_bytes(uint32_t size)
+{
+	uint32_t head = size / 1000;
+
+    if (head > 0)
+    {
+	pretty_bytes(head);
+	printf("%c%03u", DIGDELIM, size % 1000);
+    }
+    else
+	printf("%u", size);
+}; /* pretty_bytes */
+
+void prn_KMbytes(uint32_t size)
+{
+
+
+    if (size < 10 * Knum)
+    {
+	// Printout of bytes
+	pretty_bytes(size);
+	printf(" bytes");
+    } /* if size < 10 * Knum */
+    else if (size < Knum * Knum)
+    {
+	// Printout of Kbytes
+//	printf("%u bytes", size);
+	printf("%u Kbytes", size / Knum);
+	;
+    } /* else if size < Knum^2 */
+    else if (size < Knum * Knum * Knum)
+    {
+	// Printout of Mbytes
+//		printf("%u bytes", size);
+		printf("%u Mbytes", size / Knum / Knum);
+	;
+    } /* else if size < Knum^3 */
+    else
+    {
+	// all other
+//	printf("%u bytes", size);
+	pretty_bytes(size);
+	printf(" bytes");
+    }; /* else */
+
+}; /* prn_KMbytes */

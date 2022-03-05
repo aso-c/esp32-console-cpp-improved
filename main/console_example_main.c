@@ -7,8 +7,6 @@
    CONDITIONS OF ANY KIND, either express or implied.
 */
 
-#include "console_prj.cfg.h"
-
 #include <stdio.h>
 #include <string.h>
 #include "esp_system.h"
@@ -22,6 +20,7 @@
 #include "esp_vfs_fat.h"
 #include "nvs.h"
 #include "nvs_flash.h"
+#include "console_example.h"
 
 #ifdef CONFIG_ESP_CONSOLE_USB_CDC
 #error This example is incompatible with USB CDC console. Please try "console_usb" example instead.
@@ -29,6 +28,17 @@
 
 static const char* TAG = "example";
 #define PROMPT_STR CONFIG_IDF_TARGET
+
+///*
+// * @brief Get string with version information of project current state
+// * @return string containing the current version of project.
+// */
+//const char* version_str(void)
+//{
+//    return "Version " str(VER_prj-VER_sfx)
+//	    " of " str(DATE_prj) ","
+//	    " modified by " str(MODIFIER_prj) ".";
+//}; /* get_version */
 
 /* Console command history can be stored to and loaded from a file.
  * The easiest way to do this is to use FATFS filesystem on top of
@@ -132,6 +142,63 @@ static void initialize_console(void)
 #endif
 }
 
+
+
+/**
+ * @brief Info command about a version information of a project
+ *
+ * Printout version info $ small description,
+ * about this project
+ *
+ * @return
+ *      - ESP_OK on success
+ *      - ESP_ERR_INVALID_STATE, if esp_console_init wasn't called
+ */
+
+/* 'version' command */
+static int get_info(int argc, char **argv)
+{
+    printf("ESP Console Example Project, Version: %s of %s\r\n", str(VER_prj-VER_sfx), str(DATE_prj));
+    return ESP_OK;
+}
+
+/**
+ * @brief Fake command only for output version information in a 'help' command
+ *
+ * Own 'help' command implementation first run default 'help' command,
+ * and then prints the version string of a program.
+ */
+
+static void register_info(void)
+{
+    const esp_console_cmd_t cmd = {
+        .command = "info",
+        .help = version_str(),
+        .hint = "about this project",
+//        .hint = "ESP32 Console Component Example Project",
+        .func = &get_info,
+    };
+    ESP_ERROR_CHECK( esp_console_cmd_register(&cmd) );
+}; /* register_info */
+
+
+
+/**
+ * @brief Register a 'help' command for a console example project
+ *
+ * Own 'help' command implementation first run default 'help' command,
+ * and then prints the version string of a program.
+ *
+ * @return
+ *      - ESP_OK on success
+ *      - ESP_ERR_INVALID_STATE, if esp_console_init wasn't called
+ */
+esp_err_t console_example_register_help_command(void)
+{
+    return esp_console_register_help_command();;
+}; /* console_example_register_help_command */
+
+
 void app_main(void)
 {
     initialize_nvs();
@@ -146,10 +213,12 @@ void app_main(void)
     initialize_console();
 
     /* Register commands */
-    esp_console_register_help_command();
+    //esp_console_register_help_command();
+    console_example_register_help_command();
     register_system();
     register_wifi();
     register_nvs();
+    register_info();
 
     /* Prompt to be printed before each line.
      * This can be customized, made dynamic, etc.
@@ -158,11 +227,12 @@ void app_main(void)
 
     printf("\n"
            "This is an example of ESP-IDF console component.\n"
-           "Version " str(VER_prj-VER_sfx) " of " str(DATE_prj) ", modified by " str(MODIFIER_prj) ".\n"
+	   "%s\n"
            "Type 'help' to get the list of commands.\n"
            "Use UP/DOWN arrows to navigate through command history.\n"
            "Press TAB when typing command name to auto-complete.\n"
-           "Press Enter or Ctrl+C will terminate the console environment.\n");
+	   "Press Enter or Ctrl+C will terminate the console environment.\n",
+	   version_str());
 
     /* Figure out if the terminal supports escape sequences */
     int probe_status = linenoiseProbe();

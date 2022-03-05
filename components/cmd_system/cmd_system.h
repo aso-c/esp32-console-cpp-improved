@@ -21,6 +21,21 @@ void register_system_common(void);
 // Register deep and light sleep functions
 void register_system_sleep(void);
 
+/*
+ * @brief Get string with version information of project current state
+ * @return string containing the current version of project.
+ */
+const char* version_str(void);
+
 #ifdef __cplusplus
 }
 #endif
+
+// Enclose an argument in quotas
+#define str(a) quote(a)
+#define quote(a) #a
+
+#define VERSION_STRING	"Version " str(VER_prj-VER_sfx) \
+    " of " str(DATE_prj) "," \
+    " modified by " str(MODIFIER_prj) "."
+

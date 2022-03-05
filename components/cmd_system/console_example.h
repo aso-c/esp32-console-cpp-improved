@@ -19,15 +19,13 @@
 #ifndef MAIN_CONSOLE_H_
 #define MAIN_CONSOLE_H_
 
-#define quote(a) #a
-#define str(a) quote(a)
 
-#define VER_prj v.1.1.7
-#define VER_sfx plain
-#define DATE_prj 04.02.22.
+//#define VER_prj v.1.4.6.2
+#define VER_prj CONFIG_APP_PROJECT_VER
+#define VER_sfx unencrypted
+#define DATE_prj 05.03.22.
+#define BUILD_DATE CONFIG_APP_COMPILE_TIME_DATE
 #define MODIFIER_prj aso
-
-
 
 
 #endif /* MAIN_CONSOLE_H_ */
