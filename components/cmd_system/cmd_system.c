@@ -70,7 +70,7 @@ static int get_version(int argc, char **argv)
 {
     esp_chip_info_t info;
     esp_chip_info(&info);
-    printf("ESP Console Example, Version: %s of %s\r\n", str(VER_prj-VER_sfx), str(DATE_prj));
+    printf("ESP Console Example, Version: %s of %s\r\n", VER_prj str(-VER_sfx)/*str(VER_prj-VER_sfx)*/, str(DATE_prj));
     printf("\t\t     modified by %s\r\n", str(MODIFIER_prj));
     printf("IDF Version: %s\r\n", esp_get_idf_version());
     printf("Chip info:\r\n");
