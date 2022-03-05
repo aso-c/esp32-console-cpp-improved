@@ -29,16 +29,16 @@
 static const char* TAG = "example";
 #define PROMPT_STR CONFIG_IDF_TARGET
 
-/*
- * @brief Get string with version information of project current state
- * @return string containing the current version of project.
- */
-const char* version_str(void)
-{
-    return "Version " str(VER_prj-VER_sfx)
-	    " of " str(DATE_prj) ","
-	    " modified by " str(MODIFIER_prj) ".";
-}; /* get_version */
+///*
+// * @brief Get string with version information of project current state
+// * @return string containing the current version of project.
+// */
+//const char* version_str(void)
+//{
+//    return "Version " str(VER_prj-VER_sfx)
+//	    " of " str(DATE_prj) ","
+//	    " modified by " str(MODIFIER_prj) ".";
+//}; /* get_version */
 
 /* Console command history can be stored to and loaded from a file.
  * The easiest way to do this is to use FATFS filesystem on top of

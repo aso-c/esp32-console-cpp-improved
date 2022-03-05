@@ -377,6 +377,20 @@ static void register_light_sleep(void)
     ESP_ERROR_CHECK( esp_console_cmd_register(&cmd) );
 }
 
+
+
+/*
+ * @brief Get string with version information of project current state
+ * @return string containing the current version of project.
+ */
+const char* version_str(void)
+{
+    return "Version " str(VER_prj-VER_sfx)
+	    " of " str(DATE_prj) ","
+	    " modified by " str(MODIFIER_prj) ".";
+}; /* get_version */
+
+
 // Print bytes count in groups by 3 digits
 void pretty_bytes(uint32_t size);
 
