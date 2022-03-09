@@ -4484,6 +4484,36 @@
 			<location>/huge/usr/share/esp/esp-idf-v4.4/components/wpa_supplicant/port/os_xtensa.c</location>
 		</link>
 		<link>
+			<name>esp_idf_components/examples/cxx/experimental/experimental_cpp_component/esp_event_api.cpp</name>
+			<type>1</type>
+			<location>/usr/share/esp/esp-idf/examples/cxx/experimental/experimental_cpp_component/esp_event_api.cpp</location>
+		</link>
+		<link>
+			<name>esp_idf_components/examples/cxx/experimental/experimental_cpp_component/esp_event_cxx.cpp</name>
+			<type>1</type>
+			<location>/usr/share/esp/esp-idf/examples/cxx/experimental/experimental_cpp_component/esp_event_cxx.cpp</location>
+		</link>
+		<link>
+			<name>esp_idf_components/examples/cxx/experimental/experimental_cpp_component/esp_exception.cpp</name>
+			<type>1</type>
+			<location>/usr/share/esp/esp-idf/examples/cxx/experimental/experimental_cpp_component/esp_exception.cpp</location>
+		</link>
+		<link>
+			<name>esp_idf_components/examples/cxx/experimental/experimental_cpp_component/esp_timer_cxx.cpp</name>
+			<type>1</type>
+			<location>/usr/share/esp/esp-idf/examples/cxx/experimental/experimental_cpp_component/esp_timer_cxx.cpp</location>
+		</link>
+		<link>
+			<name>esp_idf_components/examples/cxx/experimental/experimental_cpp_component/gpio_cxx.cpp</name>
+			<type>1</type>
+			<location>/usr/share/esp/esp-idf/examples/cxx/experimental/experimental_cpp_component/gpio_cxx.cpp</location>
+		</link>
+		<link>
+			<name>esp_idf_components/examples/cxx/experimental/experimental_cpp_component/i2c_cxx.cpp</name>
+			<type>1</type>
+			<location>/usr/share/esp/esp-idf/examples/cxx/experimental/experimental_cpp_component/i2c_cxx.cpp</location>
+		</link>
+		<link>
 			<name>esp_idf_components/p-idf-v4.3.2/bootloader_support/src/idf/bootloader_sha.c</name>
 			<type>1</type>
 			<location>/huge/usr/share/esp/esp-idf-v4.3.2/components/bootloader_support/src/idf/bootloader_sha.c</location>
