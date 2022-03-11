@@ -22,10 +22,12 @@
 
 //#define VER_prj v.1.4.8.0
 #define VER_prj CONFIG_APP_PROJECT_VER
-#define PRJ_flavour unencrypted
-#define DATE_prj 09.03.22.
-#define BUILD_DATE CONFIG_APP_COMPILE_TIME_DATE
-#define MODIFIER_prj aso
+//#define PRJ_flavour unencrypted
+#define PRJ_flavour CONFIG_APP_PROJECT_FLAVOUR
+//#define DATE_prj 09.03.22.
+#define DATE_prj CONFIG_APP_PROJECT_DATE
+//#define MODIFIER_prj aso
+#define MODIFIER_prj CONFIG_APP_PROJECT_MODIFICATOR
 
 
 #endif /* MAIN_CONSOLE_H_ */

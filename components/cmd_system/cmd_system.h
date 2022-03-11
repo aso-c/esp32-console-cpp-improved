@@ -32,10 +32,16 @@ const char* version_str(void);
 #endif
 
 // Enclose an argument in quotas
-#define str(a) quote(a)
-#define quote(a) #a
+//#define str(a) quote(a)
+//#define quote(a) #a
 
+#if 0
 #define VERSION_STRING	"Version " str(VER_prj-VER_sfx) \
     " of " str(DATE_prj) "," \
     " modified by " str(MODIFIER_prj) "."
+#endif
+
+#define VERSION_STRING	"Version " VER_prj-VER_sfx \
+    " of " DATE_prj "," \
+    " modified by " MODIFIER_prj "."
 
