@@ -7,8 +7,16 @@
    CONDITIONS OF ANY KIND, either express or implied.
 */
 
-#include <stdio.h>
-#include <string.h>
+#include <cstdlib>
+#include <iostream>
+//#include <thread>
+//#include "esp_log.h"
+#include "gpio_cxx.hpp"
+
+
+
+//#include <stdio.h>
+//#include <string.h>
 #include "esp_system.h"
 #include "esp_log.h"
 #include "esp_console.h"
@@ -21,6 +29,9 @@
 #include "nvs.h"
 #include "nvs_flash.h"
 #include "console_example.h"
+
+using namespace idf;
+using namespace std;
 
 #ifdef CONFIG_ESP_CONSOLE_USB_CDC
 #error This example is incompatible with USB CDC console. Please try "console_usb" example instead.
@@ -35,7 +46,7 @@ static const char* TAG = "example";
 // */
 //const char* version_str(void)
 //{
-//    return "Version " str(VER_prj-VER_sfx)
+//    return "Version " VER_prj str(-PRJ_flavour)
 //	    " of " str(DATE_prj) ","
 //	    " modified by " str(MODIFIER_prj) ".";
 //}; /* get_version */
@@ -53,8 +64,13 @@ static void initialize_filesystem(void)
 {
     static wl_handle_t wl_handle;
     const esp_vfs_fat_mount_config_t mount_config = {
+#ifdef __cplusplus
+            .format_if_mount_failed = true,
+            .max_files = 4,
+#else
             .max_files = 4,
             .format_if_mount_failed = true
+#endif
     };
     esp_err_t err = esp_vfs_fat_spiflash_mount(MOUNT_PATH, "storage", &mount_config, &wl_handle);
     if (err != ESP_OK) {
@@ -112,8 +128,13 @@ static void initialize_console(void)
 
     /* Initialize the console */
     esp_console_config_t console_config = {
+#ifdef __cplusplus
+            .max_cmdline_length = 256,
+            .max_cmdline_args = 8,
+#else
             .max_cmdline_args = 8,
             .max_cmdline_length = 256,
+#endif
 #if CONFIG_LOG_COLORS
             .hint_color = atoi(LOG_COLOR_CYAN)
 #endif
@@ -158,7 +179,7 @@ static void initialize_console(void)
 /* 'version' command */
 static int get_info(int argc, char **argv)
 {
-    printf("ESP Console Example Project, Version: %s of %s\r\n", str(VER_prj-VER_sfx), str(DATE_prj));
+    printf("ESP Console Example Project, Version: %s of %s\r\n", VER_prj str(-PRJ_flavour), str(DATE_prj));
     return ESP_OK;
 }
 
@@ -199,7 +220,7 @@ esp_err_t console_example_register_help_command(void)
 }; /* console_example_register_help_command */
 
 
-void app_main(void)
+extern "C" void app_main(void)
 {
     initialize_nvs();
 
@@ -299,4 +320,4 @@ void app_main(void)
 
     ESP_LOGE(TAG, "Error or end-of-input, terminating console");
     esp_console_deinit();
-}
+}; /* app_main */
