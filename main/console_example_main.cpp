@@ -40,17 +40,6 @@ using namespace std;
 static const char* TAG = "example";
 #define PROMPT_STR CONFIG_IDF_TARGET
 
-///*
-// * @brief Get string with version information of project current state
-// * @return string containing the current version of project.
-// */
-//const char* version_str(void)
-//{
-//    return "Version " VER_prj str(-PRJ_flavour)
-//	    " of " str(DATE_prj) ","
-//	    " modified by " str(MODIFIER_prj) ".";
-//}; /* get_version */
-
 /* Console command history can be stored to and loaded from a file.
  * The easiest way to do this is to use FATFS filesystem on top of
  * wear_levelling library.
@@ -64,13 +53,8 @@ static void initialize_filesystem(void)
 {
     static wl_handle_t wl_handle;
     const esp_vfs_fat_mount_config_t mount_config = {
-#ifdef __cplusplus
             .format_if_mount_failed = true,
             .max_files = 4,
-#else
-            .max_files = 4,
-            .format_if_mount_failed = true
-#endif
     };
     esp_err_t err = esp_vfs_fat_spiflash_mount(MOUNT_PATH, "storage", &mount_config, &wl_handle);
     if (err != ESP_OK) {
@@ -128,13 +112,8 @@ static void initialize_console(void)
 
     /* Initialize the console */
     esp_console_config_t console_config = {
-#ifdef __cplusplus
             .max_cmdline_length = 256,
             .max_cmdline_args = 8,
-#else
-            .max_cmdline_args = 8,
-            .max_cmdline_length = 256,
-#endif
 #if CONFIG_LOG_COLORS
             .hint_color = atoi(LOG_COLOR_CYAN)
 #endif
@@ -176,12 +155,14 @@ static void initialize_console(void)
  *      - ESP_ERR_INVALID_STATE, if esp_console_init wasn't called
  */
 
-/* 'version' command */
+/* 'info' pseudo-command */
+extern "C" {
 static int get_info(int argc, char **argv)
 {
-    printf("ESP Console Example Project, Version: %s of %s\r\n", VER_prj str(-PRJ_flavour), str(DATE_prj));
+    printf("ESP Console Example Project, Version: %s of %s\r\n", CONFIG_APP_PROJECT_VER "-" CONFIG_APP_PROJECT_FLAVOUR, CONFIG_APP_PROJECT_DATE);
     return ESP_OK;
-}
+}; /* get_info */
+}; /* extern C */
 
 /**
  * @brief Fake command only for output version information in a 'help' command

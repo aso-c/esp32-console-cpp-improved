@@ -9,3 +9,31 @@ menu "Example Configuration"
             and uses it to store command history.
 
 endmenu
+
+menu "Application manager"
+
+    config APP_PROJECT_VER
+    string "Project version"
+    help
+            Project version
+
+    config APP_PROJECT_DATE
+    string "Current project version date"
+    help
+            Date of the project current version
+
+    config APP_PROJECT_FLAVOUR
+    string "Flavour of the current project branch"
+    help
+            Variant of the project application
+
+    config APP_PROJECT_MODIFICATOR
+    string "Modificator of the current project version"
+    help
+            The person, who made the current version of the changes
+            in the source code of the project
+
+endmenu
+
+
+
