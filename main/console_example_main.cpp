@@ -159,7 +159,7 @@ static void initialize_console(void)
 extern "C" {
 static int get_info(int argc, char **argv)
 {
-    printf("ESP Console Example Project, Version: %s of %s\r\n", CONFIG_APP_PROJECT_VER "-" PRJ_flavour, DATE_prj);
+    printf("ESP Console Example Project, Version: %s of %s\r\n", CONFIG_APP_PROJECT_VER "-" CONFIG_APP_PROJECT_FLAVOUR, CONFIG_APP_PROJECT_DATE);
     return ESP_OK;
 }; /* get_info */
 }; /* extern C */

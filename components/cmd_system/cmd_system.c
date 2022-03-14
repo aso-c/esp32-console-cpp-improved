@@ -70,7 +70,7 @@ static int get_version(int argc, char **argv)
 {
     esp_chip_info_t info;
     esp_chip_info(&info);
-    printf("ESP Console Example, Version: %s of %s\r\n", CONFIG_APP_PROJECT_VER "-" PRJ_flavour, DATE_prj);
+    printf("ESP Console Example, Version: %s of %s\r\n", CONFIG_APP_PROJECT_VER "-" CONFIG_APP_PROJECT_FLAVOUR, CONFIG_APP_PROJECT_DATE);
     printf("\t\t     modified by %s\r\n", MODIFIER_prj);
     printf("IDF Version: %s\r\n", esp_get_idf_version());
     printf("Chip info:\r\n");
@@ -385,8 +385,8 @@ static void register_light_sleep(void)
  */
 const char* version_str(void)
 {
-    return "Version " CONFIG_APP_PROJECT_VER "-" PRJ_flavour
-	    " of " DATE_prj ","
+    return "Version " CONFIG_APP_PROJECT_VER "-" CONFIG_APP_PROJECT_FLAVOUR
+	    " of " CONFIG_APP_PROJECT_DATE ","
 	    " modified by " MODIFIER_prj "." "\n"
 	    "Build Date: " __DATE__ " " __TIME__ ".";
 }; /* get_version */
