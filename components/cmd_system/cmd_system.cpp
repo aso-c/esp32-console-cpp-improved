@@ -7,6 +7,14 @@
    CONDITIONS OF ANY KIND, either express or implied.
 */
 
+
+//#include <cstdlib>
+//#include <iostream>
+//#include <thread>
+//#include "esp_log.h"
+//#include "gpio_cxx.hpp"
+
+
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
@@ -24,6 +32,10 @@
 #include "cmd_system.h"
 #include "sdkconfig.h"
 #include "console_example.h"
+
+
+//using namespace idf;
+using namespace std;
 
 
 #ifdef CONFIG_FREERTOS_USE_STATS_FORMATTING_FUNCTIONS
@@ -167,7 +179,7 @@ static void register_heap(void)
 static int tasks_info(int argc, char **argv)
 {
     const size_t bytes_per_task = 40; /* see vTaskList description */
-    char *task_list_buffer = malloc(uxTaskGetNumberOfTasks() * bytes_per_task);
+    char *task_list_buffer = (char*)malloc(uxTaskGetNumberOfTasks() * bytes_per_task);
     if (task_list_buffer == NULL) {
         ESP_LOGE(TAG, "failed to allocate buffer for vTaskList output");
         return 1;
@@ -224,7 +236,7 @@ static int deep_sleep(int argc, char **argv)
 #if SOC_PM_SUPPORT_EXT_WAKEUP
     if (deep_sleep_args.wakeup_gpio_num->count) {
         int io_num = deep_sleep_args.wakeup_gpio_num->ival[0];
-        if (!esp_sleep_is_valid_wakeup_gpio(io_num)) {
+        if (!esp_sleep_is_valid_wakeup_gpio((gpio_num_t)io_num)) {
             ESP_LOGE(TAG, "GPIO %d is not an RTC IO", io_num);
             return 1;
         }
@@ -239,7 +251,7 @@ static int deep_sleep(int argc, char **argv)
         ESP_LOGI(TAG, "Enabling wakeup on GPIO%d, wakeup on %s level",
                  io_num, level ? "HIGH" : "LOW");
 
-        ESP_ERROR_CHECK( esp_sleep_enable_ext1_wakeup(1ULL << io_num, level) );
+        ESP_ERROR_CHECK( esp_sleep_enable_ext1_wakeup(1ULL << io_num, (esp_sleep_ext1_wakeup_mode_t)level) );
         ESP_LOGE(TAG, "GPIO wakeup from deep sleep currently unsupported on ESP32-C3");
     }
 #endif // SOC_PM_SUPPORT_EXT_WAKEUP
@@ -319,7 +331,7 @@ static int light_sleep(int argc, char **argv)
         ESP_LOGI(TAG, "Enabling wakeup on GPIO%d, wakeup on %s level",
                  io_num, level ? "HIGH" : "LOW");
 
-        ESP_ERROR_CHECK( gpio_wakeup_enable(io_num, level ? GPIO_INTR_HIGH_LEVEL : GPIO_INTR_LOW_LEVEL) );
+        ESP_ERROR_CHECK( gpio_wakeup_enable((gpio_num_t)io_num, level ? GPIO_INTR_HIGH_LEVEL : GPIO_INTR_LOW_LEVEL) );
     }
     if (io_count > 0) {
         ESP_ERROR_CHECK( esp_sleep_enable_gpio_wakeup() );
