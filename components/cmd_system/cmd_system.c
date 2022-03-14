@@ -71,7 +71,7 @@ static int get_version(int argc, char **argv)
     esp_chip_info_t info;
     esp_chip_info(&info);
     printf("ESP Console Example, Version: %s of %s\r\n", CONFIG_APP_PROJECT_VER "-" CONFIG_APP_PROJECT_FLAVOUR, CONFIG_APP_PROJECT_DATE);
-    printf("\t\t     modified by %s\r\n", MODIFIER_prj);
+    printf("\t\t     modified by %s\r\n", CONFIG_APP_PROJECT_MODIFICATOR);
     printf("IDF Version: %s\r\n", esp_get_idf_version());
     printf("Chip info:\r\n");
     printf("\tmodel:%s\r\n", info.model == CHIP_ESP32 ? "ESP32" : "Unknow");
@@ -387,7 +387,7 @@ const char* version_str(void)
 {
     return "Version " CONFIG_APP_PROJECT_VER "-" CONFIG_APP_PROJECT_FLAVOUR
 	    " of " CONFIG_APP_PROJECT_DATE ","
-	    " modified by " MODIFIER_prj "." "\n"
+	    " modified by " CONFIG_APP_PROJECT_MODIFICATOR "." "\n"
 	    "Build Date: " __DATE__ " " __TIME__ ".";
 }; /* get_version */
 
