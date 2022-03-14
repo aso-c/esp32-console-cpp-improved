@@ -12,6 +12,11 @@ endmenu
 
 menu "Application manager"
 
+    config APP_PROJECT_VER
+    string "Project version"
+    help
+            Project version
+
     config APP_PROJECT_DATE
     string "Current project version date"
     help

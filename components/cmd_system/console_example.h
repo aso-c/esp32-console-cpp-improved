@@ -21,7 +21,8 @@
 
 
 //#define VER_prj v.1.4.8.0
-#define VER_prj CONFIG_APP_PROJECT_VER
+///#define VER_prj CONFIG_APP_PROJECT_VER
+//#define CONFIG_APP_PROJECT_VER CONFIG_APP_PROJECT_VER
 //#define PRJ_flavour unencrypted
 #define PRJ_flavour CONFIG_APP_PROJECT_FLAVOUR
 //#define DATE_prj 09.03.22.

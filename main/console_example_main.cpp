@@ -155,12 +155,14 @@ static void initialize_console(void)
  *      - ESP_ERR_INVALID_STATE, if esp_console_init wasn't called
  */
 
-/* 'version' command */
+/* 'info' pseudo-command */
+extern "C" {
 static int get_info(int argc, char **argv)
 {
-    printf("ESP Console Example Project, Version: %s of %s\r\n", VER_prj "-" PRJ_flavour, DATE_prj);
+    printf("ESP Console Example Project, Version: %s of %s\r\n", CONFIG_APP_PROJECT_VER "-" PRJ_flavour, DATE_prj);
     return ESP_OK;
-}
+}; /* get_info */
+}; /* extern C */
 
 /**
  * @brief Fake command only for output version information in a 'help' command
