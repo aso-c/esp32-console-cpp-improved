@@ -7,7 +7,15 @@
    CONDITIONS OF ANY KIND, either express or implied.
 */
 
-#include <stdio.h>
+
+#include <cstdlib>
+//#include <iostream>
+//#include <thread>
+//#include "esp_log.h"
+//#include "gpio_cxx.hpp"
+
+
+//#include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 #include <unistd.h>
@@ -23,7 +31,10 @@
 #include "freertos/task.h"
 #include "cmd_system.h"
 #include "sdkconfig.h"
-#include "console_example.h"
+
+
+//using namespace idf;
+using namespace std;
 
 
 #ifdef CONFIG_FREERTOS_USE_STATS_FORMATTING_FUNCTIONS
@@ -118,14 +129,17 @@ static void register_restart(void)
 
 
 /* Print int value with pretty fprmat & in bytes/megabytes etc. */
-static int pretty_size_prn(char* prompt, uint32_t size);
+static int pretty_size_prn(const char prompt[], uint32_t size);
 
 /** 'free' command prints available heap memory */
 static int free_mem(int argc, char **argv)
 {
+#if 0
     printf("free memory size: %d\n", esp_get_free_heap_size());
-//    pretty_size_prn("free memory size", esp_get_free_heap_size());
     pretty_size_prn("Test free memory size prn", 15003748);
+#else
+    pretty_size_prn("free memory size", esp_get_free_heap_size());
+#endif
     return 0;
 }
 
@@ -144,8 +158,11 @@ static void register_free(void)
 static int heap_size(int argc, char **argv)
 {
     uint32_t heap_size = heap_caps_get_minimum_free_size(MALLOC_CAP_DEFAULT);
+#if 0
     printf("min heap size: %u\n", heap_size);
-//    pretty_size_prn("min heap size", heap_size);
+#else
+    pretty_size_prn("min heap size", heap_size);
+#endif
     return 0;
 }
 
@@ -167,7 +184,7 @@ static void register_heap(void)
 static int tasks_info(int argc, char **argv)
 {
     const size_t bytes_per_task = 40; /* see vTaskList description */
-    char *task_list_buffer = malloc(uxTaskGetNumberOfTasks() * bytes_per_task);
+    char *task_list_buffer = (char*)malloc(uxTaskGetNumberOfTasks() * bytes_per_task);
     if (task_list_buffer == NULL) {
         ESP_LOGE(TAG, "failed to allocate buffer for vTaskList output");
         return 1;
@@ -224,7 +241,7 @@ static int deep_sleep(int argc, char **argv)
 #if SOC_PM_SUPPORT_EXT_WAKEUP
     if (deep_sleep_args.wakeup_gpio_num->count) {
         int io_num = deep_sleep_args.wakeup_gpio_num->ival[0];
-        if (!esp_sleep_is_valid_wakeup_gpio(io_num)) {
+        if (!esp_sleep_is_valid_wakeup_gpio((gpio_num_t)io_num)) {
             ESP_LOGE(TAG, "GPIO %d is not an RTC IO", io_num);
             return 1;
         }
@@ -239,7 +256,7 @@ static int deep_sleep(int argc, char **argv)
         ESP_LOGI(TAG, "Enabling wakeup on GPIO%d, wakeup on %s level",
                  io_num, level ? "HIGH" : "LOW");
 
-        ESP_ERROR_CHECK( esp_sleep_enable_ext1_wakeup(1ULL << io_num, level) );
+        ESP_ERROR_CHECK( esp_sleep_enable_ext1_wakeup(1ULL << io_num, (esp_sleep_ext1_wakeup_mode_t)level) );
         ESP_LOGE(TAG, "GPIO wakeup from deep sleep currently unsupported on ESP32-C3");
     }
 #endif // SOC_PM_SUPPORT_EXT_WAKEUP
@@ -319,7 +336,7 @@ static int light_sleep(int argc, char **argv)
         ESP_LOGI(TAG, "Enabling wakeup on GPIO%d, wakeup on %s level",
                  io_num, level ? "HIGH" : "LOW");
 
-        ESP_ERROR_CHECK( gpio_wakeup_enable(io_num, level ? GPIO_INTR_HIGH_LEVEL : GPIO_INTR_LOW_LEVEL) );
+        ESP_ERROR_CHECK( gpio_wakeup_enable((gpio_num_t)io_num, level ? GPIO_INTR_HIGH_LEVEL : GPIO_INTR_LOW_LEVEL) );
     }
     if (io_count > 0) {
         ESP_ERROR_CHECK( esp_sleep_enable_gpio_wakeup() );
@@ -385,10 +402,10 @@ static void register_light_sleep(void)
  */
 const char* version_str(void)
 {
-    return "Version " CONFIG_APP_PROJECT_VER "-" CONFIG_APP_PROJECT_FLAVOUR
+    return " Version " CONFIG_APP_PROJECT_VER "-" CONFIG_APP_PROJECT_FLAVOUR
 	    " of " CONFIG_APP_PROJECT_DATE ","
-	    " modified by " CONFIG_APP_PROJECT_MODIFICATOR "." "\n"
-	    "Build Date: " __DATE__ " " __TIME__ ".";
+	    " modified by " CONFIG_APP_PROJECT_MODIFICATOR "."/* "\r\n"
+	    "Build Date: " __DATE__ " " __TIME__ "."*/;
 }; /* get_version */
 
 
@@ -403,12 +420,13 @@ void prn_KMbytes(uint32_t size);
 // in pretty format: group digits by 3 cifer,
 // and divide fractional part from integer
 
-#define DIGDELIM '.'
+//#define DIGDELIM '.'
+#define DIGDELIM '_'
 #define FRACTDELIM ','
 #define Knum 1024
 
 /* Print int value with pretty fprmat & in bytes/megabytes etc. */
-static int pretty_size_prn(char* prompt, uint32_t size)
+static int pretty_size_prn(const char prompt[], uint32_t size)
 {
 //    printf("%s: %d bytes (", prompt, size);
     printf("%s: ", prompt);

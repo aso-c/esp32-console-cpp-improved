@@ -28,7 +28,6 @@
 #include "esp_vfs_fat.h"
 #include "nvs.h"
 #include "nvs_flash.h"
-#include "console_example.h"
 
 using namespace idf;
 using namespace std;
@@ -164,6 +163,7 @@ static int get_info(int argc, char **argv)
 }; /* get_info */
 }; /* extern C */
 
+
 /**
  * @brief Fake command only for output version information in a 'help' command
  *
@@ -173,12 +173,22 @@ static int get_info(int argc, char **argv)
 
 static void register_info(void)
 {
+
+	static struct {
+	    struct arg_str *name_space;
+	    struct arg_end *end;
+	} info_args;
+
+
+    info_args.name_space = arg_str1(NULL, NULL, "Build Date:", __DATE__ " " __TIME__ ".");
+    info_args.end = arg_end(2);
+
     const esp_console_cmd_t cmd = {
         .command = "info",
         .help = version_str(),
         .hint = "about this project",
-//        .hint = "ESP32 Console Component Example Project",
         .func = &get_info,
+	.argtable = &info_args,
     };
     ESP_ERROR_CHECK( esp_console_cmd_register(&cmd) );
 }; /* register_info */
