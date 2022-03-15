@@ -129,14 +129,17 @@ static void register_restart(void)
 
 
 /* Print int value with pretty fprmat & in bytes/megabytes etc. */
-static int pretty_size_prn(char* prompt, uint32_t size);
+static int pretty_size_prn(const char prompt[], uint32_t size);
 
 /** 'free' command prints available heap memory */
 static int free_mem(int argc, char **argv)
 {
+#if 0
     printf("free memory size: %d\n", esp_get_free_heap_size());
-//    pretty_size_prn("free memory size", esp_get_free_heap_size());
     pretty_size_prn("Test free memory size prn", 15003748);
+#else
+    pretty_size_prn("free memory size", esp_get_free_heap_size());
+#endif
     return 0;
 }
 
@@ -155,8 +158,11 @@ static void register_free(void)
 static int heap_size(int argc, char **argv)
 {
     uint32_t heap_size = heap_caps_get_minimum_free_size(MALLOC_CAP_DEFAULT);
+#if 0
     printf("min heap size: %u\n", heap_size);
-//    pretty_size_prn("min heap size", heap_size);
+#else
+    pretty_size_prn("min heap size", heap_size);
+#endif
     return 0;
 }
 
@@ -396,10 +402,10 @@ static void register_light_sleep(void)
  */
 const char* version_str(void)
 {
-    return "Version " CONFIG_APP_PROJECT_VER "-" CONFIG_APP_PROJECT_FLAVOUR
+    return " Version " CONFIG_APP_PROJECT_VER "-" CONFIG_APP_PROJECT_FLAVOUR
 	    " of " CONFIG_APP_PROJECT_DATE ","
-	    " modified by " CONFIG_APP_PROJECT_MODIFICATOR "." "\n"
-	    "Build Date: " __DATE__ " " __TIME__ ".";
+	    " modified by " CONFIG_APP_PROJECT_MODIFICATOR "."/* "\r\n"
+	    "Build Date: " __DATE__ " " __TIME__ "."*/;
 }; /* get_version */
 
 
@@ -414,12 +420,13 @@ void prn_KMbytes(uint32_t size);
 // in pretty format: group digits by 3 cifer,
 // and divide fractional part from integer
 
-#define DIGDELIM '.'
+//#define DIGDELIM '.'
+#define DIGDELIM '_'
 #define FRACTDELIM ','
 #define Knum 1024
 
 /* Print int value with pretty fprmat & in bytes/megabytes etc. */
-static int pretty_size_prn(char* prompt, uint32_t size)
+static int pretty_size_prn(const char prompt[], uint32_t size)
 {
 //    printf("%s: %d bytes (", prompt, size);
     printf("%s: ", prompt);
