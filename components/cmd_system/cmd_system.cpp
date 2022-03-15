@@ -8,14 +8,14 @@
 */
 
 
-//#include <cstdlib>
+#include <cstdlib>
 //#include <iostream>
 //#include <thread>
 //#include "esp_log.h"
 //#include "gpio_cxx.hpp"
 
 
-#include <stdio.h>
+//#include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 #include <unistd.h>
@@ -31,7 +31,6 @@
 #include "freertos/task.h"
 #include "cmd_system.h"
 #include "sdkconfig.h"
-#include "console_example.h"
 
 
 //using namespace idf;

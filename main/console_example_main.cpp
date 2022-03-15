@@ -28,7 +28,6 @@
 #include "esp_vfs_fat.h"
 #include "nvs.h"
 #include "nvs_flash.h"
-#include "console_example.h"
 
 using namespace idf;
 using namespace std;
