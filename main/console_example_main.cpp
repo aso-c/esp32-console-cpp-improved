@@ -163,7 +163,7 @@ static int get_info(int argc, char **argv)
 #ifdef __WITH_STDIO__
 //    printf("ESP Console Example Project, Version: %s of %s\r\n", CONFIG_APP_PROJECT_VER "-" CONFIG_APP_PROJECT_FLAVOUR, CONFIG_APP_PROJECT_DATE);
     printf("ESP Console Example Project, Version: %s-%s of %s\r\n", CONFIG_APP_PROJECT_VER, CONFIG_APP_PROJECT_FLAVOUR, CONFIG_APP_PROJECT_DATE);
-#elif __WITH_BOOST__
+#elif defined(__WITH_BOOST__)
     printf("ESP Console Example Project, Version: %s-%s of %s\r\n", CONFIG_APP_PROJECT_VER, CONFIG_APP_PROJECT_FLAVOUR, CONFIG_APP_PROJECT_DATE);
 #else
     cout << "ESP Console Example Project, Version: " CONFIG_APP_PROJECT_VER "-" CONFIG_APP_PROJECT_FLAVOUR " of " CONFIG_APP_PROJECT_DATE "\r\n";
@@ -258,7 +258,7 @@ extern "C" void app_main(void)
 	   CONFIG_APP_PROJECT_VER, CONFIG_APP_PROJECT_FLAVOUR,
 	   CONFIG_APP_PROJECT_DATE, CONFIG_APP_PROJECT_MODIFICATOR,
 	   __DATE__, __TIME__);
-#elif __WITH_BOOST__
+#elif defined(__WITH_BOOST__)
     printf("\n"
            "This is an example of ESP-IDF console component.\n"
 	   "%s\n"
@@ -268,29 +268,34 @@ extern "C" void app_main(void)
 	   "Press Enter or Ctrl+C will terminate the console environment.\n",
 	   version_str());
 #else
+#ifdef __MAX_UNFOLDED_OUTPUT__
     cout << endl
 	<< "This is an example of ESP-IDF console component." << endl
 	<< version_str() << endl
+	<< "Builded " << __DATE__ << " " << __TIME__ << endl
+	<< "Type 'help' to get the list of commands." << endl
+	<< "Use UP/DOWN arrows to navigate through command history." << endl
+	<< "Press TAB when typing command name to auto-complete." << endl
+	<< "Press Enter or Ctrl+C will terminate the console environment." << endl;
+#else
+    cout << endl
+	<< "This is an example of ESP-IDF console component." << endl
+	<< version_str() << endl
+	<< "Builded " << __DATE__ << " " << __TIME__ << endl
 	<< "Type 'help' to get the list of commands." << endl
 	<< "Use UP/DOWN arrows to navigate through command history." << endl
 	<< "Press TAB when typing command name to auto-complete." << endl
 	<< "Press Enter or Ctrl+C will terminate the console environment." << endl;
 #endif
+#endif
 
     /* Figure out if the terminal supports escape sequences */
     int probe_status = linenoiseProbe();
     if (probe_status) { /* zero indicates success */
-#ifdef __WITH_STDIO__
-        printf("\n"
-               "Your terminal application does not support escape sequences.\n"
-               "Line editing and history features are disabled.\n"
-               "On Windows, try using Putty instead.\n");
-#else
         cout << endl
 	    << "Your terminal application does not support escape sequences." << endl
 	    << "Line editing and history features are disabled." << endl
 	    << "On Windows, try using Putty instead." << endl;
-#endif
 
         linenoiseSetDumbMode(1);
 #if CONFIG_LOG_COLORS
