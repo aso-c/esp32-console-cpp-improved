@@ -15,6 +15,7 @@
 
 //#define __WITH_STDIO__
 //#define __WITH_BOOST__
+#define __MAX_UNFOLDED_OUTPUT__
 
 //#include <stdio.h>
 //#include <string.h>
@@ -267,14 +268,13 @@ extern "C" void app_main(void)
 	   "Press Enter or Ctrl+C will terminate the console environment.\n",
 	   version_str());
 #else
-    cout << "\n"
-           "This is an example of ESP-IDF console component.\n"
-	   "%s\n"
-	<< version_str()
+    cout << endl
+	<< "This is an example of ESP-IDF console component.\n"
+	<< version_str() << endl
 	<< "Type 'help' to get the list of commands.\n"
-           "Use UP/DOWN arrows to navigate through command history.\n"
-           "Press TAB when typing command name to auto-complete.\n"
-	   "Press Enter or Ctrl+C will terminate the console environment.\n";
+	<< "Use UP/DOWN arrows to navigate through command history.\n"
+	<< "Press TAB when typing command name to auto-complete.\n"
+	<< "Press Enter or Ctrl+C will terminate the console environment.\n";
 #endif
 
     /* Figure out if the terminal supports escape sequences */
