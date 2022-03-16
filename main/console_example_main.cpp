@@ -13,8 +13,8 @@
 //#include "esp_log.h"
 #include "gpio_cxx.hpp"
 
-#define __WITH_STDIO__
-#define __WITH_BOOST__
+//#define __WITH_STDIO__
+//#define __WITH_BOOST__
 
 //#include <stdio.h>
 //#include <string.h>
@@ -246,18 +246,6 @@ extern "C" void app_main(void)
     const char* prompt = LOG_COLOR_I PROMPT_STR "> " LOG_RESET_COLOR;
 
 #ifdef __WITH_STDIO__
-#if 0
-    printf("\n"
-           "This is an example of ESP-IDF console component.\n"
-	   "%s\n"
-	   "Builded %s %s\n"
-           "Type 'help' to get the list of commands.\n"
-           "Use UP/DOWN arrows to navigate through command history.\n"
-           "Press TAB when typing command name to auto-complete.\n"
-	   "Press Enter or Ctrl+C will terminate the console environment.\n",
-	   version_str(), __DATE__, __TIME__);
-#else
-
     printf("\n"
            "This is an example of ESP-IDF console component.\n"
 	   "Version %s-%s of %s, modified by %s.\n"
@@ -269,8 +257,6 @@ extern "C" void app_main(void)
 	   CONFIG_APP_PROJECT_VER, CONFIG_APP_PROJECT_FLAVOUR,
 	   CONFIG_APP_PROJECT_DATE, CONFIG_APP_PROJECT_MODIFICATOR,
 	   __DATE__, __TIME__);
-#endif
-
 #elif __WITH_BOOST__
     printf("\n"
            "This is an example of ESP-IDF console component.\n"
@@ -281,14 +267,14 @@ extern "C" void app_main(void)
 	   "Press Enter or Ctrl+C will terminate the console environment.\n",
 	   version_str());
 #else
-    printf("\n"
+    cout << "\n"
            "This is an example of ESP-IDF console component.\n"
 	   "%s\n"
-           "Type 'help' to get the list of commands.\n"
+	<< version_str()
+	<< "Type 'help' to get the list of commands.\n"
            "Use UP/DOWN arrows to navigate through command history.\n"
            "Press TAB when typing command name to auto-complete.\n"
-	   "Press Enter or Ctrl+C will terminate the console environment.\n",
-	   version_str());
+	   "Press Enter or Ctrl+C will terminate the console environment.\n";
 #endif
 
     /* Figure out if the terminal supports escape sequences */

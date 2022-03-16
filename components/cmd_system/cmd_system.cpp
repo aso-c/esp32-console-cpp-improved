@@ -402,7 +402,7 @@ static void register_light_sleep(void)
  */
 const char* version_str(void)
 {
-    return "  Version " CONFIG_APP_PROJECT_VER "-" CONFIG_APP_PROJECT_FLAVOUR
+    return "Version " CONFIG_APP_PROJECT_VER "-" CONFIG_APP_PROJECT_FLAVOUR
 	    " of " CONFIG_APP_PROJECT_DATE ","
 	    " modified by " CONFIG_APP_PROJECT_MODIFICATOR "."/* "\r\n"
 	    "Build Date: " __DATE__ " " __TIME__ "."*/;
