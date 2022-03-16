@@ -14,6 +14,10 @@
 //#include "esp_log.h"
 //#include "gpio_cxx.hpp"
 
+#define __WITH_STDIO__
+//#define __WITH_BOOST__
+//#define __MAX_UNFOLDED_OUTPUT__
+
 
 //#include <stdio.h>
 #include <string.h>
@@ -79,8 +83,10 @@ void register_system(void)
 /* 'version' command */
 static int get_version(int argc, char **argv)
 {
-    esp_chip_info_t info;
+	esp_chip_info_t info;
+
     esp_chip_info(&info);
+#ifdef __WITH_STDIO__
     printf("ESP Console Example, Version: %s of %s\r\n", CONFIG_APP_PROJECT_VER "-" CONFIG_APP_PROJECT_FLAVOUR, CONFIG_APP_PROJECT_DATE);
     printf("\t\t     modified by %s\r\n", CONFIG_APP_PROJECT_MODIFICATOR);
     printf("IDF Version: %s\r\n", esp_get_idf_version());
@@ -94,6 +100,21 @@ static int get_version(int argc, char **argv)
            info.features & CHIP_FEATURE_EMB_FLASH ? "/Embedded-Flash:" : "/External-Flash:",
            spi_flash_get_chip_size() / (1024 * 1024), " MB");
     printf("\trevision number:%d\r\n", info.revision);
+#else
+    printf("ESP Console Example, Version: %s of %s\r\n", CONFIG_APP_PROJECT_VER "-" CONFIG_APP_PROJECT_FLAVOUR, CONFIG_APP_PROJECT_DATE);
+    printf("\t\t     modified by %s\r\n", CONFIG_APP_PROJECT_MODIFICATOR);
+    printf("IDF Version: %s\r\n", esp_get_idf_version());
+    printf("Chip info:\r\n");
+    printf("\tmodel:%s\r\n", info.model == CHIP_ESP32 ? "ESP32" : "Unknow");
+    printf("\tcores:%d\r\n", info.cores);
+    printf("\tfeature:%s%s%s%s%d%s\r\n",
+           info.features & CHIP_FEATURE_WIFI_BGN ? "/802.11bgn" : "",
+           info.features & CHIP_FEATURE_BLE ? "/BLE" : "",
+           info.features & CHIP_FEATURE_BT ? "/BT" : "",
+           info.features & CHIP_FEATURE_EMB_FLASH ? "/Embedded-Flash:" : "/External-Flash:",
+           spi_flash_get_chip_size() / (1024 * 1024), " MB");
+    printf("\trevision number:%d\r\n", info.revision);
+#endif
     return 0;
 }
 
@@ -135,7 +156,11 @@ static int pretty_size_prn(const char prompt[], uint32_t size);
 static int free_mem(int argc, char **argv)
 {
 #if 0
+#ifdef __WITH_STDIO__
     printf("free memory size: %d\n", esp_get_free_heap_size());
+#else
+    cout << "free memory size: " << esp_get_free_heap_size() endl;
+#endif
     pretty_size_prn("Test free memory size prn", 15003748);
 #else
     pretty_size_prn("free memory size", esp_get_free_heap_size());
@@ -159,7 +184,11 @@ static int heap_size(int argc, char **argv)
 {
     uint32_t heap_size = heap_caps_get_minimum_free_size(MALLOC_CAP_DEFAULT);
 #if 0
+#ifdef __WITH_STDIO__
     printf("min heap size: %u\n", heap_size);
+#else
+    cout << "min heap size: " << heap_size << endlf;
+#endif
 #else
     pretty_size_prn("min heap size", heap_size);
 #endif
@@ -363,7 +392,11 @@ static int light_sleep(int argc, char **argv)
         break;
     default:
         cause_str = "unknown";
+#ifdef __WITH_STDIO__
         printf("%d\n", cause);
+#else
+        cout << cause << endl;
+#endif
     }
     ESP_LOGI(TAG, "Woke up from: %s", cause_str);
     return 0;
