@@ -269,12 +269,12 @@ extern "C" void app_main(void)
 	   version_str());
 #else
     cout << endl
-	<< "This is an example of ESP-IDF console component.\n"
+	<< "This is an example of ESP-IDF console component." << endl
 	<< version_str() << endl
-	<< "Type 'help' to get the list of commands.\n"
-	<< "Use UP/DOWN arrows to navigate through command history.\n"
-	<< "Press TAB when typing command name to auto-complete.\n"
-	<< "Press Enter or Ctrl+C will terminate the console environment.\n";
+	<< "Type 'help' to get the list of commands." << endl
+	<< "Use UP/DOWN arrows to navigate through command history." << endl
+	<< "Press TAB when typing command name to auto-complete." << endl
+	<< "Press Enter or Ctrl+C will terminate the console environment." << endl;
 #endif
 
     /* Figure out if the terminal supports escape sequences */
@@ -285,16 +285,11 @@ extern "C" void app_main(void)
                "Your terminal application does not support escape sequences.\n"
                "Line editing and history features are disabled.\n"
                "On Windows, try using Putty instead.\n");
-#elif __WITH_BOOST__
-        printf("\n"
-               "Your terminal application does not support escape sequences.\n"
-               "Line editing and history features are disabled.\n"
-               "On Windows, try using Putty instead.\n");
 #else
-        printf("\n"
-               "Your terminal application does not support escape sequences.\n"
-               "Line editing and history features are disabled.\n"
-               "On Windows, try using Putty instead.\n");
+        cout << endl
+	    << "Your terminal application does not support escape sequences." << endl
+	    << "Line editing and history features are disabled." << endl
+	    << "On Windows, try using Putty instead." << endl;
 #endif
 
         linenoiseSetDumbMode(1);
