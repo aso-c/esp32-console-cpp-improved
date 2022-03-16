@@ -271,7 +271,10 @@ extern "C" void app_main(void)
 #ifdef __MAX_UNFOLDED_OUTPUT__
     cout << endl
 	<< "This is an example of ESP-IDF console component." << endl
-	<< version_str() << endl
+	<<   "Version " << CONFIG_APP_PROJECT_VER << '-' << CONFIG_APP_PROJECT_FLAVOUR
+	<< " of " << CONFIG_APP_PROJECT_DATE << ',' << " modified by "
+	<< CONFIG_APP_PROJECT_MODIFICATOR << '.' << endl
+//	<< version_str() << endl
 	<< "Builded " << __DATE__ << " " << __TIME__ << endl
 	<< "Type 'help' to get the list of commands." << endl
 	<< "Use UP/DOWN arrows to navigate through command history." << endl
