@@ -9,14 +9,14 @@
 
 
 #include <cstdlib>
-//#include <iostream>
+#include <iostream>
 //#include <thread>
 //#include "esp_log.h"
 //#include "gpio_cxx.hpp"
 
-#define __WITH_STDIO__
+//#define __WITH_STDIO__
 //#define __WITH_BOOST__
-#define __MAX_UNFOLDED_OUTPUT__
+//#define __MAX_UNFOLDED_OUTPUT__
 
 
 //#include <stdio.h>
@@ -88,8 +88,8 @@ static int get_version(int argc, char **argv)
     esp_chip_info(&info);
 #ifdef __WITH_STDIO__
 
-#ifndef __MAX_UNFOLDED_OUTPUT__
-    printf("ESP Console Example, Version: %s of %s\r\n", CONFIG_APP_PROJECT_VER "-" CONFIG_APP_PROJECT_FLAVOUR, CONFIG_APP_PROJECT_DATE);
+#ifdef __MAX_UNFOLDED_OUTPUT__
+    printf("ESP Console Example, Version: %s-%s of %s,\r\n", CONFIG_APP_PROJECT_VER, CONFIG_APP_PROJECT_FLAVOUR, CONFIG_APP_PROJECT_DATE);
     printf("\t\t\t\t\t      modified by %s\r\n", CONFIG_APP_PROJECT_MODIFICATOR);
     printf("IDF Version: %s\r\n", esp_get_idf_version());
     printf("Chip info:\r\n");
@@ -103,7 +103,7 @@ static int get_version(int argc, char **argv)
            spi_flash_get_chip_size() / (1024 * 1024), " MB");
     printf("\trevision number:%d\r\n", info.revision);
 #else
-    printf("ESP Console Example, Version: %s-%s of %s,\r\n", CONFIG_APP_PROJECT_VER, CONFIG_APP_PROJECT_FLAVOUR, CONFIG_APP_PROJECT_DATE);
+    printf("ESP Console Example, Version: %s of %s\r\n", CONFIG_APP_PROJECT_VER "-" CONFIG_APP_PROJECT_FLAVOUR, CONFIG_APP_PROJECT_DATE);
     printf("\t\t\t\t\t      modified by %s\r\n", CONFIG_APP_PROJECT_MODIFICATOR);
     printf("IDF Version: %s\r\n", esp_get_idf_version());
     printf("Chip info:\r\n");
@@ -119,7 +119,9 @@ static int get_version(int argc, char **argv)
 #endif
 
 #else
-    printf("ESP Console Example, Version: %s of %s\r\n", CONFIG_APP_PROJECT_VER "-" CONFIG_APP_PROJECT_FLAVOUR, CONFIG_APP_PROJECT_DATE);
+
+#ifdef __MAX_UNFOLDED_OUTPUT__
+    printf("ESP Console Example, Version: %s-%s of %s,\r\n", CONFIG_APP_PROJECT_VER, CONFIG_APP_PROJECT_FLAVOUR, CONFIG_APP_PROJECT_DATE);
     printf("\t\t\t\t\t      modified by %s\r\n", CONFIG_APP_PROJECT_MODIFICATOR);
     printf("IDF Version: %s\r\n", esp_get_idf_version());
     printf("Chip info:\r\n");
@@ -132,6 +134,22 @@ static int get_version(int argc, char **argv)
            info.features & CHIP_FEATURE_EMB_FLASH ? "/Embedded-Flash:" : "/External-Flash:",
            spi_flash_get_chip_size() / (1024 * 1024), " MB");
     printf("\trevision number:%d\r\n", info.revision);
+#else
+    cout << "ESP Console Example, Version: " CONFIG_APP_PROJECT_VER "-" CONFIG_APP_PROJECT_FLAVOUR " of " CONFIG_APP_PROJECT_DATE << endl;
+    cout << "\t\t\t\t\t      modified by " << CONFIG_APP_PROJECT_MODIFICATOR << endl;
+    cout << "IDF Version: " << esp_get_idf_version() << endl;
+    cout << "Chip info: " << endl;
+    cout << "\tmodel: " << (info.model == CHIP_ESP32 ? "ESP32" : "Unknow") << endl;
+    cout << "\tcores: " << (int)info.cores << endl;
+    printf("\tfeature:%s%s%s%s%d%s\r\n",
+           info.features & CHIP_FEATURE_WIFI_BGN ? "/802.11bgn" : "",
+           info.features & CHIP_FEATURE_BLE ? "/BLE" : "",
+           info.features & CHIP_FEATURE_BT ? "/BT" : "",
+           info.features & CHIP_FEATURE_EMB_FLASH ? "/Embedded-Flash:" : "/External-Flash:",
+           spi_flash_get_chip_size() / (1024 * 1024), " MB");
+    cout << "\trevision number: " << (int)info.revision << endl;
+#endif
+
 #endif
     return 0;
 }
