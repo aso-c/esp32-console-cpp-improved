@@ -141,7 +141,7 @@ static int get_version(int argc, char **argv)
     cout << "Chip info: " << endl;
     cout << "\tmodel: " << (info.model == CHIP_ESP32 ? "ESP32" : "Unknow") << endl;
     cout << "\tcores: " << (int)info.cores << endl;
-    cout << "\tfeature:" /*"%s%s%s%s%d%s"*/ /*"\r\n"*/
+    cout << "\tfeature:"
 	<< (info.features & CHIP_FEATURE_WIFI_BGN ? "802.11bgn/" : "")
 	<< (info.features & CHIP_FEATURE_BLE ? "BLE/" : "")
 	<< (info.features & CHIP_FEATURE_BT ? "BT/" : "")
