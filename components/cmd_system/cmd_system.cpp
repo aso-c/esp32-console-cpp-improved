@@ -120,7 +120,7 @@ static int get_version(int argc, char **argv)
 
 #else
 
-#ifdef __MAX_UNFOLDED_OUTPUT__
+#ifdef __WITH_BOOST__
     printf("ESP Console Example, Version: %s-%s of %s,\r\n", CONFIG_APP_PROJECT_VER, CONFIG_APP_PROJECT_FLAVOUR, CONFIG_APP_PROJECT_DATE);
     printf("\t\t\t\t\t      modified by %s\r\n", CONFIG_APP_PROJECT_MODIFICATOR);
     printf("IDF Version: %s\r\n", esp_get_idf_version());
@@ -141,12 +141,12 @@ static int get_version(int argc, char **argv)
     cout << "Chip info: " << endl;
     cout << "\tmodel: " << (info.model == CHIP_ESP32 ? "ESP32" : "Unknow") << endl;
     cout << "\tcores: " << (int)info.cores << endl;
-    printf("\tfeature:%s%s%s%s%d%s\r\n",
-           info.features & CHIP_FEATURE_WIFI_BGN ? "/802.11bgn" : "",
-           info.features & CHIP_FEATURE_BLE ? "/BLE" : "",
-           info.features & CHIP_FEATURE_BT ? "/BT" : "",
-           info.features & CHIP_FEATURE_EMB_FLASH ? "/Embedded-Flash:" : "/External-Flash:",
-           spi_flash_get_chip_size() / (1024 * 1024), " MB");
+    cout << "\tfeature:" /*"%s%s%s%s%d%s"*/ /*"\r\n"*/
+	<< (info.features & CHIP_FEATURE_WIFI_BGN ? "802.11bgn/" : "")
+	<< (info.features & CHIP_FEATURE_BLE ? "BLE/" : "")
+	<< (info.features & CHIP_FEATURE_BT ? "BT/" : "")
+	<< (info.features & CHIP_FEATURE_EMB_FLASH ? "Embedded-Flash:" : "External-Flash:")
+	<< spi_flash_get_chip_size() / (1024 * 1024) << " MB" << endl;
     cout << "\trevision number: " << (int)info.revision << endl;
 #endif
 
@@ -494,6 +494,7 @@ void prn_KMbytes(uint32_t size);
 #define FRACTDELIM ','
 #define Knum 1024
 
+#ifdef __WITH_STDIO__
 /* Print int value with pretty fprmat & in bytes/megabytes etc. */
 static int pretty_size_prn(const char prompt[], uint32_t size)
 {
@@ -505,7 +506,21 @@ static int pretty_size_prn(const char prompt[], uint32_t size)
     printf(" bytes)\n");
     return 0;
 }; /* pretty_size_prn */
+#else
+/* Print int value with pretty fprmat & in bytes/megabytes etc. */
+static int pretty_size_prn(const char prompt[], uint32_t size)
+{
+//    printf("%s: %d bytes (", prompt, size);
+    printf("%s: ", prompt);
+    prn_KMbytes(size);
+    printf(" (");
+    pretty_bytes(size);
+    printf(" bytes)\n");
+    return 0;
+}; /* pretty_size_prn */
+#endif
 
+#ifdef __WITH_STDIO__
 // Print bytes count in groups by 3 digits
 void pretty_bytes(uint32_t size)
 {
@@ -519,7 +534,24 @@ void pretty_bytes(uint32_t size)
     else
 	printf("%u", size);
 }; /* pretty_bytes */
+#else
+// Print bytes count in groups by 3 digits
+void pretty_bytes(uint32_t size)
+{
+	uint32_t head = size / 1000;
 
+    if (head > 0)
+    {
+	pretty_bytes(head);
+	printf("%c%03u", DIGDELIM, size % 1000);
+    }
+    else
+	printf("%u", size);
+}; /* pretty_bytes */
+#endif
+
+#ifdef __WITH_STDIO__
+// Print the units of numerical value
 void prn_KMbytes(uint32_t size)
 {
 
@@ -553,3 +585,39 @@ void prn_KMbytes(uint32_t size)
     }; /* else */
 
 }; /* prn_KMbytes */
+#else
+// Print the units of numerical value
+void prn_KMbytes(uint32_t size)
+{
+
+
+    if (size < 10 * Knum)
+    {
+	// Printout of bytes
+	pretty_bytes(size);
+	printf(" bytes");
+    } /* if size < 10 * Knum */
+    else if (size < Knum * Knum)
+    {
+	// Printout of Kbytes
+//	printf("%u bytes", size);
+	printf("%u Kbytes", size / Knum);
+	;
+    } /* else if size < Knum^2 */
+    else if (size < Knum * Knum * Knum)
+    {
+	// Printout of Mbytes
+//		printf("%u bytes", size);
+		printf("%u Mbytes", size / Knum / Knum);
+	;
+    } /* else if size < Knum^3 */
+    else
+    {
+	// all other
+//	printf("%u bytes", size);
+	pretty_bytes(size);
+	printf(" bytes");
+    }; /* else */
+
+}; /* prn_KMbytes */
+#endif
