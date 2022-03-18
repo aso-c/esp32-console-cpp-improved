@@ -16,7 +16,7 @@
 
 //#define __WITH_STDIO__
 //#define __WITH_BOOST__
-#define __MAX_UNFOLDED_OUTPUT__
+//#define __MAX_UNFOLDED_OUTPUT__
 
 
 //#include <stdio.h>
@@ -201,7 +201,7 @@ static void register_restart(void)
 
 
 /* Print int value with pretty fprmat & in bytes/megabytes etc. */
-static int pretty_size_prn(const char prompt[], uint32_t size);
+static int pretty_size_prn(const char prompt[], uint32_t value);
 
 /** 'free' command prints available heap memory */
 static int free_mem(int argc, char **argv)
@@ -493,11 +493,19 @@ const char* version_str(void)
 }; /* get_version */
 
 
+#ifdef __WITH_STDIO__
 // Print bytes count in groups by 3 digits
-void pretty_bytes(uint32_t size);
+void pretty_bytes(uint32_t value);
 
 // Print bytes count in Kb, Mb as needed
-void prn_KMbytes(uint32_t size);
+void prn_KMbytes(uint32_t value);
+#else
+// Print bytes count in groups by 3 digits
+void pretty_bytes(uint32_t value);
+
+// Print bytes count in Kb, Mb as needed
+void prn_KMbytes(uint32_t value);
+#endif
 
 
 // Procedures for output memory size/numbers
@@ -523,13 +531,12 @@ static int pretty_size_prn(const char prompt[], uint32_t size)
 }; /* pretty_size_prn */
 #else
 /* Print int value with pretty fprmat & in bytes/megabytes etc. */
-static int pretty_size_prn(const char prompt[], uint32_t size)
+static int pretty_size_prn(const char prompt[], uint32_t value)
 {
-//    printf("%s: %d bytes (", prompt, size);
     printf("%s: ", prompt);
-    prn_KMbytes(size);
+    prn_KMbytes(value);
     printf(" (");
-    pretty_bytes(size);
+    pretty_bytes(value);
     printf(" bytes)\n");
     return 0;
 }; /* pretty_size_prn */
@@ -551,17 +558,17 @@ void pretty_bytes(uint32_t size)
 }; /* pretty_bytes */
 #else
 // Print bytes count in groups by 3 digits
-void pretty_bytes(uint32_t size)
+void pretty_bytes(uint32_t value)
 {
-	uint32_t head = size / 1000;
+	uint32_t head = value / 1000;
 
     if (head > 0)
     {
 	pretty_bytes(head);
-	printf("%c%03u", DIGDELIM, size % 1000);
+	printf("%c%03u", DIGDELIM, value % 1000);
     }
     else
-	printf("%u", size);
+	printf("%u", value);
 }; /* pretty_bytes */
 #endif
 
@@ -602,35 +609,31 @@ void prn_KMbytes(uint32_t size)
 }; /* prn_KMbytes */
 #else
 // Print the units of numerical value
-void prn_KMbytes(uint32_t size)
+void prn_KMbytes(uint32_t value)
 {
 
 
-    if (size < 10 * Knum)
+    if (value < 10 * Knum)
     {
 	// Printout of bytes
-	pretty_bytes(size);
+	pretty_bytes(value);
 	printf(" bytes");
     } /* if size < 10 * Knum */
-    else if (size < Knum * Knum)
+    else if (value < Knum * Knum)
     {
 	// Printout of Kbytes
-//	printf("%u bytes", size);
-	printf("%u Kbytes", size / Knum);
+	printf("%u Kbytes", value / Knum);
 	;
     } /* else if size < Knum^2 */
-    else if (size < Knum * Knum * Knum)
+    else if (value < Knum * Knum * Knum)
     {
 	// Printout of Mbytes
-//		printf("%u bytes", size);
-		printf("%u Mbytes", size / Knum / Knum);
-	;
+	printf("%u Mbytes", value / Knum / Knum);
     } /* else if size < Knum^3 */
     else
     {
 	// all other
-//	printf("%u bytes", size);
-	pretty_bytes(size);
+	pretty_bytes(value);
 	printf(" bytes");
     }; /* else */
 
