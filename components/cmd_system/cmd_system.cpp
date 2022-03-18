@@ -10,6 +10,7 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <iomanip>
 //#include <thread>
 //#include "esp_log.h"
 //#include "gpio_cxx.hpp"
@@ -200,8 +201,13 @@ static void register_restart(void)
 }
 
 
+#ifdef __WITH_STDIO__
 /* Print int value with pretty fprmat & in bytes/megabytes etc. */
 static int pretty_size_prn(const char prompt[], uint32_t value);
+#else
+/* Print int value with pretty fprmat & in bytes/megabytes etc. */
+ostream& pretty_size_prn(ostream& out, const char prompt[], uint32_t value);
+#endif
 
 /** 'free' command prints available heap memory */
 static int free_mem(int argc, char **argv)
@@ -214,7 +220,8 @@ static int free_mem(int argc, char **argv)
 #endif
     pretty_size_prn("Test free memory size prn", 15003748);
 #else
-    pretty_size_prn("free memory size", esp_get_free_heap_size());
+//    pretty_size_prn("free memory size", esp_get_free_heap_size());
+    pretty_size_prn(cout, "free memory size", esp_get_free_heap_size());
 #endif
     return 0;
 }
@@ -241,7 +248,8 @@ static int heap_size(int argc, char **argv)
     cout << "min heap size: " << heap_size << endlf;
 #endif
 #else
-    pretty_size_prn("min heap size", heap_size);
+//    pretty_size_prn("min heap size", heap_size);
+    pretty_size_prn(cout, "min heap size", heap_size);
 #endif
     return 0;
 }
@@ -501,10 +509,10 @@ void pretty_bytes(uint32_t value);
 void prn_KMbytes(uint32_t value);
 #else
 // Print bytes count in groups by 3 digits
-void pretty_bytes(uint32_t value);
+ostream& pretty_bytes(ostream& out, uint32_t value);
 
 // Print bytes count in Kb, Mb as needed
-void prn_KMbytes(uint32_t value);
+ostream& prn_KMbytes(ostream& out, uint32_t value);
 #endif
 
 
@@ -531,14 +539,20 @@ static int pretty_size_prn(const char prompt[], uint32_t size)
 }; /* pretty_size_prn */
 #else
 /* Print int value with pretty fprmat & in bytes/megabytes etc. */
-static int pretty_size_prn(const char prompt[], uint32_t value)
+ostream& pretty_size_prn(ostream& out, const char prompt[], uint32_t value)
 {
-    printf("%s: ", prompt);
-    prn_KMbytes(value);
-    printf(" (");
-    pretty_bytes(value);
-    printf(" bytes)\n");
-    return 0;
+//    printf("%s: ", prompt);
+    out << prompt << ": ";
+//    prn_KMbytes(value);
+    prn_KMbytes(out, value);
+//    printf(" (");
+    out << " (";
+//    pretty_bytes(value);
+    pretty_bytes(out, value);
+//    printf(" bytes)\n");
+    out << " bytes)" << endl;
+//    return 0;
+    return out;
 }; /* pretty_size_prn */
 #endif
 
@@ -558,17 +572,21 @@ void pretty_bytes(uint32_t size)
 }; /* pretty_bytes */
 #else
 // Print bytes count in groups by 3 digits
-void pretty_bytes(uint32_t value)
+ostream& pretty_bytes(ostream& out, uint32_t value)
 {
 	uint32_t head = value / 1000;
 
     if (head > 0)
     {
-	pretty_bytes(head);
-	printf("%c%03u", DIGDELIM, value % 1000);
+//	pretty_bytes(head);
+	pretty_bytes(out, head);
+//	printf("%c%03u", DIGDELIM, value % 1000);
+	out << DIGDELIM << setw(3) << setfill('0') << value % 1000;
     }
     else
-	printf("%u", value);
+//	printf("%u", value);
+	out << value;
+    return out;
 }; /* pretty_bytes */
 #endif
 
@@ -609,33 +627,37 @@ void prn_KMbytes(uint32_t size)
 }; /* prn_KMbytes */
 #else
 // Print the units of numerical value
-void prn_KMbytes(uint32_t value)
+ostream& prn_KMbytes(ostream& out, uint32_t value)
 {
 
 
     if (value < 10 * Knum)
     {
 	// Printout of bytes
-	pretty_bytes(value);
+	pretty_bytes(out, value);
 	printf(" bytes");
     } /* if size < 10 * Knum */
     else if (value < Knum * Knum)
     {
 	// Printout of Kbytes
-	printf("%u Kbytes", value / Knum);
+//	printf("%u Kbytes", value / Knum);
+	out << value / Knum << " Kbytes";
 	;
     } /* else if size < Knum^2 */
     else if (value < Knum * Knum * Knum)
     {
 	// Printout of Mbytes
-	printf("%u Mbytes", value / Knum / Knum);
+//	printf("%u Mbytes", value / Knum / Knum);
+	out << value / Knum / Knum << " Mbytes";
     } /* else if size < Knum^3 */
     else
     {
 	// all other
-	pretty_bytes(value);
-	printf(" bytes");
+	pretty_bytes(out, value);
+//	printf(" bytes");
+	out << " bytes";
     }; /* else */
+    return out;
 
 }; /* prn_KMbytes */
 #endif
