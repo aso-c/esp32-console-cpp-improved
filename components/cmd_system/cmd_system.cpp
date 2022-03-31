@@ -18,6 +18,7 @@
 //#define __WITH_STDIO__
 //#define __WITH_BOOST__
 //#define __MAX_UNFOLDED_OUTPUT__
+#define __EXPRESSION_OUTPUT__
 
 
 //#include <stdio.h>
@@ -588,6 +589,30 @@ ostream& pretty_bytes(ostream& out, uint32_t value)
 	out << value;
     return out;
 }; /* pretty_bytes */
+
+typedef ostream& (streamer)(ostream&);
+
+
+#ifdef __EXPRESSION_OUTPUT__
+
+auto pretty_prn(uint32_t& value) -> streamer*
+{
+    static uint32_t outvalue;
+    outvalue = value;
+    return ([&outvalue] (ostream& ost) -> ostream& {return pretty_bytes(ost, outvalue);});
+}; /* pretty_prn */
+
+auto pretty_bytes(uint32_t& value) -> streamer*
+{
+    static uint32_t outvalue;
+    outvalue = value;
+    return ([&outvalue] (ostream& ost) -> ostream& {return pretty_bytes(ost, outvalue);});
+}; /* pretty_bytes */
+
+#endif
+
+
+
 #endif
 
 #ifdef __WITH_STDIO__
@@ -626,6 +651,9 @@ void prn_KMbytes(uint32_t size)
 
 }; /* prn_KMbytes */
 #else
+
+
+
 // Print the units of numerical value
 ostream& prn_KMbytes(ostream& out, uint32_t value)
 {
@@ -634,8 +662,12 @@ ostream& prn_KMbytes(ostream& out, uint32_t value)
     if (value < 10 * Knum)
     {
 	// Printout of bytes
+#ifdef __EXPRESSION_OUTPUT__
+	out << pretty_prn(value) << " bytes";
+#else
 	pretty_bytes(out, value);
 	printf(" bytes");
+#endif
     } /* if size < 10 * Knum */
     else if (value < Knum * Knum)
     {
@@ -653,9 +685,15 @@ ostream& prn_KMbytes(ostream& out, uint32_t value)
     else
     {
 	// all other
+//#ifdef __EXPRESSION_OUTPUT__
+//	auto pbx = ([value] (ostream& ost) -> ostream& {return pretty_bytes(ost, value);});
+////	pretty_bytes(out, value);
+////	out << ([value] (ostream& ost) -> ostream& {return pretty_bytes(ost, value);})  << " bytes";
+//#else
 	pretty_bytes(out, value);
 //	printf(" bytes");
 	out << " bytes";
+//#endif
     }; /* else */
     return out;
 

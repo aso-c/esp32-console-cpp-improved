@@ -13,6 +13,8 @@
 //#include "esp_log.h"
 #include "gpio_cxx.hpp"
 
+//#include <boost/format.hpp>
+
 //#define __WITH_STDIO__
 //#define __WITH_BOOST__
 #define __MAX_UNFOLDED_OUTPUT__
@@ -166,7 +168,7 @@ static int get_info(int argc, char **argv)
 #elif defined(__WITH_BOOST__)
     printf("ESP Console Example Project, Version: %s-%s of %s\r\n", CONFIG_APP_PROJECT_VER, CONFIG_APP_PROJECT_FLAVOUR, CONFIG_APP_PROJECT_DATE);
 #else
-    cout << "ESP Console Example Project, Version: " CONFIG_APP_PROJECT_VER "-" CONFIG_APP_PROJECT_FLAVOUR " of " CONFIG_APP_PROJECT_DATE "\r\n";
+    cout << "ESP Console Example Project, Version: " CONFIG_APP_PROJECT_VER "-" CONFIG_APP_PROJECT_FLAVOUR " of " CONFIG_APP_PROJECT_DATE << endl /*"\r\n"*/;
 #endif
     return ESP_OK;
 }; /* get_info */
