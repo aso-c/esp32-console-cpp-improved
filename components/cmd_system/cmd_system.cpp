@@ -533,16 +533,30 @@ typedef ostream& (streamer)(ostream&);
 
 #ifdef __EXPRESSION_OUTPUT__
 
-// i/o manipulator for calling pretty_bytes w/fixed parameter 'value'
-// in call of pretty_bytes(ostream, value)
+// i/o manipulator for calling pretty_bytes
+// w/partial application for procedure pretty_bytesed(ostream, value),
+// parameter 'value'
 auto pretty_bytes(uint32_t& value) -> streamer*
 {
-    static uint32_t outvalue;
+#if 1
+	static uint32_t outvalue ;
     outvalue = value;
+#else
+	static uint32_t outvalue = value;
+#endif
     return ([&outvalue] (ostream& ost) -> ostream& {return pretty_bytes(ost, outvalue);});
 }; /* pretty_bytes */
 
 #endif
+
+// Partial application of prn_KMbytes: fixing value
+auto prn_KMbytes(uint32_t val) -> streamer*
+{
+	static uint32_t value;
+
+    value = val;
+    return ([&value] (ostream& ost) -> ostream& {return prn_KMbytes(ost, value);});
+}; /* prn_KMbytes(uint32_t value) */
 
 
 
@@ -562,6 +576,12 @@ static int pretty_size_prn(const char prompt[], uint32_t size)
 /* Print int value with pretty fprmat & in bytes/megabytes etc. */
 ostream& pretty_size_prn(ostream& out, const char prompt[], uint32_t value)
 {
+#ifdef __EXPRESSION_OUTPUT__
+//        out << prompt << ": ";
+//        prn_KMbytes(out, value);
+        out << prompt << ": " << prn_KMbytes(value);
+        out << " (" << pretty_bytes(value) << " bytes)" << endl;
+#else
 //    printf("%s: ", prompt);
     out << prompt << ": ";
 //    prn_KMbytes(value);
@@ -572,7 +592,7 @@ ostream& pretty_size_prn(ostream& out, const char prompt[], uint32_t value)
     pretty_bytes(out, value);
 //    printf(" bytes)\n");
     out << " bytes)" << endl;
-//    return 0;
+#endif
     return out;
 }; /* pretty_size_prn */
 #endif
