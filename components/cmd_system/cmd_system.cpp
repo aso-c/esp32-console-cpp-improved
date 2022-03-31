@@ -525,6 +525,26 @@ ostream& prn_KMbytes(ostream& out, uint32_t value);
 #define DIGDELIM '_'
 #define FRACTDELIM ','
 #define Knum 1024
+#ifdef __EXPRESSION_OUTPUT__
+typedef ostream& (streamer)(ostream&);
+#endif
+
+
+
+#ifdef __EXPRESSION_OUTPUT__
+
+// i/o manipulator for calling pretty_bytes w/fixed parameter 'value'
+// in call of pretty_bytes(ostream, value)
+auto pretty_bytes(uint32_t& value) -> streamer*
+{
+    static uint32_t outvalue;
+    outvalue = value;
+    return ([&outvalue] (ostream& ost) -> ostream& {return pretty_bytes(ost, outvalue);});
+}; /* pretty_bytes */
+
+#endif
+
+
 
 #ifdef __WITH_STDIO__
 /* Print int value with pretty fprmat & in bytes/megabytes etc. */
@@ -579,39 +599,20 @@ ostream& pretty_bytes(ostream& out, uint32_t value)
 
     if (head > 0)
     {
-//	pretty_bytes(head);
+#ifdef __EXPRESSION_OUTPUT__
+	//	printf("%c%03u", DIGDELIM, value % 1000);
+	out << pretty_bytes(head) << DIGDELIM << setw(3) << setfill('0') << value % 1000;
+#else
 	pretty_bytes(out, head);
 //	printf("%c%03u", DIGDELIM, value % 1000);
 	out << DIGDELIM << setw(3) << setfill('0') << value % 1000;
+#endif
     }
     else
 //	printf("%u", value);
 	out << value;
     return out;
 }; /* pretty_bytes */
-
-typedef ostream& (streamer)(ostream&);
-
-
-#ifdef __EXPRESSION_OUTPUT__
-
-auto pretty_prn(uint32_t& value) -> streamer*
-{
-    static uint32_t outvalue;
-    outvalue = value;
-    return ([&outvalue] (ostream& ost) -> ostream& {return pretty_bytes(ost, outvalue);});
-}; /* pretty_prn */
-
-auto pretty_bytes(uint32_t& value) -> streamer*
-{
-    static uint32_t outvalue;
-    outvalue = value;
-    return ([&outvalue] (ostream& ost) -> ostream& {return pretty_bytes(ost, outvalue);});
-}; /* pretty_bytes */
-
-#endif
-
-
 
 #endif
 
@@ -663,7 +664,7 @@ ostream& prn_KMbytes(ostream& out, uint32_t value)
     {
 	// Printout of bytes
 #ifdef __EXPRESSION_OUTPUT__
-	out << pretty_prn(value) << " bytes";
+	out << pretty_bytes(value) << " bytes";
 #else
 	pretty_bytes(out, value);
 	printf(" bytes");
@@ -685,15 +686,13 @@ ostream& prn_KMbytes(ostream& out, uint32_t value)
     else
     {
 	// all other
-//#ifdef __EXPRESSION_OUTPUT__
-//	auto pbx = ([value] (ostream& ost) -> ostream& {return pretty_bytes(ost, value);});
-////	pretty_bytes(out, value);
-////	out << ([value] (ostream& ost) -> ostream& {return pretty_bytes(ost, value);})  << " bytes";
-//#else
+#ifdef __EXPRESSION_OUTPUT__
+	out << pretty_bytes(value) << " bytes";
+#else
 	pretty_bytes(out, value);
 //	printf(" bytes");
 	out << " bytes";
-//#endif
+#endif
     }; /* else */
     return out;
 

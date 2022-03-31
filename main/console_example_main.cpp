@@ -168,7 +168,7 @@ static int get_info(int argc, char **argv)
 #elif defined(__WITH_BOOST__)
     printf("ESP Console Example Project, Version: %s-%s of %s\r\n", CONFIG_APP_PROJECT_VER, CONFIG_APP_PROJECT_FLAVOUR, CONFIG_APP_PROJECT_DATE);
 #else
-    cout << "ESP Console Example Project, Version: " CONFIG_APP_PROJECT_VER "-" CONFIG_APP_PROJECT_FLAVOUR " of " CONFIG_APP_PROJECT_DATE << endl /*"\r\n"*/;
+    cout << "ESP Console Example Project, Version: " CONFIG_APP_PROJECT_VER "-" CONFIG_APP_PROJECT_FLAVOUR " of " CONFIG_APP_PROJECT_DATE << endl;
 #endif
     return ESP_OK;
 }; /* get_info */
