@@ -218,7 +218,7 @@ auto pretty_size_prn(const char prompt[], uint32_t value) -> streamer*;
 // i/o manipulator for calling pretty_bytes
 // w/partial application for procedure pretty_bytesed(ostream, value),
 // parameter 'value'
-auto pretty_bytes(uint32_t& value) -> streamer*;
+auto pretty_bytes(uint32_t value) -> streamer*;
 
 // Partial application of prn_KMbytes: fixing value
 auto prn_KMbytes(uint32_t val) -> streamer*;
@@ -238,14 +238,19 @@ static int free_mem(int argc, char **argv)
     cout << "free memory size: " << esp_get_free_heap_size() endl;
 #else
 #ifdef __EXPRESSION_OUTPUT__
+#if 0
     cout << pretty_size_prn("free memory size", esp_get_free_heap_size()) << endl;
+#else
+    cout << "free memory size: " << prn_KMbytes(esp_get_free_heap_size());
+    cout << " (" << pretty_bytes(esp_get_free_heap_size()) << " bytes)" << endl;
+#endif
 #else
     pretty_size_prn(cout, "free memory size", esp_get_free_heap_size()) << endl;
 #endif
 #endif
 #endif
     return 0;
-}
+}; /* free_mem */
 
 static void register_free(void)
 {
@@ -256,7 +261,7 @@ static void register_free(void)
         .func = &free_mem,
     };
     ESP_ERROR_CHECK( esp_console_cmd_register(&cmd) );
-}
+}; /* register_free */
 
 /* 'heap' command prints minumum heap size */
 static int heap_size(int argc, char **argv)
@@ -273,7 +278,7 @@ static int heap_size(int argc, char **argv)
 #if 0
     cout << pretty_size_prn("min heap size", heap_size) << endl;
 #else
-    cout << "min heap size" << ": " << prn_KMbytes(heap_size);
+    cout << "min heap size: " << prn_KMbytes(heap_size);
     cout << " (" << pretty_bytes(heap_size) << " bytes)" << endl;
 #endif
 #else
@@ -282,7 +287,7 @@ static int heap_size(int argc, char **argv)
 #endif
 #endif
     return 0;
-}
+}; /* heap_size */
 
 static void register_heap(void)
 {
@@ -294,7 +299,7 @@ static void register_heap(void)
     };
     ESP_ERROR_CHECK( esp_console_cmd_register(&heap_cmd) );
 
-}
+}; /* register_heap */
 
 /** 'tasks' command prints the list of tasks and related information */
 #if WITH_TASKS_INFO
@@ -565,7 +570,7 @@ ostream& prn_KMbytes(ostream& out, uint32_t value);
 // i/o manipulator for calling pretty_bytes
 // w/partial application for procedure pretty_bytesed(ostream, value),
 // parameter 'value'
-auto pretty_bytes(uint32_t& value) -> streamer*
+auto pretty_bytes(uint32_t value) -> streamer*
 {
 	static uint32_t outvalue = 0;
 
