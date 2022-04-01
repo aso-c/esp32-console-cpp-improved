@@ -215,8 +215,15 @@ typedef ostream& (streamer)(ostream&);
 
 auto pretty_size_prn(const char prompt[], uint32_t value) -> streamer*;
 
-#endif
+// i/o manipulator for calling pretty_bytes
+// w/partial application for procedure pretty_bytesed(ostream, value),
+// parameter 'value'
+auto pretty_bytes(uint32_t& value) -> streamer*;
 
+// Partial application of prn_KMbytes: fixing value
+auto prn_KMbytes(uint32_t val) -> streamer*;
+
+#endif
 #endif
 
 
@@ -263,7 +270,12 @@ static int heap_size(int argc, char **argv)
     cout << "min heap size: " << heap_size << endlf;
 #else
 #ifdef __EXPRESSION_OUTPUT__
+#if 0
     cout << pretty_size_prn("min heap size", heap_size) << endl;
+#else
+    cout << "min heap size" << ": " << prn_KMbytes(heap_size);
+    cout << " (" << pretty_bytes(heap_size) << " bytes)" << endl;
+#endif
 #else
     pretty_size_prn(cout, "min heap size", heap_size) << endl;
 #endif
