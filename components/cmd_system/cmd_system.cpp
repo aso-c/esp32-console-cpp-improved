@@ -18,7 +18,6 @@
 //#define __WITH_STDIO__
 //#define __WITH_BOOST__
 //#define __MAX_UNFOLDED_OUTPUT__
-	//#define __EXPRESSION_OUTPUT__
 
 
 //#include <stdio.h>
