@@ -208,7 +208,17 @@ static int pretty_size_prn(const char prompt[], uint32_t value);
 #else
 /* Print int value with pretty fprmat & in bytes/megabytes etc. */
 ostream& pretty_size_prn(ostream& out, const char prompt[], uint32_t value);
+
+#ifdef __EXPRESSION_OUTPUT__
+
+typedef ostream& (streamer)(ostream&);
+
+auto pretty_size_prn(const char prompt[], uint32_t value) -> streamer*;
+
 #endif
+
+#endif
+
 
 /** 'free' command prints available heap memory */
 static int free_mem(int argc, char **argv)
@@ -242,15 +252,19 @@ static void register_free(void)
 static int heap_size(int argc, char **argv)
 {
     uint32_t heap_size = heap_caps_get_minimum_free_size(MALLOC_CAP_DEFAULT);
-#if 0
 #ifdef __WITH_STDIO__
     printf("min heap size: %u\n", heap_size);
 #else
+#if 0
     cout << "min heap size: " << heap_size << endlf;
-#endif
 #else
-//    pretty_size_prn("min heap size", heap_size);
+#ifdef __EXPRESSION_OUTPUT__
+    cout << pretty_size_prn("min heap size", heap_size);
+#else
+    //    pretty_size_prn("min heap size", heap_size);
     pretty_size_prn(cout, "min heap size", heap_size);
+#endif
+#endif
 #endif
     return 0;
 }
@@ -525,9 +539,9 @@ ostream& prn_KMbytes(ostream& out, uint32_t value);
 #define DIGDELIM '_'
 #define FRACTDELIM ','
 #define Knum 1024
-#ifdef __EXPRESSION_OUTPUT__
-typedef ostream& (streamer)(ostream&);
-#endif
+//#ifdef __EXPRESSION_OUTPUT__
+//typedef ostream& (streamer)(ostream&);
+//#endif
 
 
 
@@ -538,25 +552,35 @@ typedef ostream& (streamer)(ostream&);
 // parameter 'value'
 auto pretty_bytes(uint32_t& value) -> streamer*
 {
-#if 1
-	static uint32_t outvalue ;
+	static uint32_t outvalue = 0;
+
     outvalue = value;
-#else
-	static uint32_t outvalue = value;
-#endif
     return ([&outvalue] (ostream& ost) -> ostream& {return pretty_bytes(ost, outvalue);});
 }; /* pretty_bytes */
-
-#endif
 
 // Partial application of prn_KMbytes: fixing value
 auto prn_KMbytes(uint32_t val) -> streamer*
 {
-	static uint32_t value;
+	static uint32_t value = 0;
 
     value = val;
     return ([&value] (ostream& ost) -> ostream& {return prn_KMbytes(ost, value);});
 }; /* prn_KMbytes(uint32_t value) */
+
+ostream& pretty_size_prn(ostream& out, const char prompt[], uint32_t value);
+
+auto pretty_size_prn(const char prompt[], uint32_t value) -> streamer*
+{
+	static const char *outprompt = NULL;
+	static uint32_t outval = 0;
+
+    outprompt = prompt;
+    outval = value;
+    return ([&outprompt, &outval] (ostream& ost) -> ostream& {return pretty_size_prn(ost, outprompt, outval);});
+};
+
+
+#endif
 
 
 
@@ -577,8 +601,6 @@ static int pretty_size_prn(const char prompt[], uint32_t size)
 ostream& pretty_size_prn(ostream& out, const char prompt[], uint32_t value)
 {
 #ifdef __EXPRESSION_OUTPUT__
-//        out << prompt << ": ";
-//        prn_KMbytes(out, value);
         out << prompt << ": " << prn_KMbytes(value);
         out << " (" << pretty_bytes(value) << " bytes)" << endl;
 #else
