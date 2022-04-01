@@ -18,7 +18,7 @@
 //#define __WITH_STDIO__
 //#define __WITH_BOOST__
 //#define __MAX_UNFOLDED_OUTPUT__
-#define __EXPRESSION_OUTPUT__
+	//#define __EXPRESSION_OUTPUT__
 
 
 //#include <stdio.h>
@@ -206,14 +206,9 @@ static void register_restart(void)
 /* Print int value with pretty fprmat & in bytes/megabytes etc. */
 static int pretty_size_prn(const char prompt[], uint32_t value);
 #else
-/* Print int value with pretty fprmat & in bytes/megabytes etc. */
-ostream& pretty_size_prn(ostream& out, const char prompt[], uint32_t value);
 
-#ifdef __EXPRESSION_OUTPUT__
-
+// typedef for iostream manipulator
 typedef ostream& (streamer)(ostream&);
-
-auto pretty_size_prn(const char prompt[], uint32_t value) -> streamer*;
 
 // i/o manipulator for calling pretty_bytes
 // w/partial application for procedure pretty_bytesed(ostream, value),
@@ -224,7 +219,6 @@ auto pretty_bytes(uint32_t value) -> streamer*;
 auto prn_KMbytes(uint32_t val) -> streamer*;
 
 #endif
-#endif
 
 
 /** 'free' command prints available heap memory */
@@ -234,20 +228,8 @@ static int free_mem(int argc, char **argv)
     printf("free memory size: %d\n", esp_get_free_heap_size());
     pretty_size_prn("Test free memory size prn", 15003748);
 #else
-#if 0
-    cout << "free memory size: " << esp_get_free_heap_size() endl;
-#else
-#ifdef __EXPRESSION_OUTPUT__
-#if 0
-    cout << pretty_size_prn("free memory size", esp_get_free_heap_size()) << endl;
-#else
     cout << "free memory size: " << prn_KMbytes(esp_get_free_heap_size());
     cout << " (" << pretty_bytes(esp_get_free_heap_size()) << " bytes)" << endl;
-#endif
-#else
-    pretty_size_prn(cout, "free memory size", esp_get_free_heap_size()) << endl;
-#endif
-#endif
 #endif
     return 0;
 }; /* free_mem */
@@ -271,20 +253,8 @@ static int heap_size(int argc, char **argv)
 //    printf("min heap size: %u\n", heap_size);
     pretty_size_prn("min heap size", heap_size);
 #else
-#if 0
-    cout << "min heap size: " << heap_size << endlf;
-#else
-#ifdef __EXPRESSION_OUTPUT__
-#if 0
-    cout << pretty_size_prn("min heap size", heap_size) << endl;
-#else
     cout << "min heap size: " << prn_KMbytes(heap_size);
     cout << " (" << pretty_bytes(heap_size) << " bytes)" << endl;
-#endif
-#else
-    pretty_size_prn(cout, "min heap size", heap_size) << endl;
-#endif
-#endif
 #endif
     return 0;
 }; /* heap_size */
@@ -565,7 +535,6 @@ ostream& prn_KMbytes(ostream& out, uint32_t value);
 
 
 
-#ifdef __EXPRESSION_OUTPUT__
 
 // i/o manipulator for calling pretty_bytes
 // w/partial application for procedure pretty_bytesed(ostream, value),
@@ -600,9 +569,6 @@ auto pretty_size_prn(const char prompt[], uint32_t value) -> streamer*
 };
 
 
-#endif
-
-
 
 #ifdef __WITH_STDIO__
 /* Print int value with pretty fprmat & in bytes/megabytes etc. */
@@ -620,21 +586,8 @@ static int pretty_size_prn(const char prompt[], uint32_t size)
 /* Print int value with pretty fprmat & in bytes/megabytes etc. */
 ostream& pretty_size_prn(ostream& out, const char prompt[], uint32_t value)
 {
-#ifdef __EXPRESSION_OUTPUT__
         out << prompt << ": " << prn_KMbytes(value);
         out << " (" << pretty_bytes(value) << " bytes)";
-#else
-//    printf("%s: ", prompt);
-    out << prompt << ": ";
-//    prn_KMbytes(value);
-    prn_KMbytes(out, value);
-//    printf(" (");
-    out << " (";
-//    pretty_bytes(value);
-    pretty_bytes(out, value);
-//    printf(" bytes)\n");
-    out << " bytes)" << endl;
-#endif
     return out;
 }; /* pretty_size_prn */
 #endif
@@ -661,14 +614,8 @@ ostream& pretty_bytes(ostream& out, uint32_t value)
 
     if (head > 0)
     {
-#ifdef __EXPRESSION_OUTPUT__
 	//	printf("%c%03u", DIGDELIM, value % 1000);
 	out << pretty_bytes(head) << DIGDELIM << setw(3) << setfill('0') << value % 1000;
-#else
-	pretty_bytes(out, head);
-//	printf("%c%03u", DIGDELIM, value % 1000);
-	out << DIGDELIM << setw(3) << setfill('0') << value % 1000;
-#endif
     }
     else
 //	printf("%u", value);
@@ -720,17 +667,10 @@ void prn_KMbytes(uint32_t size)
 // Print the units of numerical value
 ostream& prn_KMbytes(ostream& out, uint32_t value)
 {
-
-
     if (value < 10 * Knum)
     {
 	// Printout of bytes
-#ifdef __EXPRESSION_OUTPUT__
 	out << pretty_bytes(value) << " bytes";
-#else
-	pretty_bytes(out, value);
-	printf(" bytes");
-#endif
     } /* if size < 10 * Knum */
     else if (value < Knum * Knum)
     {
@@ -748,13 +688,7 @@ ostream& prn_KMbytes(ostream& out, uint32_t value)
     else
     {
 	// all other
-#ifdef __EXPRESSION_OUTPUT__
 	out << pretty_bytes(value) << " bytes";
-#else
-	pretty_bytes(out, value);
-//	printf(" bytes");
-	out << " bytes";
-#endif
     }; /* else */
     return out;
 
