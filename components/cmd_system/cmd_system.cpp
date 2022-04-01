@@ -223,16 +223,19 @@ auto pretty_size_prn(const char prompt[], uint32_t value) -> streamer*;
 /** 'free' command prints available heap memory */
 static int free_mem(int argc, char **argv)
 {
-#if 0
 #ifdef __WITH_STDIO__
     printf("free memory size: %d\n", esp_get_free_heap_size());
-#else
-    cout << "free memory size: " << esp_get_free_heap_size() endl;
-#endif
     pretty_size_prn("Test free memory size prn", 15003748);
 #else
-//    pretty_size_prn("free memory size", esp_get_free_heap_size());
-    pretty_size_prn(cout, "free memory size", esp_get_free_heap_size());
+#if 0
+    cout << "free memory size: " << esp_get_free_heap_size() endl;
+#else
+#ifdef __EXPRESSION_OUTPUT__
+    cout << pretty_size_prn("free memory size", esp_get_free_heap_size()) << endl;
+#else
+    pretty_size_prn(cout, "free memory size", esp_get_free_heap_size()) << endl;
+#endif
+#endif
 #endif
     return 0;
 }
@@ -253,16 +256,16 @@ static int heap_size(int argc, char **argv)
 {
     uint32_t heap_size = heap_caps_get_minimum_free_size(MALLOC_CAP_DEFAULT);
 #ifdef __WITH_STDIO__
-    printf("min heap size: %u\n", heap_size);
+//    printf("min heap size: %u\n", heap_size);
+    pretty_size_prn("min heap size", heap_size);
 #else
 #if 0
     cout << "min heap size: " << heap_size << endlf;
 #else
 #ifdef __EXPRESSION_OUTPUT__
-    cout << pretty_size_prn("min heap size", heap_size);
+    cout << pretty_size_prn("min heap size", heap_size) << endl;
 #else
-    //    pretty_size_prn("min heap size", heap_size);
-    pretty_size_prn(cout, "min heap size", heap_size);
+    pretty_size_prn(cout, "min heap size", heap_size) << endl;
 #endif
 #endif
 #endif
@@ -602,7 +605,7 @@ ostream& pretty_size_prn(ostream& out, const char prompt[], uint32_t value)
 {
 #ifdef __EXPRESSION_OUTPUT__
         out << prompt << ": " << prn_KMbytes(value);
-        out << " (" << pretty_bytes(value) << " bytes)" << endl;
+        out << " (" << pretty_bytes(value) << " bytes)";
 #else
 //    printf("%s: ", prompt);
     out << prompt << ": ";
