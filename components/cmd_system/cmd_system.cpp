@@ -13,14 +13,13 @@
 #include <iomanip>
 //#include <thread>
 //#include "esp_log.h"
-//#include "gpio_cxx.hpp"
+#include "gpio_cxx.hpp"
 
 //#define __WITH_STDIO__
 //#define __WITH_BOOST__
 //#define __MAX_UNFOLDED_OUTPUT__
 
 
-//#include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 #include <unistd.h>

@@ -32,7 +32,6 @@ CONFIG_APP_COMPILE_TIME_DATE=y
 # CONFIG_APP_EXCLUDE_PROJECT_VER_VAR is not set
 # CONFIG_APP_EXCLUDE_PROJECT_NAME_VAR is not set
 CONFIG_APP_PROJECT_VER_FROM_CONFIG=y
-CONFIG_APP_PROJECT_VER="1.6.0.0"
 CONFIG_APP_RETRIEVE_LEN_ELF_SHA=16
 # end of Application manager
 
@@ -138,10 +137,16 @@ CONFIG_STORE_HISTORY=y
 #
 # Application manager
 #
-CONFIG_APP_PROJECT_DATE="01.04.22"
+CONFIG_APP_PROJECT_DATE="04.04.22"
 CONFIG_APP_PROJECT_FLAVOUR="unencrypted"
 CONFIG_APP_PROJECT_MODIFICATOR="aso"
 # end of Application manager
+
+#
+# SD card operation config menu
+#
+# CONFIG_EXAMPLE_FORMAT_IF_MOUNT_FAILED is not set
+# end of SD card operation config menu
 
 #
 # Compiler options
