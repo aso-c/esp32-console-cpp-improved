@@ -8,11 +8,15 @@
  */
 
 
-#ifndef __CMD_SDCARD__
-#define __CMD_SDCARD__
+// prevent multyple inclusion
+#pragma once
 
-void func(void);
+#ifndef __cplusplus
+#error "File cmd_sdcard.hpp is included for C++ only"
+#endif
 
-#endif /* __CMD_SDCARD__ */
+
+// Register all SD-card commands
+void register_sdcard_all(void);
 
 //--[ cmd_sdcard.hpp ]-----------------------------------------------------------------------------

@@ -12,6 +12,9 @@
 #include <iomanip>
 
 #include <string.h>
+#include "esp_log.h"
+#include "esp_console.h"
+#include "esp_system.h"
 #include <sys/unistd.h>
 #include <sys/stat.h>
 #include "esp_vfs_fat.h"
@@ -33,17 +36,51 @@ using namespace std;
  *	+ u, umount - unmount sdcard;
  *	+ ls, dir   - list of files in sdcard;
  *	+ cd	    - change dir;
- *	+ cat, type - print file to console
+ *	+ cat	    - print file to console
+ *	+ type      - type text to cinsile and store it in the file optionally
  *	+ cp, copy  - copy file
- *	+ mv, move - move & rename file
+ *	+ mv, move  - move & rename file
  */
 
+static void register_sd_cmd(void);
 
-
-void func(void)
+// Register all SD-card commands
+void register_sdcard_all(void)
 {
+    register_sd_cmd();
+}; /* register_sdcard_all */
 
+
+extern "C" {
+// Procedure of the 'sd' command
+static int sd_cmd(int argc, char **argv)
+{
+    cout << "Run the command \"sd\'" << endl
+	 << endl
+	 << " . . ." << endl
+	 << " <<   <<" << endl
+	 << " . . ." << endl
+	 << endl;
+    cout << "Command 'sd' is not yet implemented now." << endl
+	 << endl;
+    return 0;
+}; /* sd_cmd */
 }
+
+// Register command 'sd'
+static void register_sd_cmd(void)
+{
+    const esp_console_cmd_t cmd = {
+        .command = "sd",
+        .help = "SD card manipulating general command",
+        .hint = "enter subcommand for Sd card operations",
+        .func = &sd_cmd,
+    };
+    ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
+}; /* register_sd_cmd */
+
+
+
 
 #if 0
 
