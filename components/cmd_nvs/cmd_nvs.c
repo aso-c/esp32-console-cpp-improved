@@ -580,10 +580,11 @@ void register_nvs(void)
 
     const esp_console_cmd_t list_entries_cmd = {
         .command = "nvs_list",
-        .help = "List stored key-value pairs stored in NVS."
-        "Namespace and type can be specified to print only those key-value pairs.\n"
-        "Following command list variables stored inside 'nvs' partition, under namespace 'storage' with type uint32_t"
-        "Example: nvs_list nvs -n storage -t u32 \n",
+        .help = "List of the key-value pairs, that stored in NVS.  "
+        "Namespace and type can be  specified to print only selected key-value pairs. "
+        "Following command printout the variables stored in the 'nvs' partition, of the 'storage' namespace with type uint32_t\n"
+        "Example:\n"
+        " nvs_list nvs -n storage -t u32",
         .hint = NULL,
         .func = &list_entries,
         .argtable = &list_args

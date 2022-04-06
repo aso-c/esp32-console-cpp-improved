@@ -67,6 +67,15 @@ static int sd_cmd(int argc, char **argv)
 }; /* sd_cmd */
 }
 
+
+static struct {
+    struct arg_str *key;
+    struct arg_str *type;
+    struct arg_str *value;
+    struct arg_end *end;
+} sd_args;
+
+
 // Register command 'sd'
 static void register_sd_cmd(void)
 {
