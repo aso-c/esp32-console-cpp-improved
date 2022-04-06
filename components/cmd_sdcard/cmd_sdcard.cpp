@@ -42,38 +42,66 @@ using namespace std;
  *	+ mv, move  - move & rename file
  */
 
+static void register_sdcard_cmd(void);
 static void register_sd_cmd(void);
 
 // Register all SD-card commands
 void register_sdcard_all(void)
 {
+    register_sdcard_cmd();
     register_sd_cmd();
 }; /* register_sdcard_all */
 
 
 extern "C" {
 // Procedure of the 'sd' command
-static int sd_cmd(int argc, char **argv)
+static int sdcard_cmd(int argc, char **argv)
 {
-    cout << "Run the command \"sd\'" << endl
-	 << endl
+    cout << "Run the command \"sdcard\'" << endl
+	 << endl;
+    cout << "argc is   : " << argc << endl;
+    for (int i = 0; i < argc; i++)
+	cout << "argv[" << i << "] is: " << argv[i] << endl;
+    cout << endl
 	 << " . . ." << endl
 	 << " <<   <<" << endl
 	 << " . . ." << endl
 	 << endl;
-    cout << "Command 'sd' is not yet implemented now." << endl
+    cout << "Command " << argv[0] << "' is not yet implemented now." << endl
 	 << endl;
     return 0;
 }; /* sd_cmd */
 }
 
 
+//static struct {
+//    struct arg_str *key;
+//    struct arg_str *type;
+//    struct arg_str *value;
+//    struct arg_end *end;
+//} sd_args;
+
 static struct {
-    struct arg_str *key;
+    struct arg_str *subcommand;
+    struct arg_str *option;
     struct arg_str *type;
-    struct arg_str *value;
     struct arg_end *end;
 } sd_args;
+
+
+// Register command 'sdcard'
+static void register_sdcard_cmd(void)
+{
+    const esp_console_cmd_t cmd = {
+        .command = "sdcard",
+        .help = "SD card manipulating generic command\n",
+//        .hint = "enter subcommand for Sd card operations",
+        .hint = NULL,
+        .func = &sdcard_cmd,
+	.argtable = NULL
+    };
+    ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
+}; /* register_sdcard_cmd */
 
 
 // Register command 'sd'
@@ -81,9 +109,11 @@ static void register_sd_cmd(void)
 {
     const esp_console_cmd_t cmd = {
         .command = "sd",
-        .help = "SD card manipulating general command",
-        .hint = "enter subcommand for Sd card operations",
-        .func = &sd_cmd,
+        .help = "shortcut for 'sdcard' command\n",
+//        .hint = "enter subcommand for Sd card operations",
+        .hint = NULL,
+        .func = &sdcard_cmd,
+	.argtable = NULL
     };
     ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
 }; /* register_sd_cmd */
