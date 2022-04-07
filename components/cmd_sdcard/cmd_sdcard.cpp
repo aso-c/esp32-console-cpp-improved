@@ -77,7 +77,10 @@ static int sdcard_cmd(int argc, char **argv)
 static struct {
     struct arg_str *subcommand;
 //    void * subcommand;
-    struct arg_str *option;
+    struct arg_str *mount;
+    struct arg_str *moption;
+    struct arg_str *umount;
+    struct arg_str *uoption;
 //    void * options[1];
 //    void * options[3];
 //    struct arg_str *type;
@@ -89,21 +92,37 @@ static struct {
 void register_sdcard_cmd(void)
 {
 
+	static struct {
+	    struct arg_str *subcommand;
+	//    void * subcommand;
+	    struct arg_str *mount;
+	    struct arg_str *moption;
+	    //struct arg_str *umount;
+	    //struct arg_str *uoption;
+	//    void * options[1];
+	//    void * options[3];
+	//    struct arg_str *type;
+	    struct arg_end *end;
+	} args;
+
+	const esp_console_cmd_t cmd1 = {
+	    .command = "sdcard",
+	    .help = "SD card manipulating generic command",
+    //        .hint = "enter subcommand for Sd card operations",
+	    .hint = NULL,
+	    .func = &sdcard_cmd,
+    //	.argtable = NULL
+	    .argtable = &args
+	};
+
     args.subcommand = arg_str1(NULL, NULL, "<subcommand>", "Subcommand are: m, mount, u, umount, ls, dir");
-    args.option = arg_str0(NULL, NULL, "options", "options depend on the command");
+    args.mount = arg_str0(NULL, NULL, "[m, mount]", "mount SD-card");
+    args.mount->hdr.parent = args.subcommand;
+    args.moption = arg_str0(NULL, NULL, "[sdcard]", "sd-card name, if omitted - used default");
+    args.moption->hdr.parent = args.mount;
     args.end = arg_end(2);
 
-    const esp_console_cmd_t cmd1 = {
-        .command = "sdcard",
-        .help = "SD card manipulating generic command",
-//        .hint = "enter subcommand for Sd card operations",
-        .hint = NULL,
-        .func = &sdcard_cmd,
-//	.argtable = NULL
-	.argtable = &args
-    };
     register_cmd(&cmd1);
-
 
     const esp_console_cmd_t cmd2 = {
         .command = "sd",
