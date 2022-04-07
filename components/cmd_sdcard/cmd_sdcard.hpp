@@ -17,6 +17,6 @@
 
 
 // Register all SD-card commands
-void register_sdcard_all(void);
+void register_sdcard_cmd(void);
 
 //--[ cmd_sdcard.hpp ]-----------------------------------------------------------------------------

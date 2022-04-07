@@ -536,9 +536,9 @@ void register_nvs(void)
     const esp_console_cmd_t set_cmd = {
         .command = "nvs_set",
         .help = "Set key-value pair in selected namespace.\n"
-        "Examples:\n"
-        " nvs_set VarName i32 -v 123 \n"
-        " nvs_set VarName srt -v YourString \n"
+        "Examples:                        "
+        " nvs_set VarName i32 -v 123 \n "
+        " nvs_set VarName srt -v YourString            "
         " nvs_set VarName blob -v 0123456789abcdef \n",
         .hint = NULL,
         .func = &set_value,

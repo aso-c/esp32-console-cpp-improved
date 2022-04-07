@@ -241,7 +241,7 @@ extern "C" void app_main(void)
     register_system();
     register_wifi();
     register_nvs();
-    register_sdcard_all();
+    register_sdcard_cmd();
 
     register_info();
 
