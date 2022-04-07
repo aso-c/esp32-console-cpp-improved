@@ -89,18 +89,70 @@ static struct {
 } sd_args;
 
 
+class TConsoleCmd
+{
+public:
+    TConsoleCmd(esp_console_cmd_func_t proc, const char cmd[], const char help[],
+	    const char hint[] = NULL, void* args = NULL);
+
+    const esp_console_cmd_t* get();
+
+    void set(esp_console_cmd_func_t proc, const char cmd[], const char help[],
+	    const char hint[] = NULL, void* args = NULL);
+    void command(const char cmd[]);
+    void help(const char help[]);
+    void hint(const char hint[]);
+    void procedure(esp_console_cmd_func_t proc);
+    void argtable(void* args);
+
+private:
+    static esp_console_cmd_t console_cmd;
+}; /* TConsoleCmd */
+
+
+inline const esp_console_cmd_t*
+TConsoleCmd::get() {
+    return &console_cmd; };
+
+void inline
+TConsoleCmd::command(const char cmd[]) {
+    TConsoleCmd::console_cmd.command = cmd;};
+
+void inline
+TConsoleCmd::help(const char hlp[]) {
+    TConsoleCmd::console_cmd.help = hlp;};
+
+void inline
+TConsoleCmd::hint(const char hnt[]) {
+    TConsoleCmd::console_cmd.hint = hnt;};
+
+void inline
+TConsoleCmd::procedure(esp_console_cmd_func_t proc) {
+    TConsoleCmd::console_cmd.func = proc;};
+
+void inline
+TConsoleCmd::argtable(void* args) {
+    TConsoleCmd::console_cmd.argtable = args;};
+
+
 // Register command 'sdcard'
 static void register_sdcard_cmd(void)
 {
+#if 01
     const esp_console_cmd_t cmd = {
         .command = "sdcard",
-        .help = "SD card manipulating generic command\n",
+        .help = "SD card manipulating generic command",
 //        .hint = "enter subcommand for Sd card operations",
         .hint = NULL,
         .func = &sdcard_cmd,
 	.argtable = NULL
     };
     ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
+#else
+    TConsoleCmd Cmd(sdcard_cmd, "sdcard", "SD card manipulating generic command"/*,
+	"enter subcommand for Sd card operations"*/);
+    ESP_ERROR_CHECK(esp_console_cmd_register(Cmd.get()));
+#endif
 }; /* register_sdcard_cmd */
 
 
@@ -109,7 +161,7 @@ static void register_sd_cmd(void)
 {
     const esp_console_cmd_t cmd = {
         .command = "sd",
-        .help = "shortcut for 'sdcard' command\n",
+        .help = "shortcut for 'sdcard' command",
 //        .hint = "enter subcommand for Sd card operations",
         .hint = NULL,
         .func = &sdcard_cmd,
@@ -117,6 +169,22 @@ static void register_sd_cmd(void)
     };
     ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
 }; /* register_sd_cmd */
+
+
+
+TConsoleCmd::TConsoleCmd(esp_console_cmd_func_t proc, const char cmd[],
+	const char help[], const char hint[], void* args) {
+    set(proc, cmd, help, hint, args); }
+
+void TConsoleCmd::set(esp_console_cmd_func_t proc, const char cmd[],
+	const char hlp[], const char hnt[], void* args)
+{
+    command(cmd);
+    help(hlp);
+    hint(hnt);
+    procedure(proc);
+    argtable(args);
+}; /* TConsoleCmd::set */
 
 
 
