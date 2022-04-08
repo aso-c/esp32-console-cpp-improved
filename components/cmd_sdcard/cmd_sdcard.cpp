@@ -18,6 +18,8 @@
 #include <argtable3/argtable3.h>
 #include <sys/unistd.h>
 #include <sys/stat.h>
+#include <sys/types.h>
+#include <regex>
 #include "esp_vfs_fat.h"
 #include "sdmmc_cmd.h"
 #include "driver/sdmmc_host.h"
@@ -74,36 +76,56 @@ static int sdcard_cmd(int argc, char **argv)
 //    struct arg_end *end;
 //} sd_args;
 
-static struct {
-    struct arg_str *subcommand;
-//    void * subcommand;
-    struct arg_str *mount;
-    struct arg_str *moption;
-    struct arg_str *umount;
-    struct arg_str *uoption;
-//    void * options[1];
-//    void * options[3];
-//    struct arg_str *type;
-    struct arg_end *end;
-} args;
-
+//static struct {
+//    struct arg_str *subcommand;
+////    void * subcommand;
+//    struct arg_str *mount;
+//    struct arg_str *moption;
+//    struct arg_str *umount;
+//    struct arg_str *uoption;
+////    void * options[1];
+////    void * options[3];
+////    struct arg_str *type;
+//    struct arg_end *end;
+//} args;
 
 // Register all SD-card commands
 void register_sdcard_cmd(void)
 {
 
-	static struct {
-	    struct arg_str *subcommand;
-	//    void * subcommand;
-	    struct arg_str *mount;
-	    struct arg_str *moption;
-	    //struct arg_str *umount;
-	    //struct arg_str *uoption;
-	//    void * options[1];
-	//    void * options[3];
-	//    struct arg_str *type;
-	    struct arg_end *end;
-	} args;
+//#define _NAMED_SUBCOMMANDS_
+
+//	static struct {
+//#ifndef _NAMED_SUBCOMMANDS_
+//	    struct arg_str *subcommands[] = {
+//		    arg_str0("m", "mount", "mount points", "mount SD card to mount points"),
+//		    arg_str0("u", "umount", "mount points", "unmount SD card from the mount points"))
+//	    };
+//#else
+//	    struct arg_str *subcommand;
+//	//    void * subcommand;
+//	    struct arg_str *mount;
+//	    struct arg_str *moption;
+//	    //struct arg_str *umount;
+//	    //struct arg_str *uoption;
+//	//    void * options[1];
+//	//    void * options[3];
+//	//    struct arg_str *type;
+//#endif
+//	    struct arg_end *end;
+//	} args;
+
+	static struct arg_rex *c;
+	static struct arg_str *o1, *o2;
+	static struct arg_rem *r1;
+	static struct arg_end *end;
+
+	static void *args[] = {
+		/*c = */arg_rex1(NULL, NULL, "m|mount|u|umount|l|ls|dir|cat|type", "subcommand", 0/*REG_ICASE*/, "subcommands for SD-card manipulation"),
+		/*o1 = */arg_str0(NULL, NULL, "device", "SD card device name, only for mount or unmount command"),
+		/*o2 = */arg_str0(NULL, NULL, "<path>|<pattern>|<file name>", "mount point for mount/unmount command, file pattern or name for ls/dir command, file name for cat or type command"),
+		/*end = */arg_end(2),
+	};
 
 	const esp_console_cmd_t cmd1 = {
 	    .command = "sdcard",
@@ -115,12 +137,15 @@ void register_sdcard_cmd(void)
 	    .argtable = &args
 	};
 
+#ifdef _NAMED_SUBCOMMANDS_
     args.subcommand = arg_str1(NULL, NULL, "<subcommand>", "Subcommand are: m, mount, u, umount, ls, dir");
-    args.mount = arg_str0(NULL, NULL, "[m, mount]", "mount SD-card");
+    args.mount = arg_str0(NULL, NULL, "m, mount", "mount SD-card");
     args.mount->hdr.parent = args.subcommand;
-    args.moption = arg_str0(NULL, NULL, "[sdcard]", "sd-card name, if omitted - used default");
+    args.moption = arg_str0(NULL, NULL, "sdcard", "sd-card name, if omitted - used default");
     args.moption->hdr.parent = args.mount;
     args.end = arg_end(2);
+#endif
+
 
     register_cmd(&cmd1);
 
