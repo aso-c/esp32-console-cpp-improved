@@ -69,62 +69,23 @@ static int sdcard_cmd(int argc, char **argv)
 }
 
 
-//static struct {
-//    struct arg_str *key;
-//    struct arg_str *type;
-//    struct arg_str *value;
-//    struct arg_end *end;
-//} sd_args;
-
-//static struct {
-//    struct arg_str *subcommand;
-////    void * subcommand;
-//    struct arg_str *mount;
-//    struct arg_str *moption;
-//    struct arg_str *umount;
-//    struct arg_str *uoption;
-////    void * options[1];
-////    void * options[3];
-////    struct arg_str *type;
-//    struct arg_end *end;
-//} args;
-
 // Register all SD-card commands
 void register_sdcard_cmd(void)
 {
 
-//#define _NAMED_SUBCOMMANDS_
-
-//	static struct {
-//#ifndef _NAMED_SUBCOMMANDS_
-//	    struct arg_str *subcommands[] = {
-//		    arg_str0("m", "mount", "mount points", "mount SD card to mount points"),
-//		    arg_str0("u", "umount", "mount points", "unmount SD card from the mount points"))
-//	    };
-//#else
-//	    struct arg_str *subcommand;
-//	//    void * subcommand;
-//	    struct arg_str *mount;
-//	    struct arg_str *moption;
-//	    //struct arg_str *umount;
-//	    //struct arg_str *uoption;
-//	//    void * options[1];
-//	//    void * options[3];
-//	//    struct arg_str *type;
-//#endif
-//	    struct arg_end *end;
-//	} args;
-
-	static struct arg_rex *c;
-	static struct arg_str *o1, *o2;
-	static struct arg_rem *r1;
-	static struct arg_end *end;
-
 	static void *args[] = {
-		/*c = */arg_rex1(NULL, NULL, "m|mount|u|umount|l|ls|dir|cat|type", "subcommand", 0/*REG_ICASE*/, "subcommands for SD-card manipulation"),
-		/*o1 = */arg_str0(NULL, NULL, "device", "SD card device name, only for mount or unmount command"),
-		/*o2 = */arg_str0(NULL, NULL, "<path>|<pattern>|<file name>", "mount point for mount/unmount command, file pattern or name for ls/dir command, file name for cat or type command"),
-		/*end = */arg_end(2),
+		arg_rex1(NULL, NULL, "m|mount", NULL, 0/*REG_ICASE*/, "mount SD-card <device> to <mountpoint>, parameters is optionally"),
+		arg_str0(NULL, NULL, "<device>", "SD card device name, if omitted - use ..."),
+		arg_str0(NULL, NULL, "<path>", "mountpoint path for SD card, if omitted - use ..."),
+		arg_rex1(NULL, NULL, "u|umount", NULL, 0/*REG_ICASE*/, "unmount SD-card <device> or that was mounted to <path>; if all parameters omitted - use default values - ..."),
+		arg_str0(NULL, NULL, "<device>|<path>", "SD card device or mountpoint"),
+		arg_rex1(NULL, NULL, "ls", NULL, 0, "list directory contents on SD-card"),
+		arg_str0(NULL, NULL, "<pattern>", "pattern or path in SD-card of the listed files in directory"),
+		arg_rex1(NULL, NULL, "cat", NULL, 0, "print file to stdout (console output)"),
+		arg_str1(NULL, NULL, "<file name>", "print file content to stdout"),
+		arg_rex1(NULL, NULL, "type", NULL, 0, "print file to stdout (console output)"),
+		arg_str0(NULL, NULL, "<file name>", "type from the keyboard to file & screen or screen only, if file name is omitted"),
+		arg_end(2),
 	};
 
 	const esp_console_cmd_t cmd1 = {
@@ -133,18 +94,8 @@ void register_sdcard_cmd(void)
     //        .hint = "enter subcommand for Sd card operations",
 	    .hint = NULL,
 	    .func = &sdcard_cmd,
-    //	.argtable = NULL
 	    .argtable = &args
 	};
-
-#ifdef _NAMED_SUBCOMMANDS_
-    args.subcommand = arg_str1(NULL, NULL, "<subcommand>", "Subcommand are: m, mount, u, umount, ls, dir");
-    args.mount = arg_str0(NULL, NULL, "m, mount", "mount SD-card");
-    args.mount->hdr.parent = args.subcommand;
-    args.moption = arg_str0(NULL, NULL, "sdcard", "sd-card name, if omitted - used default");
-    args.moption->hdr.parent = args.mount;
-    args.end = arg_end(2);
-#endif
 
 
     register_cmd(&cmd1);
