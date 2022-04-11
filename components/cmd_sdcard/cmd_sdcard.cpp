@@ -119,22 +119,11 @@ void register_sdcard_cmd(void)
 #else
 
 	static void *args[] = {
-//		arg_str0("m", "mount", "[<device>|<mountpoint>]", "mount SD card, optionally the device name or mount point path can by specified; if omitted - used default value..."),
-//		arg_rex0("h", "help", "[h] | [help]", NULL, 0/*REG_ICASE*/, "help for command 'sdcard'"),
-		arg_rex1(NULL, NULL, "[h] | help | <subcommand>", NULL, 0/*REG_ICASE*/, "other subcommand of command 'sdcard'"),
+		arg_rex1(NULL, NULL, "h|help", "h | help", 0/*REG_ICASE*/, "help for command 'sdcard'"),
+		arg_rem ("|", NULL),
+		arg_rex1(NULL, NULL, "<subcommand>", NULL, 0/*REG_ICASE*/, "other subcommand of command 'sdcard'"),
 		arg_strn(NULL, NULL, "<options>", 0, 2, "subcommand options"),
-//		arg_str0(NULL, NULL, "<device>", "SD card device name, if omitted - use ..."),
-//		arg_str0(NULL, NULL, "<path>", "mountpoint path for SD card, if omitted - use ..."),
-//		arg_rem("\nsdcard  u|umount", "unmount SD-card <device> or that was mounted to <path>; if all parameters omitted - use default values - ..."),
-////		arg_rex1(NULL, NULL, "u|umount", NULL, 0/*REG_ICASE*/, "unmount SD-card <device> or that was mounted to <path>; if all parameters omitted - use default values - ..."),
-//		arg_str0(NULL, NULL, "[<device>|<path>]", "SD card device or mountpoint"),
-////		arg_rex1(NULL, NULL, "ls", NULL, 0, "list directory contents on SD-card"),
-//		arg_rem("\nsdcard  l|ls", "list directory contents on SD-card"),
-//		arg_str0(NULL, NULL, "[<pattern>]", "pattern or path in SD-card of the listed files in directory"),
-////		arg_str0("c", "cat", "<file name>", "print file to stdout (console output)"),
-//		arg_rem("\nsdcard  c|cat", "unmount SD-card <device> or that was mounted to <path>; if all parameters omitted - use default values - ..."),
-//		arg_str0(NULL, NULL, "<pattern>", "pattern or path in SD-card of the listed files in directory"),
-		arg_rem(NULL, "\nNote! Use 'help' or 'h' subcommands for help"),
+//		arg_rem (NULL, "Use 'help' or 'h' subcommands for help"),
 		arg_end(2),
 	};
 
