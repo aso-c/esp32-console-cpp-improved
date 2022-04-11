@@ -73,6 +73,7 @@ static int sdcard_cmd(int argc, char **argv)
 void register_sdcard_cmd(void)
 {
 
+#if 0
 	static void *args[] = {
 		arg_str0("m", "mount", "[<device>|<mountpoint>]", "mount SD card, optionally the device name or mount point path can by specified; if omitted - used default value..."),
 //		arg_rex1(NULL, NULL, "m|mount", NULL, 0/*REG_ICASE*/, "mount SD-card <device> to <mountpoint>, parameters is optionally"),
@@ -93,18 +94,37 @@ void register_sdcard_cmd(void)
 		arg_rem(NULL, "\nNote! Use only one options/command at one time!"),
 		arg_end(2),
 	};
+#else
+	static void *args[] = {
+//		arg_str0("m", "mount", "[<device>|<mountpoint>]", "mount SD card, optionally the device name or mount point path can by specified; if omitted - used default value..."),
+		arg_rex1(NULL, NULL, "m|mount", NULL, 0/*REG_ICASE*/, "mount SD-card <device> to <mountpoint>, parameters is optionally"),
+		arg_str0(NULL, NULL, "<device>", "SD card device name, if omitted - use ..."),
+		arg_str0(NULL, NULL, "<path>", "mountpoint path for SD card, if omitted - use ..."),
+		arg_rem("\nsdcard  u|umount", "unmount SD-card <device> or that was mounted to <path>; if all parameters omitted - use default values - ..."),
+//		arg_rex1(NULL, NULL, "u|umount", NULL, 0/*REG_ICASE*/, "unmount SD-card <device> or that was mounted to <path>; if all parameters omitted - use default values - ..."),
+		arg_str0(NULL, NULL, "[<device>|<path>]", "SD card device or mountpoint"),
+//		arg_rex1(NULL, NULL, "ls", NULL, 0, "list directory contents on SD-card"),
+		arg_rem("\nsdcard  l|ls", "list directory contents on SD-card"),
+		arg_str0(NULL, NULL, "[<pattern>]", "pattern or path in SD-card of the listed files in directory"),
+//		arg_str0("c", "cat", "<file name>", "print file to stdout (console output)"),
+		arg_rem("\nsdcard  c|cat", "unmount SD-card <device> or that was mounted to <path>; if all parameters omitted - use default values - ..."),
+		arg_str0(NULL, NULL, "<pattern>", "pattern or path in SD-card of the listed files in directory"),
+//		arg_rem(NULL, "\nNote! Use only one options/command at one time!"),
+		arg_end(2),
+	};
+#endif
 
-	const esp_console_cmd_t cmd1 = {
+	const esp_console_cmd_t cmd = {
 	    .command = "sdcard",
-	    .help = "SD card manipulating generic command",
+	    .help = "SD card manipulating main command",
     //        .hint = "enter subcommand for Sd card operations",
 	    .hint = NULL,
 	    .func = &sdcard_cmd,
 	    .argtable = &args
 	};
+    register_cmd(&cmd);
 
 
-    register_cmd(&cmd1);
 
     const esp_console_cmd_t cmd2 = {
         .command = "sd",
