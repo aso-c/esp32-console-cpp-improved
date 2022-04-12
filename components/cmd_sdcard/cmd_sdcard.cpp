@@ -107,25 +107,31 @@ void register_sdcard_cmd(void)
     args_help[0] = arg_rex1(NULL, NULL, "h|help", "h|help", 0/*REG_ICASE*/, "help by subcommand of command 'sdcard'");
     args_help[1] = arg_end(2);
     // syntax1: m | mount [<device>] [<mountpoint>]
-    args_mount[0] = arg_rex1(NULL, NULL, "m|mount", NULL, 0, "mount SD-card <device> to <mountpoint>, parameters are optional"),
+//    args_mount[0] = arg_rex1(NULL, NULL, "m|mount", NULL, 0, "mount SD-card <device> to <mountpoint>, parameters are optional"),
+    args_mount[0] = arg_rex1(NULL, NULL, "m|mount", NULL, 0, NULL);
     args_mount[1] = arg_str0(NULL, NULL, "<device>", "SD card device name, if omitted - use ...");
-    args_mount[2] = arg_str0(NULL, NULL, "<mountpoint>", "mountpoint path for SD card, if omitted - use ...");
+    args_mount[2] = arg_str0(NULL, NULL, "<mountpoint>", "path to mountpoint SD card, if omitted - use ...");
     args_mount[3] = arg_end(2);
     // syntax2: u | umount [ <device> | <mountpoint> ]
-    args_umount[0] = arg_rex1(NULL, NULL, "u|umount", NULL, 0, "unmount SD-card <device> or that was mounted to <path>; if all parameters omitted - use default values - ...");
-    args_umount[1] = arg_str0(NULL, NULL, "<device>|<path>", "SD card device or mountpoint, if omitted - use defaul value"),
+//    args_umount[0] = arg_rex1(NULL, NULL, "u|umount", NULL, 0, "unmount SD-card <device> or that was mounted to <path>; if all parameters omitted - use default values - ...");
+    args_umount[0] = arg_rex1(NULL, NULL, "u|umount", NULL, 0, NULL);
+    args_umount[1] = arg_str0(NULL, NULL, "<device>|<path>", "SD card device or mountpoint, if omitted - use defaul value");
     args_umount[2] = arg_end(2);
     // syntax3: ls | dir [<pattern>]
-    args_ls[0] = arg_rex1(NULL, NULL, "ls|dir", NULL, 0, "list directory contents on SD-card");
+//    args_ls[0] = arg_rex1(NULL, NULL, "ls|dir", NULL, 0, "list directory contents on SD-card");
+    args_ls[0] = arg_rex1(NULL, NULL, "ls|dir", NULL, 0, NULL);
     args_ls[1] = arg_str0(NULL, NULL, "<pattern>", "pattern or path in SD-card of the listed files in directory");
     args_ls[2] = arg_end(2);
     // syntax4: cat <filename>
-    args_cat[0] = arg_rex1(NULL, NULL, "cat", NULL, 0, "print file to stdout (console output)");
-    args_cat[1] = arg_str1(NULL, NULL, "<file name>", "file name to be printed");
+//    args_cat[0] = arg_rex1(NULL, NULL, "cat", NULL, 0, "print file to stdout (console output)");
+    args_cat[0] = arg_rex1(NULL, NULL, "cat", NULL, 0, NULL);
+    args_cat[1] = arg_str1(NULL, NULL, "<file>", "file name to be printed or the name of where the typed text is saved");
     args_cat[2] = arg_end(2);
     // syntax5: type [filename]
-    args_type[0] = arg_rex1(NULL, NULL, "type", NULL, 0, "type from the keyboard to file & screen or screen only; <file name> - name of the file is to be printed; if omitted - print to screen only");
-    args_type[1] = arg_str0(NULL, NULL, "<file name>", "the name of the file where the typed text is saved");
+//    args_type[0] = arg_rex1(NULL, NULL, "type", NULL, 0, "type from the keyboard to file & screen or screen only; <file name> - name of the file is to be printed; if omitted - print to screen only");
+    args_type[0] = arg_rex1(NULL, NULL, "type", NULL, 0, NULL);
+//    args_type[1] = arg_str0(NULL, NULL, "<file name>", "the name of the file where the typed text is saved");
+    args_type[1] = args_cat[1];
     args_type[2] = arg_end(2);
 
 
