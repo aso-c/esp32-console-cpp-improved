@@ -10,6 +10,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <iomanip>
+#include <stdarg.h>
 
 #include <string.h>
 #include "esp_log.h"
@@ -253,9 +254,18 @@ string2subcommand(char subcmd_str[])
 }; /* string2subcommand */
 
 
+#if 0
 /* help_action implements the actions for syntax 0 */
 int help_action(int help, const char *progname, void *argtable0[], void *argtable1[],
 	void *argtable2[], void *argtable3[], void *argtable4[], void *argtable5[]);
+#endif
+// help_action implements the actions for syntax 0
+// Multisyntax!
+// Call variants:
+// help_actions(int act = 0, const char cmdname[]) - call, if omittes cmd options
+// help_actions(int act = -1, const char cmdname, char option[]) - call, if cmd option is unknown
+// help_action(int act = 1, const char cmdname[], int argcnt, void *argtable1[][, void* argtable2[]]...)
+int help_action(int act, const char cmdname[], ...);
 
 
 //extern "C" {
@@ -274,7 +284,8 @@ static int sdcard_cmd(int argc, char **argv)
 	 << endl;
 //    cout << "Command " << argv[0] << "' is not yet implemented now." << endl
     if (argc == 1)
-	return help_action(0, argv[0], args_help, args_mount, args_umount, args_ls, args_cat, args_type);
+//	return help_action(0, argv[0], args_help, args_mount, args_umount, args_ls, args_cat, args_type);
+	return help_action(0, argv[0]);
 
     switch (string2subcommand(argv[1]))
     {
@@ -283,15 +294,18 @@ static int sdcard_cmd(int argc, char **argv)
     case sd_ls:
     case sd_cat:
     case sd_type:
-	cout << "Command " << argv[0] << "' is not yet implemented now." << endl;
+	cout << "Command" << '\'' << argv[0] << ' ' << argv[1] << '\''
+	    << " is not yet implemented now." << endl;
 	break;
 
     case sd_help:
-	return help_action(0, argv[0], args_help, args_mount, args_umount, args_ls, args_cat, args_type);
+//	return help_action(0, argv[0], args_help, args_mount, args_umount, args_ls, args_cat, args_type);
+	return help_action(1, argv[0], 6, args_help, args_mount, args_umount, args_ls, args_cat, args_type);
 
     case sd_unknown:
     default:
-	return help_action(1, argv[0], args_help, args_mount, args_umount, args_ls, args_cat, args_type);
+//	return help_action(1, argv[0], args_help, args_mount, args_umount, args_ls, args_cat, args_type);
+	return help_action(-1, argv[0], argv[1]);
     }; /* switch string2subcommand(argv[1]) */
 
     cout << endl;
@@ -300,33 +314,58 @@ static int sdcard_cmd(int argc, char **argv)
 //}
 
 
-/* help_action implements the actions for syntax 0 */
-int help_action(int help, const char *progname, void *argtable0[], void *argtable1[],
-	void *argtable2[], void *argtable3[], void *argtable4[], void *argtable5[])
+// help_action implements the actions for syntax 0
+// Multisyntax!
+// Call variants:
+// help_actions(int act = 0, const char cmdname[]) - call, if omittes cmd options
+// help_actions(int act = -1, const char cmdname, char option[]) - call, if cmd option is unknown
+// help_action(int act = 1, const char cmdname[], int argcnt, void *argtable1[][, void* argtable2[]]...)
+int help_action(int act, const char cmdname[], .../*void *argtable0[], void *argtable1[],
+	void *argtable2[], void *argtable3[], void *argtable4[], void *argtable5[]*/)
 {
+
+	va_list arglst;
+
+    va_start(arglst, cmdname);
     /* help subcommand */
-    if (help)
+    if (act == 1)
     {
-        printf("Usage: %s", progname);
-        arg_print_syntax(stdout,argtable1,"\n");
-        printf("       %s", progname);
-        arg_print_syntax(stdout,argtable2,"\n");
-        printf("       %s", progname);
-        arg_print_syntax(stdout,argtable3,"\n");
-        printf("       %s", progname);
-        arg_print_syntax(stdout,argtable4,"\n");
-        printf("       %s", progname);
-        arg_print_syntax(stdout,argtable5,"\n");
-        printf("       %s", progname);
-        arg_print_syntax(stdout,argtable0,"\n");
+	    int argcnt = va_arg(arglst, int);
+	    va_list arglst2;
+	    va_copy(arglst2, arglst);
+
+//        printf("Usage: %s", cmdname);
+//        arg_print_syntax(stdout,argtable1,"\n");
+//        printf("       %s", cmdname);
+//        arg_print_syntax(stdout,argtable2,"\n");
+//        printf("       %s", cmdname);
+//        arg_print_syntax(stdout,argtable3,"\n");
+//        printf("       %s", cmdname);
+//        arg_print_syntax(stdout,argtable4,"\n");
+//        printf("       %s", cmdname);
+//        arg_print_syntax(stdout,argtable5,"\n");
+//        printf("       %s", cmdname);
+//        arg_print_syntax(stdout,argtable0,"\n");
+//        for (int i = 0; i < argcnt; i++)
+        for (int i = 0; i < argcnt; i++)
+        {
+            printf("Usage: %s", cmdname);
+            arg_print_syntax(stdout, va_arg(arglst, void**), "\n");
+        }; /* for int i = 0; i < argcnt; i++ */
+
         printf("This program demonstrates the use of the argtable2 library\n");
         printf("for parsing multiple command line syntaxes.\n");
-        arg_print_glossary(stdout,argtable1,"      %-20s %s\n");
-        arg_print_glossary(stdout,argtable2,"      %-20s %s\n");
-        arg_print_glossary(stdout,argtable3,"      %-20s %s\n");
-        arg_print_glossary(stdout,argtable4,"      %-20s %s\n");
-        arg_print_glossary(stdout,argtable5,"      %-20s %s\n");
-        arg_print_glossary(stdout,argtable0,"      %-20s %s\n");
+//        arg_print_glossary(stdout,argtable1,"      %-20s %s\n");
+//        arg_print_glossary(stdout,argtable2,"      %-20s %s\n");
+//        arg_print_glossary(stdout,argtable3,"      %-20s %s\n");
+//        arg_print_glossary(stdout,argtable4,"      %-20s %s\n");
+//        arg_print_glossary(stdout,argtable5,"      %-20s %s\n");
+//        arg_print_glossary(stdout,argtable0,"      %-20s %s\n");
+
+        for (int i = 0; i < argcnt; i++)
+            arg_print_glossary(stdout, va_arg(arglst2, void**), "      %-20s %s\n");
+        va_end(arglst2);
+        va_end(arglst);
         return 0;
     }; /* help */
 
@@ -334,16 +373,26 @@ int help_action(int help, const char *progname, void *argtable0[], void *argtabl
     /* --version option */
     if (version)
     {
-        printf("'%s' example program for the \"argtable\" command line argument parser.\n",progname);
+        printf("'%s' example program for the \"argtable\" command line argument parser.\n",cmdname);
         return 0;
     }; /* version */
 #endif
 
+    switch (act)
+    {
+    case 0:
+	printf("Options is absent.\n");
+	break;
+    case -1:
+    default:
+	printf ("Unknown options: \"%s\".\n", va_arg(arglst, char*));
+    }; /* switch act */
     /* no command line options at all */
-    printf("Try '%s help' for more information.\n", progname);
+    va_end(arglst);
+    printf("Try '%s help' for more information.\n", cmdname);
+    va_end(arglst);
     return 0;
-}; /*  */
-
+}; /* help_action */
 
 
 #if 0
