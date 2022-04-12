@@ -84,52 +84,6 @@ static void
 void register_sdcard_cmd(void)
 {
 
-#define _MULTISYNTAX_
-#ifndef _MULTISYNTAX_
-#if 0
-	static void *args[] = {
-		arg_str0("m", "mount", "[<device>|<mountpoint>]", "mount SD card, optionally the device name or mount point path can by specified; if omitted - used default value..."),
-//		arg_rex1(NULL, NULL, "m|mount", NULL, 0/*REG_ICASE*/, "mount SD-card <device> to <mountpoint>, parameters is optionally"),
-//		arg_str0(NULL, NULL, "<device>", "SD card device name, if omitted - use ..."),
-//		arg_str0(NULL, NULL, "<path>", "mountpoint path for SD card, if omitted - use ..."),
-		arg_str0("u", "umount", "[<device>|<mountpoint>]", "unmount SD card, optionally the device name or mount point path can by specified; if omitted - used default value..."),
-//		arg_rex1(NULL, NULL, "u|umount", NULL, 0/*REG_ICASE*/, "unmount SD-card <device> or that was mounted to <path>; if all parameters omitted - use default values - ..."),
-//		arg_str0(NULL, NULL, "<device>|<path>", "SD card device or mountpoint"),
-		arg_str0("l", "ls,dir", "[<pattern>]", "list directory contents on SD-card; if omitted - used current dir"),
-//		arg_rex1(NULL, NULL, "ls", NULL, 0, "list directory contents on SD-card"),
-//		arg_str0(NULL, NULL, "<pattern>", "pattern or path in SD-card of the listed files in directory"),
-		arg_str0("c", "cat", "<file name>", "print file to stdout (console output)"),
-//		arg_rex1(NULL, NULL, "cat", NULL, 0, "print file to stdout (console output)"),
-//		arg_str1(NULL, NULL, "<file name>", "print file content to stdout"),
-		arg_str0("t", "type", "[<file name>]", "type from the keyboard to file & screen or screen only; <file name> - name of the file is to be printed; if omitted - print to screen only"),
-//		arg_rex1(NULL, NULL, "type", NULL, 0, "type from the keyboard to file & screen or screen only, if file name is omitted"),
-//		arg_str0(NULL, NULL, "<file name>", "file name to be printed"),
-		arg_rem(NULL, "\nNote! Use only one options/command at one time!"),
-		arg_end(2),
-	};
-#else
-	static void *args[] = {
-//		arg_str0("m", "mount", "[<device>|<mountpoint>]", "mount SD card, optionally the device name or mount point path can by specified; if omitted - used default value..."),
-		arg_rex1(NULL, NULL, "m|mount", NULL, 0/*REG_ICASE*/, "mount SD-card <device> to <mountpoint>, parameters is optionally"),
-		arg_str0(NULL, NULL, "<device>", "SD card device name, if omitted - use ..."),
-		arg_str0(NULL, NULL, "<path>", "mountpoint path for SD card, if omitted - use ..."),
-		arg_rem("\nsdcard  u|umount", "unmount SD-card <device> or that was mounted to <path>; if all parameters omitted - use default values - ..."),
-//		arg_rex1(NULL, NULL, "u|umount", NULL, 0/*REG_ICASE*/, "unmount SD-card <device> or that was mounted to <path>; if all parameters omitted - use default values - ..."),
-		arg_str0(NULL, NULL, "[<device>|<path>]", "SD card device or mountpoint"),
-//		arg_rex1(NULL, NULL, "ls", NULL, 0, "list directory contents on SD-card"),
-		arg_rem("\nsdcard  l|ls", "list directory contents on SD-card"),
-		arg_str0(NULL, NULL, "[<pattern>]", "pattern or path in SD-card of the listed files in directory"),
-//		arg_str0("c", "cat", "<file name>", "print file to stdout (console output)"),
-		arg_rem("\nsdcard  c|cat", "unmount SD-card <device> or that was mounted to <path>; if all parameters omitted - use default values - ..."),
-		print file to stdout (console output)
-		arg_str0(NULL, NULL, "<pattern>", "pattern or path in SD-card of the listed files in directory"),
-//		arg_rem(NULL, "\nNote! Use only one options/command at one time!"),
-		arg_end(2),
-	};
-#endif
-
-#else
-
 	static void *args[] = {
 		arg_rex1(NULL, NULL, "h|help", "h | help", 0/*REG_ICASE*/, "help for command 'sdcard'"),
 		arg_rem ("|", NULL),
@@ -137,33 +91,6 @@ void register_sdcard_cmd(void)
 		arg_strn(NULL, NULL, "<options>", 0, 2, "subcommand options"),
 		arg_end(2),
 	};
-
-    // syntax0: h | help
-    args_help[0] = arg_rex1(NULL, NULL, "h|help", "h | help", 0/*REG_ICASE*/, "help by subcommand of command 'sdcard'");
-    args_help[1] = arg_end(2);
-    // syntax1: m | mount [<device>] [<mountpoint>]
-    args_mount[0] = arg_rex1(NULL, NULL, "m|mount", NULL, 0, "mount SD-card <device> to <mountpoint>, parameters are optional"),
-    args_mount[1] = arg_str0(NULL, NULL, "<device>", "SD card device name, if omitted - use ...");
-    args_mount[2] = arg_str0(NULL, NULL, "<mountpoint>", "mountpoint path for SD card, if omitted - use ...");
-    args_mount[3] = arg_end(2);
-    // syntax2: u | umount [ <device> | <mountpoint> ]
-    args_umount[0] = arg_rex1(NULL, NULL, "u|umount", NULL, 0, "unmount SD-card <device> or that was mounted to <path>; if all parameters omitted - use default values - ...");
-    args_umount[1] = arg_str0(NULL, NULL, "[<device>|<path>]", "SD card device or mountpoint, if omitted - use defaul value"),
-    args_umount[2] = arg_end(2);
-    // syntax3: ls | dir [<pattern>]
-    args_ls[0] = arg_rex1(NULL, NULL, "ls|dir", NULL, 0, "list directory contents on SD-card");
-    args_ls[1] = arg_str0(NULL, NULL, "[<pattern>]", "pattern or path in SD-card of the listed files in directory");
-    args_ls[2] = arg_end(2);
-    // syntax4: cat <filename>
-    args_cat[0] = arg_rex1(NULL, NULL, "cat", NULL, 0, "print file to stdout (console output)");
-    args_cat[1] = arg_str1(NULL, NULL, "<file name>", "file name to be printed");
-    args_cat[2] = arg_end(2);
-    // syntax5: type [filename]
-    args_type[0] = arg_rex1(NULL, NULL, "type", NULL, 0, "type from the keyboard to file & screen or screen only; <file name> - name of the file is to be printed; if omitted - print to screen only");
-    args_type[1] = args_cat[1] = arg_str0(NULL, NULL, "<file name>", "the name of the file where the typed text is saved");
-    args_type[2] = arg_end(2);
-
-#endif
 
 	const esp_console_cmd_t cmd = {
 	    .command = "sdcard",
@@ -175,6 +102,31 @@ void register_sdcard_cmd(void)
 	};
     register_cmd(&cmd);
 
+
+    // syntax0: h | help
+    args_help[0] = arg_rex1(NULL, NULL, "h|help", "h|help", 0/*REG_ICASE*/, "help by subcommand of command 'sdcard'");
+    args_help[1] = arg_end(2);
+    // syntax1: m | mount [<device>] [<mountpoint>]
+    args_mount[0] = arg_rex1(NULL, NULL, "m|mount", NULL, 0, "mount SD-card <device> to <mountpoint>, parameters are optional"),
+    args_mount[1] = arg_str0(NULL, NULL, "<device>", "SD card device name, if omitted - use ...");
+    args_mount[2] = arg_str0(NULL, NULL, "<mountpoint>", "mountpoint path for SD card, if omitted - use ...");
+    args_mount[3] = arg_end(2);
+    // syntax2: u | umount [ <device> | <mountpoint> ]
+    args_umount[0] = arg_rex1(NULL, NULL, "u|umount", NULL, 0, "unmount SD-card <device> or that was mounted to <path>; if all parameters omitted - use default values - ...");
+    args_umount[1] = arg_str0(NULL, NULL, "<device>|<path>", "SD card device or mountpoint, if omitted - use defaul value"),
+    args_umount[2] = arg_end(2);
+    // syntax3: ls | dir [<pattern>]
+    args_ls[0] = arg_rex1(NULL, NULL, "ls|dir", NULL, 0, "list directory contents on SD-card");
+    args_ls[1] = arg_str0(NULL, NULL, "<pattern>", "pattern or path in SD-card of the listed files in directory");
+    args_ls[2] = arg_end(2);
+    // syntax4: cat <filename>
+    args_cat[0] = arg_rex1(NULL, NULL, "cat", NULL, 0, "print file to stdout (console output)");
+    args_cat[1] = arg_str1(NULL, NULL, "<file name>", "file name to be printed");
+    args_cat[2] = arg_end(2);
+    // syntax5: type [filename]
+    args_type[0] = arg_rex1(NULL, NULL, "type", NULL, 0, "type from the keyboard to file & screen or screen only; <file name> - name of the file is to be printed; if omitted - print to screen only");
+    args_type[1] = arg_str0(NULL, NULL, "<file name>", "the name of the file where the typed text is saved");
+    args_type[2] = arg_end(2);
 
 
     const esp_console_cmd_t cmd2 = {
@@ -188,15 +140,6 @@ void register_sdcard_cmd(void)
     register_cmd(&cmd2);
 
 }; /* register_sdcard_all */
-
-//const esp_console_cmd_t cmd = {
-//    .command = "sdcard",
-//    .help = "SD card manipulating main command",
-////        .hint = "enter subcommand for Sd card operations",
-//    .hint = NULL,
-//    .func = &sdcard_cmd,
-//    .argtable = &args
-//};
 
 
 // Register command procedure
@@ -254,11 +197,6 @@ string2subcommand(char subcmd_str[])
 }; /* string2subcommand */
 
 
-#if 0
-/* help_action implements the actions for syntax 0 */
-int help_action(int help, const char *progname, void *argtable0[], void *argtable1[],
-	void *argtable2[], void *argtable3[], void *argtable4[], void *argtable5[]);
-#endif
 // help_action implements the actions for syntax 0
 // Multisyntax!
 // Call variants:
@@ -318,8 +256,7 @@ static int sdcard_cmd(int argc, char **argv)
 // help_actions(int act = 0, const char cmdname[]) - call, if omittes cmd options
 // help_actions(int act = -1, const char cmdname, char option[]) - call, if cmd option is unknown
 // help_action(int act = 1, const char cmdname[], int argcnt, void *argtable1[][, void* argtable2[]]...)
-int help_action(int act, const char cmdname[], .../*void *argtable0[], void *argtable1[],
-	void *argtable2[], void *argtable3[], void *argtable4[], void *argtable5[]*/)
+int help_action(int act, const char cmdname[], ...)
 {
 
 	va_list arglst;
@@ -329,27 +266,11 @@ int help_action(int act, const char cmdname[], .../*void *argtable0[], void *arg
     /* help subcommand */
     if (act == 1)
     {
-//        printf("Usage: %s", cmdname);
-//        arg_print_syntax(stdout,argtable1,"\n");
-//        printf("       %s", cmdname);
-//        arg_print_syntax(stdout,argtable2,"\n");
-//        printf("       %s", cmdname);
-//        arg_print_syntax(stdout,argtable3,"\n");
-//        printf("       %s", cmdname);
-//        arg_print_syntax(stdout,argtable4,"\n");
-//        printf("       %s", cmdname);
-//        arg_print_syntax(stdout,argtable5,"\n");
-//        printf("       %s", cmdname);
-//        arg_print_syntax(stdout,argtable0,"\n");
-
-	//	    va_list arglst2;
-	//	    va_copy(arglst2, arglst);
-		    int argcnt = va_arg(arglst, int);
+	    int argcnt = va_arg(arglst, int);
 
 	printf("Usage: %s", cmdname);
 	arg_print_syntax(stdout, va_arg(arglst, void**), "\n");
 	argcnt--;
-//        for (int i = 0; i < argcnt; i++)
 	for (int i = 0; i < argcnt; i++)
 	{
 	    printf("       %s", cmdname);
@@ -359,20 +280,11 @@ int help_action(int act, const char cmdname[], .../*void *argtable0[], void *arg
 
 	printf("This program demonstrates the use of the argtable2 library\n");
 	printf("for parsing multiple command line syntaxes.\n");
-//        arg_print_glossary(stdout,argtable1,"      %-20s %s\n");
-//        arg_print_glossary(stdout,argtable2,"      %-20s %s\n");
-//        arg_print_glossary(stdout,argtable3,"      %-20s %s\n");
-//        arg_print_glossary(stdout,argtable4,"      %-20s %s\n");
-//        arg_print_glossary(stdout,argtable5,"      %-20s %s\n");
-//        arg_print_glossary(stdout,argtable0,"      %-20s %s\n");
 
-	va_start(arglst, cmdname);
-//        argcnt = va_arg(arglst2, int);
+	va_start(arglst, cmdname);  // reset arglist pointer
         va_arg(arglst, int);	// drop unneded first variadic parameter from the list
         for (int i = 0; i < argcnt; i++)
-//            arg_print_glossary(stdout, va_arg(arglst2, void**), "      %-20s %s\n");
 	    arg_print_glossary(stdout, va_arg(arglst, void**), "      %-20s %s\n");
-//        va_end(arglst2);
         va_end(arglst);
         return 0;
     }; /* help */
