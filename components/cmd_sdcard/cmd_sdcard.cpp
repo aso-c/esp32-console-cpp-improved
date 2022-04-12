@@ -142,8 +142,8 @@ void register_sdcard_cmd(void)
     args_help[0] = arg_rex1(NULL, NULL, "h|help", "h | help", 0/*REG_ICASE*/, "help by subcommand of command 'sdcard'");
     args_help[1] = arg_end(2);
     // syntax1: m | mount [<device>] [<mountpoint>]
-    args_mount[0] = arg_rex1(NULL, NULL, "m|mount", NULL, 0, "mount SD-card <device> to <mountpoint>, parameters is optionally"),
-    args_mount[3] = arg_str0(NULL, NULL, "<device>", "SD card device name, if omitted - use ...");
+    args_mount[0] = arg_rex1(NULL, NULL, "m|mount", NULL, 0, "mount SD-card <device> to <mountpoint>, parameters are optional"),
+    args_mount[1] = arg_str0(NULL, NULL, "<device>", "SD card device name, if omitted - use ...");
     args_mount[2] = arg_str0(NULL, NULL, "<mountpoint>", "mountpoint path for SD card, if omitted - use ...");
     args_mount[3] = arg_end(2);
     // syntax2: u | umount [ <device> | <mountpoint> ]
@@ -284,7 +284,6 @@ static int sdcard_cmd(int argc, char **argv)
 	 << endl;
 //    cout << "Command " << argv[0] << "' is not yet implemented now." << endl
     if (argc == 1)
-//	return help_action(0, argv[0], args_help, args_mount, args_umount, args_ls, args_cat, args_type);
 	return help_action(0, argv[0]);
 
     switch (string2subcommand(argv[1]))
@@ -304,7 +303,6 @@ static int sdcard_cmd(int argc, char **argv)
 
     case sd_unknown:
     default:
-//	return help_action(1, argv[0], args_help, args_mount, args_umount, args_ls, args_cat, args_type);
 	return help_action(-1, argv[0], argv[1]);
     }; /* switch string2subcommand(argv[1]) */
 
@@ -327,13 +325,10 @@ int help_action(int act, const char cmdname[], .../*void *argtable0[], void *arg
 	va_list arglst;
 
     va_start(arglst, cmdname);
+
     /* help subcommand */
     if (act == 1)
     {
-	    va_list arglst2;
-	    va_copy(arglst2, arglst);
-	    int argcnt = va_arg(arglst, int);
-
 //        printf("Usage: %s", cmdname);
 //        arg_print_syntax(stdout,argtable1,"\n");
 //        printf("       %s", cmdname);
@@ -346,15 +341,24 @@ int help_action(int act, const char cmdname[], .../*void *argtable0[], void *arg
 //        arg_print_syntax(stdout,argtable5,"\n");
 //        printf("       %s", cmdname);
 //        arg_print_syntax(stdout,argtable0,"\n");
-//        for (int i = 0; i < argcnt; i++)
-        for (int i = 0; i < argcnt; i++)
-        {
-            printf("Usage: %s", cmdname);
-            arg_print_syntax(stdout, va_arg(arglst, void**), "\n");
-        }; /* for int i = 0; i < argcnt; i++ */
 
-        printf("This program demonstrates the use of the argtable2 library\n");
-        printf("for parsing multiple command line syntaxes.\n");
+	//	    va_list arglst2;
+	//	    va_copy(arglst2, arglst);
+		    int argcnt = va_arg(arglst, int);
+
+	printf("Usage: %s", cmdname);
+	arg_print_syntax(stdout, va_arg(arglst, void**), "\n");
+	argcnt--;
+//        for (int i = 0; i < argcnt; i++)
+	for (int i = 0; i < argcnt; i++)
+	{
+	    printf("       %s", cmdname);
+	    arg_print_syntax(stdout, va_arg(arglst, void**), "\n");
+	}; /* for int i = 0; i < argcnt; i++ */
+	va_end(arglst);
+
+	printf("This program demonstrates the use of the argtable2 library\n");
+	printf("for parsing multiple command line syntaxes.\n");
 //        arg_print_glossary(stdout,argtable1,"      %-20s %s\n");
 //        arg_print_glossary(stdout,argtable2,"      %-20s %s\n");
 //        arg_print_glossary(stdout,argtable3,"      %-20s %s\n");
@@ -362,10 +366,13 @@ int help_action(int act, const char cmdname[], .../*void *argtable0[], void *arg
 //        arg_print_glossary(stdout,argtable5,"      %-20s %s\n");
 //        arg_print_glossary(stdout,argtable0,"      %-20s %s\n");
 
-        argcnt = va_arg(arglst2, int);
+	va_start(arglst, cmdname);
+//        argcnt = va_arg(arglst2, int);
+        va_arg(arglst, int);	// drop unneded first variadic parameter from the list
         for (int i = 0; i < argcnt; i++)
-            arg_print_glossary(stdout, va_arg(arglst2, void**), "      %-20s %s\n");
-        va_end(arglst2);
+//            arg_print_glossary(stdout, va_arg(arglst2, void**), "      %-20s %s\n");
+	    arg_print_glossary(stdout, va_arg(arglst, void**), "      %-20s %s\n");
+//        va_end(arglst2);
         va_end(arglst);
         return 0;
     }; /* help */
