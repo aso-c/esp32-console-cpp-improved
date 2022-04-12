@@ -51,22 +51,32 @@ static void register_cmd(const esp_console_cmd_t*);
 extern "C" {
 // Procedure of the 'sd' command
 static int sdcard_cmd(int argc, char **argv)
-{
-    cout << "Run the command \"sdcard\'" << endl
-	 << endl;
-    cout << "argc is   : " << argc << endl;
-    for (int i = 0; i < argc; i++)
-	cout << "argv[" << i << "] is: " << argv[i] << endl;
-    cout << endl
-	 << " . . ." << endl
-	 << " <<   <<" << endl
-	 << " . . ." << endl
-	 << endl;
-    cout << "Command " << argv[0] << "' is not yet implemented now." << endl
-	 << endl;
-    return 0;
-}; /* sd_cmd */
+//{
+//    cout << "Run the command \"sdcard\'" << endl
+//	 << endl;
+//    cout << "argc is   : " << argc << endl;
+//    for (int i = 0; i < argc; i++)
+//	cout << "argv[" << i << "] is: " << argv[i] << endl;
+//    cout << endl
+//	 << " . . ." << endl
+//	 << " <<   <<" << endl
+//	 << " . . ." << endl
+//	 << endl;
+//    cout << "Command " << argv[0] << "' is not yet implemented now." << endl
+//	 << endl;
+//    return 0;
+/*}*/; /* sd_cmd */
 }
+
+
+// argument tables for any subcommand of sdcard commqand
+static void
+    *args_help[1+1],	// h | help
+    *args_mount[3+1],	// m | mount [<device>] [<mountpoint>]
+    *args_umount[2+1],	// u | umount [ <device> | <mountpoint> ]
+    *args_ls[2+1],	// ls | dir [<pattern>]
+    *args_cat[2+1],	// cat <filename>
+    *args_type[2+1];	// type [filename]
 
 
 // Register all SD-card commands
@@ -110,6 +120,7 @@ void register_sdcard_cmd(void)
 		arg_str0(NULL, NULL, "[<pattern>]", "pattern or path in SD-card of the listed files in directory"),
 //		arg_str0("c", "cat", "<file name>", "print file to stdout (console output)"),
 		arg_rem("\nsdcard  c|cat", "unmount SD-card <device> or that was mounted to <path>; if all parameters omitted - use default values - ..."),
+		print file to stdout (console output)
 		arg_str0(NULL, NULL, "<pattern>", "pattern or path in SD-card of the listed files in directory"),
 //		arg_rem(NULL, "\nNote! Use only one options/command at one time!"),
 		arg_end(2),
@@ -123,9 +134,33 @@ void register_sdcard_cmd(void)
 		arg_rem ("|", NULL),
 		arg_rex1(NULL, NULL, "<subcommand>", NULL, 0/*REG_ICASE*/, "other subcommand of command 'sdcard'"),
 		arg_strn(NULL, NULL, "<options>", 0, 2, "subcommand options"),
-//		arg_rem (NULL, "Use 'help' or 'h' subcommands for help"),
 		arg_end(2),
 	};
+
+    // syntax0: h | help
+    args_help[0] = arg_rex1(NULL, NULL, "h|help", "h | help", 0/*REG_ICASE*/, "help by subcommand of command 'sdcard'");
+    args_help[1] = arg_end(2);
+    // syntax1: m | mount [<device>] [<mountpoint>]
+    args_mount[0] = arg_rex1(NULL, NULL, "m|mount", NULL, 0, "mount SD-card <device> to <mountpoint>, parameters is optionally"),
+    args_mount[3] = arg_str0(NULL, NULL, "<device>", "SD card device name, if omitted - use ...");
+    args_mount[2] = arg_str0(NULL, NULL, "<mountpoint>", "mountpoint path for SD card, if omitted - use ...");
+    args_mount[3] = arg_end(2);
+    // syntax2: u | umount [ <device> | <mountpoint> ]
+    args_umount[0] = arg_rex1(NULL, NULL, "u|umount", NULL, 0, "unmount SD-card <device> or that was mounted to <path>; if all parameters omitted - use default values - ...");
+    args_umount[1] = arg_str0(NULL, NULL, "[<device>|<path>]", "SD card device or mountpoint, if omitted - use defaul value"),
+    args_umount[2] = arg_end(2);
+    // syntax3: ls | dir [<pattern>]
+    args_ls[0] = arg_rex1(NULL, NULL, "ls|dir", NULL, 0, "list directory contents on SD-card");
+    args_ls[1] = arg_str0(NULL, NULL, "[<pattern>]", "pattern or path in SD-card of the listed files in directory");
+    args_ls[2] = arg_end(2);
+    // syntax4: cat <filename>
+    args_cat[0] = arg_rex1(NULL, NULL, "cat", NULL, 0, "print file to stdout (console output)");
+    args_cat[1] = arg_str1(NULL, NULL, "<file name>", "file name to be printed");
+    args_cat[2] = arg_end(2);
+    // syntax5: type [filename]
+    args_type[0] = arg_rex1(NULL, NULL, "type", NULL, 0, "type from the keyboard to file & screen or screen only; <file name> - name of the file is to be printed; if omitted - print to screen only");
+    args_type[1] = args_cat[1] = arg_str0(NULL, NULL, "<file name>", "the name of the file where the typed text is saved");
+    args_type[2] = arg_end(2);
 
 #endif
 
@@ -153,12 +188,161 @@ void register_sdcard_cmd(void)
 
 }; /* register_sdcard_all */
 
+//const esp_console_cmd_t cmd = {
+//    .command = "sdcard",
+//    .help = "SD card manipulating main command",
+////        .hint = "enter subcommand for Sd card operations",
+//    .hint = NULL,
+//    .func = &sdcard_cmd,
+//    .argtable = &args
+//};
+
 
 // Register command procedure
 static void register_cmd(const esp_console_cmd_t* cmd)
 {
     ESP_ERROR_CHECK(esp_console_cmd_register(cmd));
 }; /* register_cmd */
+
+
+// sucommand id
+enum SD_Subcommands_id {
+    sd_none,
+    sd_mount,
+    sd_unmount,
+    sd_ls,
+    sd_cat,
+    sd_type,
+    sd_help,
+    sd_unknown = -1
+}; /* sd_subcommands_id */
+
+// Test for empty string or NULL pointer
+bool isempty(const char *str)
+{
+    if (str == NULL || !str[0])
+	return true;
+    for (int i = 0; i < strlen(str); i++)
+	if (!isspace(str[i]))
+	    return false;
+    return true;
+}; /* isempty */
+
+// Convert subcommand string to subcommand_id
+SD_Subcommands_id
+string2subcommand(char subcmd_str[])
+{
+//    if (subcmd_str == NULL || !subcmd_str[0])
+//	return sd_none;
+    if (isempty(subcmd_str))
+	return sd_none;
+    if (strcmp(subcmd_str, "help") == 0 || strcmp(subcmd_str, "h") == 0)
+	return sd_help;
+    if (strcmp(subcmd_str, "mount") == 0 || strcmp(subcmd_str, "m") == 0)
+	return sd_mount;
+    if (strcmp(subcmd_str, "umount") == 0 || strcmp(subcmd_str, "u") == 0)
+	return sd_unmount;
+    if (strcmp(subcmd_str, "ls") == 0 || strcmp(subcmd_str, "dir") == 0)
+	return sd_ls;
+    if (strcmp(subcmd_str, "cat") == 0)
+	return sd_ls;
+    if (strcmp(subcmd_str, "type") == 0)
+	return sd_type;
+
+    return sd_unknown;
+}; /* string2subcommand */
+
+
+/* help_action implements the actions for syntax 0 */
+int help_action(int help, const char *progname, void *argtable0[], void *argtable1[],
+	void *argtable2[], void *argtable3[], void *argtable4[], void *argtable5[]);
+
+
+//extern "C" {
+// Procedure of the 'sd' command
+static int sdcard_cmd(int argc, char **argv)
+{
+    cout << "Run the command \"sdcard\'" << endl
+	 << endl;
+    cout << "argc is   : " << argc << endl;
+    for (int i = 0; i < argc; i++)
+	cout << "argv[" << i << "] is: " << argv[i] << endl;
+    cout << endl
+	 << " . . ." << endl
+	 << " <<   <<" << endl
+	 << " . . ." << endl
+	 << endl;
+//    cout << "Command " << argv[0] << "' is not yet implemented now." << endl
+    if (argc == 1)
+	return help_action(0, argv[0], args_help, args_mount, args_umount, args_ls, args_cat, args_type);
+
+    switch (string2subcommand(argv[1]))
+    {
+    case sd_mount:
+    case sd_unmount:
+    case sd_ls:
+    case sd_cat:
+    case sd_type:
+	cout << "Command " << argv[0] << "' is not yet implemented now." << endl;
+	break;
+
+    case sd_help:
+	return help_action(0, argv[0], args_help, args_mount, args_umount, args_ls, args_cat, args_type);
+
+    case sd_unknown:
+    default:
+	return help_action(1, argv[0], args_help, args_mount, args_umount, args_ls, args_cat, args_type);
+    }; /* switch string2subcommand(argv[1]) */
+
+    cout << endl;
+    return 0;
+}; /* sd_cmd */
+//}
+
+
+/* help_action implements the actions for syntax 0 */
+int help_action(int help, const char *progname, void *argtable0[], void *argtable1[],
+	void *argtable2[], void *argtable3[], void *argtable4[], void *argtable5[])
+{
+    /* help subcommand */
+    if (help)
+    {
+        printf("Usage: %s", progname);
+        arg_print_syntax(stdout,argtable1,"\n");
+        printf("       %s", progname);
+        arg_print_syntax(stdout,argtable2,"\n");
+        printf("       %s", progname);
+        arg_print_syntax(stdout,argtable3,"\n");
+        printf("       %s", progname);
+        arg_print_syntax(stdout,argtable4,"\n");
+        printf("       %s", progname);
+        arg_print_syntax(stdout,argtable5,"\n");
+        printf("       %s", progname);
+        arg_print_syntax(stdout,argtable0,"\n");
+        printf("This program demonstrates the use of the argtable2 library\n");
+        printf("for parsing multiple command line syntaxes.\n");
+        arg_print_glossary(stdout,argtable1,"      %-20s %s\n");
+        arg_print_glossary(stdout,argtable2,"      %-20s %s\n");
+        arg_print_glossary(stdout,argtable3,"      %-20s %s\n");
+        arg_print_glossary(stdout,argtable4,"      %-20s %s\n");
+        arg_print_glossary(stdout,argtable5,"      %-20s %s\n");
+        arg_print_glossary(stdout,argtable0,"      %-20s %s\n");
+        return 0;
+    }; /* help */
+
+#if 0
+    /* --version option */
+    if (version)
+    {
+        printf("'%s' example program for the \"argtable\" command line argument parser.\n",progname);
+        return 0;
+    }; /* version */
+#endif
+
+    /* no command line options at all */
+    printf("Try '%s help' for more information.\n", progname);
+    return 0;
+}; /*  */
 
 
 
