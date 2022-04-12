@@ -330,9 +330,9 @@ int help_action(int act, const char cmdname[], .../*void *argtable0[], void *arg
     /* help subcommand */
     if (act == 1)
     {
-	    int argcnt = va_arg(arglst, int);
 	    va_list arglst2;
 	    va_copy(arglst2, arglst);
+	    int argcnt = va_arg(arglst, int);
 
 //        printf("Usage: %s", cmdname);
 //        arg_print_syntax(stdout,argtable1,"\n");
@@ -362,6 +362,7 @@ int help_action(int act, const char cmdname[], .../*void *argtable0[], void *arg
 //        arg_print_glossary(stdout,argtable5,"      %-20s %s\n");
 //        arg_print_glossary(stdout,argtable0,"      %-20s %s\n");
 
+        argcnt = va_arg(arglst2, int);
         for (int i = 0; i < argcnt; i++)
             arg_print_glossary(stdout, va_arg(arglst2, void**), "      %-20s %s\n");
         va_end(arglst2);
