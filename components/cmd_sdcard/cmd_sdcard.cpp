@@ -71,13 +71,23 @@ static int sdcard_cmd(int argc, char **argv)
 
 
 // argument tables for any subcommand of sdcard commqand
-static void
-    *args_help[1+1],	// h | help
-    *args_mount[3+1],	// m | mount [<device>] [<mountpoint>]
-    *args_umount[6+1],	// u | umount [ <device> | <mountpoint> ]
-    *args_ls[2+1],	// ls | dir [<pattern>]
-    *args_cat[2+1],	// cat <filename>
-    *args_type[4+1];	// type [<filename>]
+//static void
+//    *args_help[1+1],	// h | help
+//    *args_mount[3+1],	// m | mount [<device>] [<mountpoint>]
+//    *args_umount[6+1],	// u | umount [ <device> | <mountpoint> ]
+//    *args_ls[2+1],	// ls | dir [<pattern>]
+//    *args_cat[2+1],	// cat <filename>
+//    *args_type[4+1];	// type [<filename>]
+
+static struct
+{
+    void *help[1+1],	// h | help
+	*mount[3+1],	// m | mount [<device>] [<mountpoint>]
+	*umount[6+1],	// u | umount [ <device> | <mountpoint> ]
+	*ls[2+1],	// ls | dir [<pattern>]
+	*cat[2+1],	// cat <filename>
+	*type[4+1];	// type [<filename>]
+} args;
 
 
 // Register all SD-card commands
@@ -104,35 +114,59 @@ void register_sdcard_cmd(void)
 
 
     // syntax0: h | help
-    args_help[0] = arg_rex1(NULL, NULL, "h|help", "h|help", 0/*REG_ICASE*/, "help by subcommand of command 'sdcard'");
-    args_help[1] = arg_end(2);
+//    args_help[0] = arg_rex1(NULL, NULL, "h|help", "h|help", 0/*REG_ICASE*/, "help by subcommand of command 'sdcard'");
+    ::args.help[0] = arg_rex1(NULL, NULL, "h|help", "h|help", 0/*REG_ICASE*/, "help by subcommand of command 'sdcard'");
+//    args_help[1] = arg_end(2);
+    ::args.help[1] = arg_end(2);
     // syntax1: m | mount [<device>] [<mountpoint>] "m|mount", NULL, 0, "mount SD-card <device> to <mountpoint>, parameters are optional"
-    args_mount[0] = arg_rex1(NULL, NULL, "m|mount", NULL, 0, NULL);
-    args_mount[1] = arg_str0(NULL, NULL, "<device>", "SD card device name, if omitted - use ...");
-    args_mount[2] = arg_str0(NULL, NULL, "<mountpoint>", "path to mountpoint SD card, if omitted - use ...");
-    args_mount[3] = arg_end(2);
+//    args_mount[0] = arg_rex1(NULL, NULL, "m|mount", NULL, 0, NULL);
+    ::args.mount[0] = arg_rex1(NULL, NULL, "m|mount", NULL, 0, NULL);
+//    args_mount[1] = arg_str0(NULL, NULL, "<device>", "SD card device name, if omitted - use ...");
+    ::args.mount[1] = arg_str0(NULL, NULL, "<device>", "SD card device name, if omitted - use ...");
+//    args_mount[2] = arg_str0(NULL, NULL, "<mountpoint>", "path to mountpoint SD card, if omitted - use ...");
+    ::args.mount[2] = arg_str0(NULL, NULL, "<mountpoint>", "path to mountpoint SD card, if omitted - use ...");
+//    args_mount[3] = arg_end(2);
+    ::args.mount[3] = arg_end(2);
     // syntax2: u | umount [ <device> | <mountpoint> ] "unmount SD-card <device> or that was mounted to <path>; if all parameters omitted - use default values - ..."
-    args_umount[0] = arg_rex1(NULL, NULL, "u|umount", NULL, 0, NULL);
-    args_umount[1] = arg_rem ("[", NULL);
-    args_umount[2] = args_mount[1]; // arg_str0(NULL, NULL, "<device>", "SD card device name, if omitted - use ...");
-    args_umount[3] = arg_rem ("|", NULL);
-    args_umount[4] = args_mount[2]; // arg_str0(NULL, NULL, "<mountpoint>", "path to mountpoint SD card, if omitted - use ...");
-    args_umount[5] = arg_rem ("]", NULL);
-    args_umount[6] = arg_end(2);
+//    args_umount[0] = arg_rex1(NULL, NULL, "u|umount", NULL, 0, NULL);
+    ::args.umount[0] = arg_rex1(NULL, NULL, "u|umount", NULL, 0, NULL);
+//    args_umount[1] = arg_rem ("[", NULL);
+    ::args.umount[1] = arg_rem ("[", NULL);
+//    args_umount[2] = args_mount[1]; // arg_str0(NULL, NULL, "<device>", "SD card device name, if omitted - use ...");
+    ::args.umount[2] = ::args.mount[1]; // arg_str0(NULL, NULL, "<device>", "SD card device name, if omitted - use ...");
+//    args_umount[3] = arg_rem ("|", NULL);
+    ::args.umount[3] = arg_rem ("|", NULL);
+//    args_umount[4] = args_mount[2]; // arg_str0(NULL, NULL, "<mountpoint>", "path to mountpoint SD card, if omitted - use ...");
+    ::args.umount[4] = ::args.mount[2]; // arg_str0(NULL, NULL, "<mountpoint>", "path to mountpoint SD card, if omitted - use ...");
+//    args_umount[5] = arg_rem ("]", NULL);
+    ::args.umount[5] = arg_rem ("]", NULL);
+//    args_umount[6] = arg_end(2);
+    ::args.umount[6] = arg_end(2);
     // syntax3: ls | dir [<pattern>] "list directory contents on SD-card"
-    args_ls[0] = arg_rex1(NULL, NULL, "ls|dir", NULL, 0, NULL);
-    args_ls[1] = arg_str0(NULL, NULL, "<pattern>", "pattern or path in SD-card of the listed files in directory");
-    args_ls[2] = arg_end(2);
+//    args_ls[0] = arg_rex1(NULL, NULL, "ls|dir", NULL, 0, NULL);
+    ::args.ls[0] = arg_rex1(NULL, NULL, "ls|dir", NULL, 0, NULL);
+//    args_ls[1] = arg_str0(NULL, NULL, "<pattern>", "pattern or path in SD-card of the listed files in directory");
+    ::args.ls[1] = arg_str0(NULL, NULL, "<pattern>", "pattern or path in SD-card of the listed files in directory");
+//    args_ls[2] = arg_end(2);
+    ::args.ls[2] = arg_end(2);
     // syntax4: cat <filename> "print file to stdout (console output)"
-    args_cat[0] = arg_rex1(NULL, NULL, "cat", NULL, 0, NULL);
-    args_cat[1] = arg_str1(NULL, NULL, "<file>", "file name to be printed or the name of where the typed text is saved");
-    args_cat[2] = arg_end(2);
+//    args_cat[0] = arg_rex1(NULL, NULL, "cat", NULL, 0, NULL);
+    ::args.cat[0] = arg_rex1(NULL, NULL, "cat", NULL, 0, NULL);
+//    args_cat[1] = arg_str1(NULL, NULL, "<file>", "file name to be printed or the name of where the typed text is saved");
+    ::args.cat[1] = arg_str1(NULL, NULL, "<file>", "file name to be printed or the name of where the typed text is saved");
+//    args_cat[2] = arg_end(2);
+    ::args.cat[2] = arg_end(2);
     // syntax5: type [filename] "type from the keyboard to file & screen or screen only; <file name> - name of the file is to be printed; if omitted - print to screen only"
-    args_type[0] = arg_rex1(NULL, NULL, "type", NULL, 0, NULL);
-    args_type[1] = args_umount[1];  // arg_rem ("[", NULL);
-    args_type[2] = args_cat[1];
-    args_type[3] = args_umount[5];  // arg_rem ("]", NULL);
-    args_type[4] = arg_end(2);
+//    args_type[0] = arg_rex1(NULL, NULL, "type", NULL, 0, NULL);
+    ::args.type[0] = arg_rex1(NULL, NULL, "type", NULL, 0, NULL);
+//    args_type[1] = args_umount[1];  // arg_rem ("[", NULL);
+    ::args.type[1] = ::args.umount[1];  // arg_rem ("[", NULL);
+//    args_type[2] = args_cat[1];
+    ::args.type[2] = ::args.cat[1];
+//    args_type[3] = args_umount[5];  // arg_rem ("]", NULL);
+    ::args.type[3] = ::args.umount[5];  // arg_rem ("]", NULL);
+//    args_type[4] = arg_end(2);
+    ::args.type[4] = arg_end(2);
 
 
     const esp_console_cmd_t cmd2 = {
@@ -221,10 +255,11 @@ static int sdcard_cmd(int argc, char **argv)
     cout << "argc is   : " << argc << endl;
     for (int i = 0; i < argc; i++)
 	cout << "argv[" << i << "] is: " << argv[i] << endl;
-    cout << endl
-	 << " . . ." << endl
-	 << " <<   <<" << endl
-	 << " . . ." << endl
+    cout /*<< endl*/
+	 << "..............................................." << endl
+//	 << " . . ." << endl
+//	 << " <<   <<" << endl
+//	 << " . . ." << endl
 	 << endl;
     if (argc == 1)
 	return help_action(0, argv[0]);
@@ -241,8 +276,7 @@ static int sdcard_cmd(int argc, char **argv)
 	break;
 
     case sd_help:
-//	return help_action(0, argv[0], args_help, args_mount, args_umount, args_ls, args_cat, args_type);
-	return help_action(1, argv[0], 6, args_help, args_mount, args_umount, args_ls, args_cat, args_type);
+	return help_action(1, argv[0], 6, args.help, args.mount, args.umount, args.ls, args.cat, args.type);
 
     case sd_unknown:
     default:
