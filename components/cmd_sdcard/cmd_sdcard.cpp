@@ -189,6 +189,50 @@ static void register_cmd(const esp_console_cmd_t* cmd)
 }; /* register_cmd */
 
 
+
+
+// Check if a string is empty
+bool isempty(const char *str)
+{
+    if (str == NULL || !str[0])
+	return true;
+    for (int i = 0; i < strlen(str); i++)
+	if (!isspace(str[i]))
+	    return false;
+    return true;
+}; /* isempty */
+
+
+
+
+class SDcommand
+{
+public:
+
+    // sucommand id
+    enum subcommand_id {
+        subcmd_none,
+        subcmd_mount,
+        subcmd_unmount,
+        subcmd_ls,
+        subcmd_cat,
+        subcmd_type,
+        subcmd_help,
+        subcmd_unknown = -1
+    }; /* subcommand_id */
+
+    // Convert subcommand string to subcommand_id
+    static subcommand_id
+    subcommand(char subcmd_str[]);
+
+private:
+    int argc;
+    char* argv[];
+
+}; /*SDcommand*/
+
+
+#if 0
 // sucommand id
 enum SD_Subcommands_id {
     sd_none,
@@ -200,17 +244,6 @@ enum SD_Subcommands_id {
     sd_help,
     sd_unknown = -1
 }; /* sd_subcommands_id */
-
-// Test for empty string or NULL pointer
-bool isempty(const char *str)
-{
-    if (str == NULL || !str[0])
-	return true;
-    for (int i = 0; i < strlen(str); i++)
-	if (!isspace(str[i]))
-	    return false;
-    return true;
-}; /* isempty */
 
 // Convert subcommand string to subcommand_id
 SD_Subcommands_id
@@ -235,6 +268,7 @@ string2subcommand(char subcmd_str[])
 
     return sd_unknown;
 }; /* string2subcommand */
+#endif
 
 
 // help_action implements the actions for syntax 0
@@ -255,30 +289,32 @@ static int sdcard_cmd(int argc, char **argv)
     cout << "argc is   : " << argc << endl;
     for (int i = 0; i < argc; i++)
 	cout << "argv[" << i << "] is: " << argv[i] << endl;
-    cout /*<< endl*/
-	 << "..............................................." << endl
-//	 << " . . ." << endl
-//	 << " <<   <<" << endl
-//	 << " . . ." << endl
+    cout << "..............................................." /*<< endl*/
 	 << endl;
     if (argc == 1)
 	return help_action(0, argv[0]);
 
-    switch (string2subcommand(argv[1]))
+//    switch (string2subcommand(argv[1]))
+    switch (SDcommand::subcommand(argv[1]))
     {
-    case sd_mount:
-    case sd_unmount:
-    case sd_ls:
-    case sd_cat:
-    case sd_type:
+//    case sd_mount:
+    case SDcommand::subcmd_mount:
+//    case sd_unmount:
+    case SDcommand::subcmd_unmount:
+//    case sd_ls:
+    case SDcommand::subcmd_ls:
+//    case sd_cat:
+    case SDcommand::subcmd_cat:
+//    case sd_type:
+    case SDcommand::subcmd_type:
 	cout << "Command" << '\'' << argv[0] << ' ' << argv[1] << '\''
 	    << " is not yet implemented now." << endl;
 	break;
 
-    case sd_help:
+    case SDcommand::subcmd_help:
 	return help_action(1, argv[0], 6, args.help, args.mount, args.umount, args.ls, args.cat, args.type);
 
-    case sd_unknown:
+    case SDcommand::subcmd_unknown:
     default:
 	return help_action(-1, argv[0], argv[1]);
     }; /* switch string2subcommand(argv[1]) */
@@ -352,6 +388,34 @@ int help_action(int act, const char cmdname[], ...)
     va_end(arglst);
     return 0;
 }; /* help_action */
+
+
+// Convert subcommand string to subcommand_id
+SDcommand::subcommand_id
+SDcommand::subcommand(char subcmd_str[])
+{
+    if (isempty(subcmd_str))
+	return subcmd_none;
+    if (strcmp(subcmd_str, "help") == 0 || strcmp(subcmd_str, "h") == 0)
+    	return subcmd_help;
+    if (strcmp(subcmd_str, "mount") == 0 || strcmp(subcmd_str, "m") == 0)
+    	return subcmd_mount;
+    if (strcmp(subcmd_str, "umount") == 0 || strcmp(subcmd_str, "u") == 0)
+	return subcmd_unmount;
+    if (strcmp(subcmd_str, "ls") == 0 || strcmp(subcmd_str, "dir") == 0)
+	return subcmd_ls;
+    if (strcmp(subcmd_str, "cat") == 0)
+    	return subcmd_ls;
+    if (strcmp(subcmd_str, "type") == 0)
+    	return subcmd_type;
+
+    return subcmd_unknown;
+}; /* SDcommand::subcommand */
+
+
+
+
+
 
 
 #if 0
