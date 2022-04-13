@@ -196,6 +196,9 @@ public:
 
     void Init(int argc, char *argv[]);	// Initializing current command environment
 
+    // Reaction for subcommand missing
+    int act_none();
+
     // sucommand id
     enum cmd_id {
         none,
@@ -208,15 +211,18 @@ public:
         unknown = -1
     }; /* cmd_id */
 
-//    // Convert subcommand string to id
-//    static cmd_id
-//    id(char subcmd_str[]);
     // Return subcommand id
     cmd_id id();
+
+    // Recommendation to see help
+    static ostream&
+    help_offer(ostream& out);
 
 private:
     int argc;
     char **argv;
+
+    static char *cmdname;
 
 }; /* SDcmd */
 
@@ -350,39 +356,36 @@ int help_action(int act, const char cmdname[], ...)
     /* no command line options at all */
     va_end(arglst);
     printf("Try '%s help' for more information.\n", cmdname);
-    va_end(arglst);
+//    va_end(arglst);
     return 0;
 }; /* help_action */
 
 
-#if 0
-// Convert subcommand string to cmd_id
-SDcmd::cmd_id
-SDcmd::id(char subcmd_str[])
+// Reaction for subcommand missing
+int SDcmd::act_none()
 {
-//    if (isempty(subcmd_str))
-    if (isempty(subcmd_str))
-	return none;
-    if (strcmp(subcmd_str, "help") == 0 || strcmp(subcmd_str, "h") == 0)
-    	return help;
-    if (strcmp(subcmd_str, "mount") == 0 || strcmp(subcmd_str, "m") == 0)
-    	return mount;
-    if (strcmp(subcmd_str, "umount") == 0 || strcmp(subcmd_str, "u") == 0)
-	return unmount;
-    if (strcmp(subcmd_str, "ls") == 0 || strcmp(subcmd_str, "dir") == 0)
-	return ls;
-    if (strcmp(subcmd_str, "cat") == 0)
-    	return ls;
-    if (strcmp(subcmd_str, "type") == 0)
-    	return type;
+    cmdname = argv[0];
+    cout << "Options is absent." << endl
+	 << help_offer << endl;
+//    printf("Try '%s help' for more information.\n", argv[0]);
+    return 0;
+}; /* SDcmd::act_none */
 
-    return unknown;
-}; /* SDcommand::id */
-#else
-// Return command id
-SDcmd::cmd_id
-SDcmd::id()
+// Recommendation to see help
+ostream& SDcmd::help_offer(ostream& out)
 {
+//    printf("Try '%s help' for more information.\n", argv[0]);
+    out << "Try '" << cmdname << " help' for more information.";
+    return out;
+}; /* SDcmd::help_offer */
+
+
+
+// Return command id
+SDcmd::cmd_id SDcmd::id()
+{
+    if (argc < 2)
+	return none;
     if (isempty(argv[1]))
 	return none;
     if (strcmp(argv[1], "help") == 0 || strcmp(argv[1], "h") == 0)
@@ -400,7 +403,6 @@ SDcmd::id()
 
     return unknown;
 }; /* SDcommand::id */
-#endif
 
 
 
