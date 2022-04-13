@@ -51,22 +51,7 @@ static void register_cmd(const esp_console_cmd_t*);
 
 extern "C" {
 // Procedure of the 'sd' command
-static int sdcard_cmd(int argc, char **argv)
-//{
-//    cout << "Run the command \"sdcard\'" << endl
-//	 << endl;
-//    cout << "argc is   : " << argc << endl;
-//    for (int i = 0; i < argc; i++)
-//	cout << "argv[" << i << "] is: " << argv[i] << endl;
-//    cout << endl
-//	 << " . . ." << endl
-//	 << " <<   <<" << endl
-//	 << " . . ." << endl
-//	 << endl;
-//    cout << "Command " << argv[0] << "' is not yet implemented now." << endl
-//	 << endl;
-//    return 0;
-/*}*/; /* sd_cmd */
+static int sdcard_cmd(int argc, char **argv);
 }
 
 
@@ -122,9 +107,9 @@ void register_sdcard_cmd(void)
 //    args_mount[0] = arg_rex1(NULL, NULL, "m|mount", NULL, 0, NULL);
     ::args.mount[0] = arg_rex1(NULL, NULL, "m|mount", NULL, 0, NULL);
 //    args_mount[1] = arg_str0(NULL, NULL, "<device>", "SD card device name, if omitted - use ...");
-    ::args.mount[1] = arg_str0(NULL, NULL, "<device>", "SD card device name, if omitted - use ...");
+    ::args.mount[1] = arg_str0(NULL, NULL, "<device>", "SD card device name, if omitted - use default value");
 //    args_mount[2] = arg_str0(NULL, NULL, "<mountpoint>", "path to mountpoint SD card, if omitted - use ...");
-    ::args.mount[2] = arg_str0(NULL, NULL, "<mountpoint>", "path to mountpoint SD card, if omitted - use ...");
+    ::args.mount[2] = arg_str0(NULL, NULL, "<mountpoint>", "path to mountpoint SD card, if omitted - use default value");
 //    args_mount[3] = arg_end(2);
     ::args.mount[3] = arg_end(2);
     // syntax2: u | umount [ <device> | <mountpoint> ] "unmount SD-card <device> or that was mounted to <path>; if all parameters omitted - use default values - ..."
@@ -212,7 +197,7 @@ public:
     void Init(int argc, char *argv[]);	// Initializing current command environment
 
     // sucommand id
-    enum subcommand_id {
+    enum cmd_id {
         none,
         mount,
         unmount,
@@ -221,11 +206,13 @@ public:
         type,
         help,
         unknown = -1
-    }; /* subcommand_id */
+    }; /* cmd_id */
 
-    // Convert subcommand string to subcommand_id
-    static subcommand_id
-    subcommand(char subcmd_str[]);
+//    // Convert subcommand string to id
+//    static cmd_id
+//    id(char subcmd_str[]);
+    // Return subcommand id
+    cmd_id id();
 
 private:
     int argc;
@@ -262,17 +249,13 @@ static int sdcard_cmd(int argc, char **argv)
     if (argc == 1)
 	return help_action(0, argv[0]);
 
-    switch (SDcmd::subcommand(argv[1]))
+//    switch (SDcmd::id(argv[1]))
+    switch (sdcommand.id())
     {
-//    case sd_mount:
     case SDcmd::mount:
-//    case sd_unmount:
     case SDcmd::unmount:
-//    case sd_ls:
     case SDcmd::ls:
-//    case sd_cat:
     case SDcmd::cat:
-//    case sd_type:
     case SDcmd::type:
 	cout << "Command" << '\'' << argv[0] << ' ' << argv[1] << '\''
 	    << " is not yet implemented now." << endl;
@@ -334,7 +317,8 @@ int help_action(int act, const char cmdname[], ...)
 	}; /* for int i = 0; i < argcnt; i++ */
 	va_end(arglst);
 
-	printf("This program demonstrates the use of the argtable2 library\n");
+//	printf("This program demonstrates the use of the argtable2 library\n");
+	printf("The command '%s' is provide operating with SD-card in ESP32\n", cmdname);
 	printf("for parsing multiple command line syntaxes.\n");
 
 	va_start(arglst, cmdname);  // reset arglist pointer
@@ -371,10 +355,12 @@ int help_action(int act, const char cmdname[], ...)
 }; /* help_action */
 
 
-// Convert subcommand string to subcommand_id
-SDcmd::subcommand_id
-SDcmd::subcommand(char subcmd_str[])
+#if 0
+// Convert subcommand string to cmd_id
+SDcmd::cmd_id
+SDcmd::id(char subcmd_str[])
 {
+//    if (isempty(subcmd_str))
     if (isempty(subcmd_str))
 	return none;
     if (strcmp(subcmd_str, "help") == 0 || strcmp(subcmd_str, "h") == 0)
@@ -391,9 +377,30 @@ SDcmd::subcommand(char subcmd_str[])
     	return type;
 
     return unknown;
-}; /* SDcommand::subcommand */
+}; /* SDcommand::id */
+#else
+// Return command id
+SDcmd::cmd_id
+SDcmd::id()
+{
+    if (isempty(argv[1]))
+	return none;
+    if (strcmp(argv[1], "help") == 0 || strcmp(argv[1], "h") == 0)
+    	return help;
+    if (strcmp(argv[1], "mount") == 0 || strcmp(argv[1], "m") == 0)
+    	return mount;
+    if (strcmp(argv[1], "umount") == 0 || strcmp(argv[1], "u") == 0)
+	return unmount;
+    if (strcmp(argv[1], "ls") == 0 || strcmp(argv[1], "dir") == 0)
+	return ls;
+    if (strcmp(argv[1], "cat") == 0)
+    	return ls;
+    if (strcmp(argv[1], "type") == 0)
+    	return type;
 
-
+    return unknown;
+}; /* SDcommand::id */
+#endif
 
 
 
