@@ -194,7 +194,7 @@ class SDcmd
 {
 public:
 
-    void Init(int argc, char *argv[]);	// Initializing current command environment
+    void store(int argc, char *argv[]);	// Initializing current command environment
 
     int err_none();	// Handler for "subcommand missing" error.
     int err_unknown();	// Handler for "subcommand unknown" error.
@@ -231,13 +231,8 @@ private:
 
 static SDcmd sdcommand;
 
-// help_action implements the actions for syntax 0
-// Multisyntax!
-// Call variants:
-//// help_actions(int act = 0, const char cmdname[]) - call, if omittes cmd options
-//// help_actions(int act = -1, const char cmdname, char option[]) - call, if cmd option is unknown
-// help_action(int act = 1, const char cmdname[], int argcnt, void *argtable1[][, void* argtable2[]]...)
-int help_action(int act, const char cmdname[], ...);
+// help_action implements the actions for help
+int help_action(const char cmdname[], ...);
 
 
 //extern "C" {
@@ -252,7 +247,7 @@ static int sdcard_cmd(int argc, char **argv)
     cout << "..............................................." /*<< endl*/
 	 << endl;
 
-    sdcommand.Init(argc, argv);
+    sdcommand.store(argc, argv);
 
     if (argc == 1)
 //	return help_action(0, argv[0]);
@@ -270,7 +265,7 @@ static int sdcard_cmd(int argc, char **argv)
 	break;
 
     case SDcmd::help:
-	return help_action(1, argv[0], 6, args.help, args.mount, args.umount, args.ls, args.cat, args.type);
+	return help_action(argv[0], 6, args.help, args.mount, args.umount, args.ls, args.cat, args.type);
 
     case SDcmd::unknown:
     default:
@@ -292,80 +287,47 @@ static int sdcard_cmd(int argc, char **argv)
 
 
 // Initializing current command environment
-void SDcmd::Init(int argcnt, char *argvalue[])
+void SDcmd::store(int argcnt, char *argvalue[])
 {
     argc = argcnt;
     argv = argvalue;
-}; /* SDcmd::Init */
+}; /* SDcmd::store */
 
-// help_action implements the actions for syntax 0
-// Multisyntax!
-// Call variants:
-// help_actions(int act = 0, const char cmdname[]) - call, if omittes cmd options
-// help_actions(int act = -1, const char cmdname, char option[]) - call, if cmd option is unknown
-// help_action(int act = 1, const char cmdname[], int argcnt, void *argtable1[][, void* argtable2[]]...)
-int help_action(int act, const char cmdname[], ...)
+// help_action implements the actions for help
+int help_action(const char cmdname[], ...)
 {
 
 	va_list arglst;
+	va_start(arglst, cmdname);
 
-    va_start(arglst, cmdname);
+	int argcnt = va_arg(arglst, int);
 
-    /* help subcommand */
-    if (act == 1)
+    printf("Usage: %s", cmdname);
+    arg_print_syntax(stdout, va_arg(arglst, void**), "\n");
+    argcnt--;
+    for (int i = 0; i < argcnt; i++)
     {
-	    int argcnt = va_arg(arglst, int);
-
-	printf("Usage: %s", cmdname);
+	printf("       %s", cmdname);
 	arg_print_syntax(stdout, va_arg(arglst, void**), "\n");
-	argcnt--;
-	for (int i = 0; i < argcnt; i++)
-	{
-	    printf("       %s", cmdname);
-	    arg_print_syntax(stdout, va_arg(arglst, void**), "\n");
-	}; /* for int i = 0; i < argcnt; i++ */
-	va_end(arglst);
+    }; /* for int i = 0; i < argcnt; i++ */
+    va_end(arglst);
 
-//	printf("This program demonstrates the use of the argtable2 library\n");
-	printf("The command '%s' is provide operating with SD-card in ESP32\n", cmdname);
-	printf("for parsing multiple command line syntaxes.\n");
+//	printf("The command \"%s\" provide the using of an SD card on the ESP32.\n", cmdname);
+//	printf("Subcommands are: mount, unmount, ls, cat, type, help.\n");
+    cout << "The command \"" << cmdname << "\" is provide the using of an SD card on the ESP32" << endl;
+    printf("Subcommands are: mount, unmount, ls, cat, type, help.\n");
 
-	va_start(arglst, cmdname);  // reset arglist pointer
-        va_arg(arglst, int);	// drop unneded first variadic parameter from the list
-        for (int i = 0; i < argcnt; i++)
-	    arg_print_glossary(stdout, va_arg(arglst, void**), "      %-20s %s\n");
-        va_end(arglst);
-        return 0;
-    }; /* help */
-
-#if 0
-    /* --version option */
-    if (version)
-    {
-        printf("'%s' example program for the \"argtable\" command line argument parser.\n",cmdname);
-        return 0;
-    }; /* version */
-#endif
-
-#if 0
-    switch (act)
-    {
-    case 0:
-	printf("Options is absent.\n");
-	break;
-    case -1:
-    default:
-	printf ("Unknown options: \"%s\".\n", va_arg(arglst, char*));
-    }; /* switch act */
-    /* no command line options at all */
-    printf("Try '%s help' for more information.\n", cmdname);
-#endif
+    va_start(arglst, cmdname);  // reset arglist pointer
+    va_arg(arglst, int);	// drop unneded first variadic parameter from the list
+    for (int i = 0; i < argcnt; i++)
+	arg_print_glossary(stdout, va_arg(arglst, void**), "      %-20s %s\n");
     va_end(arglst);
     return 0;
+
 }; /* help_action */
 
 
-// Reaction for subcommand missing
+// Handler for "subcommand missing" error.
 int SDcmd::err_none()
 {
     cout << "Subcommand missing." << endl
@@ -394,7 +356,7 @@ ostream& (*SDcmd::help_offer())(ostream&)
 // Recommendation to see help
 ostream& SDcmd::_help_offer(ostream& out)
 {
-    out << "Try '" << cmdname << " help' for more information.";
+    out << "Try \"" << cmdname << " help\" for more information.";
     return out;
 }; /* SDcmd::help_offer */
 
