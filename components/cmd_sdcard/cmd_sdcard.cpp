@@ -73,7 +73,7 @@ static int sdcard_cmd(int argc, char **argv)
 // argument tables for any subcommand of sdcard commqand
 static void
     *args_help[1+1],	// h | help
-    *args_mount[3+1],	// m | mount [<device>] [<mountpoint>]
+    *args_mount[8+1],	// m | mount [<device>] [<mountpoint>]
     *args_umount[2+1],	// u | umount [ <device> | <mountpoint> ]
     *args_ls[2+1],	// ls | dir [<pattern>]
     *args_cat[2+1],	// cat <filename>
@@ -108,9 +108,16 @@ void register_sdcard_cmd(void)
     args_help[1] = arg_end(2);
     // syntax1: m | mount [<device>] [<mountpoint>] "m|mount", NULL, 0, "mount SD-card <device> to <mountpoint>, parameters are optional"
     args_mount[0] = arg_rex1(NULL, NULL, "m|mount", NULL, 0, NULL);
-    args_mount[1] = arg_str0(NULL, NULL, "<device>", "SD card device name, if omitted - use ...");
-    args_mount[2] = arg_str0(NULL, NULL, "<mountpoint>", "path to mountpoint SD card, if omitted - use ...");
-    args_mount[3] = arg_end(2);
+//    args_mount[1] = arg_str0(NULL, NULL, "<device>", "SD card device name, if omitted - use ...");
+//    args_mount[2] = arg_str0(NULL, NULL, "<mountpoint>", "path to mountpoint SD card, if omitted - use ...");
+    args_mount[1] = arg_rem ("[", NULL);
+    args_mount[2] = arg_str1(NULL, NULL, "<device>", "SD card device name, if omitted - use ...");
+    args_mount[3] = arg_rem ("]", NULL);
+    args_mount[4] = arg_rem (" ", NULL);
+    args_mount[5] = args_mount[1]; // arg_rem ("[", NULL);
+    args_mount[6] = arg_str1(NULL, NULL, "<mountpoint>", "path to mountpoint SD card, if omitted - use ...");
+    args_mount[7] = args_mount[3]; // arg_rem ("]", NULL);
+    args_mount[8] = arg_end(2);
     // syntax2: u | umount [ <device> | <mountpoint> ] "unmount SD-card <device> or that was mounted to <path>; if all parameters omitted - use default values - ..."
     args_umount[0] = arg_rex1(NULL, NULL, "u|umount", NULL, 0, NULL);
     args_umount[1] = arg_str0(NULL, NULL, "<device>|<path>", "SD card device or mountpoint, if omitted - use defaul value");
