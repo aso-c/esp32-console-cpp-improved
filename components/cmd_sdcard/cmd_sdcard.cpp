@@ -77,7 +77,7 @@ static void
     *args_umount[6+1],	// u | umount [ <device> | <mountpoint> ]
     *args_ls[2+1],	// ls | dir [<pattern>]
     *args_cat[2+1],	// cat <filename>
-    *args_type[2+1];	// type [filename]
+    *args_type[4+1];	// type [<filename>]
 
 
 // Register all SD-card commands
@@ -111,17 +111,8 @@ void register_sdcard_cmd(void)
     args_mount[1] = arg_str0(NULL, NULL, "<device>", "SD card device name, if omitted - use ...");
     args_mount[2] = arg_str0(NULL, NULL, "<mountpoint>", "path to mountpoint SD card, if omitted - use ...");
     args_mount[3] = arg_end(2);
-//    args_mount[1] = arg_rem ("[", NULL);
-//    args_mount[2] = arg_str1(NULL, NULL, "<device>", "SD card device name, if omitted - use default value");
-//    args_mount[3] = arg_rem ("]", NULL);
-//    args_mount[4] = arg_rem (" ", NULL);
-//    args_mount[5] = args_mount[1]; // arg_rem ("[", NULL);
-//    args_mount[6] = arg_str1(NULL, NULL, "<mountpoint>", "path to mountpoint SD card, if omitted - use default value");
-//    args_mount[7] = args_mount[3]; // arg_rem ("]", NULL);
-//    args_mount[8] = arg_end(2);
     // syntax2: u | umount [ <device> | <mountpoint> ] "unmount SD-card <device> or that was mounted to <path>; if all parameters omitted - use default values - ..."
     args_umount[0] = arg_rex1(NULL, NULL, "u|umount", NULL, 0, NULL);
-//    args_umount[1] = arg_str0(NULL, NULL, "<device>|<path>", "SD card device or mountpoint, if omitted - use defaul value");
     args_umount[1] = arg_rem ("[", NULL);
     args_umount[2] = args_mount[1]; // arg_str0(NULL, NULL, "<device>", "SD card device name, if omitted - use ...");
     args_umount[3] = arg_rem ("|", NULL);
@@ -138,9 +129,10 @@ void register_sdcard_cmd(void)
     args_cat[2] = arg_end(2);
     // syntax5: type [filename] "type from the keyboard to file & screen or screen only; <file name> - name of the file is to be printed; if omitted - print to screen only"
     args_type[0] = arg_rex1(NULL, NULL, "type", NULL, 0, NULL);
-//    args_type[1] = arg_str0(NULL, NULL, "<file name>", "the name of the file where the typed text is saved");
-    args_type[1] = args_cat[1];
-    args_type[2] = arg_end(2);
+    args_type[1] = args_umount[1];  // arg_rem ("[", NULL);
+    args_type[2] = args_cat[1];
+    args_type[3] = args_umount[5];  // arg_rem ("]", NULL);
+    args_type[4] = arg_end(2);
 
 
     const esp_console_cmd_t cmd2 = {
