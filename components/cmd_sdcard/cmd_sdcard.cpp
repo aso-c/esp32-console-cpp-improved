@@ -196,8 +196,8 @@ public:
 
     void Init(int argc, char *argv[]);	// Initializing current command environment
 
-    // Reaction for subcommand missing
-    int act_none();
+    int err_none();	// Handler for "subcommand missing" error.
+    int err_unknown();	// Handler for "subcommand unknown" error.
 
     // sucommand id
     enum cmd_id {
@@ -215,14 +215,16 @@ public:
     cmd_id id();
 
     // Recommendation to see help
-    static ostream&
-    help_offer(ostream& out);
+    ostream& (*help_offer())(ostream&);
 
 private:
     int argc;
     char **argv;
 
     static char *cmdname;
+    // Inner call for see help щааук
+    static ostream&
+    _help_offer(ostream& out);
 
 }; /* SDcmd */
 
@@ -232,8 +234,8 @@ static SDcmd sdcommand;
 // help_action implements the actions for syntax 0
 // Multisyntax!
 // Call variants:
-// help_actions(int act = 0, const char cmdname[]) - call, if omittes cmd options
-// help_actions(int act = -1, const char cmdname, char option[]) - call, if cmd option is unknown
+//// help_actions(int act = 0, const char cmdname[]) - call, if omittes cmd options
+//// help_actions(int act = -1, const char cmdname, char option[]) - call, if cmd option is unknown
 // help_action(int act = 1, const char cmdname[], int argcnt, void *argtable1[][, void* argtable2[]]...)
 int help_action(int act, const char cmdname[], ...);
 
@@ -253,9 +255,9 @@ static int sdcard_cmd(int argc, char **argv)
     sdcommand.Init(argc, argv);
 
     if (argc == 1)
-	return help_action(0, argv[0]);
+//	return help_action(0, argv[0]);
+	return sdcommand.err_none();
 
-//    switch (SDcmd::id(argv[1]))
     switch (sdcommand.id())
     {
     case SDcmd::mount:
@@ -272,8 +274,9 @@ static int sdcard_cmd(int argc, char **argv)
 
     case SDcmd::unknown:
     default:
-	return help_action(-1, argv[0], argv[1]);
-    }; /* switch string2subcommand(argv[1]) */
+//	return help_action(-1, argv[0], argv[1]);
+	return sdcommand.err_unknown();
+    }; /* switch sdcommand.id() */
 
     cout << endl;
     return 0;
@@ -344,6 +347,7 @@ int help_action(int act, const char cmdname[], ...)
     }; /* version */
 #endif
 
+#if 0
     switch (act)
     {
     case 0:
@@ -354,30 +358,48 @@ int help_action(int act, const char cmdname[], ...)
 	printf ("Unknown options: \"%s\".\n", va_arg(arglst, char*));
     }; /* switch act */
     /* no command line options at all */
-    va_end(arglst);
     printf("Try '%s help' for more information.\n", cmdname);
-//    va_end(arglst);
+#endif
+    va_end(arglst);
     return 0;
 }; /* help_action */
 
 
 // Reaction for subcommand missing
-int SDcmd::act_none()
+int SDcmd::err_none()
+{
+    cout << "Subcommand missing." << endl
+	 << help_offer() << endl;
+    return 0;
+}; /* SDcmd::err_none */
+
+// Handler for "subcommand unknown" error.
+int SDcmd::err_unknown()
+{
+//    printf ("Unknown options: \"%s\".\n", va_arg(arglst, char*));
+    cout << "Unknown options: \"" << argv[1] <<  "\"." << endl
+//    printf("Try '%s help' for more information.\n", cmdname);
+	 << help_offer() << endl;
+    return 0;
+}; /* SDcmd::err_unknown */
+
+
+ostream& (*SDcmd::help_offer())(ostream&)
 {
     cmdname = argv[0];
-    cout << "Options is absent." << endl
-	 << help_offer << endl;
-//    printf("Try '%s help' for more information.\n", argv[0]);
-    return 0;
-}; /* SDcmd::act_none */
+    return _help_offer;;
+}; /* SDcmd::help_offer */
+
 
 // Recommendation to see help
-ostream& SDcmd::help_offer(ostream& out)
+ostream& SDcmd::_help_offer(ostream& out)
 {
-//    printf("Try '%s help' for more information.\n", argv[0]);
     out << "Try '" << cmdname << " help' for more information.";
     return out;
 }; /* SDcmd::help_offer */
+
+// temporary storage for static method '_help_offer''
+char* SDcmd::cmdname;
 
 
 
