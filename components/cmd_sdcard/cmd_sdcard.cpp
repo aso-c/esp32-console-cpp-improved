@@ -205,20 +205,22 @@ bool isempty(const char *str)
 
 
 
-class SDcommand
+class SDcmd
 {
 public:
 
+    void Init(int argc, char *argv[]);	// Initializing current command environment
+
     // sucommand id
     enum subcommand_id {
-        subcmd_none,
-        subcmd_mount,
-        subcmd_unmount,
-        subcmd_ls,
-        subcmd_cat,
-        subcmd_type,
-        subcmd_help,
-        subcmd_unknown = -1
+        none,
+        mount,
+        unmount,
+        ls,
+        cat,
+        type,
+        help,
+        unknown = -1
     }; /* subcommand_id */
 
     // Convert subcommand string to subcommand_id
@@ -227,49 +229,12 @@ public:
 
 private:
     int argc;
-    char* argv[];
+    char **argv;
 
-}; /*SDcommand*/
+}; /* SDcmd */
 
 
-#if 0
-// sucommand id
-enum SD_Subcommands_id {
-    sd_none,
-    sd_mount,
-    sd_unmount,
-    sd_ls,
-    sd_cat,
-    sd_type,
-    sd_help,
-    sd_unknown = -1
-}; /* sd_subcommands_id */
-
-// Convert subcommand string to subcommand_id
-SD_Subcommands_id
-string2subcommand(char subcmd_str[])
-{
-//    if (subcmd_str == NULL || !subcmd_str[0])
-//	return sd_none;
-    if (isempty(subcmd_str))
-	return sd_none;
-    if (strcmp(subcmd_str, "help") == 0 || strcmp(subcmd_str, "h") == 0)
-	return sd_help;
-    if (strcmp(subcmd_str, "mount") == 0 || strcmp(subcmd_str, "m") == 0)
-	return sd_mount;
-    if (strcmp(subcmd_str, "umount") == 0 || strcmp(subcmd_str, "u") == 0)
-	return sd_unmount;
-    if (strcmp(subcmd_str, "ls") == 0 || strcmp(subcmd_str, "dir") == 0)
-	return sd_ls;
-    if (strcmp(subcmd_str, "cat") == 0)
-	return sd_ls;
-    if (strcmp(subcmd_str, "type") == 0)
-	return sd_type;
-
-    return sd_unknown;
-}; /* string2subcommand */
-#endif
-
+static SDcmd sdcommand;
 
 // help_action implements the actions for syntax 0
 // Multisyntax!
@@ -291,30 +256,32 @@ static int sdcard_cmd(int argc, char **argv)
 	cout << "argv[" << i << "] is: " << argv[i] << endl;
     cout << "..............................................." /*<< endl*/
 	 << endl;
+
+    sdcommand.Init(argc, argv);
+
     if (argc == 1)
 	return help_action(0, argv[0]);
 
-//    switch (string2subcommand(argv[1]))
-    switch (SDcommand::subcommand(argv[1]))
+    switch (SDcmd::subcommand(argv[1]))
     {
 //    case sd_mount:
-    case SDcommand::subcmd_mount:
+    case SDcmd::mount:
 //    case sd_unmount:
-    case SDcommand::subcmd_unmount:
+    case SDcmd::unmount:
 //    case sd_ls:
-    case SDcommand::subcmd_ls:
+    case SDcmd::ls:
 //    case sd_cat:
-    case SDcommand::subcmd_cat:
+    case SDcmd::cat:
 //    case sd_type:
-    case SDcommand::subcmd_type:
+    case SDcmd::type:
 	cout << "Command" << '\'' << argv[0] << ' ' << argv[1] << '\''
 	    << " is not yet implemented now." << endl;
 	break;
 
-    case SDcommand::subcmd_help:
+    case SDcmd::help:
 	return help_action(1, argv[0], 6, args.help, args.mount, args.umount, args.ls, args.cat, args.type);
 
-    case SDcommand::subcmd_unknown:
+    case SDcmd::unknown:
     default:
 	return help_action(-1, argv[0], argv[1]);
     }; /* switch string2subcommand(argv[1]) */
@@ -324,6 +291,20 @@ static int sdcard_cmd(int argc, char **argv)
 }; /* sd_cmd */
 //}
 
+
+
+
+
+//--[ class SDcmd ]-------------------------------------------------------------
+
+
+
+// Initializing current command environment
+void SDcmd::Init(int argcnt, char *argvalue[])
+{
+    argc = argcnt;
+    argv = argvalue;
+}; /* SDcmd::Init */
 
 // help_action implements the actions for syntax 0
 // Multisyntax!
@@ -391,25 +372,25 @@ int help_action(int act, const char cmdname[], ...)
 
 
 // Convert subcommand string to subcommand_id
-SDcommand::subcommand_id
-SDcommand::subcommand(char subcmd_str[])
+SDcmd::subcommand_id
+SDcmd::subcommand(char subcmd_str[])
 {
     if (isempty(subcmd_str))
-	return subcmd_none;
+	return none;
     if (strcmp(subcmd_str, "help") == 0 || strcmp(subcmd_str, "h") == 0)
-    	return subcmd_help;
+    	return help;
     if (strcmp(subcmd_str, "mount") == 0 || strcmp(subcmd_str, "m") == 0)
-    	return subcmd_mount;
+    	return mount;
     if (strcmp(subcmd_str, "umount") == 0 || strcmp(subcmd_str, "u") == 0)
-	return subcmd_unmount;
+	return unmount;
     if (strcmp(subcmd_str, "ls") == 0 || strcmp(subcmd_str, "dir") == 0)
-	return subcmd_ls;
+	return ls;
     if (strcmp(subcmd_str, "cat") == 0)
-    	return subcmd_ls;
+    	return ls;
     if (strcmp(subcmd_str, "type") == 0)
-    	return subcmd_type;
+    	return type;
 
-    return subcmd_unknown;
+    return unknown;
 }; /* SDcommand::subcommand */
 
 
