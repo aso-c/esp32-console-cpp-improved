@@ -198,6 +198,7 @@ public:
 
     int err_none();	// Handler for "subcommand missing" error.
     int err_unknown();	// Handler for "subcommand unknown" error.
+    int act_help();	// help_action was implements actions for help
 
     // sucommand id
     enum cmd_id { none, mount, unmount, ls, cat, type, help, unknown = -1 };
@@ -216,6 +217,9 @@ private:
     // Inner call for see help щааук
     static ostream&
     _help_offer(ostream& out);
+
+    // inner release of the help action implements
+    int _help_action(const char cmdname[], ...);
 
 }; /* SDcmd */
 
@@ -256,7 +260,8 @@ static int sdcard_cmd(int argc, char **argv)
 	break;
 
     case SDcmd::help:
-	return help_action(argv[0], 6, args.help, args.mount, args.umount, args.ls, args.cat, args.type);
+//	return help_action(argv[0], 6, args.help, args.mount, args.umount, args.ls, args.cat, args.type);
+	return sdcommand.act_help();
 
     case SDcmd::unknown:
     default:
@@ -318,6 +323,43 @@ int help_action(const char cmdname[], ...)
 
 }; /* help_action */
 
+// help_action was implements actions for help
+int SDcmd::act_help()
+{
+    return _help_action(argv[0], 6, args.help, args.mount, args.umount, args.ls, args.cat, args.type);
+}; /* SDcmd::act_help */
+
+
+// inner release of the help action implements
+int SDcmd::_help_action(const char cmdname[], ...)
+{
+
+	va_list arglst;
+	va_start(arglst, cmdname);
+
+	int argcnt = va_arg(arglst, int);
+
+cout << "Usage: " << cmdname;
+arg_print_syntax(stdout, va_arg(arglst, void**), "\n");
+for (int i = 1; i < argcnt; i++)
+{
+	cout << "       " << cmdname;
+	arg_print_syntax(stdout, va_arg(arglst, void**), "\n");
+}; /* for int i = 0; i < argcnt; i++ */
+va_end(arglst);
+
+cout << "Command \"" << cmdname << "\" supports the ESP32 operation with an SD card." << endl;
+cout << "Use subcommands to invoke individual operations; operation are: mount, unmount, ls, cat, type, help." << endl;
+
+va_start(arglst, cmdname);  // reset arglist pointer
+va_arg(arglst, int);	    // drop unneded first variadic parameter from the list
+for (int i = 0; i < argcnt; i++)
+	arg_print_glossary(stdout, va_arg(arglst, void**), "      %-20s %s\n");
+va_end(arglst);
+return 0;
+
+}; /* SDcmd::_help_action */
+
 
 // Handler for "subcommand missing" error.
 int SDcmd::err_none()
@@ -330,9 +372,7 @@ int SDcmd::err_none()
 // Handler for "subcommand unknown" error.
 int SDcmd::err_unknown()
 {
-//    printf ("Unknown options: \"%s\".\n", va_arg(arglst, char*));
     cout << "Unknown options: \"" << argv[1] <<  "\"." << endl
-//    printf("Try '%s help' for more information.\n", cmdname);
 	 << help_offer() << endl;
     return 0;
 }; /* SDcmd::err_unknown */
