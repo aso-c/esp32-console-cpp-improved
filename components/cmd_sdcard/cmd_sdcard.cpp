@@ -200,16 +200,7 @@ public:
     int err_unknown();	// Handler for "subcommand unknown" error.
 
     // sucommand id
-    enum cmd_id {
-        none,
-        mount,
-        unmount,
-        ls,
-        cat,
-        type,
-        help,
-        unknown = -1
-    }; /* cmd_id */
+    enum cmd_id { none, mount, unmount, ls, cat, type, help, unknown = -1 };
 
     // Return subcommand id
     cmd_id id();
@@ -302,12 +293,13 @@ int help_action(const char cmdname[], ...)
 
 	int argcnt = va_arg(arglst, int);
 
-    printf("Usage: %s", cmdname);
+//    printf("Usage: %s", cmdname);
+    cout << "Usage: " << cmdname;
     arg_print_syntax(stdout, va_arg(arglst, void**), "\n");
-    argcnt--;
-    for (int i = 0; i < argcnt; i++)
+    for (int i = 1; i < argcnt; i++)
     {
-	printf("       %s", cmdname);
+//	printf("       %s", cmdname);
+	cout << "       " << cmdname;
 	arg_print_syntax(stdout, va_arg(arglst, void**), "\n");
     }; /* for int i = 0; i < argcnt; i++ */
     va_end(arglst);
@@ -315,7 +307,7 @@ int help_action(const char cmdname[], ...)
 //	printf("The command \"%s\" provide the using of an SD card on the ESP32.\n", cmdname);
 //	printf("Subcommands are: mount, unmount, ls, cat, type, help.\n");
     cout << "The command \"" << cmdname << "\" is provide the using of an SD card on the ESP32" << endl;
-    printf("Subcommands are: mount, unmount, ls, cat, type, help.\n");
+    cout << "Subcommands are: mount, unmount, ls, cat, type, help." << endl;
 
     va_start(arglst, cmdname);  // reset arglist pointer
     va_arg(arglst, int);	// drop unneded first variadic parameter from the list
