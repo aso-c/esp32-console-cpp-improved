@@ -219,20 +219,12 @@ public:
 
     HelpHint help_hint;
 
-    //    ostream& (*help_offer())(ostream&);
-//    ostream& help_hint(ostream&);
     friend ostream&
 	operator << (ostream&, const HelpHint&);
-//	operator << (ostream&, ostream& (SDcmd::*manip)(ostream&));
 
 private:
     int argc;
     char **argv;
-
-//    static char *cmdname;
-//    // Inner call for see help щааук
-//    static ostream&
-//    _help_offer(ostream& out);
 
     // inner release of the help action implements
     int _help_action(int argcnt,...);
@@ -258,7 +250,6 @@ static int sdcard_cmd(int argc, char **argv)
     sdcommand.store(argc, argv);
 
     if (argc == 1)
-//	return help_action(0, argv[0]);
 	return sdcommand.err_none();
 
     switch (sdcommand.id())
@@ -273,12 +264,10 @@ static int sdcard_cmd(int argc, char **argv)
 	break;
 
     case SDcmd::help:
-//	return help_action(argv[0], 6, args.help, args.mount, args.umount, args.ls, args.cat, args.type);
 	return sdcommand.act_help();
 
     case SDcmd::unknown:
     default:
-//	return help_action(-1, argv[0], argv[1]);
 	return sdcommand.err_unknown();
     }; /* switch sdcommand.id() */
 
@@ -323,20 +312,15 @@ int SDcmd::_help_action(int argcnt, ...)
 	va_list arglst;
 	va_start(arglst, argcnt);
 
-//	int argcnt = va_arg(arglst, int);
-
-//cout << "Usage: " << cmdname;
 cout << "Usage: " << argv[0];
 arg_print_syntax(stdout, va_arg(arglst, void**), "\n");
 for (int i = 1; i < argcnt; i++)
 {
-//	cout << "       " << cmdname;
 	cout << "       " << argv[0];
 	arg_print_syntax(stdout, va_arg(arglst, void**), "\n");
 }; /* for int i = 0; i < argcnt; i++ */
 va_end(arglst);
 
-//cout << "Command \"" << cmdname << "\" supports the ESP32 operation with an SD card." << endl;
 cout << "Command \"" << argv[0] << "\" supports the ESP32 operation with an SD card." << endl;
 cout << "Use subcommands to invoke individual operations; operation are: mount, unmount, ls, cat, type, help." << endl;
 
@@ -379,8 +363,6 @@ SDcmd::cmd_id SDcmd::id()
 int SDcmd::err_none()
 {
     cout << "Subcommand missing." << endl
-//	 << help_offer() << endl;
-//	 << &SDcmd::help_offer << endl;
 	 << help_hint << endl;
     return 0;
 }; /* SDcmd::err_none */
@@ -389,8 +371,6 @@ int SDcmd::err_none()
 int SDcmd::err_unknown()
 {
     cout << "Unknown options: \"" << argv[1] <<  "\"." << endl
-//	 << help_offer() << endl;
-//	 << help_offer << endl;
 	 << help_hint << endl;
     return 0;
 }; /* SDcmd::err_unknown */
@@ -402,36 +382,6 @@ ostream& operator << (ostream& out, const SDcmd::HelpHint& hint)
     return out;
 }; /* ostream& operator << */
 
-
-
-//// Recommendation to see help, redefinition as friend function
-//ostream& SDcmd::help_offer(ostream& out)
-//{
-//    return out << "Try \"" << argv[0] << " help\" for more information.";
-//}; /* SDcmd::help_offer */
-
-//ostream& operator << (ostream& out, ostream& (SDcmd::*manip)(ostream&))
-//{
-//    return out;
-//}; /* ostream& operator << */
-
-
-//ostream& (*SDcmd::help_offer())(ostream&)
-//{
-//    cmdname = argv[0];
-//    return _help_offer;;
-//}; /* SDcmd::help_offer */
-
-
-//// Recommendation to see help
-//ostream& SDcmd::_help_offer(ostream& out)
-//{
-//    out << "Try \"" << cmdname << " help\" for more information.";
-//    return out;
-//}; /* SDcmd::help_offer */
-//
-//// temporary storage for static method '_help_offer''
-//char* SDcmd::cmdname = NULL;
 
 
 //--[ Inner class of prompter, that recommended to see a help ]----
