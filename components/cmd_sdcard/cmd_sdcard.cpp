@@ -64,15 +64,15 @@ static int sdcard_cmd(int argc, char **argv);
 //    *args_cat[2+1],	// cat <filename>
 //    *args_type[4+1];	// type [<filename>]
 
-static struct
-{
-    void *help[1+1],	// h | help
-	*mount[3+1],	// m | mount [<device>] [<mountpoint>]
-	*umount[6+1],	// u | umount [ <device> | <mountpoint> ]
-	*ls[2+1],	// ls | dir [<pattern>]
-	*cat[2+1],	// cat <filename>
-	*type[4+1];	// type [<filename>]
-} args;
+//static struct
+//{
+//    void *help[1+1],	// h | help
+//	*mount[3+1],	// m | mount [<device>] [<mountpoint>]
+//	*umount[6+1],	// u | umount [ <device> | <mountpoint> ]
+//	*ls[2+1],	// ls | dir [<pattern>]
+//	*cat[2+1],	// cat <filename>
+//	*type[4+1];	// type [<filename>]
+//} args;
 
 
 // Register all SD-card commands
@@ -97,7 +97,7 @@ void register_sdcard_cmd(void)
 	};
     register_cmd(&cmd);
 
-
+#if 0
     // syntax0: h | help
 //    args_help[0] = arg_rex1(NULL, NULL, "h|help", "h|help", 0/*REG_ICASE*/, "help by subcommand of command 'sdcard'");
     ::args.help[0] = arg_rex1(NULL, NULL, "h|help", "h|help", 0/*REG_ICASE*/, "help by subcommand of command 'sdcard'");
@@ -152,6 +152,7 @@ void register_sdcard_cmd(void)
     ::args.type[3] = ::args.umount[5];  // arg_rem ("]", NULL);
 //    args_type[4] = arg_end(2);
     ::args.type[4] = arg_end(2);
+#endif
 
 
     const esp_console_cmd_t cmd2 = {
@@ -341,11 +342,11 @@ int SDcmd::InitSyntaxs()
 //    args_umount[1] = arg_rem ("[", NULL);
 		arg_rem ("[", NULL),
 //    args_umount[2] = args_mount[1]; // arg_str0(NULL, NULL, "<device>", "SD card device name, if omitted - use ...");
-		args.mount[1], // arg_str0(NULL, NULL, "<device>", "SD card device name, if omitted - use ...");
+		arg_mnt[1], // arg_str0(NULL, NULL, "<device>", "SD card device name, if omitted - use ...");
 //    args_umount[3] = arg_rem ("|", NULL);
 		arg_rem ("|", NULL),
 //    args_umount[4] = args_mount[2]; // arg_str0(NULL, NULL, "<mountpoint>", "path to mountpoint SD card, if omitted - use ...");
-		args.mount[2], // arg_str0(NULL, NULL, "<mountpoint>", "path to mountpoint SD card, if omitted - use ...");
+		arg_mnt[2], // arg_str0(NULL, NULL, "<mountpoint>", "path to mountpoint SD card, if omitted - use ...");
 //    args_umount[5] = arg_rem ("]", NULL);
 		arg_rem ("]", NULL),
 //    args_umount[6] = arg_end(2);
@@ -374,11 +375,11 @@ int SDcmd::InitSyntaxs()
 //    args_type[0] = arg_rex1(NULL, NULL, "type", NULL, 0, NULL);
 		arg_rex1(NULL, NULL, "type", NULL, 0, NULL),
 //    args_type[1] = args_umount[1];  // arg_rem ("[", NULL);
-		::args.umount[1],  // arg_rem ("[", NULL);
+		arg_umnt[1],  // arg_rem ("[", NULL);
 //    args_type[2] = args_cat[1];
-		::args.cat[1],
+		arg_cat[1],
 //    args_type[3] = args_umount[5];  // arg_rem ("]", NULL);
-		::args.umount[5],  // arg_rem ("]", NULL);
+		arg_umnt[5],  // arg_rem ("]", NULL);
 //    args_type[4] = arg_end(2);
 		arg_end(2),
 	};
@@ -402,8 +403,8 @@ int SDcmd::InitSyntaxs()
 // help_action was implements actions for help
 int SDcmd::act_help()
 {
-//    return _help_action(argv[0], 6, args.help, args.mount, args.umount, args.ls, args.cat, args.type);
-    return _help_action(6, args.mount, args.umount, args.ls, args.cat, args.type, args.help);
+//    return _help_action(6, args.mount, args.umount, args.ls, args.cat, args.type, args.help);
+    return _help_action(6, ((void**)all_syntaxes)[0], ((void**)all_syntaxes)[1], ((void**)all_syntaxes)[2], ((void**)all_syntaxes)[3], ((void**)all_syntaxes)[4], ((void**)all_syntaxes)[5]);
 }; /* SDcmd::act_help */
 
 
