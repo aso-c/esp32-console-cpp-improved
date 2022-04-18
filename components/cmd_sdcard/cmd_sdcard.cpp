@@ -228,7 +228,8 @@ private:
     char **argv;
 
     // inner release of the help action implements
-    int _help_action(int argcnt,...);
+//    int _help_action(int argcnt,...);
+    int _help_action(void* hlp_arg[],...);
 
     // Initialize all syntax tables
     int InitSyntaxs();
@@ -404,35 +405,66 @@ int SDcmd::InitSyntaxs()
 int SDcmd::act_help()
 {
 //    return _help_action(6, args.mount, args.umount, args.ls, args.cat, args.type, args.help);
-    return _help_action(6, ((void**)all_syntaxes)[0], ((void**)all_syntaxes)[1], ((void**)all_syntaxes)[2], ((void**)all_syntaxes)[3], ((void**)all_syntaxes)[4], ((void**)all_syntaxes)[5]);
+//    return _help_action(6, ((void**)all_syntaxes)[0], ((void**)all_syntaxes)[1], ((void**)all_syntaxes)[2], ((void**)all_syntaxes)[3], ((void**)all_syntaxes)[4], ((void**)all_syntaxes)[5]);
+    return _help_action((void**)(*(void**)all_syntaxes), ((void**)all_syntaxes)[1], ((void**)all_syntaxes)[2], ((void**)all_syntaxes)[3], ((void**)all_syntaxes)[4], ((void**)all_syntaxes)[5], NULL);
 }; /* SDcmd::act_help */
 
 
 // inner release of the help action implements
-int SDcmd::_help_action(int argcnt, ...)
+//int SDcmd::_help_action(int argcnt, ...)
+int SDcmd::_help_action(void* hlp_arg[],...)
 {
 
 	va_list arglst;
-	va_start(arglst, argcnt);
+//	va_start(arglst, argcnt);
+	va_start(arglst, hlp_arg);
+	void** curr_arg;
 
-cout << "Usage: " << argv[0];
-arg_print_syntax(stdout, va_arg(arglst, void**), "\n");
-for (int i = 1; i < argcnt; i++)
-{
+    if (!hlp_arg)
+    {
+	cout << "!!! Error: syntax tables is undefined. !!!" << endl;
+	cout << "Abort command" << endl;
+	return -1;
+    }; /* if !hlp_arg */
+    cout << "Usage: " << argv[0];
+    curr_arg = va_arg(arglst, void**);
+    if (curr_arg)
+    //    arg_print_syntax(stdout, va_arg(arglst, void**), "\n");
+        arg_print_syntax(stdout, curr_arg, "\n");
+    else
+    {
+	arg_print_syntax(stdout, hlp_arg, "\n");
+	return 0;
+    }; /* else if curr_arg */
+    curr_arg = va_arg(arglst, void**);
+//    for (int i = 1; i < argcnt; i++)
+    while (curr_arg)
+    {
 	cout << "       " << argv[0];
-	arg_print_syntax(stdout, va_arg(arglst, void**), "\n");
-}; /* for int i = 0; i < argcnt; i++ */
-va_end(arglst);
+//	arg_print_syntax(stdout, va_arg(arglst, void**), "\n");
+	arg_print_syntax(stdout, curr_arg, "\n");
+	curr_arg = va_arg(arglst, void**);
+    }; /* while curr_arg */
+//    }; /* for int i = 0; i < argcnt; i++ */
+    va_end(arglst);
+    cout << "       " << argv[0];
+    arg_print_syntax(stdout, hlp_arg, "\n");
 
-cout << "Command \"" << argv[0] << "\" supports the ESP32 operation with an SD card." << endl;
-cout << "Use subcommands to invoke individual operations; operation are: mount, unmount, ls, cat, type, help." << endl;
+    cout << "Command \"" << argv[0] << "\" supports the ESP32 operation with an SD card." << endl;
+    cout << "Use subcommands to invoke individual operations; operation are: mount, unmount, ls, cat, type, help." << endl;
 
-va_start(arglst, argcnt);  // reset arglist pointer
-//va_arg(arglst, int);	    // drop unneded first variadic parameter from the list
-for (int i = 0; i < argcnt; i++)
-	arg_print_glossary(stdout, va_arg(arglst, void**), "      %-20s %s\n");
-va_end(arglst);
-return 0;
+    va_start(arglst, hlp_arg);  // reset arglist pointer
+    curr_arg = va_arg(arglst, void**);
+//    for (int i = 0; i < argcnt; i++)
+    while (curr_arg)
+    {
+//	arg_print_glossary(stdout, va_arg(arglst, void**), "      %-20s %s\n");
+	arg_print_glossary(stdout, curr_arg, "      %-20s %s\n");
+	curr_arg = va_arg(arglst, void**);
+    }; /* while curr_arg */
+    va_end(arglst);
+    arg_print_glossary(stdout, hlp_arg, "      %-20s %s\n");
+    return 0;
 
 }; /* SDcmd::_help_action */
 
