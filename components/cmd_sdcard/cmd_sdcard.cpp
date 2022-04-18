@@ -97,63 +97,6 @@ void register_sdcard_cmd(void)
 	};
     register_cmd(&cmd);
 
-#if 0
-    // syntax0: h | help
-//    args_help[0] = arg_rex1(NULL, NULL, "h|help", "h|help", 0/*REG_ICASE*/, "help by subcommand of command 'sdcard'");
-    ::args.help[0] = arg_rex1(NULL, NULL, "h|help", "h|help", 0/*REG_ICASE*/, "help by subcommand of command 'sdcard'");
-//    args_help[1] = arg_end(2);
-    ::args.help[1] = arg_end(2);
-    // syntax1: m | mount [<device>] [<mountpoint>] "m|mount", NULL, 0, "mount SD-card <device> to <mountpoint>, parameters are optional"
-//    args_mount[0] = arg_rex1(NULL, NULL, "m|mount", NULL, 0, NULL);
-    ::args.mount[0] = arg_rex1(NULL, NULL, "m|mount", NULL, 0, NULL);
-//    args_mount[1] = arg_str0(NULL, NULL, "<device>", "SD card device name, if omitted - use ...");
-    ::args.mount[1] = arg_str0(NULL, NULL, "<device>", "SD card device name, if omitted - use default value");
-//    args_mount[2] = arg_str0(NULL, NULL, "<mountpoint>", "path to mountpoint SD card, if omitted - use ...");
-    ::args.mount[2] = arg_str0(NULL, NULL, "<mountpoint>", "path to mountpoint SD card, if omitted - use default value");
-//    args_mount[3] = arg_end(2);
-    ::args.mount[3] = arg_end(2);
-    // syntax2: u | umount [ <device> | <mountpoint> ] "unmount SD-card <device> or that was mounted to <path>; if all parameters omitted - use default values - ..."
-//    args_umount[0] = arg_rex1(NULL, NULL, "u|umount", NULL, 0, NULL);
-    ::args.umount[0] = arg_rex1(NULL, NULL, "u|umount", NULL, 0, NULL);
-//    args_umount[1] = arg_rem ("[", NULL);
-    ::args.umount[1] = arg_rem ("[", NULL);
-//    args_umount[2] = args_mount[1]; // arg_str0(NULL, NULL, "<device>", "SD card device name, if omitted - use ...");
-    ::args.umount[2] = ::args.mount[1]; // arg_str0(NULL, NULL, "<device>", "SD card device name, if omitted - use ...");
-//    args_umount[3] = arg_rem ("|", NULL);
-    ::args.umount[3] = arg_rem ("|", NULL);
-//    args_umount[4] = args_mount[2]; // arg_str0(NULL, NULL, "<mountpoint>", "path to mountpoint SD card, if omitted - use ...");
-    ::args.umount[4] = ::args.mount[2]; // arg_str0(NULL, NULL, "<mountpoint>", "path to mountpoint SD card, if omitted - use ...");
-//    args_umount[5] = arg_rem ("]", NULL);
-    ::args.umount[5] = arg_rem ("]", NULL);
-//    args_umount[6] = arg_end(2);
-    ::args.umount[6] = arg_end(2);
-    // syntax3: ls | dir [<pattern>] "list directory contents on SD-card"
-//    args_ls[0] = arg_rex1(NULL, NULL, "ls|dir", NULL, 0, NULL);
-    ::args.ls[0] = arg_rex1(NULL, NULL, "ls|dir", NULL, 0, NULL);
-//    args_ls[1] = arg_str0(NULL, NULL, "<pattern>", "pattern or path in SD-card of the listed files in directory");
-    ::args.ls[1] = arg_str0(NULL, NULL, "<pattern>", "pattern or path in SD-card of the listed files in directory");
-//    args_ls[2] = arg_end(2);
-    ::args.ls[2] = arg_end(2);
-    // syntax4: cat <filename> "print file to stdout (console output)"
-//    args_cat[0] = arg_rex1(NULL, NULL, "cat", NULL, 0, NULL);
-    ::args.cat[0] = arg_rex1(NULL, NULL, "cat", NULL, 0, NULL);
-//    args_cat[1] = arg_str1(NULL, NULL, "<file>", "file name to be printed or the name of where the typed text is saved");
-    ::args.cat[1] = arg_str1(NULL, NULL, "<file>", "file name to be printed or the name of where the typed text is saved");
-//    args_cat[2] = arg_end(2);
-    ::args.cat[2] = arg_end(2);
-    // syntax5: type [filename] "type from the keyboard to file & screen or screen only; <file name> - name of the file is to be printed; if omitted - print to screen only"
-//    args_type[0] = arg_rex1(NULL, NULL, "type", NULL, 0, NULL);
-    ::args.type[0] = arg_rex1(NULL, NULL, "type", NULL, 0, NULL);
-//    args_type[1] = args_umount[1];  // arg_rem ("[", NULL);
-    ::args.type[1] = ::args.umount[1];  // arg_rem ("[", NULL);
-//    args_type[2] = args_cat[1];
-    ::args.type[2] = ::args.cat[1];
-//    args_type[3] = args_umount[5];  // arg_rem ("]", NULL);
-    ::args.type[3] = ::args.umount[5];  // arg_rem ("]", NULL);
-//    args_type[4] = arg_end(2);
-    ::args.type[4] = arg_end(2);
-#endif
-
 
     const esp_console_cmd_t cmd2 = {
         .command = "sd",
@@ -229,11 +172,11 @@ private:
 
     // inner release of the help action implements
 //    int _help_action(int argcnt,...);
-    int _help_action(void* hlp_arg[],...);
+    int help_action(void* hlp_arg[],...);
 
     // Initialize all syntax tables
     int InitSyntaxs();
-    static void* all_syntaxes;	// syntax table storage
+    static void** all_syntaxes;	// syntax table storage
 
 }; /* SDcmd */
 
@@ -305,7 +248,7 @@ void SDcmd::store(int argcnt, char *argvalue[])
 
 
 // syntax table storage
-void* SDcmd::all_syntaxes = NULL;
+void** SDcmd::all_syntaxes = NULL;
 
 // Initialize all syntax tables
 int SDcmd::InitSyntaxs()
@@ -404,19 +347,15 @@ int SDcmd::InitSyntaxs()
 // help_action was implements actions for help
 int SDcmd::act_help()
 {
-//    return _help_action(6, args.mount, args.umount, args.ls, args.cat, args.type, args.help);
-//    return _help_action(6, ((void**)all_syntaxes)[0], ((void**)all_syntaxes)[1], ((void**)all_syntaxes)[2], ((void**)all_syntaxes)[3], ((void**)all_syntaxes)[4], ((void**)all_syntaxes)[5]);
-    return _help_action((void**)(*(void**)all_syntaxes), ((void**)all_syntaxes)[1], ((void**)all_syntaxes)[2], ((void**)all_syntaxes)[3], ((void**)all_syntaxes)[4], ((void**)all_syntaxes)[5], NULL);
+    return help_action((void**)all_syntaxes[0], all_syntaxes[1], all_syntaxes[2], all_syntaxes[3], all_syntaxes[4], all_syntaxes[5], NULL);
 }; /* SDcmd::act_help */
 
 
 // inner release of the help action implements
-//int SDcmd::_help_action(int argcnt, ...)
-int SDcmd::_help_action(void* hlp_arg[],...)
+int SDcmd::help_action(void* hlp_arg[],...)
 {
 
 	va_list arglst;
-//	va_start(arglst, argcnt);
 	va_start(arglst, hlp_arg);
 	void** curr_arg;
 
@@ -429,7 +368,6 @@ int SDcmd::_help_action(void* hlp_arg[],...)
     cout << "Usage: " << argv[0];
     curr_arg = va_arg(arglst, void**);
     if (curr_arg)
-    //    arg_print_syntax(stdout, va_arg(arglst, void**), "\n");
         arg_print_syntax(stdout, curr_arg, "\n");
     else
     {
@@ -437,15 +375,12 @@ int SDcmd::_help_action(void* hlp_arg[],...)
 	return 0;
     }; /* else if curr_arg */
     curr_arg = va_arg(arglst, void**);
-//    for (int i = 1; i < argcnt; i++)
     while (curr_arg)
     {
 	cout << "       " << argv[0];
-//	arg_print_syntax(stdout, va_arg(arglst, void**), "\n");
 	arg_print_syntax(stdout, curr_arg, "\n");
 	curr_arg = va_arg(arglst, void**);
     }; /* while curr_arg */
-//    }; /* for int i = 0; i < argcnt; i++ */
     va_end(arglst);
     cout << "       " << argv[0];
     arg_print_syntax(stdout, hlp_arg, "\n");
@@ -455,10 +390,8 @@ int SDcmd::_help_action(void* hlp_arg[],...)
 
     va_start(arglst, hlp_arg);  // reset arglist pointer
     curr_arg = va_arg(arglst, void**);
-//    for (int i = 0; i < argcnt; i++)
     while (curr_arg)
     {
-//	arg_print_glossary(stdout, va_arg(arglst, void**), "      %-20s %s\n");
 	arg_print_glossary(stdout, curr_arg, "      %-20s %s\n");
 	curr_arg = va_arg(arglst, void**);
     }; /* while curr_arg */
