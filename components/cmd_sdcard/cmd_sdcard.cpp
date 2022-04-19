@@ -183,12 +183,31 @@ private:
 
     static SDctrl& instance;    // Unique single instance of the SDcmd object
 
+    // Contains Syntax tables for subcommand for 'sdcard' command
+    class Syntax
+    {
+    public:
+	static Syntax& get();
+	int help();
+	static void** tables();
+    private:
+	Syntax();
+	Syntax(Syntax&) = delete;	// blocking of copy constructor
+	Syntax& operator =(const Syntax&) = delete;	// blocking of operator '='
+	int help_action(void* hlp_arg[],...);	// inner release of the help action implements
+
+	static SDctrl& parent;
+	static void** alltables;	// for initializing singleton at the initial phase of programm
+    };
+
     // inner release of the help action implements
     int help_action(void* hlp_arg[],...);
 
     // Initialize all syntax tables
     int InitSyntaxs();
     static void** all_syntaxes;	// syntax table storage
+
+    static Syntax& syntax;	// reference to inner 'syntqx' object
 
 }; /* SDctrl */
 
@@ -221,15 +240,17 @@ static int sdcard_cmd(int argc, char **argv)
 SDctrl::SDctrl():
 	help_hint(this),
 	argc(0),
-	argv(nullptr)
+	argv(nullptr)/*,*/
+	/*syntax(Syntax::get())*/
 { InitSyntaxs(); };
 
 
 // constructor for testing initialization
 SDctrl::SDctrl(int cnt):
-help_hint(this),
-argc(0),
-argv(nullptr)
+	help_hint(this),
+	argc(0),
+	argv(nullptr)/*,*/
+	/*syntax(Syntax::get())*/
 {
     cout << "** Alternative constructor:                              **" << endl
 	 << "** Initializing of the unuque sungle instance reference. **" << endl
@@ -241,7 +262,6 @@ argv(nullptr)
 SDctrl& SDctrl::cmd()
 {
 	static SDctrl instance(2);
-
     return instance;
 }
 
@@ -299,6 +319,7 @@ void SDctrl::store(int argcnt, char *argvalue[])
 
 // syntax table storage
 void** SDctrl::all_syntaxes = NULL;
+SDctrl::Syntax& SDctrl::syntax = SDctrl::Syntax::get();
 
 // Initialize all syntax tables
 int SDctrl::InitSyntaxs()
@@ -502,7 +523,7 @@ ostream& operator << (ostream& out, const SDctrl::HelpHint& hint)
 
 
 
-//--[ Inner class of prompter, that recommended to see a help ]----
+//--[ Inner class of prompter, that recommend to see a help ]-------------------
 
 // Constructor
 SDctrl::HelpHint::HelpHint(SDctrl* owner):
@@ -514,6 +535,41 @@ SDctrl::HelpHint::operator()(ostream& out) const
 {
     out << "Try \"" << ownsd->argv[0] << " help\" for more information.";
 }; /* SDcmd::HelpHint::operator() */
+
+//--[ Inner class of the Syntax Contains Syntax tables for subcommand for 'sdcard' command ]---
+
+//SDctrl::Syntax::Syntax(SDctrl& pater): parent(pater)
+SDctrl::Syntax::Syntax()
+{
+
+    cout << "<<< Initializing the Syntax class (SDcmd::Syntax)" << cout;
+};
+
+SDctrl::Syntax& SDctrl::Syntax::get()
+{
+	static Syntax instance;
+    return instance;
+}; /* SDctrl::Syntax::get */
+
+SDctrl& SDctrl::Syntax::parent = SDctrl::cmd();
+
+#if 0
+class Syntax
+{
+public:
+	static Syntax& get();
+	int help();
+	static void** tables();
+private:
+	Syntax(const SDctrl*);
+	Syntax(Syntax&) = delete;	// blocking of copy constructor
+	Syntax& operator =(const Syntax&) = delete;	// blocking of operator '='
+	int help_action(void* hlp_arg[],...);	// inner release of the help action implements
+
+	const SDctrl& parent;
+	static void** alltables;	// for initializing singleton at the initial phase of programm
+};
+#endif
 
 
 #if 0
