@@ -161,6 +161,7 @@ public:
     public:
 	HelpHint(SDctrl*);
 	void operator()(ostream&) const;
+
     private:
 	SDctrl* ownsd;
     }; /* HelpHint */
@@ -208,32 +209,6 @@ static int sdcard_cmd(int argc, char **argv)
 //    SDctrl::cmd().store(argc, argv);
     return SDctrl::exec(argc, argv);
 
-#if 0
-    if (argc == 1)
-	return SDctrl::cmd().err_none();
-
-    switch (SDctrl::cmd().id())
-    {
-    case SDctrl::mount:
-    case SDctrl::unmount:
-    case SDctrl::ls:
-    case SDctrl::cat:
-    case SDctrl::type:
-	cout << "Command" << '\'' << argv[0] << ' ' << argv[1] << '\''
-	    << " is not yet implemented now." << endl;
-	break;
-
-    case SDctrl::help:
-	return SDctrl::cmd().act_help();
-
-    case SDctrl::unknown:
-    default:
-	return SDctrl::cmd().err_unknown();
-    }; /* switch SDctrl::cmd().id() */
-
-    cout << endl;
-    return 0;
-#endif
 }; /* sd_cmd */
 //}
 
@@ -278,12 +253,15 @@ SDctrl& SDctrl::instance = SDctrl::cmd();
 int SDctrl::exec(int argc, char **argv)
 {
 
-    SDctrl::cmd().store(argc, argv);
+//    SDctrl::cmd().store(argc, argv);
+    instance.store(argc, argv);
 
     if (argc == 1)
-	return SDctrl::cmd().err_none();
+//	return SDctrl::cmd().err_none();
+	return instance.err_none();
 
-    switch (SDctrl::cmd().id())
+//    switch (SDctrl::cmd().id())
+    switch (instance.id())
     {
     case SDctrl::mount:
     case SDctrl::unmount:
@@ -295,12 +273,15 @@ int SDctrl::exec(int argc, char **argv)
 	break;
 
     case SDctrl::help:
-	return SDctrl::cmd().act_help();
+//	return SDctrl::cmd().act_help();
+	return instance.act_help();
 
     case SDctrl::unknown:
     default:
-	return SDctrl::cmd().err_unknown();
-    }; /* switch SDctrl::cmd().id() */
+//	return SDctrl::cmd().err_unknown();
+	return instance.err_unknown();
+//    }; /* switch SDctrl::cmd().id() */
+    }; /* switch instance.id() */
 
     cout << endl;
     return 0;
