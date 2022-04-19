@@ -55,26 +55,6 @@ static int sdcard_cmd(int argc, char **argv);
 }
 
 
-// argument tables for any subcommand of sdcard commqand
-//static void
-//    *args_help[1+1],	// h | help
-//    *args_mount[3+1],	// m | mount [<device>] [<mountpoint>]
-//    *args_umount[6+1],	// u | umount [ <device> | <mountpoint> ]
-//    *args_ls[2+1],	// ls | dir [<pattern>]
-//    *args_cat[2+1],	// cat <filename>
-//    *args_type[4+1];	// type [<filename>]
-
-//static struct
-//{
-//    void *help[1+1],	// h | help
-//	*mount[3+1],	// m | mount [<device>] [<mountpoint>]
-//	*umount[6+1],	// u | umount [ <device> | <mountpoint> ]
-//	*ls[2+1],	// ls | dir [<pattern>]
-//	*cat[2+1],	// cat <filename>
-//	*type[4+1];	// type [<filename>]
-//} args;
-
-
 // Register all SD-card commands
 void register_sdcard_cmd(void)
 {
@@ -134,12 +114,34 @@ bool isempty(const char *str)
 
 
 
+// argument tables for any subcommand of sdcard commqand
+//static void
+//    *args_help[1+1],	// h | help
+//    *args_mount[3+1],	// m | mount [<device>] [<mountpoint>]
+//    *args_umount[6+1],	// u | umount [ <device> | <mountpoint> ]
+//    *args_ls[2+1],	// ls | dir [<pattern>]
+//    *args_cat[2+1],	// cat <filename>
+//    *args_type[4+1];	// type [<filename>]
+
+//static struct
+//{
+//    void *help[1+1],	// h | help
+//	*mount[3+1],	// m | mount [<device>] [<mountpoint>]
+//	*umount[6+1],	// u | umount [ <device> | <mountpoint> ]
+//	*ls[2+1],	// ls | dir [<pattern>]
+//	*cat[2+1],	// cat <filename>
+//	*type[4+1];	// type [<filename>]
+//} args;
+
+// classs of the SD command implementation
 class SDcmd
 {
 public:
 
     SDcmd();
+    SDcmd(int);		// constructor for testing initialization
     void store(int argc, char *argv[]);	// Initializing current command environment
+    static SDcmd& get();// get unigue single instance of the SDcmd object
 
     int err_none();	// Handler for "subcommand missing" error.
     int err_unknown();	// Handler for "subcommand unknown" error.
@@ -170,8 +172,10 @@ private:
     int argc;
     char **argv;
 
+//    // Unique single instance of the SDcmd object
+//    static SDcmd& instance;
+
     // inner release of the help action implements
-//    int _help_action(int argcnt,...);
     int help_action(void* hlp_arg[],...);
 
     // Initialize all syntax tables
@@ -181,7 +185,7 @@ private:
 }; /* SDcmd */
 
 
-static SDcmd sdcommand;
+//static SDcmd sdcommand;
 
 
 //extern "C" {
@@ -196,12 +200,15 @@ static int sdcard_cmd(int argc, char **argv)
     cout << "..............................................." /*<< endl*/
 	 << endl;
 
-    sdcommand.store(argc, argv);
+//    sdcommand.store(argc, argv);
+    SDcmd::get().store(argc, argv);
 
     if (argc == 1)
-	return sdcommand.err_none();
+//	return sdcommand.err_none();
+	return SDcmd::get().err_none();
 
-    switch (sdcommand.id())
+//    switch (sdcommand.id())
+    switch (SDcmd::get().id())
     {
     case SDcmd::mount:
     case SDcmd::unmount:
@@ -213,19 +220,19 @@ static int sdcard_cmd(int argc, char **argv)
 	break;
 
     case SDcmd::help:
-	return sdcommand.act_help();
+//	return sdcommand.act_help();
+	return SDcmd::get().act_help();
 
     case SDcmd::unknown:
     default:
-	return sdcommand.err_unknown();
+//	return sdcommand.err_unknown();
+	return SDcmd::get().err_unknown();
     }; /* switch sdcommand.id() */
 
     cout << endl;
     return 0;
 }; /* sd_cmd */
 //}
-
-
 
 
 
@@ -238,6 +245,32 @@ SDcmd::SDcmd():
 	argc(0),
 	argv(nullptr)
 { InitSyntaxs(); };
+
+
+// constructor for testing initialization
+SDcmd::SDcmd(int cnt):
+help_hint(this),
+argc(0),
+argv(nullptr)
+{
+    cout << "** Alternative constructor:                              **" << endl
+	 << "** Initializing of the unuque sungle instance reference. **" << endl
+	 << "** Index number is: " << cnt << "                                    **" << endl;
+    InitSyntaxs();
+};
+
+//// Unique single instance of the SDcmd object
+//SDcmd& SDcmd::instance = SDcmd(2);
+
+// get unigue single instance of the SDcmd object
+SDcmd& SDcmd::get()
+{
+	static SDcmd instance(2);
+
+    return instance;
+}
+
+
 
 // Initializing current command environment
 void SDcmd::store(int argcnt, char *argvalue[])
