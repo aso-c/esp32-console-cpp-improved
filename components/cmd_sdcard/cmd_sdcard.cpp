@@ -46,6 +46,9 @@ using namespace std;
  *	+ mv, move	- move or rename file, options: [<src file>|<dest file>];
  */
 
+
+
+
 // Register command procedure
 static void register_cmd(const esp_console_cmd_t*);
 
@@ -133,15 +136,14 @@ bool isempty(const char *str)
 //	*type[4+1];	// type [<filename>]
 //} args;
 
-// classs of the SD command implementation
-class SDcmd
+// classs of the SD control command implementation
+class SDctrl
 {
 public:
 
-    SDcmd();
-    SDcmd(int);		// constructor for testing initialization
     void store(int argc, char *argv[]);	// Initializing current command environment
-    static SDcmd& get();// get unigue single instance of the SDcmd object
+    static SDctrl& cmd();// get unigue single instance of the SDcmd object
+    static int exec(int argc, char **argv);	// execute the 'SD' command
 
     int err_none();	// Handler for "subcommand missing" error.
     int err_unknown();	// Handler for "subcommand unknown" error.
@@ -157,10 +159,10 @@ public:
     class HelpHint
     {
     public:
-	HelpHint(SDcmd*);
+	HelpHint(SDctrl*);
 	void operator()(ostream&) const;
     private:
-	SDcmd* ownsd;
+	SDctrl* ownsd;
     }; /* HelpHint */
 
     HelpHint help_hint;
@@ -172,8 +174,13 @@ private:
     int argc;
     char **argv;
 
-//    // Unique single instance of the SDcmd object
-//    static SDcmd& instance;
+
+    SDctrl();		// Default constructor - private for singleton
+    SDctrl(int);		// constructor for testing initialization
+    SDctrl(SDctrl&) = delete;	// copy constructor forbidden for singleton
+    SDctrl& operator =(const SDctrl&) = delete;	// operator "=" - forbidden for singleton
+
+    static SDctrl& instance;    // Unique single instance of the SDcmd object
 
     // inner release of the help action implements
     int help_action(void* hlp_arg[],...);
@@ -182,10 +189,8 @@ private:
     int InitSyntaxs();
     static void** all_syntaxes;	// syntax table storage
 
-}; /* SDcmd */
+}; /* SDctrl */
 
-
-//static SDcmd sdcommand;
 
 
 //extern "C" {
@@ -200,37 +205,35 @@ static int sdcard_cmd(int argc, char **argv)
     cout << "..............................................." /*<< endl*/
 	 << endl;
 
-//    sdcommand.store(argc, argv);
-    SDcmd::get().store(argc, argv);
+//    SDctrl::cmd().store(argc, argv);
+    return SDctrl::exec(argc, argv);
 
+#if 0
     if (argc == 1)
-//	return sdcommand.err_none();
-	return SDcmd::get().err_none();
+	return SDctrl::cmd().err_none();
 
-//    switch (sdcommand.id())
-    switch (SDcmd::get().id())
+    switch (SDctrl::cmd().id())
     {
-    case SDcmd::mount:
-    case SDcmd::unmount:
-    case SDcmd::ls:
-    case SDcmd::cat:
-    case SDcmd::type:
+    case SDctrl::mount:
+    case SDctrl::unmount:
+    case SDctrl::ls:
+    case SDctrl::cat:
+    case SDctrl::type:
 	cout << "Command" << '\'' << argv[0] << ' ' << argv[1] << '\''
 	    << " is not yet implemented now." << endl;
 	break;
 
-    case SDcmd::help:
-//	return sdcommand.act_help();
-	return SDcmd::get().act_help();
+    case SDctrl::help:
+	return SDctrl::cmd().act_help();
 
-    case SDcmd::unknown:
+    case SDctrl::unknown:
     default:
-//	return sdcommand.err_unknown();
-	return SDcmd::get().err_unknown();
-    }; /* switch sdcommand.id() */
+	return SDctrl::cmd().err_unknown();
+    }; /* switch SDctrl::cmd().id() */
 
     cout << endl;
     return 0;
+#endif
 }; /* sd_cmd */
 //}
 
@@ -240,7 +243,7 @@ static int sdcard_cmd(int argc, char **argv)
 
 
 // Default constructor
-SDcmd::SDcmd():
+SDctrl::SDctrl():
 	help_hint(this),
 	argc(0),
 	argv(nullptr)
@@ -248,7 +251,7 @@ SDcmd::SDcmd():
 
 
 // constructor for testing initialization
-SDcmd::SDcmd(int cnt):
+SDctrl::SDctrl(int cnt):
 help_hint(this),
 argc(0),
 argv(nullptr)
@@ -259,21 +262,54 @@ argv(nullptr)
     InitSyntaxs();
 };
 
-//// Unique single instance of the SDcmd object
-//SDcmd& SDcmd::instance = SDcmd(2);
-
 // get unigue single instance of the SDcmd object
-SDcmd& SDcmd::get()
+SDctrl& SDctrl::cmd()
 {
-	static SDcmd instance(2);
+	static SDctrl instance(2);
 
     return instance;
 }
 
+// Unique single instance of the SDcmd object
+SDctrl& SDctrl::instance = SDctrl::cmd();
+
+
+// execute the 'SD' command
+int SDctrl::exec(int argc, char **argv)
+{
+
+    SDctrl::cmd().store(argc, argv);
+
+    if (argc == 1)
+	return SDctrl::cmd().err_none();
+
+    switch (SDctrl::cmd().id())
+    {
+    case SDctrl::mount:
+    case SDctrl::unmount:
+    case SDctrl::ls:
+    case SDctrl::cat:
+    case SDctrl::type:
+	cout << "Command" << '\'' << argv[0] << ' ' << argv[1] << '\''
+	    << " is not yet implemented now." << endl;
+	break;
+
+    case SDctrl::help:
+	return SDctrl::cmd().act_help();
+
+    case SDctrl::unknown:
+    default:
+	return SDctrl::cmd().err_unknown();
+    }; /* switch SDctrl::cmd().id() */
+
+    cout << endl;
+    return 0;
+}; /* SDctrl::exec */
+
 
 
 // Initializing current command environment
-void SDcmd::store(int argcnt, char *argvalue[])
+void SDctrl::store(int argcnt, char *argvalue[])
 {
     argc = argcnt;
     argv = argvalue;
@@ -281,10 +317,10 @@ void SDcmd::store(int argcnt, char *argvalue[])
 
 
 // syntax table storage
-void** SDcmd::all_syntaxes = NULL;
+void** SDctrl::all_syntaxes = NULL;
 
 // Initialize all syntax tables
-int SDcmd::InitSyntaxs()
+int SDctrl::InitSyntaxs()
 {
     cout << "*** Enter  to Syntax Initializing. ***" << endl;
 
@@ -378,14 +414,14 @@ int SDcmd::InitSyntaxs()
 
 
 // help_action was implements actions for help
-int SDcmd::act_help()
+int SDctrl::act_help()
 {
     return help_action((void**)all_syntaxes[0], all_syntaxes[1], all_syntaxes[2], all_syntaxes[3], all_syntaxes[4], all_syntaxes[5], NULL);
 }; /* SDcmd::act_help */
 
 
 // inner release of the help action implements
-int SDcmd::help_action(void* hlp_arg[],...)
+int SDctrl::help_action(void* hlp_arg[],...)
 {
 
 	va_list arglst;
@@ -436,7 +472,7 @@ int SDcmd::help_action(void* hlp_arg[],...)
 
 
 // Return command id
-SDcmd::cmd_id SDcmd::id()
+SDctrl::cmd_id SDctrl::id()
 {
     if (argc < 2)
 	return none;
@@ -456,12 +492,12 @@ SDcmd::cmd_id SDcmd::id()
     	return type;
 
     return unknown;
-}; /* SDcmd::id */
+}; /* SDctrl::id */
 
 
 
 // Handler for "subcommand missing" error.
-int SDcmd::err_none()
+int SDctrl::err_none()
 {
     cout << "Subcommand missing." << endl
 	 << help_hint << endl;
@@ -469,7 +505,7 @@ int SDcmd::err_none()
 }; /* SDcmd::err_none */
 
 // Handler for "subcommand unknown" error.
-int SDcmd::err_unknown()
+int SDctrl::err_unknown()
 {
     cout << "Unknown options: \"" << argv[1] <<  "\"." << endl
 	 << help_hint << endl;
@@ -477,7 +513,7 @@ int SDcmd::err_unknown()
 }; /* SDcmd::err_unknown */
 
 
-ostream& operator << (ostream& out, const SDcmd::HelpHint& hint)
+ostream& operator << (ostream& out, const SDctrl::HelpHint& hint)
 {
     hint(out);
     return out;
@@ -488,12 +524,12 @@ ostream& operator << (ostream& out, const SDcmd::HelpHint& hint)
 //--[ Inner class of prompter, that recommended to see a help ]----
 
 // Constructor
-SDcmd::HelpHint::HelpHint(SDcmd* owner):
+SDctrl::HelpHint::HelpHint(SDctrl* owner):
 	ownsd(owner)
 {};
 
 void
-SDcmd::HelpHint::operator()(ostream& out) const
+SDctrl::HelpHint::operator()(ostream& out) const
 {
     out << "Try \"" << ownsd->argv[0] << " help\" for more information.";
 }; /* SDcmd::HelpHint::operator() */
