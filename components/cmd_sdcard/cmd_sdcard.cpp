@@ -187,11 +187,12 @@ private:
 	static Syntax& get();
 	int help();
 	static void** tables();
+	static ostream& hint(ostream&);	// hint for the command - suggest to see help
+
     private:
 	Syntax();
-//	int InitSyntaxes();	    // Initialize all syntax tables
 
-	int help_action(void* hlp_arg[],...);	// inner release of the help action implements
+//	int help_action(void* hlp_arg[],...);	// inner release of the help action implements
 
 	Syntax(Syntax&) = delete;	// blocking of copy constructor
 	Syntax& operator =(const Syntax&) = delete;	// blocking of operator '='
@@ -334,7 +335,8 @@ SDctrl::cmd_id SDctrl::id()
 int SDctrl::err_none()
 {
     cout << "Subcommand missing." << endl
-	 << help_hint << endl;
+//	 << help_hint << endl;
+	 << syntax.hint << endl;
     return 0;
 }; /* SDcmd::err_none */
 
@@ -342,7 +344,8 @@ int SDctrl::err_none()
 int SDctrl::err_unknown()
 {
     cout << "Unknown options: \"" << argv[1] <<  "\"." << endl
-	 << help_hint << endl;
+//	 << help_hint << endl;
+	 << syntax.hint << endl;
     return 0;
 }; /* SDcmd::err_unknown */
 
@@ -390,6 +393,15 @@ SDctrl::Syntax& SDctrl::Syntax::get()
 	static Syntax instance;
     return instance;
 }; /* SDctrl::Syntax::get */
+
+
+// hint for the command - suggest to see help
+ostream& SDctrl::Syntax::hint(ostream& out)
+{
+    out << "Try \"" << parent.argv[0] << " help\" for more information.";
+    return out;
+}; /* SDctrl::Syntax::hint */
+
 
 
 
@@ -502,24 +514,23 @@ int SDctrl::Syntax::help()
 
     cout << "#### Help action, implemented in the SDcmd::Syntax class, method help(). ####" << endl;
 
-    if (!tables() || !tables()[0])
+    if (!tables())
     {
 	cout << "!!! Error: syntax tables is undefined. !!!" << endl;
 	cout << "Abort command" << endl;
-	return -1;
+	return -2;
     }; /* if !hlp_arg */
 
-//    cout << "Usage: " << parent.argv[0];
-//    curr_arg = va_arg(arglst, void**);
+    if (!tables()[0])
+    {
+	cout << "!!! Error: syntax tables for 1'st command is undefined. !!!" << endl;
+	cout << "Abort command" << endl;
+	return -1;
+    }; /* if !tables()[0] */
+
     cout << "Usage: " << parent.argv[0];
-//    if (curr_arg)
-//        arg_print_syntax(stdout, curr_arg, "\n");
-//    else
-//    {
-//	arg_print_syntax(stdout, hlp_arg, "\n");
-//	return 0;
-//    }; /* else if curr_arg */
     arg_print_syntax(stdout, (void**)alltables[0], "\n");
+
     for (void **currcmd = tables() + 1; *currcmd != NULL; currcmd++)
     {
 	cout << "       " << parent.argv[0];
@@ -539,49 +550,6 @@ int SDctrl::Syntax::help()
 }; /* SDctrl::Syntax::help */
 
 
-
-// inner release of the help action implements
-int SDctrl::Syntax::help_action(void* hlp_arg[],...)
-{
-
-    cout << "#### Help action, implemented in the SDcmd::Syntax class. ####" << endl;
-
-//    if (!hlp_arg)
-    if (!tables() || !tables()[0])
-    {
-	cout << "!!! Error: syntax tables is undefined. !!!" << endl;
-	cout << "Abort command" << endl;
-	return -1;
-    }; /* if !hlp_arg */
-
-//    cout << "Usage: " << parent.argv[0];
-//    curr_arg = va_arg(arglst, void**);
-    cout << "Usage: " << parent.argv[0];
-//    if (curr_arg)
-//        arg_print_syntax(stdout, curr_arg, "\n");
-//    else
-//    {
-//	arg_print_syntax(stdout, hlp_arg, "\n");
-//	return 0;
-//    }; /* else if curr_arg */
-    arg_print_syntax(stdout, (void**)alltables[0], "\n");
-    for (void **currcmd = tables() + 1; *currcmd != NULL; currcmd++)
-    {
-	cout << "       " << parent.argv[0];
-	arg_print_syntax(stdout, (void**)*currcmd, "\n");
-    }; /* for void **currcmd */
-    cout << "       " << parent.argv[0];
-    arg_print_syntax(stdout, (void**)alltables[0], "\n");
-
-    cout << "Command \"" << parent.argv[0] << "\" supports the ESP32 operation with an SD card." << endl;
-    cout << "Use subcommands to invoke individual operations; operation are: mount, unmount, ls, cat, type, help." << endl;
-
-    for (void **currcmd = tables(); *currcmd != NULL; currcmd++)
-	arg_print_glossary(stdout, (void**)*currcmd, "      %-20s %s\n");
-
-    return 0;
-
-}; /* SDcmd::Syntax::help_action */
 
 
 
