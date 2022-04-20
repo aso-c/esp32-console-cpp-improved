@@ -498,7 +498,44 @@ void** SDctrl::Syntax::alltables = nullptr;
 
 int SDctrl::Syntax::help()
 {
-    return help_action((void**)alltables[0], alltables[1], alltables[2], alltables[3], alltables[4], alltables[5], NULL);
+//    return help_action((void**)alltables[0], alltables[1], alltables[2], alltables[3], alltables[4], alltables[5], NULL);
+
+    cout << "#### Help action, implemented in the SDcmd::Syntax class, method help(). ####" << endl;
+
+    if (!tables() || !tables()[0])
+    {
+	cout << "!!! Error: syntax tables is undefined. !!!" << endl;
+	cout << "Abort command" << endl;
+	return -1;
+    }; /* if !hlp_arg */
+
+//    cout << "Usage: " << parent.argv[0];
+//    curr_arg = va_arg(arglst, void**);
+    cout << "Usage: " << parent.argv[0];
+//    if (curr_arg)
+//        arg_print_syntax(stdout, curr_arg, "\n");
+//    else
+//    {
+//	arg_print_syntax(stdout, hlp_arg, "\n");
+//	return 0;
+//    }; /* else if curr_arg */
+    arg_print_syntax(stdout, (void**)alltables[0], "\n");
+    for (void **currcmd = tables() + 1; *currcmd != NULL; currcmd++)
+    {
+	cout << "       " << parent.argv[0];
+	arg_print_syntax(stdout, (void**)*currcmd, "\n");
+    }; /* for void **currcmd */
+    cout << "       " << parent.argv[0];
+    arg_print_syntax(stdout, (void**)alltables[0], "\n");
+
+    cout << "Command \"" << parent.argv[0] << "\" supports the ESP32 operation with an SD card." << endl;
+    cout << "Use subcommands to invoke individual operations; operation are: mount, unmount, ls, cat, type, help." << endl;
+
+    for (void **currcmd = tables(); *currcmd != NULL; currcmd++)
+	arg_print_glossary(stdout, (void**)*currcmd, "      %-20s %s\n");
+
+    return 0;
+
 }; /* SDctrl::Syntax::help */
 
 
@@ -506,11 +543,6 @@ int SDctrl::Syntax::help()
 // inner release of the help action implements
 int SDctrl::Syntax::help_action(void* hlp_arg[],...)
 {
-
-//	va_list arglst;
-//	va_start(arglst, hlp_arg);
-	void** curr_arg;
-
 
     cout << "#### Help action, implemented in the SDcmd::Syntax class. ####" << endl;
 
@@ -533,48 +565,20 @@ int SDctrl::Syntax::help_action(void* hlp_arg[],...)
 //	return 0;
 //    }; /* else if curr_arg */
     arg_print_syntax(stdout, (void**)alltables[0], "\n");
-#if 0
-    curr_arg = va_arg(arglst, void**);
-    while (curr_arg)
-    {
-	cout << "       " << parent.argv[0];
-	arg_print_syntax(stdout, curr_arg, "\n");
-	curr_arg = va_arg(arglst, void**);
-    }; /* while curr_arg */
-    va_end(arglst);
-#else
     for (void **currcmd = tables() + 1; *currcmd != NULL; currcmd++)
     {
 	cout << "       " << parent.argv[0];
 	arg_print_syntax(stdout, (void**)*currcmd, "\n");
     }; /* for void **currcmd */
-#endif
     cout << "       " << parent.argv[0];
-//    arg_print_syntax(stdout, hlp_arg, "\n");
     arg_print_syntax(stdout, (void**)alltables[0], "\n");
 
     cout << "Command \"" << parent.argv[0] << "\" supports the ESP32 operation with an SD card." << endl;
     cout << "Use subcommands to invoke individual operations; operation are: mount, unmount, ls, cat, type, help." << endl;
 
-#if 0
-    va_start(arglst, hlp_arg);  // reset arglist pointer
-    curr_arg = va_arg(arglst, void**);
-    while (curr_arg)
-    {
-	arg_print_glossary(stdout, curr_arg, "      %-20s %s\n");
-	curr_arg = va_arg(arglst, void**);
-    }; /* while curr_arg */
-    va_end(arglst);
-    arg_print_glossary(stdout, hlp_arg, "      %-20s %s\n");
-#else
     for (void **currcmd = tables(); *currcmd != NULL; currcmd++)
-    {
-//	cout << "       " << parent.argv[0];
-//	arg_print_syntax(stdout, (void**)*currcmd, "\n");
-
 	arg_print_glossary(stdout, (void**)*currcmd, "      %-20s %s\n");
-    }; /* for void **currcmd */
-#endif
+
     return 0;
 
 }; /* SDcmd::Syntax::help_action */
