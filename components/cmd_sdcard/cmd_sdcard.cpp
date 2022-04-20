@@ -189,7 +189,7 @@ private:
 	static void** tables();
     private:
 	Syntax();
-	int InitSyntaxes();	    // Initialize all syntax tables
+//	int InitSyntaxes();	    // Initialize all syntax tables
 
 	int help_action(void* hlp_arg[],...);	// inner release of the help action implements
 
@@ -201,7 +201,7 @@ private:
     };
 
     static SDctrl& instance;    // Unique single instance of the SDcmd object
-    static Syntax& syntax;	// reference to inner 'syntax' object, contains all syntax tables
+    static Syntax& syntax;	// reference to inner 'syntax' object, contain`s all syntax tables
 
 }; /* SDctrl */
 
@@ -379,6 +379,7 @@ SDctrl::Syntax::Syntax()
     cout << "<<< In Constructor SDcmd::Syntax::Syntax()                          >>>" << endl;
     cout << "<<< Create the singleton object of the Syntax class (SDcmd::Syntax) >>>" << endl;
 //    InitSyntaxes();
+#if 0
     cout << "***********************************************************************" << endl;
     cout << "*** Initializing the Syntax Tables at the Start                     ***" << endl;
     cout << "***********************************************************************" << endl;
@@ -473,6 +474,9 @@ SDctrl::Syntax::Syntax()
 
     if (!alltables)
 	alltables = syntaxes;
+#endif
+
+    alltables = tables();
 }; /* SDctrl::Syntax::Syntax */
 
 
@@ -490,25 +494,14 @@ SDctrl::Syntax& SDctrl::Syntax::get()
 
 void** SDctrl::Syntax::tables()
 {
-    return alltables;
-}; /* SDctrl::Syntax::tables */
+    cout << "***********************************************************************" << endl;
+    cout << "*** Initializing the Syntax Tables at the Start                     ***" << endl;
+    cout << "***********************************************************************" << endl;
 
 
-// for initializing singleton at the initial phase of programm
-void** SDctrl::Syntax::alltables = nullptr;
-
-
-#if 0
-// Initialize all syntax tables
-int SDctrl::Syntax::InitSyntaxes()
-{
-    cout << "*** Enter  to Syntax Initializing                              ***" << endl;
-    cout << "*** class SDctrl::Syntax, call SDctrl::Syntax::InitSyntaxes(). ***" << endl;
-
-    if (alltables)
-	return -1;
-
-    cout << "*** Syntax Initializing actually in SDctrl::Syntax::InitSyntaxes(). ***" << endl;
+    cout << "***                                                                 ***" << endl
+	 << "*** Start the Initializing the Syntax Tables in tables().           ***" << endl
+	 << "***                                                                 ***" << endl;
 
     // syntax0: h | help
 	static void* arg_help[] = {
@@ -588,11 +581,16 @@ int SDctrl::Syntax::InitSyntaxes()
 		NULL
 	};
 
-    if (!alltables)
-	alltables = syntaxes;
-    return 0;;
-}; /* SDctrl::Syntax::InitSyntaxes */
-#endif
+//    if (!alltables)
+//	alltables = syntaxes;
+
+    return syntaxes;
+
+}; /* SDctrl::Syntax::tables */
+
+
+// for initializing singleton at the initial phase of programm
+void** SDctrl::Syntax::alltables = nullptr;
 
 
 
@@ -612,9 +610,10 @@ int SDctrl::Syntax::help_action(void* hlp_arg[],...)
 	void** curr_arg;
 
 
-    cout << "#### Help action, released in SDcmd::Syntax class. ####" << endl;
+    cout << "#### Help action, implemented in the SDcmd::Syntax class. ####" << endl;
 
     if (!hlp_arg)
+//    if (!tables() || !tables()[0])
     {
 	cout << "!!! Error: syntax tables is undefined. !!!" << endl;
 	cout << "Abort command" << endl;
