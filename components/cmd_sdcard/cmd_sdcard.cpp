@@ -152,8 +152,8 @@ public:
     // sucommand id
     enum cmd_id { none, mount, unmount, ls, cat, type, help, unknown = -1 };
 
-    // Return subcommand id
-    cmd_id id();
+//    // Return subcommand id
+//    cmd_id id();
 
 private:
     int argc;
@@ -169,6 +169,7 @@ private:
     {
     public:
 	static Syntax& get();
+	cmd_id id();	// Return subcommand id
 	int help();
 	static void** tables();
 	static ostream& hint(ostream&);	// hint for the command - suggest to see help
@@ -240,7 +241,8 @@ int SDctrl::exec(int argc, char **argv)
     if (argc == 1)
 	return instance.err_none();
 
-    switch (instance.id())
+//    switch (instance.id())
+    switch (syntax.id())
     {
     case SDctrl::mount:
     case SDctrl::unmount:
@@ -286,6 +288,7 @@ int SDctrl::act_help()
 
 
 
+#if 0
 // Return command id
 SDctrl::cmd_id SDctrl::id()
 {
@@ -308,7 +311,7 @@ SDctrl::cmd_id SDctrl::id()
 
     return unknown;
 }; /* SDctrl::id */
-
+#endif
 
 
 // Handler for "subcommand missing" error.
@@ -459,9 +462,29 @@ void** SDctrl::Syntax::tables()
 
 }; /* SDctrl::Syntax::tables */
 
+// Return subcommand id
+SDctrl::cmd_id
+SDctrl::Syntax::id()
+{
+    if (parent.argc < 2)
+	return none;
+    if (isempty(parent.argv[1]))
+	return none;
+    if (strcmp(parent.argv[1], "help") == 0 || strcmp(parent.argv[1], "h") == 0)
+    	return SDctrl::help;
+    if (strcmp(parent.argv[1], "mount") == 0 || strcmp(parent.argv[1], "m") == 0)
+    	return mount;
+    if (strcmp(parent.argv[1], "umount") == 0 || strcmp(parent.argv[1], "u") == 0)
+	return unmount;
+    if (strcmp(parent.argv[1], "ls") == 0 || strcmp(parent.argv[1], "dir") == 0)
+	return ls;
+    if (strcmp(parent.argv[1], "cat") == 0)
+    	return ls;
+    if (strcmp(parent.argv[1], "type") == 0)
+    	return type;
 
-// for initializing singleton at the initial phase of programm
-void** SDctrl::Syntax::alltables = nullptr;
+    return unknown;
+}; /* SDctrl::Syntax::id */
 
 
 
@@ -506,6 +529,9 @@ int SDctrl::Syntax::help()
 
 }; /* SDctrl::Syntax::help */
 
+
+// for initializing singleton at the initial phase of programm
+void** SDctrl::Syntax::alltables = nullptr;
 
 
 
