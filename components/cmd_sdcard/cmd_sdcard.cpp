@@ -395,6 +395,8 @@ SDctrl::Syntax& SDctrl::Syntax::get()
 
 void** SDctrl::Syntax::tables()
 {
+    if (!alltables)
+    {
     cout << "***********************************************************************" << endl;
     cout << "*** Initializing the Syntax Tables at the Start                     ***" << endl;
     cout << "***********************************************************************" << endl;
@@ -403,6 +405,7 @@ void** SDctrl::Syntax::tables()
     cout << "***                                                                 ***" << endl
 	 << "*** Start the Initializing the Syntax Tables in tables().           ***" << endl
 	 << "***                                                                 ***" << endl;
+    }; /* if !alltables */
 
     // syntax0: h | help
 	static void* arg_help[] = {
@@ -482,6 +485,7 @@ void** SDctrl::Syntax::tables()
 		NULL
 	};
 
+    cout << "**  Get the Syntax Tables in SDctrl::Syntax::tables().  **" << endl;
     return syntaxes;
 
 }; /* SDctrl::Syntax::tables */
@@ -539,6 +543,11 @@ int SDctrl::Syntax::help_action(void* hlp_arg[],...)
     }; /* while curr_arg */
     va_end(arglst);
 #else
+    for (void **currcmd = tables() + 1; *currcmd != NULL; currcmd++)
+    {
+	cout << "       " << parent.argv[0];
+	arg_print_syntax(stdout, (void**)*currcmd, "\n");
+    }; /* for void **currcmd */
 #endif
     cout << "       " << parent.argv[0];
 //    arg_print_syntax(stdout, hlp_arg, "\n");
