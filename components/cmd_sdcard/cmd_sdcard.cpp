@@ -567,6 +567,13 @@ int SDctrl::Syntax::help_action(void* hlp_arg[],...)
     va_end(arglst);
     arg_print_glossary(stdout, hlp_arg, "      %-20s %s\n");
 #else
+    for (void **currcmd = tables(); *currcmd != NULL; currcmd++)
+    {
+//	cout << "       " << parent.argv[0];
+//	arg_print_syntax(stdout, (void**)*currcmd, "\n");
+
+	arg_print_glossary(stdout, (void**)*currcmd, "      %-20s %s\n");
+    }; /* for void **currcmd */
 #endif
     return 0;
 
