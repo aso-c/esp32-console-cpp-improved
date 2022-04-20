@@ -147,13 +147,10 @@ public:
 
     int err_none();	// Handler for "subcommand missing" error.
     int err_unknown();	// Handler for "subcommand unknown" error.
-    int act_help();	// help_action was implements actions for help
+//    int act_help();	// help_action was implements actions for help
 
-    // sucommand id
-    enum cmd_id { none, mount, unmount, ls, cat, type, help, unknown = -1 };
-
-//    // Return subcommand id
-//    cmd_id id();
+//    // sucommand id
+//    enum cmd_id { none, mount, unmount, ls, cat, type, help, unknown = -1 };
 
 private:
     int argc;
@@ -168,6 +165,10 @@ private:
     class Syntax
     {
     public:
+
+	// sucommand id
+	enum cmd_id { none, mount, unmount, ls, cat, type, helping, unknown = -1 };
+
 	static Syntax& get();
 	cmd_id id();	// Return subcommand id
 	int help();
@@ -241,23 +242,35 @@ int SDctrl::exec(int argc, char **argv)
     if (argc == 1)
 	return instance.err_none();
 
-//    switch (instance.id())
     switch (syntax.id())
     {
-    case SDctrl::mount:
-    case SDctrl::unmount:
-    case SDctrl::ls:
-    case SDctrl::cat:
-    case SDctrl::type:
+//    case SDctrl::mount:
+    case SDctrl::Syntax::mount:
+//    case Syntax::mount:
+//    case SDctrl::unmount:
+    case SDctrl::Syntax::unmount:
+//    case Syntax::unmount:
+//    case SDctrl::ls:
+    case SDctrl::Syntax::ls:
+//    case Syntax::ls:
+//    case SDctrl::cat:
+    case SDctrl::Syntax::cat:
+//    case Syntax::cat:
+//    case SDctrl::type:
+    case SDctrl::Syntax::type:
+//    case Syntax::type:
 	cout << "Command" << '\'' << argv[0] << ' ' << argv[1] << '\''
 	    << " is not yet implemented now." << endl;
 	break;
 
-    case SDctrl::help:
-//	return instance.act_help();
+//    case SDctrl::help:
+    case SDctrl::Syntax::helping:
+//    case Syntax::helping:
 	return syntax.help();
 
-    case SDctrl::unknown:
+//    case SDctrl::unknown:
+    case SDctrl::Syntax::unknown:
+//    case Syntax::unknown:
     default:
 	return instance.err_unknown();
     }; /* switch instance.id() */
@@ -276,44 +289,6 @@ void SDctrl::store(int argcnt, char *argvalue[])
 }; /* SDcmd::store */
 
 
-// syntax table storage
-SDctrl::Syntax& SDctrl::syntax = SDctrl::Syntax::get();
-
-
-// help_action was implements actions for help
-int SDctrl::act_help()
-{
-    return syntax.help();
-}; /* SDcmd::act_help */
-
-
-
-#if 0
-// Return command id
-SDctrl::cmd_id SDctrl::id()
-{
-    if (argc < 2)
-	return none;
-    if (isempty(argv[1]))
-	return none;
-    if (strcmp(argv[1], "help") == 0 || strcmp(argv[1], "h") == 0)
-    	return help;
-    if (strcmp(argv[1], "mount") == 0 || strcmp(argv[1], "m") == 0)
-    	return mount;
-    if (strcmp(argv[1], "umount") == 0 || strcmp(argv[1], "u") == 0)
-	return unmount;
-    if (strcmp(argv[1], "ls") == 0 || strcmp(argv[1], "dir") == 0)
-	return ls;
-    if (strcmp(argv[1], "cat") == 0)
-    	return ls;
-    if (strcmp(argv[1], "type") == 0)
-    	return type;
-
-    return unknown;
-}; /* SDctrl::id */
-#endif
-
-
 // Handler for "subcommand missing" error.
 int SDctrl::err_none()
 {
@@ -329,6 +304,10 @@ int SDctrl::err_unknown()
 	 << syntax.hint << endl;
     return 0;
 }; /* SDcmd::err_unknown */
+
+
+// syntax table storage
+SDctrl::Syntax& SDctrl::syntax = SDctrl::Syntax::get();
 
 
 
@@ -463,7 +442,7 @@ void** SDctrl::Syntax::tables()
 }; /* SDctrl::Syntax::tables */
 
 // Return subcommand id
-SDctrl::cmd_id
+SDctrl::Syntax::cmd_id
 SDctrl::Syntax::id()
 {
     if (parent.argc < 2)
@@ -471,7 +450,7 @@ SDctrl::Syntax::id()
     if (isempty(parent.argv[1]))
 	return none;
     if (strcmp(parent.argv[1], "help") == 0 || strcmp(parent.argv[1], "h") == 0)
-    	return SDctrl::help;
+    	return helping;
     if (strcmp(parent.argv[1], "mount") == 0 || strcmp(parent.argv[1], "m") == 0)
     	return mount;
     if (strcmp(parent.argv[1], "umount") == 0 || strcmp(parent.argv[1], "u") == 0)
