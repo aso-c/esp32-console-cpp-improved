@@ -155,22 +155,6 @@ public:
     // Return subcommand id
     cmd_id id();
 
-    // Recommendation to see a help
-    class HelpHint
-    {
-    public:
-	HelpHint(SDctrl*);
-	void operator()(ostream&) const;
-
-    private:
-	SDctrl* ownsd;
-    }; /* HelpHint */
-
-    HelpHint help_hint;
-
-    friend ostream&
-	operator << (ostream&, const HelpHint&);
-
 private:
     int argc;
     char **argv;
@@ -191,8 +175,6 @@ private:
 
     private:
 	Syntax();
-
-//	int help_action(void* hlp_arg[],...);	// inner release of the help action implements
 
 	Syntax(Syntax&) = delete;	// blocking of copy constructor
 	Syntax& operator =(const Syntax&) = delete;	// blocking of operator '='
@@ -233,7 +215,6 @@ static int sdcard_cmd(int argc, char **argv)
 
 // Default constructor
 SDctrl::SDctrl():
-	help_hint(this),
 	argc(0),
 	argv(nullptr)
 { /*InitSyntaxs();*/ };
@@ -294,7 +275,6 @@ void SDctrl::store(int argcnt, char *argvalue[])
 
 
 // syntax table storage
-//void** SDctrl::all_syntaxes = NULL;
 SDctrl::Syntax& SDctrl::syntax = SDctrl::Syntax::get();
 
 
@@ -335,7 +315,6 @@ SDctrl::cmd_id SDctrl::id()
 int SDctrl::err_none()
 {
     cout << "Subcommand missing." << endl
-//	 << help_hint << endl;
 	 << syntax.hint << endl;
     return 0;
 }; /* SDcmd::err_none */
@@ -344,32 +323,10 @@ int SDctrl::err_none()
 int SDctrl::err_unknown()
 {
     cout << "Unknown options: \"" << argv[1] <<  "\"." << endl
-//	 << help_hint << endl;
 	 << syntax.hint << endl;
     return 0;
 }; /* SDcmd::err_unknown */
 
-
-ostream& operator << (ostream& out, const SDctrl::HelpHint& hint)
-{
-    hint(out);
-    return out;
-}; /* ostream& operator << */
-
-
-
-//--[ Inner class of prompter, that recommend to see a help ]-------------------
-
-// Constructor
-SDctrl::HelpHint::HelpHint(SDctrl* owner):
-	ownsd(owner)
-{};
-
-void
-SDctrl::HelpHint::operator()(ostream& out) const
-{
-    out << "Try \"" << ownsd->argv[0] << " help\" for more information.";
-}; /* SDcmd::HelpHint::operator() */
 
 
 
@@ -497,7 +454,7 @@ void** SDctrl::Syntax::tables()
 		NULL
 	};
 
-    cout << "**  Get the Syntax Tables in SDctrl::Syntax::tables().  **" << endl;
+//    cout << "**  Get the Syntax Tables in SDctrl::Syntax::tables().  **" << endl;
     return syntaxes;
 
 }; /* SDctrl::Syntax::tables */
