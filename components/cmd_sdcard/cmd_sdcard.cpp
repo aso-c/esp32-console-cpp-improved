@@ -147,10 +147,6 @@ public:
 
     int err_none();	// Handler for "subcommand missing" error.
     int err_unknown();	// Handler for "subcommand unknown" error.
-//    int act_help();	// help_action was implements actions for help
-
-//    // sucommand id
-//    enum cmd_id { none, mount, unmount, ls, cat, type, help, unknown = -1 };
 
 private:
     int argc;
@@ -360,16 +356,15 @@ void** SDctrl::Syntax::tables()
 
     // syntax0: h | help
 	static void* arg_help[] = {
-//    args_help[0] = arg_rex1(NULL, NULL, "h|help", "h|help", 0/*REG_ICASE*/, "help by subcommand of command 'sdcard'");
 		arg_rex1(NULL, NULL, "h|help", "h|help", 0/*REG_ICASE*/, "help by subcommand of command 'sdcard'"),
-//    args_help[1] = arg_end(2);
 		arg_end(2),
 	};
 
     // syntax1: m | mount [<device>] [<mountpoint>] "m|mount", NULL, 0, "mount SD-card <device> to <mountpoint>, parameters are optional"
 	static void* arg_mnt[] = {
 //    args_mount[0] = arg_rex1(NULL, NULL, "m|mount", NULL, 0, NULL);
-		arg_rex1(NULL, NULL, "m|mount", NULL, 0, NULL),
+	//	arg_rex1(NULL, NULL, "m|mount", NULL, 0, NULL),
+		arg_rex1(NULL, NULL, "m|mount", NULL, 0, "mount SD-card [<device>] to [<mountpoint>], parameters are optional"),
 //    args_mount[1] = arg_str0(NULL, NULL, "<device>", "SD card device name, if omitted - use ...");
 		arg_str0(NULL, NULL, "<device>", "SD card device name, if omitted - use default value"),
 //    args_mount[2] = arg_str0(NULL, NULL, "<mountpoint>", "path to mountpoint SD card, if omitted - use ...");
@@ -380,15 +375,17 @@ void** SDctrl::Syntax::tables()
     // syntax2: u | umount [ <device> | <mountpoint> ] "unmount SD-card <device> or that was mounted to <path>; if all parameters omitted - use default values - ..."
 	static void* arg_umnt[] = {
 //    args_umount[0] = arg_rex1(NULL, NULL, "u|umount", NULL, 0, NULL);
-		arg_rex1(NULL, NULL, "u|umount", NULL, 0, NULL),
+		arg_rex1(NULL, NULL, "u|umount", NULL, 0, "unmount SD-card <device> or <path> where the SD card is mounted; if parameters omitted - use default values - ..."),
 //    args_umount[1] = arg_rem ("[", NULL);
 		arg_rem ("[", NULL),
 //    args_umount[2] = args_mount[1]; // arg_str0(NULL, NULL, "<device>", "SD card device name, if omitted - use ...");
-		arg_mnt[1], // arg_str0(NULL, NULL, "<device>", "SD card device name, if omitted - use ...");
+	//	arg_mnt[1], // arg_str0(NULL, NULL, "<device>", "SD card device name, if omitted - use ...");
+		arg_str1(NULL, NULL, "<device>", "SD card device name, if omitted - use default value"),
 //    args_umount[3] = arg_rem ("|", NULL);
 		arg_rem ("|", NULL),
 //    args_umount[4] = args_mount[2]; // arg_str0(NULL, NULL, "<mountpoint>", "path to mountpoint SD card, if omitted - use ...");
-		arg_mnt[2], // arg_str0(NULL, NULL, "<mountpoint>", "path to mountpoint SD card, if omitted - use ...");
+	//	arg_mnt[2], // arg_str0(NULL, NULL, "<mountpoint>", "path to mountpoint SD card, if omitted - use ...");
+		arg_str1(NULL, NULL, "<mountpoint>", "path to mountpoint SD card, if omitted - use default value"),
 //    args_umount[5] = arg_rem ("]", NULL);
 		arg_rem ("]", NULL),
 //    args_umount[6] = arg_end(2);
@@ -397,9 +394,11 @@ void** SDctrl::Syntax::tables()
     // syntax3: ls | dir [<pattern>] "list directory contents on SD-card"
 	static void* arg_ls[] = {
 //    args_ls[0] = arg_rex1(NULL, NULL, "ls|dir", NULL, 0, NULL);
-		arg_rex1(NULL, NULL, "ls|dir", NULL, 0, NULL),
+	//	arg_rex1(NULL, NULL, "ls|dir", NULL, 0, NULL),
+		arg_rex1(NULL, NULL, "ls|dir", NULL, 0, "list directory contents on SD-card"),
 //    args_ls[1] = arg_str0(NULL, NULL, "<pattern>", "pattern or path in SD-card of the listed files in directory");
-		arg_str0(NULL, NULL, "<pattern>", "pattern or path in SD-card of the listed files in directory"),
+	//	arg_str0(NULL, NULL, "<pattern>", "pattern or path in SD-card of the listed files in directory"),
+		arg_str0(NULL, NULL, "<pattern>", "file pattern or path whose contents are printed"),
 //    args_ls[2] = arg_end(2);
 		arg_end(2),
 	};
@@ -415,24 +414,26 @@ void** SDctrl::Syntax::tables()
     // syntax5: type [filename] "type from the keyboard to file & screen or screen only; <file name> - name of the file is to be printed; if omitted - print to screen only"
 	static void* arg_type[] = {
 //    args_type[0] = arg_rex1(NULL, NULL, "type", NULL, 0, NULL);
-		arg_rex1(NULL, NULL, "type", NULL, 0, NULL),
+	//	arg_rex1(NULL, NULL, "type", NULL, 0, NULL),
+		arg_rex1(NULL, NULL, "type", NULL, 0, "type from the keyboard to file & screen or screen only; <file name> - name of the file is to be printed; if omitted - print to screen only"),
 //    args_type[1] = args_umount[1];  // arg_rem ("[", NULL);
-		arg_umnt[1],  // arg_rem ("[", NULL);
+	//	arg_umnt[1],  // arg_rem ("[", NULL);
 //    args_type[2] = args_cat[1];
-		arg_cat[1],
+	//	arg_cat[1],
+		arg_str0(NULL, NULL, "<file>", "file name to be printed or the name of where the typed text is saved"),
 //    args_type[3] = args_umount[5];  // arg_rem ("]", NULL);
-		arg_umnt[5],  // arg_rem ("]", NULL);
+	//	arg_umnt[5],  // arg_rem ("]", NULL);
 //    args_type[4] = arg_end(2);
 		arg_end(2),
 	};
 
 	static void* syntaxes[] = {
-		arg_help,
 		arg_mnt,
 		arg_umnt,
 		arg_ls,
 		arg_cat,
 		arg_type,
+		arg_help,
 		NULL
 	};
 
@@ -495,8 +496,8 @@ int SDctrl::Syntax::help()
 	cout << "       " << parent.argv[0];
 	arg_print_syntax(stdout, (void**)*currcmd, "\n");
     }; /* for void **currcmd */
-    cout << "       " << parent.argv[0];
-    arg_print_syntax(stdout, (void**)alltables[0], "\n");
+//    cout << "       " << parent.argv[0];
+//    arg_print_syntax(stdout, (void**)alltables[0], "\n");
 
     cout << "Command \"" << parent.argv[0] << "\" supports the ESP32 operation with an SD card." << endl;
     cout << "Use subcommands to invoke individual operations; operation are: mount, unmount, ls, cat, type, help." << endl;
