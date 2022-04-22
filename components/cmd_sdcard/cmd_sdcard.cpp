@@ -249,26 +249,23 @@ int SDctrl::exec(int argc, char **argv)
     {
 //    case SDctrl::Syntax::mount:
     case Syntax::mount:
-	return act_mnt();
+	return instance.act_mnt();
 
 //    case SDctrl::Syntax::unmount:
     case Syntax::unmount:
-	return act_umnt();
+	return instance.act_umnt();
 
 //    case SDctrl::Syntax::ls:
     case Syntax::ls:
-	return act_ls();
+	return instance.act_ls();
 
 //    case SDctrl::Syntax::cat:
     case Syntax::cat:
-	return act_cat();
+	return instance.act_cat();
 
 //    case SDctrl::Syntax::type:
     case Syntax::type:
-	return act_type();
-//	cout << "Command" << '\'' << argv[0] << ' ' << argv[1] << '\''
-//	    << " is not yet implemented now." << endl;
-//	break;
+	return instance.act_type();
 
 //    case SDctrl::Syntax::helping:
     case Syntax::helping:
@@ -314,37 +311,124 @@ int SDctrl::err_unknown()
 // action for 'mount' command
 int SDctrl::act_mnt()
 {
-    //	cout << "Command" << '\'' << argv[0] << ' ' << argv[1] << '\''
-    //	    << " is not yet implemented now." << endl;
-    return 0;;
+    cout << "\"mount\" command execution" << endl;
+    switch (argc)
+    {
+    case 2:
+	cout << "...without parameters - use default values." << endl;
+	break;
+
+    case 3:
+	cout << "...with one parameter - use device or mount point." << endl;
+	break;
+
+    case 4:
+	cout << "...with two parameters - use device & mount point." << endl;
+	break;
+
+    default:
+	cout << "more than two parameters - unknown configuration of parameters." << endl;
+    }; /* switch argc */
+    cout << endl;
+
+//    cout << "args number : " << argc << endl;
+//    cout << "args is     : " << argc << endl;
+//    for (int i = 0; i < argc; i++)
+//	cout << "argv[" << i << "] is  : " << argv[i] << endl;
+
+    return 0;
 }; /* SDctrl::act_mnt */
 
 
 // action for 'unmount' command
 int SDctrl::act_umnt()
 {
-    return 0;;
+    cout << "\"unmount\" command execution" << endl;
+    switch (argc)
+    {
+    case 2:
+	cout << "...without parameters - use default values." << endl;
+	break;
+
+    case 3:
+	cout << "...with one parameter - use device or mount point." << endl;
+	break;
+
+    default:
+	cout << "more than one parameter - unknown configuration of parameters." << endl;
+    }; /* switch argc */
+    cout << endl;
+
+    return 0;
 }; /* SDctrl::act_umnt */
 
 
 // action for list/dir command
 int SDctrl::act_ls()
 {
-    return 0;;
+    cout << "\"ls\" command execution" << endl;
+    switch (argc)
+    {
+    case 2:
+	cout << "...without parameters - use current dir." << endl;
+	break;
+
+    case 3:
+	cout << "...with one parameter - use pattern or directory." << endl;
+	break;
+
+    default:
+	cout << "more than one parameter - unknown parameters config." << endl;
+    }; /* switch argc */
+    cout << endl;
+
+    return 0;
 }; /* SDctrl::act_ls */
 
 
 // action for 'cat' command
 int SDctrl::act_cat()
 {
-    return 0;;
+    cout << "\"cat\" command execution" << endl;
+    switch (argc)
+    {
+    case 2:
+	cout << "...without parameters - error parameter values." << endl;
+	break;
+
+    case 3:
+	cout << "...with one parameter - use file name." << endl;
+	break;
+
+    default:
+	cout << "more than one parameter - error in parameters value." << endl;
+    }; /* switch argc */
+    cout << endl;
+
+    return 0;
 }; /* SDctrl::act_cat */
 
 
 // action for 'type' command
 int SDctrl::act_type()
 {
-    return 0;;
+    cout << "\"type\" command execution" << endl;
+    switch (argc)
+    {
+    case 2:
+	cout << "...without parameters - type to screen only." << endl;
+	break;
+
+    case 3:
+	cout << "...with one parameter - save type output to file & screen." << endl;
+	break;
+
+    default:
+	cout << "more than one parameter - error in parameters value." << endl;
+    }; /* switch argc */
+    cout << endl;
+
+    return 0;
 }; /* SDctrl::act_type */
 
 
@@ -484,7 +568,7 @@ SDctrl::Syntax::id()
     if (strcmp(parent.argv[1], "ls") == 0 || strcmp(parent.argv[1], "dir") == 0)
 	return ls;
     if (strcmp(parent.argv[1], "cat") == 0)
-    	return ls;
+    	return cat;
     if (strcmp(parent.argv[1], "type") == 0)
     	return type;
 
