@@ -148,6 +148,12 @@ public:
     int err_none();	// Handler for "subcommand missing" error.
     int err_unknown();	// Handler for "subcommand unknown" error.
 
+    int act_mnt();	// action for 'mount' command
+    int act_umnt();	// action for 'unmount' command
+    int act_ls();	// action for list/dir command
+    int act_cat();	// action for 'cat' command
+    int act_type();	// action for 'type' command
+
 private:
     int argc;
     char **argv;
@@ -173,6 +179,7 @@ private:
 
     private:
 	Syntax();
+	~Syntax();
 
 	Syntax(Syntax&) = delete;	// blocking of copy constructor
 	Syntax& operator =(const Syntax&) = delete;	// blocking of operator '='
@@ -240,33 +247,35 @@ int SDctrl::exec(int argc, char **argv)
 
     switch (syntax.id())
     {
-//    case SDctrl::mount:
-    case SDctrl::Syntax::mount:
-//    case Syntax::mount:
-//    case SDctrl::unmount:
-    case SDctrl::Syntax::unmount:
-//    case Syntax::unmount:
-//    case SDctrl::ls:
-    case SDctrl::Syntax::ls:
-//    case Syntax::ls:
-//    case SDctrl::cat:
-    case SDctrl::Syntax::cat:
-//    case Syntax::cat:
-//    case SDctrl::type:
-    case SDctrl::Syntax::type:
-//    case Syntax::type:
-	cout << "Command" << '\'' << argv[0] << ' ' << argv[1] << '\''
-	    << " is not yet implemented now." << endl;
-	break;
+//    case SDctrl::Syntax::mount:
+    case Syntax::mount:
+	return act_mnt();
 
-//    case SDctrl::help:
-    case SDctrl::Syntax::helping:
-//    case Syntax::helping:
+//    case SDctrl::Syntax::unmount:
+    case Syntax::unmount:
+	return act_umnt();
+
+//    case SDctrl::Syntax::ls:
+    case Syntax::ls:
+	return act_ls();
+
+//    case SDctrl::Syntax::cat:
+    case Syntax::cat:
+	return act_cat();
+
+//    case SDctrl::Syntax::type:
+    case Syntax::type:
+	return act_type();
+//	cout << "Command" << '\'' << argv[0] << ' ' << argv[1] << '\''
+//	    << " is not yet implemented now." << endl;
+//	break;
+
+//    case SDctrl::Syntax::helping:
+    case Syntax::helping:
 	return syntax.help();
 
-//    case SDctrl::unknown:
-    case SDctrl::Syntax::unknown:
-//    case Syntax::unknown:
+//    case SDctrl::Syntax::unknown:
+    case Syntax::unknown:
     default:
 	return instance.err_unknown();
     }; /* switch instance.id() */
@@ -302,15 +311,51 @@ int SDctrl::err_unknown()
 }; /* SDcmd::err_unknown */
 
 
+// action for 'mount' command
+int SDctrl::act_mnt()
+{
+    //	cout << "Command" << '\'' << argv[0] << ' ' << argv[1] << '\''
+    //	    << " is not yet implemented now." << endl;
+    return 0;;
+}; /* SDctrl::act_mnt */
+
+
+// action for 'unmount' command
+int SDctrl::act_umnt()
+{
+    return 0;;
+}; /* SDctrl::act_umnt */
+
+
+// action for list/dir command
+int SDctrl::act_ls()
+{
+    return 0;;
+}; /* SDctrl::act_ls */
+
+
+// action for 'cat' command
+int SDctrl::act_cat()
+{
+    return 0;;
+}; /* SDctrl::act_cat */
+
+
+// action for 'type' command
+int SDctrl::act_type()
+{
+    return 0;;
+}; /* SDctrl::act_type */
+
+
+
+
 // syntax table storage
 SDctrl::Syntax& SDctrl::syntax = SDctrl::Syntax::get();
 
 
-
-
 //--[ Inner class of the Syntax Contains Syntax tables for subcommand for 'sdcard' command ]---
 
-//SDctrl::Syntax::Syntax(SDctrl& pater): parent(pater)
 SDctrl::Syntax::Syntax()
 {
     cout << "<<< In Constructor SDcmd::Syntax::Syntax()                          >>>" << endl;
@@ -318,6 +363,15 @@ SDctrl::Syntax::Syntax()
     alltables = tables();
 }; /* SDctrl::Syntax::Syntax */
 
+
+SDctrl::Syntax::~Syntax()
+{
+//    // free the alltables
+////    for (void** tbl = alltables; tbl; tbl++)
+//    for (int i = 0; alltables[i] != nullptr; i++)
+//	arg_freetable(alltables[i],sizeof(argtable1)/sizeof(argtable1[0]));
+////    arg_freetable(argtable1,sizeof(argtable1)/sizeof(argtable1[0]));
+}; /* SDctrl::Syntax::~Syntax() */
 
 // Rererence to parent SDcmd object, that is the singleton
 SDctrl& SDctrl::Syntax::parent = SDctrl::cmd();
@@ -363,25 +417,16 @@ void** SDctrl::Syntax::tables()
     // syntax1: m | mount [<device>] [<mountpoint>] "m|mount", NULL, 0, "mount SD-card <device> to <mountpoint>, parameters are optional"
 	static void* arg_mnt[] = {
 		arg_rex1(NULL, NULL, "m|mount", NULL, 0, "mount SD-card [<device>] to [<mountpoint>], parameters are optional"),
-	//	arg_str0(NULL, NULL, "<device>", "SD card device name, default value if omitted"),
 		arg_str0(NULL, NULL, "<device>", NULL),
-	//	arg_str0(NULL, NULL, "<device>", "SD card device name, if omitted - use default value"),
-	//	arg_str0(NULL, NULL, "<mountpoint>", "path to mountpoint SD card, use default value if omitted"),
 		arg_str0(NULL, NULL, "<mountpoint>", NULL),
-//		arg_str0(NULL, NULL, "<mountpoint>", "path to mountpoint SD card, if omitted - use default value"),
 		arg_end(2),
 	};
     // syntax2: u | umount [ <device> | <mountpoint> ] "unmount SD-card <device> or that was mounted to <path>; if all parameters omitted - use default values - ..."
 	static void* arg_umnt[] = {
 		arg_rex1(NULL, NULL, "u|umount", NULL, 0, "unmount SD-card <device> or <path> where the SD card is mounted; if parameters omitted - use default values - ..."),
 		arg_rem ("[", NULL),
-	//	arg_mnt[1], // arg_str0(NULL, NULL, "<device>", "SD card device name, if omitted - use ...");
-	//	arg_str1(NULL, NULL, "<device>", "SD card device name, if omitted - use default value"),
 		arg_str1(NULL, NULL, "<device>", "SD card device name, used default value if omitted"),
 		arg_rem ("|", NULL),
-//    args_umount[4] = args_mount[2]; // arg_str0(NULL, NULL, "<mountpoint>", "path to mountpoint SD card, if omitted - use ...");
-	//	arg_mnt[2], // arg_str0(NULL, NULL, "<mountpoint>", "path to mountpoint SD card, if omitted - use ...");
-	//	arg_str1(NULL, NULL, "<mountpoint>", "path to mountpoint SD card, if omitted - use default value"),
 		arg_str1(NULL, NULL, "<mountpoint>", "path to mountpoint SD card, used default value if omitted"),
 		arg_rem ("]", NULL),
 		arg_end(2),
@@ -390,7 +435,6 @@ void** SDctrl::Syntax::tables()
 	static void* arg_ls[] = {
 	//	arg_rex1(NULL, NULL, "ls|dir", NULL, 0, NULL),
 		arg_rex1(NULL, NULL, "ls|dir", NULL, 0, "list directory contents on SD-card"),
-	//	arg_str0(NULL, NULL, "<pattern>", "pattern or path in SD-card of the listed files in directory"),
 	//	arg_str0(NULL, NULL, "<pattern>", "file pattern or path whose contents are printed"),
 		arg_str0(NULL, NULL, "<pattern>", "file pattern or path"),
 		arg_end(2),
@@ -398,14 +442,11 @@ void** SDctrl::Syntax::tables()
     // syntax4: cat <filename> "print file to stdout (console output)"
 	static void* arg_cat[] = {
 		arg_rex1(NULL, NULL, "cat", NULL, 0, NULL),
-	//	arg_str1(NULL, NULL, "<file>", "file name to be printed or the name of where the typed text is saved"),
 		arg_str1(NULL, NULL, "<file>", NULL),
 		arg_end(2),
 	};
     // syntax5: type [filename] "type from the keyboard to file & screen or screen only; <file name> - name of the file is to be printed; if omitted - print to screen only"
 	static void* arg_type[] = {
-	//	arg_rex1(NULL, NULL, "type", NULL, 0, NULL),
-	//	arg_rex1(NULL, NULL, "type", NULL, 0, "type from the keyboard to file & screen or screen only; <file name> - name of the file is to be printed; if omitted - print to screen only"),
 		arg_rex1(NULL, NULL, "type", NULL, 0, "type from the keyboard to file & screen or screen only; if file omitted - print to screen only"),
 		arg_str0(NULL, NULL, "<file>", "file name to be printed or the name of where the typed text is saved"),
 		arg_end(2),
