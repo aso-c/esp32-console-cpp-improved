@@ -34,7 +34,7 @@
 using namespace std;
 
 
-#define MOUNT_POINT "/sdcard"
+#define MOUNT_POINT_def "/sdcard"
 
 
 /*
@@ -119,30 +119,92 @@ bool isempty(const char *str)
 }; /* isempty */
 
 
+namespace SDMMC
+{
 
-
+static const char *TAG = "SD/MMC service";
 
 // SD/MMC card class
-class SDMMC_card
+//class SDMMC_card
+class card
 {
+public:
+    card() {card = NULL;};
+    void Init() {};
+    ~card();
+private:
     sdmmc_card_t *card;
+}; /* card */
+//}; /* SDMMC_card */
 
-}; /* SDMMC_card */
 
-
-class SDMMC_host
+//class SDMMC_host
+class host
 {
-    ;
-}; /* SDMMC_host */
+public:
+    host() {};
+
+    // Use settings defined above to initialize SD card and mount FAT filesystem.
+    // Note: esp_vfs_fat_sdmmc/sdspi_mount is all-in-one convenience functions.
+    // Please check its source code and implement error recovery when developing
+    // production applications.
+    void Init() {
+	ESP_LOGI(TAG, "Using SDMMC peripheral");
+	host = SDMMC_HOST_DEFAULT();
+    }; /* Init() */
+private:
+    sdmmc_host_t host;
+}; /* host */
+//}; /* SDMMC_host */
 
 
-class SDMMC_slot
+//class SDMMC_slot
+class slot
 {
-    ;
-}; /* SDMMC_slot */
+public:
+    slot() {};
+    void Init()
+    {
+    // This initializes the slot without card detect (CD) and write protect (WP) signals.
+    // Modify slot_config.gpio_cd and slot_config.gpio_wp if your board has these signals.
+//    sdmmc_slot_config_t slot_config = SDMMC_SLOT_CONFIG_DEFAULT();
+    config = SDMMC_SLOT_CONFIG_DEFAULT();
+
+    // To use 1-line SD mode, change this to 1:
+//    slot_config.width = 4;
+    config.width = SLOT_WIDTH;
+
+    // On chips where the GPIOs used for SD card can be configured, set them in
+    // the slot_config structure:
+#ifdef SOC_SDMMC_USE_GPIO_MATRIX
+    slot_config.clk = GPIO_NUM_14;
+    slot_config.cmd = GPIO_NUM_15;
+    slot_config.d0 = GPIO_NUM_2;
+    slot_config.d1 = GPIO_NUM_4;
+    slot_config.d2 = GPIO_NUM_12;
+    slot_config.d3 = GPIO_NUM_13;
+#endif
+
+    // Enable internal pullups on enabled pins. The internal pullups
+    // are insufficient however, please make sure 10k external pullups are
+    // connected on the bus. This is for debug / example purpose only.
+//    slot_config.flags |= SDMMC_SLOT_FLAG_INTERNAL_PULLUP;
+    config.flags |= SDMMC_SLOT_FLAG_INTERNAL_PULLUP;
+    }; /* Init() */
+
+private:
+    // use field name 'config' instead 'slot_config'
+    sdmmc_slot_config_t config;
+
+    // To use 1-line SD mode, change this to 1:
+    static const int SLOT_WIDTH = 4;
+
+}; /* slot */
+//}; /* SDMMC_slot */
 
 
-class SDMMC
+//class SDMMC
+class server
 {
 
     esp_err_t ret;
@@ -164,8 +226,15 @@ class SDMMC
     const char mount_point[] = MOUNT_POINT;
     //ESP_LOGI(TAG, "Initializing SD card");
 
-}; /* SDMMC */
+private:
+    static const char MOUNT_POINT[] = MOUNT_POINT_def;
+    static const char TAG[] = "SD/MMC service";
+    sdmmc_card_t *card;
 
+}; /* server */
+//}; /* SDMMC */
+
+}; /* namespace SDMMC */
 
 
 #if 0
@@ -176,36 +245,7 @@ class SDMMC
 
 void app_main(void)
 {
-    // Use settings defined above to initialize SD card and mount FAT filesystem.
-    // Note: esp_vfs_fat_sdmmc/sdspi_mount is all-in-one convenience functions.
-    // Please check its source code and implement error recovery when developing
-    // production applications.
 
-    ESP_LOGI(TAG, "Using SDMMC peripheral");
-    sdmmc_host_t host = SDMMC_HOST_DEFAULT();
-
-    // This initializes the slot without card detect (CD) and write protect (WP) signals.
-    // Modify slot_config.gpio_cd and slot_config.gpio_wp if your board has these signals.
-    sdmmc_slot_config_t slot_config = SDMMC_SLOT_CONFIG_DEFAULT();
-
-    // To use 1-line SD mode, change this to 1:
-    slot_config.width = 4;
-
-    // On chips where the GPIOs used for SD card can be configured, set them in
-    // the slot_config structure:
-#ifdef SOC_SDMMC_USE_GPIO_MATRIX
-    slot_config.clk = GPIO_NUM_14;
-    slot_config.cmd = GPIO_NUM_15;
-    slot_config.d0 = GPIO_NUM_2;
-    slot_config.d1 = GPIO_NUM_4;
-    slot_config.d2 = GPIO_NUM_12;
-    slot_config.d3 = GPIO_NUM_13;
-#endif
-
-    // Enable internal pullups on enabled pins. The internal pullups
-    // are insufficient however, please make sure 10k external pullups are
-    // connected on the bus. This is for debug / example purpose only.
-    slot_config.flags |= SDMMC_SLOT_FLAG_INTERNAL_PULLUP;
 
     ESP_LOGI(TAG, "Mounting filesystem");
     ret = esp_vfs_fat_sdmmc_mount(mount_point, &host, &slot_config, &mount_config, &card);
