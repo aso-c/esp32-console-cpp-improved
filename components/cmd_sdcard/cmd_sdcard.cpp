@@ -124,115 +124,161 @@ namespace SDMMC
 
 static const char *TAG = "SD/MMC service";
 
-// SD/MMC card class
-//class SDMMC_card
-class card
-{
-public:
-    card() {card = NULL;};
-    void Init() {};
-    ~card();
-private:
-    sdmmc_card_t *card;
-}; /* card */
-//}; /* SDMMC_card */
+//// SD/MMC card class
+//class card
+//{
+//public:
+//    card() {card = NULL;};
+//    void Init() {};
+//    ~card();
+//private:
+//    sdmmc_card_t *card;
+//}; /* card */
 
 
 //class SDMMC_host
-class host
+class Host
 {
 public:
-    host() {};
+    Host()
+    {
+	ESP_LOGI(TAG, "Using SDMMC peripheral");
+    }; /* Host */
 
+//    // Use settings defined above to initialize SD card and mount FAT filesystem.
+//    // Note: esp_vfs_fat_sdmmc/sdspi_mount is all-in-one convenience functions.
+//    // Please check its source code and implement error recovery when developing
+//    // production applications.
+//    void Init() {
+//	ESP_LOGI(TAG, "Using SDMMC peripheral");
+//	instance = SDMMC_HOST_DEFAULT();
+//    }; /* Init() */
+private:
     // Use settings defined above to initialize SD card and mount FAT filesystem.
     // Note: esp_vfs_fat_sdmmc/sdspi_mount is all-in-one convenience functions.
     // Please check its source code and implement error recovery when developing
     // production applications.
-    void Init() {
-	ESP_LOGI(TAG, "Using SDMMC peripheral");
-	host = SDMMC_HOST_DEFAULT();
-    }; /* Init() */
-private:
-    sdmmc_host_t host;
-}; /* host */
-//}; /* SDMMC_host */
+    sdmmc_host_t instance = SDMMC_HOST_DEFAULT();
+}; /* Host */
 
 
-//class SDMMC_slot
-class slot
+class Slot
 {
 public:
-    slot() {};
-    void Init()
+    Slot()
     {
-    // This initializes the slot without card detect (CD) and write protect (WP) signals.
-    // Modify slot_config.gpio_cd and slot_config.gpio_wp if your board has these signals.
-//    sdmmc_slot_config_t slot_config = SDMMC_SLOT_CONFIG_DEFAULT();
-    config = SDMMC_SLOT_CONFIG_DEFAULT();
+	    // This initializes the slot without card detect (CD) and write protect (WP) signals.
+	    // Modify slot_config.gpio_cd and slot_config.gpio_wp if your board has these signals.
+	    //config = SDMMC_SLOT_CONFIG_DEFAULT();
 
-    // To use 1-line SD mode, change this to 1:
-//    slot_config.width = 4;
-    config.width = SLOT_WIDTH;
+	    // To use 1-line SD mode, change this to 1:
+	    config.width = SLOT_WIDTH;
 
-    // On chips where the GPIOs used for SD card can be configured, set them in
-    // the slot_config structure:
-#ifdef SOC_SDMMC_USE_GPIO_MATRIX
-    slot_config.clk = GPIO_NUM_14;
-    slot_config.cmd = GPIO_NUM_15;
-    slot_config.d0 = GPIO_NUM_2;
-    slot_config.d1 = GPIO_NUM_4;
-    slot_config.d2 = GPIO_NUM_12;
-    slot_config.d3 = GPIO_NUM_13;
-#endif
+	    // On chips where the GPIOs used for SD card can be configured, set them in
+	    // the slot_config structure:
+	#ifdef SOC_SDMMC_USE_GPIO_MATRIX
+	    slot_config.clk = GPIO_NUM_14;
+	    slot_config.cmd = GPIO_NUM_15;
+	    slot_config.d0 = GPIO_NUM_2;
+	    slot_config.d1 = GPIO_NUM_4;
+	    slot_config.d2 = GPIO_NUM_12;
+	    slot_config.d3 = GPIO_NUM_13;
+	#endif
 
-    // Enable internal pullups on enabled pins. The internal pullups
-    // are insufficient however, please make sure 10k external pullups are
-    // connected on the bus. This is for debug / example purpose only.
-//    slot_config.flags |= SDMMC_SLOT_FLAG_INTERNAL_PULLUP;
-    config.flags |= SDMMC_SLOT_FLAG_INTERNAL_PULLUP;
-    }; /* Init() */
+	    // Enable internal pullups on enabled pins. The internal pullups
+	    // are insufficient however, please make sure 10k external pullups are
+	    // connected on the bus. This is for debug / example purpose only.
+	//    slot_config.flags |= SDMMC_SLOT_FLAG_INTERNAL_PULLUP;
+	    config.flags |= SDMMC_SLOT_FLAG_INTERNAL_PULLUP;
+
+    }; /* Slot */
 
 private:
+    // This initializes the slot without card detect (CD) and write protect (WP) signals.
+    // Modify slot_config.gpio_cd and slot_config.gpio_wp if your board has these signals.
     // use field name 'config' instead 'slot_config'
-    sdmmc_slot_config_t config;
+    sdmmc_slot_config_t config = SDMMC_SLOT_CONFIG_DEFAULT();
 
     // To use 1-line SD mode, change this to 1:
     static const int SLOT_WIDTH = 4;
 
-}; /* slot */
-//}; /* SDMMC_slot */
+}; /* Slot */
 
 
-//class SDMMC
-class server
+// Options for mounting the filesystem.
+// If format_if_mount_failed is set to true, SD card will be partitioned and
+// formatted in case when mounting fails.
+class Mounter
+{
+public:
+    // Options for mounting the filesystem.
+    // If format_if_mount_failed is set to true, SD card will be partitioned and
+    // formatted in case when mounting fails.
+    Mounter():
+	point((char*)MOUNT_POINT)
+    {
+#ifdef CONFIG_EXAMPLE_FORMAT_IF_MOUNT_FAILED
+	config.format_if_mount_failed = true;
+#else
+	config.format_if_mount_failed = false;
+#endif // EXAMPLE_FORMAT_IF_MOUNT_FAILED
+	config.max_files = 5;
+	config.allocation_unit_size = 16 * 1024;
+	//ESP_LOGI(TAG, "Initializing SD card");
+    }; /* Mount */
+//    esp_vfs_fat_sdmmc_mount_config_t mount_config = {
+//    #ifdef CONFIG_EXAMPLE_FORMAT_IF_MOUNT_FAILED
+//        .format_if_mount_failed = true,
+//    #else
+//        .format_if_mount_failed = false,
+//    #endif // EXAMPLE_FORMAT_IF_MOUNT_FAILED
+//        .max_files = 5,
+//        .allocation_unit_size = 16 * 1024
+//    };
+
+    esp_vfs_fat_sdmmc_mount_config_t config;
+    char* point/* = MOUNT_POINT*/;
+    //ESP_LOGI(TAG, "Initializing SD card");
+
+private:
+    static const char* MOUNT_POINT;
+
+}; /* Mounter */
+
+const char *Mounter::MOUNT_POINT = MOUNT_POINT_def;
+
+
+class Server
 {
 
     esp_err_t ret;
 
-
     // Options for mounting the filesystem.
     // If format_if_mount_failed is set to true, SD card will be partitioned and
     // formatted in case when mounting fails.
-    esp_vfs_fat_sdmmc_mount_config_t mount_config = {
-    #ifdef CONFIG_EXAMPLE_FORMAT_IF_MOUNT_FAILED
-        .format_if_mount_failed = true,
-    #else
-        .format_if_mount_failed = false,
-    #endif // EXAMPLE_FORMAT_IF_MOUNT_FAILED
-        .max_files = 5,
-        .allocation_unit_size = 16 * 1024
-    };
-
-    const char mount_point[] = MOUNT_POINT;
-    //ESP_LOGI(TAG, "Initializing SD card");
+//    esp_vfs_fat_sdmmc_mount_config_t mount_config = {
+//    #ifdef CONFIG_EXAMPLE_FORMAT_IF_MOUNT_FAILED
+//        .format_if_mount_failed = true,
+//    #else
+//        .format_if_mount_failed = false,
+//    #endif // EXAMPLE_FORMAT_IF_MOUNT_FAILED
+//        .max_files = 5,
+//        .allocation_unit_size = 16 * 1024
+//    };
+    //
+//    char* mount_point/* = MOUNT_POINT*/;
+//    //ESP_LOGI(TAG, "Initializing SD card");
 
 private:
-    static const char MOUNT_POINT[] = MOUNT_POINT_def;
-    static const char TAG[] = "SD/MMC service";
+//    static const char* MOUNT_POINT;
+    static const char* TAG;
     sdmmc_card_t *card;
 
-}; /* server */
-//}; /* SDMMC */
+}; /* Server */
+
+//const char *server::MOUNT_POINT = MOUNT_POINT_def;
+const char* Server::TAG = "SD/MMC service";
+
 
 }; /* namespace SDMMC */
 
@@ -713,7 +759,7 @@ void** SDctrl::Syntax::tables()
 	};
     // syntax2: u | umount [ <device> | <mountpoint> ] "unmount SD-card <device> or that was mounted to <path>; if all parameters omitted - use default values - ..."
 	static void* arg_umnt[] = {
-		arg_rex1(NULL, NULL, "u|umount", NULL, 0, "unmount SD-card <device> or <path> where the SD card is mounted; if parameters omitted - use \"" MOUNT_POINT "\"" ),
+		arg_rex1(NULL, NULL, "u|umount", NULL, 0, "unmount SD-card <device> or <path> where the SD card is mounted; if parameters omitted - use \"" MOUNT_POINT_def "\"" ),
 		arg_rem ("[", NULL),
 		arg_str1(NULL, NULL, "<device>", "SD card device name, used default value if omitted"),
 		arg_rem ("|", NULL),
