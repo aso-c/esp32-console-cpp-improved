@@ -137,9 +137,8 @@ static const char *TAG = "SD/MMC service";
 
 
 //class SDMMC_host
-class Host
+struct Host
 {
-public:
     Host()
     {
 	ESP_LOGI(TAG, "Using SDMMC peripheral");
@@ -153,18 +152,17 @@ public:
 //	ESP_LOGI(TAG, "Using SDMMC peripheral");
 //	instance = SDMMC_HOST_DEFAULT();
 //    }; /* Init() */
-private:
+
     // Use settings defined above to initialize SD card and mount FAT filesystem.
     // Note: esp_vfs_fat_sdmmc/sdspi_mount is all-in-one convenience functions.
     // Please check its source code and implement error recovery when developing
     // production applications.
     sdmmc_host_t instance = SDMMC_HOST_DEFAULT();
-}; /* Host */
+}; /* struct Host */
 
 
-class Slot
+struct Slot
 {
-public:
     Slot()
     {
 	    // This initializes the slot without card detect (CD) and write protect (WP) signals.
@@ -193,29 +191,29 @@ public:
 
     }; /* Slot */
 
-private:
     // This initializes the slot without card detect (CD) and write protect (WP) signals.
     // Modify slot_config.gpio_cd and slot_config.gpio_wp if your board has these signals.
     // use field name 'config' instead 'slot_config'
     sdmmc_slot_config_t config = SDMMC_SLOT_CONFIG_DEFAULT();
 
+private:
     // To use 1-line SD mode, change this to 1:
     static const int SLOT_WIDTH = 4;
 
-}; /* Slot */
+}; /* struct Slot */
 
 
 // Options for mounting the filesystem.
 // If format_if_mount_failed is set to true, SD card will be partitioned and
 // formatted in case when mounting fails.
-class Mounter
+struct Mounter
 {
-public:
+
     // Options for mounting the filesystem.
     // If format_if_mount_failed is set to true, SD card will be partitioned and
     // formatted in case when mounting fails.
     Mounter():
-	point((char*)MOUNT_POINT)
+	point(MOUNT_POINT)
     {
 #ifdef CONFIG_EXAMPLE_FORMAT_IF_MOUNT_FAILED
 	config.format_if_mount_failed = true;
@@ -237,13 +235,13 @@ public:
 //    };
 
     esp_vfs_fat_sdmmc_mount_config_t config;
-    char* point/* = MOUNT_POINT*/;
+    const char* point;
     //ESP_LOGI(TAG, "Initializing SD card");
 
 private:
     static const char* MOUNT_POINT;
 
-}; /* Mounter */
+}; /* struct Mounter */
 
 const char *Mounter::MOUNT_POINT = MOUNT_POINT_def;
 
@@ -274,11 +272,10 @@ private:
     static const char* TAG;
     sdmmc_card_t *card;
 
-}; /* Server */
+}; /* class Server */
 
 //const char *server::MOUNT_POINT = MOUNT_POINT_def;
 const char* Server::TAG = "SD/MMC service";
-
 
 }; /* namespace SDMMC */
 
