@@ -50,8 +50,6 @@ static const char *TAG = "cmd_system";
 
 #define __PRETTY_CLASSES__
 
-//// typedef for iostream manipulator
-//typedef ostream& (streamer)(ostream&);
 
 // Print bytes count in groups by 3 digits
 ostream& pretty_bytes(ostream& out, uint32_t value);
@@ -59,8 +57,6 @@ ostream& pretty_bytes(ostream& out, uint32_t value);
 // Print bytes count in Kb, Mb as needed
 ostream& prn_KMbytes(ostream& out, uint32_t value);
 
-// Partial application of prn_KMbytes: fixing value
-    //auto prn_KMbytes(uint32_t val) -> streamer*;
 
 // i/o manipulator for calling pretty_bytes
 // w/partial application of procedure pretty_bytesed(ostream, value),
@@ -522,24 +518,36 @@ const char* version_str(void)
 //#endif
 
 
+// Template for the iostream manipulator
+// that implemented partial application of the function callfunc
+// with fixing ParamType parameter
+template <typename ParamType, ostream& (*callfunc)(ostream&, ParamType)>
+ostream& (*paramanip(ParamType value))(ostream&)
+{
+	static ParamType val = 0;
+	struct PartApp { static ostream& exec(ostream& out) {return callfunc(out, val);}; };
+
+    val = value;
+    return PartApp::exec;
+}; /* paramanip*/
+
 
 // Call the procedure 'pretty_bytes'
 // in iostream manipulator environment
 // partial application
 ostream& (*prettynumber(uint32_t value))(ostream&)
 {
-	static uint32_t val = 0;
-	struct PartApp
-	{
-	    static ostream& exec(ostream& out) {return pretty_bytes(out, val);};
-	};
-
-    val = value;
-    return PartApp::exec;
+    return paramanip<uint32_t, pretty_bytes>(value);
 }; /* prettynumber */
 
 
-
+#if 1
+// Partial application of prn_KMbytes: fixing value
+ostream& (*prn_KMbytes(uint32_t value))(ostream&)
+{
+    return paramanip<uint32_t, pretty_bytes>(value);
+}; /* prn_KMbytes(uint32_t value) */
+#else
 // Partial application of prn_KMbytes: fixing value
 //auto prn_KMbytes(uint32_t val) -> streamer*
 ostream& (*prn_KMbytes(uint32_t val))(ostream&)
@@ -549,10 +557,26 @@ ostream& (*prn_KMbytes(uint32_t val))(ostream&)
     value = val;
     return ([&value] (ostream& ost) -> ostream& {return prn_KMbytes(ost, value);});
 }; /* prn_KMbytes(uint32_t value) */
+#endif
+
 
 ostream& pretty_size_prn(ostream& out, const char prompt[], uint32_t value);
 
-//auto pretty_size_prn(const char prompt[], uint32_t value) -> streamer*
+#if 1
+ostream& (*pretty_size_prn(const char prompt[], uint32_t value))(ostream&)
+{
+	static const char *outprompt = NULL;
+	static uint32_t outvalue = 0;
+	struct PartDef { static ostream& exec(ostream& out) {return pretty_size_prn(out, outprompt, outvalue);}; };
+
+
+    outprompt = prompt;
+    outvalue = value;
+//    return ([&outprompt, &outval] (ostream& ost) -> ostream& {return pretty_size_prn(ost, outprompt, outval);});
+//    return paramanip<uint32_t, PartDef::exec>(value);
+    return PartDef::exec;
+};
+#else
 ostream& (*pretty_size_prn(const char prompt[], uint32_t value))(ostream&)
 {
 	static const char *outprompt = NULL;
@@ -562,6 +586,7 @@ ostream& (*pretty_size_prn(const char prompt[], uint32_t value))(ostream&)
     outval = value;
     return ([&outprompt, &outval] (ostream& ost) -> ostream& {return pretty_size_prn(ost, outprompt, outval);});
 };
+#endif
 
 
 
