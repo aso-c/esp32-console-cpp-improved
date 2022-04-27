@@ -47,6 +47,53 @@ using namespace std;
 
 static const char *TAG = "cmd_system";
 
+
+#define __PRETTY_CLASSES__
+
+// typedef for iostream manipulator
+typedef ostream& (streamer)(ostream&);
+
+#ifndef __PRETTY_CLASSES__
+// i/o manipulator for calling pretty_bytes
+// w/partial application for procedure pretty_bytesed(ostream, value),
+// parameter 'value'
+auto pretty_bytes(uint32_t value) -> streamer*;
+
+#else
+
+// Print bytes count in groups by 3 digits
+ostream& pretty_bytes(ostream& out, uint32_t value);
+
+// Print bytes count in Kb, Mb as needed
+ostream& prn_KMbytes(ostream& out, uint32_t value);
+
+// i/o manipulator for calling pretty_bytes
+// w/partial application for procedure pretty_bytesed(ostream, value),
+// parameter 'value'
+    //auto pretty_bytes(uint32_t value) -> streamer*;
+class prettybytes
+{
+public:
+    prettybytes(uint32_t val) {value = val;};
+//    ostream& operator()(ostream& out) {return pretty_bytes(out, value);}
+    operator streamer*() const {return prettybytes::partial_call;}
+
+private:
+    static uint32_t value;
+    static ostream& partial_call(ostream& out) {return pretty_bytes(out, value);};
+}; /* prettybytes */
+uint32_t prettybytes::value;
+
+// Partial application of prn_KMbytes: fixing value
+    //auto prn_KMbytes(uint32_t val) -> streamer*;
+
+#endif
+
+// Partial application of prn_KMbytes: fixing value
+auto prn_KMbytes(uint32_t val) -> streamer*;
+
+
+
 static void register_free(void);
 static void register_heap(void);
 static void register_version(void);
@@ -200,35 +247,12 @@ static void register_restart(void)
 }
 
 
-#ifdef __WITH_STDIO__
-/* Print int value with pretty fprmat & in bytes/megabytes etc. */
-static int pretty_size_prn(const char prompt[], uint32_t value);
-#else
-
-// typedef for iostream manipulator
-typedef ostream& (streamer)(ostream&);
-
-// i/o manipulator for calling pretty_bytes
-// w/partial application for procedure pretty_bytesed(ostream, value),
-// parameter 'value'
-auto pretty_bytes(uint32_t value) -> streamer*;
-
-// Partial application of prn_KMbytes: fixing value
-auto prn_KMbytes(uint32_t val) -> streamer*;
-
-#endif
-
 
 /** 'free' command prints available heap memory */
 static int free_mem(int argc, char **argv)
 {
-#ifdef __WITH_STDIO__
-    printf("free memory size: %d\n", esp_get_free_heap_size());
-    pretty_size_prn("Test free memory size prn", 15003748);
-#else
     cout << "free memory size: " << prn_KMbytes(esp_get_free_heap_size());
-    cout << " (" << pretty_bytes(esp_get_free_heap_size()) << " bytes)" << endl;
-#endif
+    cout << " (" << prettybytes(esp_get_free_heap_size()) << " bytes)" << endl;
     return 0;
 }; /* free_mem */
 
@@ -247,13 +271,8 @@ static void register_free(void)
 static int heap_size(int argc, char **argv)
 {
     uint32_t heap_size = heap_caps_get_minimum_free_size(MALLOC_CAP_DEFAULT);
-#ifdef __WITH_STDIO__
-//    printf("min heap size: %u\n", heap_size);
-    pretty_size_prn("min heap size", heap_size);
-#else
     cout << "min heap size: " << prn_KMbytes(heap_size);
-    cout << " (" << pretty_bytes(heap_size) << " bytes)" << endl;
-#endif
+    cout << " (" << prettybytes(heap_size) << " bytes)" << endl;
     return 0;
 }; /* heap_size */
 
@@ -454,11 +473,7 @@ static int light_sleep(int argc, char **argv)
         break;
     default:
         cause_str = "unknown";
-#ifdef __WITH_STDIO__
-        printf("%d\n", cause);
-#else
         cout << cause << endl;
-#endif
     }
     ESP_LOGI(TAG, "Woke up from: %s", cause_str);
     return 0;
@@ -504,19 +519,11 @@ const char* version_str(void)
 }; /* get_version */
 
 
-#ifdef __WITH_STDIO__
-// Print bytes count in groups by 3 digits
-void pretty_bytes(uint32_t value);
-
-// Print bytes count in Kb, Mb as needed
-void prn_KMbytes(uint32_t value);
-#else
-// Print bytes count in groups by 3 digits
-ostream& pretty_bytes(ostream& out, uint32_t value);
-
-// Print bytes count in Kb, Mb as needed
-ostream& prn_KMbytes(ostream& out, uint32_t value);
-#endif
+//// Print bytes count in groups by 3 digits
+//ostream& pretty_bytes(ostream& out, uint32_t value);
+//
+//// Print bytes count in Kb, Mb as needed
+//ostream& prn_KMbytes(ostream& out, uint32_t value);
 
 
 // Procedures for output memory size/numbers
@@ -534,6 +541,7 @@ ostream& prn_KMbytes(ostream& out, uint32_t value);
 
 
 
+#ifndef __PRETTY_CLASSES__
 // i/o manipulator for calling pretty_bytes
 // w/partial application for procedure pretty_bytesed(ostream, value),
 // parameter 'value'
@@ -544,6 +552,12 @@ auto pretty_bytes(uint32_t value) -> streamer*
     outvalue = value;
     return ([&outvalue] (ostream& ost) -> ostream& {return pretty_bytes(ost, outvalue);});
 }; /* pretty_bytes */
+#else
+//class pretty_bytes
+//{
+//    ;
+//};
+#endif // #ifndef __PRETTY_CLASSES__
 
 // Partial application of prn_KMbytes: fixing value
 auto prn_KMbytes(uint32_t val) -> streamer*
@@ -568,43 +582,14 @@ auto pretty_size_prn(const char prompt[], uint32_t value) -> streamer*
 
 
 
-#ifdef __WITH_STDIO__
-/* Print int value with pretty fprmat & in bytes/megabytes etc. */
-static int pretty_size_prn(const char prompt[], uint32_t size)
-{
-//    printf("%s: %d bytes (", prompt, size);
-    printf("%s: ", prompt);
-    prn_KMbytes(size);
-    printf(" (");
-    pretty_bytes(size);
-    printf(" bytes)\n");
-    return 0;
-}; /* pretty_size_prn */
-#else
 /* Print int value with pretty fprmat & in bytes/megabytes etc. */
 ostream& pretty_size_prn(ostream& out, const char prompt[], uint32_t value)
 {
         out << prompt << ": " << prn_KMbytes(value);
-        out << " (" << pretty_bytes(value) << " bytes)";
+        out << " (" << prettybytes(value) << " bytes)";
     return out;
 }; /* pretty_size_prn */
-#endif
 
-#ifdef __WITH_STDIO__
-// Print bytes count in groups by 3 digits
-void pretty_bytes(uint32_t size)
-{
-	uint32_t head = size / 1000;
-
-    if (head > 0)
-    {
-	pretty_bytes(head);
-	printf("%c%03u", DIGDELIM, size % 1000);
-    }
-    else
-	printf("%u", size);
-}; /* pretty_bytes */
-#else
 // Print bytes count in groups by 3 digits
 ostream& pretty_bytes(ostream& out, uint32_t value)
 {
@@ -613,52 +598,13 @@ ostream& pretty_bytes(ostream& out, uint32_t value)
     if (head > 0)
     {
 	//	printf("%c%03u", DIGDELIM, value % 1000);
-	out << pretty_bytes(head) << DIGDELIM << setw(3) << setfill('0') << value % 1000;
+	out << prettybytes(head) << DIGDELIM << setw(3) << setfill('0') << value % 1000;
     }
     else
 //	printf("%u", value);
 	out << value;
     return out;
 }; /* pretty_bytes */
-
-#endif
-
-#ifdef __WITH_STDIO__
-// Print the units of numerical value
-void prn_KMbytes(uint32_t size)
-{
-
-
-    if (size < 10 * Knum)
-    {
-	// Printout of bytes
-	pretty_bytes(size);
-	printf(" bytes");
-    } /* if size < 10 * Knum */
-    else if (size < Knum * Knum)
-    {
-	// Printout of Kbytes
-//	printf("%u bytes", size);
-	printf("%u Kbytes", size / Knum);
-	;
-    } /* else if size < Knum^2 */
-    else if (size < Knum * Knum * Knum)
-    {
-	// Printout of Mbytes
-//		printf("%u bytes", size);
-		printf("%u Mbytes", size / Knum / Knum);
-	;
-    } /* else if size < Knum^3 */
-    else
-    {
-	// all other
-//	printf("%u bytes", size);
-	pretty_bytes(size);
-	printf(" bytes");
-    }; /* else */
-
-}; /* prn_KMbytes */
-#else
 
 
 
@@ -668,7 +614,7 @@ ostream& prn_KMbytes(ostream& out, uint32_t value)
     if (value < 10 * Knum)
     {
 	// Printout of bytes
-	out << pretty_bytes(value) << " bytes";
+	out << prettybytes(value) << " bytes";
     } /* if size < 10 * Knum */
     else if (value < Knum * Knum)
     {
@@ -686,9 +632,8 @@ ostream& prn_KMbytes(ostream& out, uint32_t value)
     else
     {
 	// all other
-	out << pretty_bytes(value) << " bytes";
+	out << prettybytes(value) << " bytes";
     }; /* else */
     return out;
 
 }; /* prn_KMbytes */
-#endif

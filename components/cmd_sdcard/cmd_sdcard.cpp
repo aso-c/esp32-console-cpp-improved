@@ -119,39 +119,21 @@ bool isempty(const char *str)
 }; /* isempty */
 
 
-namespace SDMMC
+namespace SDMMC	//-----------------------------------------------------------------------------------------------------
 {
 
 static const char *TAG = "SD/MMC service";
 
-//// SD/MMC card class
-//class card
-//{
-//public:
-//    card() {card = NULL;};
-//    void Init() {};
-//    ~card();
-//private:
-//    sdmmc_card_t *card;
-//}; /* card */
-
-
-//class SDMMC_host
+// Use settings defined above to initialize SD card and mount FAT filesystem.
+// Note: esp_vfs_fat_sdmmc/sdspi_mount is all-in-one convenience functions.
+// Please check its source code and implement error recovery when developing
+// production applications.
 struct Host
 {
     Host()
     {
 	ESP_LOGI(TAG, "Using SDMMC peripheral");
     }; /* Host */
-
-//    // Use settings defined above to initialize SD card and mount FAT filesystem.
-//    // Note: esp_vfs_fat_sdmmc/sdspi_mount is all-in-one convenience functions.
-//    // Please check its source code and implement error recovery when developing
-//    // production applications.
-//    void Init() {
-//	ESP_LOGI(TAG, "Using SDMMC peripheral");
-//	instance = SDMMC_HOST_DEFAULT();
-//    }; /* Init() */
 
     // Use settings defined above to initialize SD card and mount FAT filesystem.
     // Note: esp_vfs_fat_sdmmc/sdspi_mount is all-in-one convenience functions.
@@ -165,10 +147,6 @@ struct Slot
 {
     Slot()
     {
-	    // This initializes the slot without card detect (CD) and write protect (WP) signals.
-	    // Modify slot_config.gpio_cd and slot_config.gpio_wp if your board has these signals.
-	    //config = SDMMC_SLOT_CONFIG_DEFAULT();
-
 	    // To use 1-line SD mode, change this to 1:
 	    config.width = SLOT_WIDTH;
 
@@ -193,7 +171,6 @@ struct Slot
 
     // This initializes the slot without card detect (CD) and write protect (WP) signals.
     // Modify slot_config.gpio_cd and slot_config.gpio_wp if your board has these signals.
-    // use field name 'config' instead 'slot_config'
     sdmmc_slot_config_t config = SDMMC_SLOT_CONFIG_DEFAULT();
 
 private:
@@ -206,44 +183,32 @@ private:
 // Options for mounting the filesystem.
 // If format_if_mount_failed is set to true, SD card will be partitioned and
 // formatted in case when mounting fails.
-struct Mounter
+struct Mounting
 {
 
-    // Options for mounting the filesystem.
-    // If format_if_mount_failed is set to true, SD card will be partitioned and
-    // formatted in case when mounting fails.
-    Mounter():
-	point(MOUNT_POINT)
+    Mounting():
+	target(MOUNT_POINT)
     {
 #ifdef CONFIG_EXAMPLE_FORMAT_IF_MOUNT_FAILED
-	config.format_if_mount_failed = true;
+	cfg.format_if_mount_failed = true;
 #else
-	config.format_if_mount_failed = false;
+	cfg.format_if_mount_failed = false;
 #endif // EXAMPLE_FORMAT_IF_MOUNT_FAILED
-	config.max_files = 5;
-	config.allocation_unit_size = 16 * 1024;
+	cfg.max_files = 5;
+	cfg.allocation_unit_size = 16 * 1024;
 	//ESP_LOGI(TAG, "Initializing SD card");
     }; /* Mount */
-//    esp_vfs_fat_sdmmc_mount_config_t mount_config = {
-//    #ifdef CONFIG_EXAMPLE_FORMAT_IF_MOUNT_FAILED
-//        .format_if_mount_failed = true,
-//    #else
-//        .format_if_mount_failed = false,
-//    #endif // EXAMPLE_FORMAT_IF_MOUNT_FAILED
-//        .max_files = 5,
-//        .allocation_unit_size = 16 * 1024
-//    };
 
-    esp_vfs_fat_sdmmc_mount_config_t config;
-    const char* point;
+    esp_vfs_fat_sdmmc_mount_config_t cfg;
+    const char* target;
     //ESP_LOGI(TAG, "Initializing SD card");
 
 private:
     static const char* MOUNT_POINT;
 
-}; /* struct Mounter */
+}; /* struct Mount */
 
-const char *Mounter::MOUNT_POINT = MOUNT_POINT_def;
+// const char *Mounting::MOUNT_POINT = MOUNT_POINT_def;
 
 
 class Server
@@ -251,33 +216,29 @@ class Server
 
     esp_err_t ret;
 
-    // Options for mounting the filesystem.
-    // If format_if_mount_failed is set to true, SD card will be partitioned and
-    // formatted in case when mounting fails.
-//    esp_vfs_fat_sdmmc_mount_config_t mount_config = {
-//    #ifdef CONFIG_EXAMPLE_FORMAT_IF_MOUNT_FAILED
-//        .format_if_mount_failed = true,
-//    #else
-//        .format_if_mount_failed = false,
-//    #endif // EXAMPLE_FORMAT_IF_MOUNT_FAILED
-//        .max_files = 5,
-//        .allocation_unit_size = 16 * 1024
-//    };
-    //
-//    char* mount_point/* = MOUNT_POINT*/;
-//    //ESP_LOGI(TAG, "Initializing SD card");
+    esp_err_t mount();				// Mount SD-card with default parameters
+    esp_err_t mount(char mountpoint[]);		// Mount default SD-card slot onto path "mountpoint"
+    esp_err_t mount(int slot_no);		// Mount SD-card slot "slot_no" onto default mount path
+    esp_err_t mount(int slot_no, char mountpoint);  // Mount SD-card slot "slot_no" onto default mount path
+
+    esp_err_t unmount();			// Unmount default mounted SD-card
+    esp_err_t unmount(const char mountpath[]);	// Unmount SD-card, that mounted onto "mountpath"
+    esp_err_t unmount(sdmmc_card_t *card);	// Unmount SD-card "card", mounted onto default mountpath
+    esp_err_t unmount(const char *base_path, sdmmc_card_t *card);	// Unmount mounted SD-card "card", mounted onto mountpath
 
 private:
-//    static const char* MOUNT_POINT;
     static const char* TAG;
     sdmmc_card_t *card;
 
+    Host host;
+    Slot slot;
+    Mounting mounting;
+
 }; /* class Server */
 
-//const char *server::MOUNT_POINT = MOUNT_POINT_def;
-const char* Server::TAG = "SD/MMC service";
+//const char* Server::TAG = "SD/MMC service";
 
-}; /* namespace SDMMC */
+}; /* namespace SDMMC */  //-------------------------------------------------------------------------------------------
 
 
 #if 0
@@ -369,6 +330,7 @@ void app_main(void)
 
 
 
+SDMMC::Server sd_server;
 
 
 // argument tables for any subcommand of sdcard commqand
@@ -872,6 +834,90 @@ void** SDctrl::Syntax::alltables = nullptr;
 
 
 
+namespace SDMMC
+{  //------------------------------------------------------------------------------------------------------------------
+
+//--[ strust Host ]-------------------------------------------------------------------------------------------------
+
+
+//--[ strust Slot ]-------------------------------------------------------------------------------------------------
+
+
+//--[ struct Mounting ]---------------------------------------------------------------------------------------------
+
+    const char *Mounting::MOUNT_POINT = MOUNT_POINT_def;
+
+
+//--[ class Server ]------------------------------------------------------------------------------------------------
+
+    // Mount SD-card with default parameters
+    esp_err_t Server::mount()
+    {
+	cout << TAG << ": " << "Procedure \"Mount\" is not yet released now" << endl;
+	cout << "Exit..." << endl;
+	return ESP_ERR_INVALID_VERSION;
+    }; /* Server::mount */
+
+    // Mount default SD-card slot onto path "mountpoint"
+    esp_err_t mount(char mountpoint[])
+    {
+	cout << TAG << ": " << "Procedure \"Mount(<mountpath>)\" is not yet released now" << endl;
+	cout << "Exit..." << endl;
+	return ESP_ERR_INVALID_VERSION;
+    }; /* Server::mount */
+
+    // Mount SD-card slot "slot_no" onto default mount path
+    esp_err_t mount(int slot_no)
+    {
+	cout << TAG << ": " << "Procedure \"Mount(<slot_number>)\" is not yet released now" << endl;
+	cout << "Exit..." << endl;
+	return ESP_ERR_INVALID_VERSION;
+    }; /* Server::mount */
+
+    // Mount SD-card slot "slot_no" onto default mount path
+    esp_err_t mount(int slot_no, char mountpoint)
+    {
+	cout << TAG << ": " << "Procedure \"Mount(<slot_number>, <mountpath>)\" is not yet released now" << endl;
+	cout << "Exit..." << endl;
+	return ESP_ERR_INVALID_VERSION;
+    }; /* Server::mount */
+
+    // Unmount default mounted SD-card
+    esp_err_t unmount()
+    {
+	cout << TAG << ": " << "Procedure \"Unmount()\" is not yet released now" << endl;
+	cout << "Exit..." << endl;
+	return ESP_ERR_INVALID_VERSION;
+    }; /* Server::unmount */
+
+    // Unmount SD-card, that mounted onto "mountpath"
+    esp_err_t unmount(const char mountpath[])
+    {
+	cout << TAG << ": " << "Procedure \"Unmount(<mountpath>)\" is not yet released now" << endl;
+	cout << "Exit..." << endl;
+	return ESP_ERR_INVALID_VERSION;
+    }; /* Server::unmount */
+
+    // Unmount SD-card "card", mounted onto default mountpath
+    esp_err_t unmount(sdmmc_card_t *card)
+    {
+	cout << TAG << ": " << "Procedure \"Unmount(<card>)\" is not yet released now" << endl;
+	cout << "Exit..." << endl;
+	return ESP_ERR_INVALID_VERSION;
+    }; /* Server::unmount */
+
+    // Unmount mounted SD-card "card", mounted onto mountpath
+    esp_err_t unmount(const char *base_path, sdmmc_card_t *card)
+    {
+	cout << TAG << ": " << "Procedure \"Unmount(<mountpath, ><card>)\" is not yet released now" << endl;
+	cout << "Exit..." << endl;
+	return ESP_ERR_INVALID_VERSION;
+    }; /* Server::unmount */
+
+
+    const char* Server::TAG = "SD/MMC service";
+
+}; /* namespace SDMMC */  //-------------------------------------------------------------------------------------------
 
 
 #if 0
