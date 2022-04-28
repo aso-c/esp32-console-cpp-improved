@@ -124,66 +124,81 @@ namespace SDMMC	//--------------------------------------------------------------
 
 static const char *TAG = "SD/MMC service";
 
-// Use settings defined above to initialize SD card and mount FAT filesystem.
-// Note: esp_vfs_fat_sdmmc/sdspi_mount is all-in-one convenience functions.
-// Please check its source code and implement error recovery when developing
-// production applications.
-struct Host
-{
-    Host()
-    {
-	slot_default_no = instance.slot;
-	ESP_LOGI(TAG, "Using SDMMC peripheral");
-    }; /* Host */
-
-    // Use settings defined above to initialize SD card and mount FAT filesystem.
-    // Note: esp_vfs_fat_sdmmc/sdspi_mount is all-in-one convenience functions.
-    // Please check its source code and implement error recovery when developing
-    // production applications.
-    sdmmc_host_t instance = SDMMC_HOST_DEFAULT();
-
-    void slot_no_reset() {instance.slot = slot_default_no;};
-
-private:
-    static int slot_default_no;
-}; /* struct Host */
-
-
 struct Slot
 {
     Slot()
     {
 	    // To use 1-line SD mode, change this to 1:
-	    config.width = SLOT_WIDTH;
+	    cfg.width = SLOT_WIDTH;
 
 	    // On chips where the GPIOs used for SD card can be configured, set them in
 	    // the slot_config structure:
 	#ifdef SOC_SDMMC_USE_GPIO_MATRIX
+//	    slot_config.clk = GPIO_NUM_14;
 	    slot_config.clk = GPIO_NUM_14;
-	    slot_config.cmd = GPIO_NUM_15;
-	    slot_config.d0 = GPIO_NUM_2;
-	    slot_config.d1 = GPIO_NUM_4;
-	    slot_config.d2 = GPIO_NUM_12;
-	    slot_config.d3 = GPIO_NUM_13;
+//	    slot_config.cmd = GPIO_NUM_15;
+	    cfg.cmd = GPIO_NUM_15;
+//	    slot_config.d0 = GPIO_NUM_2;
+	    cfg.d0 = GPIO_NUM_2;
+//	    slot_config.d1 = GPIO_NUM_4;
+	    cfg.d1 = GPIO_NUM_4;
+//	    slot_config.d2 = GPIO_NUM_12;
+	    cfg.d2 = GPIO_NUM_12;
+//	    slot_config.d3 = GPIO_NUM_13;
+	    cfg.d3 = GPIO_NUM_13;
 	#endif
 
 	    // Enable internal pullups on enabled pins. The internal pullups
 	    // are insufficient however, please make sure 10k external pullups are
 	    // connected on the bus. This is for debug / example purpose only.
-	//    slot_config.flags |= SDMMC_SLOT_FLAG_INTERNAL_PULLUP;
-	    config.flags |= SDMMC_SLOT_FLAG_INTERNAL_PULLUP;
+	    cfg.flags |= SDMMC_SLOT_FLAG_INTERNAL_PULLUP;
 
     }; /* Slot */
 
     // This initializes the slot without card detect (CD) and write protect (WP) signals.
     // Modify slot_config.gpio_cd and slot_config.gpio_wp if your board has these signals.
-    sdmmc_slot_config_t config = SDMMC_SLOT_CONFIG_DEFAULT();
+    sdmmc_slot_config_t cfg = SDMMC_SLOT_CONFIG_DEFAULT();
+
+    int  default_num() {return def_num;};
 
 private:
+
+    friend class Control;
+    void default_num(int num) {def_num = num;};
+
     // To use 1-line SD mode, change this to 1:
     static const int SLOT_WIDTH = 4;
+    static int def_num;
 
 }; /* struct Slot */
+
+
+//
+// SD/MMC Host
+struct Control
+{
+    Control()
+    {
+	//slot_default_no = host.slot;
+	slot.default_num(host.slot);
+	ESP_LOGI(TAG, "Using SDMMC peripheral");
+    }; /* Control */
+
+    // Use settings defined above to initialize SD card and mount FAT filesystem.
+    // Note: esp_vfs_fat_sdmmc/sdspi_mount is all-in-one convenience functions.
+    // Please check its source code and implement error recovery when developing
+    // production applications.
+    sdmmc_host_t host = SDMMC_HOST_DEFAULT();
+
+    Slot slot;
+
+//    void slot_num_reset() {host.slot = slot_default_no;};
+
+private:
+//    static int slot_default_no;
+}; /* struct Control */
+
+
 
 
 // Options for mounting the filesystem.
@@ -238,8 +253,8 @@ private:
     static const char* TAG;
     sdmmc_card_t *card;
 
-    Host host;
-    Slot slot;
+    Control control;
+//    Slot slot;
     Mounting mounting;
 
 }; /* class Server */
@@ -549,7 +564,8 @@ esp_err_t SDctrl::act_mnt()
 //	    return sd_server.mount(atoi(argv[2]));
 //	else
 //	    return sd_server.mount(argv[2]);
-	return isdigit(argv[2][0])? sd_server.mount(atoi(argv[2])): sd_server.mount(argv[2]);
+//	return isdigit(argv[2][0])? sd_server.mount(atoi(argv[2])): sd_server.mount(argv[2]);
+	return sd_server.mount(argv[2]);
 	break;
 
     case 4:
@@ -733,10 +749,7 @@ void** SDctrl::Syntax::tables()
     // syntax1: corrected m | mount [<slot>] [<mountpoint>] "m|mount", NULL, 0, "mount SD-card <device> to <mountpoint>, parameters are optional"
 	static void* arg_mnt[] = {
 		arg_rex1(NULL, NULL, "m|mount", NULL, 0, "mount SD-card [<device>] to [<mountpoint>], parameters are optional"),
-//		arg_str0(NULL, NULL, "<device>", NULL),
 		arg_str0(NULL, NULL, "<slot>", "SD card slot (device) number, used slot #"  qte(SDMMC_HOST_SLOT_1)  " default value if omitted"),
-//		arg_str0(NULL, NULL, "<mountpoint>", NULL),
-//		arg_str0(NULL, NULL, "<mountpoint>", "path to mountpoint SD card, used default value if omitted"),
 		arg_str0(NULL, NULL, "<mountpoint>", "path to mountpoint SD card, used path \"" MOUNT_POINT_def "\" if omitted"),
 		arg_end(2),
 	};
@@ -744,22 +757,12 @@ void** SDctrl::Syntax::tables()
     // syntax2 corrected: u | umount [<mountpoint>] "unmount SD-card <device> or that was mounted to <path>; if all parameters omitted - use default values - ..."
 	static void* arg_umnt[] = {
 		arg_rex1(NULL, NULL, "u|umount", NULL, 0, "unmount SD-card [<path>] where the SD card is mounted; if parameters omitted - use \"" MOUNT_POINT_def "\"" ),
-//		arg_str0(NULL, NULL, "<mountpoint>", "path to mountpoint SD card, used path \"" MOUNT_POINT_def "\" if omitted"),
 		arg_str0(NULL, NULL, "<mountpoint>", NULL),
-//-------------------------------------------------------------
-//		arg_str1(NULL, NULL, "<device>", "SD card device name, used default value if omitted"),
-//		arg_rem ("|", NULL),
-//		arg_str1(NULL, NULL, "<mountpoint>", "path to mountpoint SD card, used default value if omitted"),
-//		arg_rem ("]", NULL),
-//
-//-------------------------------------------------------------
 		arg_end(2),
 	};
     // syntax3: ls | dir [<pattern>] "list directory contents on SD-card"
 	static void* arg_ls[] = {
-	//	arg_rex1(NULL, NULL, "ls|dir", NULL, 0, NULL),
 		arg_rex1(NULL, NULL, "ls|dir", NULL, 0, "list directory contents on SD-card"),
-	//	arg_str0(NULL, NULL, "<pattern>", "file pattern or path whose contents are printed"),
 		arg_str0(NULL, NULL, "<pattern>", "file pattern or path"),
 		arg_end(2),
 	};
@@ -866,10 +869,12 @@ namespace SDMMC
 
 //--[ strust Host ]-------------------------------------------------------------------------------------------------
 
-int Host::slot_default_no;
+//int Control::slot_default_no;
 
 
 //--[ strust Slot ]-------------------------------------------------------------------------------------------------
+
+int Slot::def_num;
 
 
 //--[ struct Mounting ]---------------------------------------------------------------------------------------------
@@ -884,8 +889,10 @@ int Host::slot_default_no;
     {
 //	mounting.target = Mounting::MOUNT_POINT;
 	mounting.target_reset();
-	host.slot_no_reset();
-	cout << "Mount card slot #" << host.instance.slot << " to path \"" << mounting.target << "\"." << endl
+//	control.slot_num_reset();
+	control.host.slot = control.slot.default_num();
+	cout << "Mount SD-card with default parameters" << endl;
+	cout << "Mount card slot #" << control.host.slot << " to path \"" << mounting.target << "\"." << endl
 		<< endl;
 	cout << TAG << ": " << "Procedure \"Mount\" is not yet released now" << endl;
 	cout << "Exit..." << endl;
@@ -895,9 +902,15 @@ int Host::slot_default_no;
     // Mount default SD-card slot onto path "mountpoint"
     esp_err_t Server::mount(char mountpoint[])
     {
+	// if parameter - digit, than call mount(int)
+	if (isdigit(mountpoint[0]))
+	    return mount(atoi(mountpoint));
+
 	mounting.target = mountpoint;
-	host.slot_no_reset();
-	cout << "Mount card slot #" << host.instance.slot << " to path \"" << mounting.target << "\"." << endl
+//	control.slot_num_reset();
+	control.host.slot = control.slot.default_num();
+	cout << "Mount default SD-card slot onto specified path" << endl;
+	cout << "Mount card slot #" << control.host.slot << " to path \"" << mounting.target << "\"" << endl
 		<< endl;
 	cout << TAG << ": " << "Procedure \"Mount(<mountpath>)\" is not yet released now" << endl;
 	cout << "Exit..." << endl;
@@ -908,20 +921,23 @@ int Host::slot_default_no;
     esp_err_t Server::mount(int slot_no)
     {
 	mounting.target_reset();
-	host.instance.slot = slot_no;
-	cout << "Mount card slot #" << host.instance.slot << " to path \"" << mounting.target << "\"." << endl
+	control.host.slot = slot_no;
+	cout << "Mount SD-card in specified slot onto default mount path" << endl;
+	cout << "Mount card slot #" << control.host.slot << " to path \"" << mounting.target << "\"" << endl
 		<< endl;
 	cout << TAG << ": " << "Procedure \"Mount(<slot_number>)\" is not yet released now" << endl;
 	cout << "Exit..." << endl;
 	return ESP_ERR_INVALID_VERSION;
     }; /* Server::mount */
 
-    // Mount SD-card slot "slot_no" onto default mount path
+    // Mount SD-card slot "slot_no" onto specified mount path
     esp_err_t Server::mount(int slot_no, char mountpoint[])
     {
 	mounting.target = mountpoint;
-	host.instance.slot = slot_no;
-	cout << "Mount card slot #" << host.instance.slot << " to path \"" << mounting.target << "\"." << endl
+//	control.host.slot = slot_no;
+	control.host.slot = control.slot.default_num();
+	cout << "Mount SD-card in specified slot onto specified mount path" << endl;
+	cout << "Mount card slot #" << control.host.slot << " to path \"" << mounting.target << "\"" << endl
 		<< endl;
 	cout << TAG << ": " << "Procedure \"Mount(<slot_number>, <mountpath>)\" is not yet released now" << endl;
 	cout << "Exit..." << endl;
