@@ -498,12 +498,6 @@ const char* version_str(void)
 }; /* get_version */
 
 
-//// Print bytes count in groups by 3 digits
-//ostream& pretty_bytes(ostream& out, uint32_t value);
-//
-//// Print bytes count in Kb, Mb as needed
-//ostream& prn_KMbytes(ostream& out, uint32_t value);
-
 
 // Procedures for output memory size/numbers
 // in pretty format: group digits by 3 cifer,
@@ -541,60 +535,31 @@ ostream& (*prettynumber(uint32_t value))(ostream&)
 }; /* prettynumber */
 
 
-#if 1
 // Partial application of prn_KMbytes: fixing value
 ostream& (*prn_KMbytes(uint32_t value))(ostream&)
 {
     return paramanip<uint32_t, pretty_bytes>(value);
 }; /* prn_KMbytes(uint32_t value) */
-#else
-// Partial application of prn_KMbytes: fixing value
-//auto prn_KMbytes(uint32_t val) -> streamer*
-ostream& (*prn_KMbytes(uint32_t val))(ostream&)
-{
-	static uint32_t value = 0;
-
-    value = val;
-    return ([&value] (ostream& ost) -> ostream& {return prn_KMbytes(ost, value);});
-}; /* prn_KMbytes(uint32_t value) */
-#endif
 
 
 ostream& pretty_size_prn(ostream& out, const char prompt[], uint32_t value);
 
-#if 1
 ostream& (*pretty_size_prn(const char prompt[], uint32_t value))(ostream&)
 {
 	static const char *outprompt = NULL;
 	static uint32_t outvalue = 0;
 	struct PartDef { static ostream& exec(ostream& out) {return pretty_size_prn(out, outprompt, outvalue);}; };
 
-
     outprompt = prompt;
     outvalue = value;
-//    return ([&outprompt, &outval] (ostream& ost) -> ostream& {return pretty_size_prn(ost, outprompt, outval);});
-//    return paramanip<uint32_t, PartDef::exec>(value);
     return PartDef::exec;
 };
-#else
-ostream& (*pretty_size_prn(const char prompt[], uint32_t value))(ostream&)
-{
-	static const char *outprompt = NULL;
-	static uint32_t outval = 0;
-
-    outprompt = prompt;
-    outval = value;
-    return ([&outprompt, &outval] (ostream& ost) -> ostream& {return pretty_size_prn(ost, outprompt, outval);});
-};
-#endif
-
 
 
 /* Print int value with pretty fprmat & in bytes/megabytes etc. */
 ostream& pretty_size_prn(ostream& out, const char prompt[], uint32_t value)
 {
         out << prompt << ": " << prn_KMbytes(value);
-//        out << " (" << prettybytes(value) << " bytes)";
         out << " (" << prettynumber(value) << " bytes)";
     return out;
 }; /* pretty_size_prn */
@@ -607,7 +572,6 @@ ostream& pretty_bytes(ostream& out, uint32_t value)
     if (head > 0)
     {
 	//	printf("%c%03u", DIGDELIM, value % 1000);
-//	out << prettybytes(head) << DIGDELIM << setw(3) << setfill('0') << value % 1000;
 	out << prettynumber(head) << DIGDELIM << setw(3) << setfill('0') << value % 1000;
     }
     else
@@ -624,7 +588,6 @@ ostream& prn_KMbytes(ostream& out, uint32_t value)
     if (value < 10 * Knum)
     {
 	// Printout of bytes
-//	out << prettybytes(value) << " bytes";
 	out << prettynumber(value) << " bytes";
     } /* if size < 10 * Knum */
     else if (value < Knum * Knum)
@@ -643,7 +606,6 @@ ostream& prn_KMbytes(ostream& out, uint32_t value)
     else
     {
 	// all other
-//	out << prettybytes(value) << " bytes";
 	out << prettynumber(value) << " bytes";
     }; /* else */
     return out;

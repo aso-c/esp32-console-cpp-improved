@@ -132,6 +132,7 @@ struct Host
 {
     Host()
     {
+	slot_default_no = instance.slot;
 	ESP_LOGI(TAG, "Using SDMMC peripheral");
     }; /* Host */
 
@@ -140,6 +141,11 @@ struct Host
     // Please check its source code and implement error recovery when developing
     // production applications.
     sdmmc_host_t instance = SDMMC_HOST_DEFAULT();
+
+    void slot_no_reset() {instance.slot = slot_default_no;};
+
+private:
+    static int slot_default_no;
 }; /* struct Host */
 
 
@@ -199,6 +205,8 @@ struct Mounting
 	//ESP_LOGI(TAG, "Initializing SD card");
     }; /* Mount */
 
+    void target_reset() {target = Mounting::MOUNT_POINT;};
+
     esp_vfs_fat_sdmmc_mount_config_t cfg;
     const char* target;
     //ESP_LOGI(TAG, "Initializing SD card");
@@ -206,20 +214,18 @@ struct Mounting
 private:
     static const char* MOUNT_POINT;
 
-}; /* struct Mount */
+}; /* struct Mountштп */
 
 // const char *Mounting::MOUNT_POINT = MOUNT_POINT_def;
 
 
 class Server
 {
-
-    esp_err_t ret;
-
+public:
     esp_err_t mount();				// Mount SD-card with default parameters
     esp_err_t mount(char mountpoint[]);		// Mount default SD-card slot onto path "mountpoint"
     esp_err_t mount(int slot_no);		// Mount SD-card slot "slot_no" onto default mount path
-    esp_err_t mount(int slot_no, char mountpoint);  // Mount SD-card slot "slot_no" onto default mount path
+    esp_err_t mount(int slot_no, char mountpoint[]);  // Mount SD-card slot "slot_no" onto default mount path
 
     esp_err_t unmount();			// Unmount default mounted SD-card
     esp_err_t unmount(const char mountpath[]);	// Unmount SD-card, that mounted onto "mountpath"
@@ -227,6 +233,8 @@ class Server
     esp_err_t unmount(const char *base_path, sdmmc_card_t *card);	// Unmount mounted SD-card "card", mounted onto mountpath
 
 private:
+    esp_err_t ret;
+
     static const char* TAG;
     sdmmc_card_t *card;
 
@@ -359,16 +367,16 @@ public:
 
     void store(int argc, char *argv[]);	// Initializing current command environment
     static SDctrl& cmd();// get unigue single instance of the SDcmd object
-    static int exec(int argc, char **argv);	// execute the 'SD' command
+    static esp_err_t exec(int argc, char **argv);	// execute the 'SD' command
 
-    int err_none();	// Handler for "subcommand missing" error.
-    int err_unknown();	// Handler for "subcommand unknown" error.
+    esp_err_t err_none();	// Handler for "subcommand missing" error.
+    esp_err_t err_unknown();	// Handler for "subcommand unknown" error.
 
-    int act_mnt();	// action for 'mount' command
-    int act_umnt();	// action for 'unmount' command
-    int act_ls();	// action for list/dir command
-    int act_cat();	// action for 'cat' command
-    int act_type();	// action for 'type' command
+    esp_err_t act_mnt();	// action for 'mount' command
+    esp_err_t act_umnt();	// action for 'unmount' command
+    esp_err_t act_ls();	// action for list/dir command
+    esp_err_t act_cat();	// action for 'cat' command
+    esp_err_t act_type();	// action for 'type' command
 
 private:
     int argc;
@@ -453,7 +461,7 @@ SDctrl& SDctrl::instance = SDctrl::cmd();
 
 
 // execute the 'SD' command
-int SDctrl::exec(int argc, char **argv)
+esp_err_t SDctrl::exec(int argc, char **argv)
 {
 
     instance.store(argc, argv);
@@ -494,7 +502,7 @@ int SDctrl::exec(int argc, char **argv)
     }; /* switch instance.id() */
 
     cout << endl;
-    return 0;
+    return ESP_OK;
 }; /* SDctrl::exec */
 
 
@@ -508,42 +516,50 @@ void SDctrl::store(int argcnt, char *argvalue[])
 
 
 // Handler for "subcommand missing" error.
-int SDctrl::err_none()
+esp_err_t SDctrl::err_none()
 {
     cout << "Subcommand missing." << endl
 	 << syntax.hint << endl;
-    return 0;
+    return ESP_OK;
 }; /* SDcmd::err_none */
 
 // Handler for "subcommand unknown" error.
-int SDctrl::err_unknown()
+esp_err_t SDctrl::err_unknown()
 {
     cout << "Unknown options: \"" << argv[1] <<  "\"." << endl
 	 << syntax.hint << endl;
-    return 0;
+    return ESP_OK;
 }; /* SDcmd::err_unknown */
 
 
 // action for 'mount' command
-int SDctrl::act_mnt()
+esp_err_t SDctrl::act_mnt()
 {
     cout << "\"mount\" command execution" << endl;
     switch (argc)
     {
     case 2:
 	cout << "...without parameters - use default values." << endl;
+	return sd_server.mount();
 	break;
 
     case 3:
 	cout << "...with one parameter - use device or mount point." << endl;
+//	if (isdigit(argv[2][0]))
+//	    return sd_server.mount(atoi(argv[2]));
+//	else
+//	    return sd_server.mount(argv[2]);
+	return isdigit(argv[2][0])? sd_server.mount(atoi(argv[2])): sd_server.mount(argv[2]);
 	break;
 
     case 4:
 	cout << "...with two parameters - use device & mount point." << endl;
+	return sd_server.mount(atoi(argv[2]), argv[3]);
 	break;
 
     default:
-	cout << "more than two parameters - unknown configuration of parameters." << endl;
+	cout << "more than two parameters - obscure set of parameters." << endl;
+					//  unclear set of parameters
     }; /* switch argc */
     cout << endl;
 
@@ -552,21 +568,23 @@ int SDctrl::act_mnt()
 
 
 // action for 'unmount' command
-int SDctrl::act_umnt()
+esp_err_t SDctrl::act_umnt()
 {
     cout << "\"unmount\" command execution" << endl;
     switch (argc)
     {
     case 2:
 	cout << "...without parameters - use default values." << endl;
+	return sd_server.unmount();
 	break;
 
     case 3:
 	cout << "...with one parameter - use device or mount point." << endl;
+	return sd_server.unmount(argv[2]);
 	break;
 
     default:
-	cout << "more than one parameter - unknown configuration of parameters." << endl;
+	cout << "more than one parameter - unclear set of parameters." << endl;
     }; /* switch argc */
     cout << endl;
 
@@ -575,7 +593,7 @@ int SDctrl::act_umnt()
 
 
 // action for list/dir command
-int SDctrl::act_ls()
+esp_err_t SDctrl::act_ls()
 {
     cout << "\"ls\" command execution" << endl;
     switch (argc)
@@ -598,7 +616,7 @@ int SDctrl::act_ls()
 
 
 // action for 'cat' command
-int SDctrl::act_cat()
+esp_err_t SDctrl::act_cat()
 {
     cout << "\"cat\" command execution" << endl;
     switch (argc)
@@ -621,7 +639,7 @@ int SDctrl::act_cat()
 
 
 // action for 'type' command
-int SDctrl::act_type()
+esp_err_t SDctrl::act_type()
 {
     cout << "\"type\" command execution" << endl;
     switch (argc)
@@ -709,21 +727,32 @@ void** SDctrl::Syntax::tables()
 		arg_end(2),
 	};
 
+#define innerqte(a) #a
+#define qte(a) innerqte(a)
     // syntax1: m | mount [<device>] [<mountpoint>] "m|mount", NULL, 0, "mount SD-card <device> to <mountpoint>, parameters are optional"
+    // syntax1: corrected m | mount [<slot>] [<mountpoint>] "m|mount", NULL, 0, "mount SD-card <device> to <mountpoint>, parameters are optional"
 	static void* arg_mnt[] = {
 		arg_rex1(NULL, NULL, "m|mount", NULL, 0, "mount SD-card [<device>] to [<mountpoint>], parameters are optional"),
-		arg_str0(NULL, NULL, "<device>", NULL),
-		arg_str0(NULL, NULL, "<mountpoint>", NULL),
+//		arg_str0(NULL, NULL, "<device>", NULL),
+		arg_str0(NULL, NULL, "<slot>", "SD card slot (device) number, used slot #"  qte(SDMMC_HOST_SLOT_1)  " default value if omitted"),
+//		arg_str0(NULL, NULL, "<mountpoint>", NULL),
+//		arg_str0(NULL, NULL, "<mountpoint>", "path to mountpoint SD card, used default value if omitted"),
+		arg_str0(NULL, NULL, "<mountpoint>", "path to mountpoint SD card, used path \"" MOUNT_POINT_def "\" if omitted"),
 		arg_end(2),
 	};
     // syntax2: u | umount [ <device> | <mountpoint> ] "unmount SD-card <device> or that was mounted to <path>; if all parameters omitted - use default values - ..."
+    // syntax2 corrected: u | umount [<mountpoint>] "unmount SD-card <device> or that was mounted to <path>; if all parameters omitted - use default values - ..."
 	static void* arg_umnt[] = {
-		arg_rex1(NULL, NULL, "u|umount", NULL, 0, "unmount SD-card <device> or <path> where the SD card is mounted; if parameters omitted - use \"" MOUNT_POINT_def "\"" ),
-		arg_rem ("[", NULL),
-		arg_str1(NULL, NULL, "<device>", "SD card device name, used default value if omitted"),
-		arg_rem ("|", NULL),
-		arg_str1(NULL, NULL, "<mountpoint>", "path to mountpoint SD card, used default value if omitted"),
-		arg_rem ("]", NULL),
+		arg_rex1(NULL, NULL, "u|umount", NULL, 0, "unmount SD-card [<path>] where the SD card is mounted; if parameters omitted - use \"" MOUNT_POINT_def "\"" ),
+//		arg_str0(NULL, NULL, "<mountpoint>", "path to mountpoint SD card, used path \"" MOUNT_POINT_def "\" if omitted"),
+		arg_str0(NULL, NULL, "<mountpoint>", NULL),
+//-------------------------------------------------------------
+//		arg_str1(NULL, NULL, "<device>", "SD card device name, used default value if omitted"),
+//		arg_rem ("|", NULL),
+//		arg_str1(NULL, NULL, "<mountpoint>", "path to mountpoint SD card, used default value if omitted"),
+//		arg_rem ("]", NULL),
+//
+//-------------------------------------------------------------
 		arg_end(2),
 	};
     // syntax3: ls | dir [<pattern>] "list directory contents on SD-card"
@@ -790,8 +819,6 @@ SDctrl::Syntax::id()
 
 int SDctrl::Syntax::help()
 {
-//    return help_action((void**)alltables[0], alltables[1], alltables[2], alltables[3], alltables[4], alltables[5], NULL);
-
     cout << "#### Help action, implemented in the SDcmd::Syntax class, method help(). ####" << endl;
 
     if (!tables())
@@ -839,6 +866,8 @@ namespace SDMMC
 
 //--[ strust Host ]-------------------------------------------------------------------------------------------------
 
+int Host::slot_default_no;
+
 
 //--[ strust Slot ]-------------------------------------------------------------------------------------------------
 
@@ -853,37 +882,54 @@ namespace SDMMC
     // Mount SD-card with default parameters
     esp_err_t Server::mount()
     {
+//	mounting.target = Mounting::MOUNT_POINT;
+	mounting.target_reset();
+	host.slot_no_reset();
+	cout << "Mount card slot #" << host.instance.slot << " to path \"" << mounting.target << "\"." << endl
+		<< endl;
 	cout << TAG << ": " << "Procedure \"Mount\" is not yet released now" << endl;
 	cout << "Exit..." << endl;
 	return ESP_ERR_INVALID_VERSION;
     }; /* Server::mount */
 
     // Mount default SD-card slot onto path "mountpoint"
-    esp_err_t mount(char mountpoint[])
+    esp_err_t Server::mount(char mountpoint[])
     {
+	mounting.target = mountpoint;
+	host.slot_no_reset();
+	cout << "Mount card slot #" << host.instance.slot << " to path \"" << mounting.target << "\"." << endl
+		<< endl;
 	cout << TAG << ": " << "Procedure \"Mount(<mountpath>)\" is not yet released now" << endl;
 	cout << "Exit..." << endl;
 	return ESP_ERR_INVALID_VERSION;
     }; /* Server::mount */
 
     // Mount SD-card slot "slot_no" onto default mount path
-    esp_err_t mount(int slot_no)
+    esp_err_t Server::mount(int slot_no)
     {
+	mounting.target_reset();
+	host.instance.slot = slot_no;
+	cout << "Mount card slot #" << host.instance.slot << " to path \"" << mounting.target << "\"." << endl
+		<< endl;
 	cout << TAG << ": " << "Procedure \"Mount(<slot_number>)\" is not yet released now" << endl;
 	cout << "Exit..." << endl;
 	return ESP_ERR_INVALID_VERSION;
     }; /* Server::mount */
 
     // Mount SD-card slot "slot_no" onto default mount path
-    esp_err_t mount(int slot_no, char mountpoint)
+    esp_err_t Server::mount(int slot_no, char mountpoint[])
     {
+	mounting.target = mountpoint;
+	host.instance.slot = slot_no;
+	cout << "Mount card slot #" << host.instance.slot << " to path \"" << mounting.target << "\"." << endl
+		<< endl;
 	cout << TAG << ": " << "Procedure \"Mount(<slot_number>, <mountpath>)\" is not yet released now" << endl;
 	cout << "Exit..." << endl;
 	return ESP_ERR_INVALID_VERSION;
     }; /* Server::mount */
 
     // Unmount default mounted SD-card
-    esp_err_t unmount()
+    esp_err_t Server::unmount()
     {
 	cout << TAG << ": " << "Procedure \"Unmount()\" is not yet released now" << endl;
 	cout << "Exit..." << endl;
@@ -891,7 +937,7 @@ namespace SDMMC
     }; /* Server::unmount */
 
     // Unmount SD-card, that mounted onto "mountpath"
-    esp_err_t unmount(const char mountpath[])
+    esp_err_t Server::unmount(const char mountpath[])
     {
 	cout << TAG << ": " << "Procedure \"Unmount(<mountpath>)\" is not yet released now" << endl;
 	cout << "Exit..." << endl;
@@ -899,7 +945,7 @@ namespace SDMMC
     }; /* Server::unmount */
 
     // Unmount SD-card "card", mounted onto default mountpath
-    esp_err_t unmount(sdmmc_card_t *card)
+    esp_err_t Server::unmount(sdmmc_card_t *card)
     {
 	cout << TAG << ": " << "Procedure \"Unmount(<card>)\" is not yet released now" << endl;
 	cout << "Exit..." << endl;
@@ -907,7 +953,7 @@ namespace SDMMC
     }; /* Server::unmount */
 
     // Unmount mounted SD-card "card", mounted onto mountpath
-    esp_err_t unmount(const char *base_path, sdmmc_card_t *card)
+    esp_err_t Server::unmount(const char *base_path, sdmmc_card_t *card)
     {
 	cout << TAG << ": " << "Procedure \"Unmount(<mountpath, ><card>)\" is not yet released now" << endl;
 	cout << "Exit..." << endl;
