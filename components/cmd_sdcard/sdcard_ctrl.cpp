@@ -7,6 +7,7 @@
  *	Version: 0.1
  */
 
+
 #include <cstdlib>
 #include <iostream>
 #include <iomanip>
@@ -22,10 +23,11 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <regex>
+
 #include "esp_vfs_fat.h"
-#include "sdmmc_cmd.h"
 #include "driver/sdmmc_host.h"
 
+//#include "sdmmc_cmd.h"
 #include "sdcard_ctrl.hpp"
 
 
@@ -74,7 +76,6 @@ int Slot::def_num;
     // Mount SD-card with default parameters
     esp_err_t Server::mount()
     {
-//	mounting.target = Mounting::MOUNT_POINT;
 	mounting.target_reset();
 //	control.slot_num_reset();
 	control.host.slot = control.slot.default_num();
@@ -89,7 +90,6 @@ int Slot::def_num;
     // Mount default SD-card slot onto path "mountpoint"
     esp_err_t Server::mount(char mountpoint[])
     {
-	// if parameter - digit, than call mount(int)
 	if (isdigit(mountpoint[0]))
 	    return mount(atoi(mountpoint));
 
@@ -147,21 +147,21 @@ int Slot::def_num;
 	return ESP_ERR_INVALID_VERSION;
     }; /* Server::unmount */
 
-    // Unmount SD-card "card", mounted onto default mountpath
-    esp_err_t Server::unmount(sdmmc_card_t *card)
-    {
-	cout << TAG << ": " << "Procedure \"Unmount(<card>)\" is not yet released now" << endl;
-	cout << "Exit..." << endl;
-	return ESP_ERR_INVALID_VERSION;
-    }; /* Server::unmount */
-
-    // Unmount mounted SD-card "card", mounted onto mountpath
-    esp_err_t Server::unmount(const char *base_path, sdmmc_card_t *card)
-    {
-	cout << TAG << ": " << "Procedure \"Unmount(<mountpath, ><card>)\" is not yet released now" << endl;
-	cout << "Exit..." << endl;
-	return ESP_ERR_INVALID_VERSION;
-    }; /* Server::unmount */
+//    // Unmount SD-card "card", mounted onto default mountpath
+//    esp_err_t Server::unmount(sdmmc_card_t *card)
+//    {
+//	cout << TAG << ": " << "Procedure \"Unmount(<card>)\" is not yet released now" << endl;
+//	cout << "Exit..." << endl;
+//	return ESP_ERR_INVALID_VERSION;
+//    }; /* Server::unmount */
+//
+//    // Unmount mounted SD-card "card", mounted onto mountpath
+//    esp_err_t Server::unmount(const char *base_path, sdmmc_card_t *card)
+//    {
+//	cout << TAG << ": " << "Procedure \"Unmount(<mountpath, ><card>)\" is not yet released now" << endl;
+//	cout << "Exit..." << endl;
+//	return ESP_ERR_INVALID_VERSION;
+//    }; /* Server::unmount */
 
 
     const char* Server::TAG = "SD/MMC service";

@@ -538,7 +538,7 @@ ostream& (*prettynumber(uint32_t value))(ostream&)
 // Partial application of prn_KMbytes: fixing value
 ostream& (*prn_KMbytes(uint32_t value))(ostream&)
 {
-    return paramanip<uint32_t, pretty_bytes>(value);
+    return paramanip<uint32_t, prn_KMbytes>(value);
 }; /* prn_KMbytes(uint32_t value) */
 
 

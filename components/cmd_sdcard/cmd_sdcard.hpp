@@ -12,7 +12,7 @@
 #pragma once
 
 #ifndef __cplusplus
-#error "File cmd_sdcard.hpp is included for C++ only"
+#error "The cmd_sdcard file usable in C++ projects only."
 #endif
 
 

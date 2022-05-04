@@ -7,32 +7,10 @@
  *	Version: 0.1
  */
 
-//#include <cstdlib>
-//#include <iostream>
-//#include <iomanip>
-//#include <stdarg.h>
-//
-//#include <string.h>
-//#include <sys/unistd.h>
-//#include "esp_log.h"
-//#include "esp_console.h"
-//#include "esp_system.h"
-//#include <argtable3/argtable3.h>
-//#include <sys/unistd.h>
-//#include <sys/stat.h>
-//#include <sys/types.h>
-//#include <regex>
-//#include "esp_vfs_fat.h"
-//#include "sdmmc_cmd.h"
-//#include "driver/sdmmc_host.h"
-
-//#include <stdio.h>
 
 //using namespace idf;
 //using namespace std;
 
-
-//#define MOUNT_POINT_def "/sdcard"
 
 #pragma once
 
@@ -50,6 +28,7 @@
  */
 
 
+#ifdef __cplusplus
 
 
 namespace SDMMC	//-----------------------------------------------------------------------------------------------------
@@ -67,17 +46,11 @@ struct Slot
 	    // On chips where the GPIOs used for SD card can be configured, set them in
 	    // the slot_config structure:
 	#ifdef SOC_SDMMC_USE_GPIO_MATRIX
-//	    slot_config.clk = GPIO_NUM_14;
-	    slot_config.clk = GPIO_NUM_14;
-//	    slot_config.cmd = GPIO_NUM_15;
+	    cfg.clk = GPIO_NUM_14;
 	    cfg.cmd = GPIO_NUM_15;
-//	    slot_config.d0 = GPIO_NUM_2;
 	    cfg.d0 = GPIO_NUM_2;
-//	    slot_config.d1 = GPIO_NUM_4;
 	    cfg.d1 = GPIO_NUM_4;
-//	    slot_config.d2 = GPIO_NUM_12;
 	    cfg.d2 = GPIO_NUM_12;
-//	    slot_config.d3 = GPIO_NUM_13;
 	    cfg.d3 = GPIO_NUM_13;
 	#endif
 
@@ -177,8 +150,8 @@ public:
 
     esp_err_t unmount();			// Unmount default mounted SD-card
     esp_err_t unmount(const char mountpath[]);	// Unmount SD-card, that mounted onto "mountpath"
-    esp_err_t unmount(sdmmc_card_t *card);	// Unmount SD-card "card", mounted onto default mountpath
-    esp_err_t unmount(const char *base_path, sdmmc_card_t *card);	// Unmount mounted SD-card "card", mounted onto mountpath
+//    esp_err_t unmount(sdmmc_card_t *card);	// Unmount SD-card "card", mounted onto default mountpath
+//    esp_err_t unmount(const char *base_path, sdmmc_card_t *card);	// Unmount mounted SD-card "card", mounted onto mountpath
 
 private:
     esp_err_t ret;
@@ -281,6 +254,10 @@ void app_main(void)
     ESP_LOGI(TAG, "Card unmounted");
 }
 
+#endif
+
+#else
+#error "The sdcard_ctrl file usable in C++ projects only."
 #endif
 
 //--[ sdcard_ctrl.hpp ]----------------------------------------------------------------------------
