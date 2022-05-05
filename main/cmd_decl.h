@@ -20,7 +20,7 @@ extern "C" {
 }
 #endif
 
-#ifdef __cplusplus
+//#ifdef __cplusplus
 #include "cmd_sdcard.hpp"
-#endif
+//#endif
 

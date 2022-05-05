@@ -11,12 +11,16 @@
 // prevent multyple inclusion
 #pragma once
 
-#ifndef __cplusplus
-#error "The cmd_sdcard file usable in C++ projects only."
+#ifdef __cplusplus
+extern "C" {
 #endif
-
 
 // Register all SD-card commands
 void register_sdcard_cmd(void);
+
+#ifdef __cplusplus
+}
+#endif
+
 
 //--[ cmd_sdcard.hpp ]-----------------------------------------------------------------------------

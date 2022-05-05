@@ -98,8 +98,6 @@ struct Control
 
     Slot slot;
 
-//    void slot_num_reset() {host.slot = slot_default_no;};
-
 private:
 //    static int slot_default_no;
 }; /* struct Control */
@@ -114,7 +112,7 @@ struct Mounting
 {
 
     Mounting():
-	target(MOUNT_POINT)
+	target(MOUNT_POINT_Default)
     {
 #ifdef CONFIG_EXAMPLE_FORMAT_IF_MOUNT_FAILED
 	cfg.format_if_mount_failed = true;
@@ -126,14 +124,13 @@ struct Mounting
 	//ESP_LOGI(TAG, "Initializing SD card");
     }; /* Mount */
 
-    void target_reset() {target = Mounting::MOUNT_POINT;};
+    void target_reset() {target = Mounting::MOUNT_POINT_Default;};
 
     esp_vfs_fat_sdmmc_mount_config_t cfg;
     const char* target;
     //ESP_LOGI(TAG, "Initializing SD card");
 
-private:
-    static const char* MOUNT_POINT;
+    static const char* MOUNT_POINT_Default;
 
 }; /* struct Mountштп */
 
@@ -146,7 +143,7 @@ public:
     esp_err_t mount();				// Mount SD-card with default parameters
     esp_err_t mount(char mountpoint[]);		// Mount default SD-card slot onto path "mountpoint"
     esp_err_t mount(int slot_no);		// Mount SD-card slot "slot_no" onto default mount path
-    esp_err_t mount(int slot_no, char mountpoint[]);  // Mount SD-card slot "slot_no" onto default mount path
+    esp_err_t mount(int slot_no, const char mountpoint[]);  // Mount SD-card slot "slot_no" onto default mount path
 
     esp_err_t unmount();			// Unmount default mounted SD-card
     esp_err_t unmount(const char mountpath[]);	// Unmount SD-card, that mounted onto "mountpath"
