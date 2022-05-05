@@ -317,36 +317,41 @@ esp_err_t SDctrl::err_unknown()
 // action for 'mount' command
 esp_err_t SDctrl::act_mnt()
 {
+    esp_err_t res;
+
     cout << "\"mount\" command execution" << endl;
     switch (argc)
     {
     case 2:
 	cout << "...without parameters - use default values." << endl;
-	return sd_server.mount();
+//	return sd_server.mount();
+	res = sd_server.mount();
 	break;
 
     case 3:
 	cout << "...with one parameter - use device or mount point." << endl;
-//	if (isdigit(argv[2][0]))
-//	    return sd_server.mount(atoi(argv[2]));
-//	else
-//	    return sd_server.mount(argv[2]);
-//	return isdigit(argv[2][0])? sd_server.mount(atoi(argv[2])): sd_server.mount(argv[2]);
-	return sd_server.mount(argv[2]);
+//	return sd_server.mount(argv[2]);
+	res = sd_server.mount(argv[2]);
 	break;
 
     case 4:
 	cout << "...with two parameters - use device & mount point." << endl;
-	return sd_server.mount(atoi(argv[2]), argv[3]);
+//	return sd_server.mount(atoi(argv[2]), argv[3]);
+	res = sd_server.mount(atoi(argv[2]), argv[3]);
 	break;
 
     default:
 	cout << "more than two parameters - obscure set of parameters." << endl;
 					//  unclear set of parameters
+	res = ESP_FAIL;
     }; /* switch argc */
     cout << endl;
 
-    return 0;
+    if (res == ESP_OK)
+	sd_server.card_info();
+
+//    return 0;
+    return res;
 }; /* SDctrl::act_mnt */
 
 

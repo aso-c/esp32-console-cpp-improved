@@ -149,6 +149,7 @@ public:
     esp_err_t unmount(const char mountpath[]);	// Unmount SD-card, that mounted onto "mountpath"
 //    esp_err_t unmount(sdmmc_card_t *card);	// Unmount SD-card "card", mounted onto default mountpath
 //    esp_err_t unmount(const char *base_path, sdmmc_card_t *card);	// Unmount mounted SD-card "card", mounted onto mountpath
+    void card_info();		// Print the card info
 
 private:
     esp_err_t ret;

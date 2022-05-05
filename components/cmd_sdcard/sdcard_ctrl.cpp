@@ -25,6 +25,7 @@
 #include <regex>
 
 #include "esp_vfs_fat.h"
+#include "sdmmc_cmd.h"
 #include "driver/sdmmc_host.h"
 
 //#include "sdmmc_cmd.h"
@@ -221,6 +222,14 @@ int Slot::def_num;
 //	cout << "Exit..." << endl;
 //	return ESP_ERR_INVALID_VERSION;
 //    }; /* Server::unmount */
+
+
+// Print the card info
+void Server::card_info()
+{
+    sdmmc_card_print_info(stdout, card);
+}; /* Server::card_info */
+
 
 
     const char* Server::TAG = "SD/MMC service";
