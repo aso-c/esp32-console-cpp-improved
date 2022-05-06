@@ -244,7 +244,7 @@ esp_err_t Server::type()
 	char c = '\0', prevc;
     do {
 	prevc = c;
-	cin >> c;
+	cin >> noskipws >> c;
 	cout << c;
     } while (c != prevc || c != 'q');
 
