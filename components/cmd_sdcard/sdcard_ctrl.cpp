@@ -236,7 +236,8 @@ esp_err_t Server::type()
 {
     cout << endl
 	 << "**** Type the text on keyboard to screen *****" << endl
-	 << "Press 'q' or <Enter> twice for exit..."
+//	 << "Press 'q' or <Enter> twice for exit..." << endl
+	 << "Press <Enter> twice for exit..." << endl
 	 << endl;
 //    cout << TAG << ": " << "Procedure \"cat(fname)\" is not yet released now" << endl;
 //    cout << "Exit..." << endl;
@@ -245,17 +246,17 @@ esp_err_t Server::type()
     do {
 	prevc = c;
 	cin >> noskipws >> c;
-	if (c == '\n')
-	    cout << "<LF>";
-	if (c == '\r')
-	    cout << "<CR>";
 	cout << c;
-    } while (c != prevc || c != 'q');
+//	if (c == '\n')
+//	    cout << "<LF>" << endl;
+//	if (c == '\r')
+//	    cout << "<CR>" << endl;
+    } while (c != prevc || c != '\n');
 
     cout << endl << endl
 	 << "**** End of typing the text on keyboard. *****" << endl
 	 << endl;
-    return ESP_ERR_INVALID_VERSION;
+    return ESP_OK;
 }; /* type */
 
 // type text from keyboard to file and to screen
