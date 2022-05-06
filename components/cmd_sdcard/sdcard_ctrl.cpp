@@ -245,10 +245,14 @@ esp_err_t Server::type()
     do {
 	prevc = c;
 	cin >> noskipws >> c;
+	if (c == '\n')
+	    cout << "<LF>";
+	if (c == '\r')
+	    cout << "<CR>";
 	cout << c;
     } while (c != prevc || c != 'q');
 
-    cout << endl
+    cout << endl << endl
 	 << "**** End of typing the text on keyboard. *****" << endl
 	 << endl;
     return ESP_ERR_INVALID_VERSION;
