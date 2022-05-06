@@ -586,9 +586,9 @@ SDctrl::Syntax::id()
 	return unmount;
     if (strcmp(parent.argv[1], "ls") == 0 || strcmp(parent.argv[1], "dir") == 0)
 	return ls;
-    if (strcmp(parent.argv[1], "cat") == 0)
+    if (strcmp(parent.argv[1], "cat") == 0 || strcmp(parent.argv[1], "c") == 0)
     	return cat;
-    if (strcmp(parent.argv[1], "type") == 0)
+    if (strcmp(parent.argv[1], "type") == 0 || strcmp(parent.argv[1], "t") == 0)
     	return type;
 
     return unknown;

@@ -236,9 +236,18 @@ esp_err_t Server::type()
 {
     cout << endl
 	 << "**** Type the text on keyboard to screen *****" << endl
+	 << "Press 'q' or <Enter> twice for exit..."
 	 << endl;
-    cout << TAG << ": " << "Procedure \"cat(fname)\" is not yet released now" << endl;
-    cout << "Exit..." << endl;
+//    cout << TAG << ": " << "Procedure \"cat(fname)\" is not yet released now" << endl;
+//    cout << "Exit..." << endl;
+
+	char c = '\0', prevc;
+    do {
+	prevc = c;
+	cin >> c;
+	cout << c;
+    } while (c != prevc || c != 'q');
+
     cout << endl
 	 << "**** End of typing the text on keyboard. *****" << endl
 	 << endl;
