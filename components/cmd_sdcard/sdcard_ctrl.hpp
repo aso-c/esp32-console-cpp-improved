@@ -149,7 +149,14 @@ public:
     esp_err_t unmount(const char mountpath[]);	// Unmount SD-card, that mounted onto "mountpath"
 //    esp_err_t unmount(sdmmc_card_t *card);	// Unmount SD-card "card", mounted onto default mountpath
 //    esp_err_t unmount(const char *base_path, sdmmc_card_t *card);	// Unmount mounted SD-card "card", mounted onto mountpath
-    void card_info();		// Print the card info
+    void card_info(FILE* outfile);		// Print the card info
+
+    esp_err_t cat();	// type file contents - error, file name is absent
+    esp_err_t cat(const char fname[]);	// type file contents
+
+    esp_err_t type();	// type text from keyboard to screen
+    esp_err_t type(const char fname[]);	// type text from keyboard to file and to screen
+
 
 private:
     esp_err_t ret;

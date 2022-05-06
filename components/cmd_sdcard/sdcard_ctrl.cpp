@@ -28,7 +28,6 @@
 #include "sdmmc_cmd.h"
 #include "driver/sdmmc_host.h"
 
-//#include "sdmmc_cmd.h"
 #include "sdcard_ctrl.hpp"
 
 
@@ -115,74 +114,50 @@ int Slot::def_num;
     {
 	mounting.target = mountpoint;
 	control.host.slot = slot_no;
+
+	// Enable internal pullups on enabled pins. The internal pullups
+	// are insufficient however, please make sure 10k external pullups are
+	// connected on the bus. This is for debug / example purpose only.
+	// slot_config.flags |= SDMMC_SLOT_FLAG_INTERNAL_PULLUP;
+	//ESP_LOGI(TAG, "Mounting filesystem");
+
 	cout << "Mount SD-card in specified slot onto specified mount path" << endl;
-	cout << "Mount card slot #" << control.host.slot << " to path \"" << mounting.target << "\"" << endl
+//	cout << "Mount card slot #" << control.host.slot << " to path \"" << mounting.target << "\"" << endl
+//		<< endl;
+	cout << TAG << ": " "Mounting filesystem in card slot #" << control.host.slot << " to path \"" << mounting.target << "\"" << endl
 		<< endl;
-//	cout << TAG << ": " << "Procedure \"Mount(" << slot_no << ',' << ' ' << mountpoint << ")\" is not yet released now" << endl;
-//	cout << "Exit..." << endl;
-//	ret = ESP_ERR_NOT_SUPPORTED;
-	ret = esp_vfs_fat_sdmmc_mount(mounting.target, &control.host, &control.slot.cfg/*slot_config*/, &mounting.cfg/*mount_config*/, &card);
+	ret = esp_vfs_fat_sdmmc_mount(mounting.target, &control.host, &control.slot.cfg, &mounting.cfg, &card);
 	if (ret != ESP_OK)
 	{
 	    if (ret == ESP_FAIL)
-//	    {
-//		ESP_LOGE(TAG, "Failed to mount filesystem. "
-//			"If you want the card to be formatted, set the EXAMPLE_FORMAT_IF_MOUNT_FAILED menuconfig option.");
 		cout << TAG << ": " << "Failed to mount filesystem. "
 			"If you want the card to be formatted, set the EXAMPLE_FORMAT_IF_MOUNT_FAILED menuconfig option.";
-//	    }
 	    else
-//	    {
-//		ESP_LOGE(TAG, "Failed to initialize the card (%s). "
-//			"Make sure SD card lines have pull-up resistors in place.", esp_err_to_name(ret));
 		cout << TAG << ": " << "Failed to initialize the card (error " << ret << ", " << esp_err_to_name(ret) << "). "
 			<< "Make sure SD card lines have pull-up resistors in place.";
-//	    }
 	    return ret;
 	}; /* if ret != ESP_OK */
-    ESP_LOGI(TAG, "Filesystem mounted");
 
-//	return ESP_ERR_NOT_SUPPORTED;
+	//ESP_LOGI(TAG, "Filesystem mounted");
+	cout << TAG << ": " "Filesystem mounted";
+
 	return ret;
     }; /* Server::mount */
 
-//--------------------------------------------------------------------------------
-//    // Enable internal pullups on enabled pins. The internal pullups
-//    // are insufficient however, please make sure 10k external pullups are
-//    // connected on the bus. This is for debug / example purpose only.
-//    slot_config.flags |= SDMMC_SLOT_FLAG_INTERNAL_PULLUP;
-//
-//    ESP_LOGI(TAG, "Mounting filesystem");
-//    ret = esp_vfs_fat_sdmmc_mount(mount_point, &host, &slot_config, &mount_config, &card);
-//
-//    if (ret != ESP_OK) {
-//        if (ret == ESP_FAIL) {
-//            ESP_LOGE(TAG, "Failed to mount filesystem. "
-//                     "If you want the card to be formatted, set the EXAMPLE_FORMAT_IF_MOUNT_FAILED menuconfig option.");
-//        } else {
-//            ESP_LOGE(TAG, "Failed to initialize the card (%s). "
-//                     "Make sure SD card lines have pull-up resistors in place.", esp_err_to_name(ret));
-//        }
-//        return;
-//    }
-//    ESP_LOGI(TAG, "Filesystem mounted");
-//
-//    // Card has been initialized, print its properties
-//    sdmmc_card_print_info(stdout, card);
-//
-//--------------------------------------------------------------------------------
 
 
+    //------------------------------------------------------------------------------------------
+    //    // All done, unmount partition and disable SDMMC peripheral
+    //    esp_vfs_fat_sdcard_unmount(mount_point, card);
+    //    ESP_LOGI(TAG, "Card unmounted");
+    //------------------------------------------------------------------------------------------
 
     // Unmount default mounted SD-card
     esp_err_t Server::unmount()
     {
-//	cout << TAG << ": " << "Procedure \"Unmount()\" is not yet released now" << endl;
-//	cout << "Exit..." << endl;
 //	return ESP_ERR_NOT_SUPPORTED;
 	cout << TAG << ": " << "Call: unmount(" << mounting.target << ");" << endl;
 	ret = unmount(mounting.target);
-//	return ESP_ERR_INVALID_VERSION;
 	return ret;
     }; /* Server::unmount */
 
@@ -190,14 +165,12 @@ int Slot::def_num;
     esp_err_t Server::unmount(const char mountpath[])
     {
 	ret = esp_vfs_fat_sdcard_unmount(mountpath, card);
-//	cout << TAG << ": " << "Call: esp_vfs_fat_sdcard_unmount(" << mountpath << ',' << ' ' << "<card>" << ");" << endl;
 	//ESP_LOGI(TAG, "Card unmounted");
 	if (ret == ESP_OK)
 	    cout << TAG << ": " << "Card unmounted" << endl;
 	else
 	    cout << TAG << ": "  << "Error: " << ret
 		<< ", " << esp_err_to_name(ret) << endl;
-//	return ESP_ERR_INVALID_VERSION;
 	return ret;
     }; /* Server::unmount */
 
@@ -225,11 +198,66 @@ int Slot::def_num;
 
 
 // Print the card info
-void Server::card_info()
+void Server::card_info(FILE* outfile)
 {
-    sdmmc_card_print_info(stdout, card);
+    sdmmc_card_print_info(outfile/*stdout*/, card);
 }; /* Server::card_info */
 
+
+// type file contents - error, file name is absent
+esp_err_t Server::cat()
+{
+    cout << endl
+	 << "*** Printing contents of the file <XXXX fname>. ***" << endl
+	 << endl;
+    cout << TAG << ": " << "Error: file name is required, mandatory parameter is absent" << endl;
+    cout << endl
+	 << "*** End of printing file XXXX. ** ******************" << endl;
+    return ESP_ERR_INVALID_ARG;
+}; /* cat */
+
+// type file contents
+esp_err_t Server::cat(const char fname[])
+{
+    cout << endl
+	 << "*** Printing contents of the file <" << fname << ">. ***" << endl
+	 << endl;
+    cout << TAG << ": " << "Procedure \"cat(" << fname << ")\" is not yet released now" << endl;
+    cout << "Exit..." << endl;
+    cout << endl
+	 << "*** End of printing file " << fname << ". **************" << endl
+	 << endl;
+    return ESP_ERR_INVALID_VERSION;
+}; /* cat */
+
+
+// type text from keyboard to screen
+esp_err_t Server::type()
+{
+    cout << endl
+	 << "**** Type the text on keyboard to screen *****" << endl
+	 << endl;
+    cout << TAG << ": " << "Procedure \"cat(fname)\" is not yet released now" << endl;
+    cout << "Exit..." << endl;
+    cout << endl
+	 << "**** End of typing the text on keyboard. *****" << endl
+	 << endl;
+    return ESP_ERR_INVALID_VERSION;
+}; /* type */
+
+// type text from keyboard to file and to screen
+esp_err_t Server::type(const char fname[])
+{
+    cout << endl
+	 << "**** Type the text on keyboard to screen and file <" << fname << ">. ****" << endl
+	 << endl;
+    cout << TAG << ": " << "Procedure \"cat(fname)\" is not yet released now" << endl;
+    cout << "Exit..." << endl;
+    cout << endl
+	 << "**** End of typing the text on keyboard for the screen&file. ****" << endl
+	 << endl;
+    return ESP_ERR_INVALID_VERSION;
+}; /* type */
 
 
     const char* Server::TAG = "SD/MMC service";

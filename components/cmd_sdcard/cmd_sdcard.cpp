@@ -348,7 +348,7 @@ esp_err_t SDctrl::act_mnt()
     cout << endl;
 
     if (res == ESP_OK)
-	sd_server.card_info();
+	sd_server.card_info(stdout);
 
 //    return 0;
     return res;
@@ -410,15 +410,17 @@ esp_err_t SDctrl::act_cat()
     switch (argc)
     {
     case 2:
-	cout << "...without parameters - error parameter values." << endl;
+	//cout << "...without parameters - error parameter values." << endl;
+	return sd_server.cat();
 	break;
 
     case 3:
-	cout << "...with one parameter - use file name." << endl;
+	//cout << "...with one parameter - use file name." << endl;
+	return sd_server.cat(argv[2]);
 	break;
 
     default:
-	cout << "more than one parameter - error in parameters value." << endl;
+	cout << "Any parameters error." << endl;
     }; /* switch argc */
     cout << endl;
 
@@ -433,15 +435,17 @@ esp_err_t SDctrl::act_type()
     switch (argc)
     {
     case 2:
-	cout << "...without parameters - type to screen only." << endl;
+	//cout << "...without parameters - type to screen only." << endl;
+	return sd_server.type();
 	break;
 
     case 3:
 	cout << "...with one parameter - save type output to file & screen." << endl;
+	return sd_server.type(argv[2]);
 	break;
 
     default:
-	cout << "more than one parameter - error in parameters value." << endl;
+	cout << "Any parameters error." << endl;
     }; /* switch argc */
     cout << endl;
 
