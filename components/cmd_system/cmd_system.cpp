@@ -9,8 +9,13 @@
 
 
 #include <cstdlib>
+// #include <stdio.h>
 #include <iostream>
 #include <iomanip>
+// #include <fstream>
+//#include <ext/stdio_filebuf.h>
+
+
 //#include <thread>
 //#include "esp_log.h"
 #include "gpio_cxx.hpp"
@@ -35,6 +40,9 @@
 #include "freertos/task.h"
 #include "cmd_system.h"
 #include "sdkconfig.h"
+
+#include "include/extra_stream"
+
 
 
 //using namespace idf;
@@ -160,7 +168,17 @@ static int get_version(int argc, char **argv)
            spi_flash_get_chip_size() / (1024 * 1024), " MB");
     printf("\trevision number:%d\r\n", info.revision);
 #elif defined(__WITH_MY_FORMAT__)
+
+    //     std::ofstream ofs("file.txt");
+    //     fprintf(cfile(ofs), "sample1");
+    //     fflush(cfile(ofs)); // ofs << std::flush; doesn't help
+    //     ofs << "sample2\n";
+
+#if 1
+    fprintf(cfile(cout), "ESP Console Example, Version: %s-%s of %s,\r\n", CONFIG_APP_PROJECT_VER, CONFIG_APP_PROJECT_FLAVOUR, CONFIG_APP_PROJECT_DATE);
+#else
     fprintf(stdout, "ESP Console Example, Version: %s-%s of %s,\r\n", CONFIG_APP_PROJECT_VER, CONFIG_APP_PROJECT_FLAVOUR, CONFIG_APP_PROJECT_DATE);
+#endif
     fprintf(stdout, "\t\t\t\t\t      modified by %s\r\n", CONFIG_APP_PROJECT_MODIFICATOR);
     fprintf(stdout, "IDF Version: %s\r\n", esp_get_idf_version());
     fprintf(stdout, "Chip info:\r\n");

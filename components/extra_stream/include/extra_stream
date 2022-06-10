@@ -1,0 +1,66 @@
+//
+// iostream extentions for advanced formatting &
+// additional compatibility with C stdio layer.
+//
+// extra_stream
+// Header file
+//
+// author: Solomatov A.A. (aso)
+// ver.  : v.0.1
+// date  : 07.06.22.
+//
+
+
+#ifndef __EXTRA_STREAM_ASO__
+#define __EXTRA_STREAM_ASO__
+
+
+
+// Sources (in russian):
+// https://overcoder.net/q/54881/получение-файла-из-std-fstream
+// https://overcoder.net/q/54881/%D0%BF%D0%BE%D0%BB%D1%83%D1%87%D0%B5%D0%BD%D0%B8%D0%B5-%D1%84%D0%B0%D0%B9%D0%BB%D0%B0-%D0%B8%D0%B7-std-fstream
+// https://ask-dev.ru/info/113124/getting-a-file-from-a-stdfstream
+//
+// Original:
+// Implementation may not be fully cross-platform, but simple
+//
+// Simple crack:  http://www.ginac.de/~kreckel/fileno/ (reply dvorak) & see this extention:
+// gcc http://gcc.gnu.org/onlinedocs/gcc-4.6.2/libstdc++/api/a00069.html#a59f78806603c619eafcd4537c920f859,
+// There is a solution, that works at GCC (> 4.8) & clang (at least, 3.3)
+// [...]
+//
+// Usage:
+//
+// #include <stdio.h>
+//
+// #include <fstream>
+// #include <ext/stdio_filebuf.h>
+//
+// /* [ -->  #include "include/extra_stream" <-- Not needeed on user file? ]
+//
+//
+// int main(){
+//     std::ofstream ofs("file.txt");
+//     fprintf(cfile(ofs), "sample1");
+//     fflush(cfile(ofs)); // ofs << std::flush; doesn't help
+//     ofs << "sample2\n";
+// }
+// Flushing C file after output on it & before output to tied C++ fstream - is strongly recommended!
+//
+
+
+// Get C File, tied with passed ofstream
+FILE* cfile(std::ofstream const& ofs);
+
+// Get C File, tied with passed ifstream
+FILE* cfile(std::ifstream const& ifs);
+
+// Overloads for cout, cerr & clog iostreams
+FILE* cfile(std::ostream const& os);
+
+// Overloads for cin iostreams
+FILE* cfile(std::istream const& is);
+
+
+
+#endif // __EXTRA_STREAM_ASO__
