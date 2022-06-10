@@ -174,23 +174,27 @@ static int get_version(int argc, char **argv)
     //     fflush(cfile(ofs)); // ofs << std::flush; doesn't help
     //     ofs << "sample2\n";
 
-#if 1
+//    fprintf(stdout, "ESP Console Example, Version: %s-%s of %s,\r\n", CONFIG_APP_PROJECT_VER, CONFIG_APP_PROJECT_FLAVOUR, CONFIG_APP_PROJECT_DATE);
     fprintf(cfile(cout), "ESP Console Example, Version: %s-%s of %s,\r\n", CONFIG_APP_PROJECT_VER, CONFIG_APP_PROJECT_FLAVOUR, CONFIG_APP_PROJECT_DATE);
-#else
-    fprintf(stdout, "ESP Console Example, Version: %s-%s of %s,\r\n", CONFIG_APP_PROJECT_VER, CONFIG_APP_PROJECT_FLAVOUR, CONFIG_APP_PROJECT_DATE);
-#endif
-    fprintf(stdout, "\t\t\t\t\t      modified by %s\r\n", CONFIG_APP_PROJECT_MODIFICATOR);
-    fprintf(stdout, "IDF Version: %s\r\n", esp_get_idf_version());
-    fprintf(stdout, "Chip info:\r\n");
-    fprintf(stdout, "\tmodel:%s\r\n", info.model == CHIP_ESP32 ? "ESP32" : "Unknow");
-    fprintf(stdout, "\tcores:%d\r\n", info.cores);
-    fprintf(stdout, "\tfeature:%s%s%s%s%d%s\r\n",
+//    fprintf(stdout, "\t\t\t\t\t      modified by %s\r\n", CONFIG_APP_PROJECT_MODIFICATOR);
+    fprintf(cfile(cout), "\t\t\t\t\t      modified by %s\r\n", CONFIG_APP_PROJECT_MODIFICATOR);
+//    fprintf(stdout, "IDF Version: %s\r\n", esp_get_idf_version());
+    fprintf(cfile(cout), "IDF Version: %s\r\n", esp_get_idf_version());
+//    fprintf(stdout, "Chip info:\r\n");
+    fprintf(cfile(cout), "Chip info:\r\n");
+//    fprintf(stdout, "\tmodel:%s\r\n", info.model == CHIP_ESP32 ? "ESP32" : "Unknow");
+    fprintf(cfile(cout), "\tmodel:%s\r\n", info.model == CHIP_ESP32 ? "ESP32" : "Unknow");
+//    fprintf(stdout, "\tcores:%d\r\n", info.cores);
+    fprintf(cfile(cout), "\tcores:%d\r\n", info.cores);
+//    fprintf(stdout, "\tfeature:%s%s%s%s%d%s\r\n",
+    fprintf(cfile(cout), "\tfeature:%s%s%s%s%d%s\r\n",
            info.features & CHIP_FEATURE_WIFI_BGN ? "/802.11bgn" : "",
            info.features & CHIP_FEATURE_BLE ? "/BLE" : "",
            info.features & CHIP_FEATURE_BT ? "/BT" : "",
            info.features & CHIP_FEATURE_EMB_FLASH ? "/Embedded-Flash:" : "/External-Flash:",
            spi_flash_get_chip_size() / (1024 * 1024), " MB");
-    fprintf(stdout, "\trevision number:%d\r\n", info.revision);
+//    fprintf(stdout, "\trevision number:%d\r\n", info.revision);
+    fprintf(cfile(cout), "\trevision number:%d\r\n", info.revision);
 #elif defined(__MAX_UNFOLDED_OUTPUT__)
     cout << "ESP Console Example, Version: " << CONFIG_APP_PROJECT_VER << '-' << CONFIG_APP_PROJECT_FLAVOUR
 	 << " of " << CONFIG_APP_PROJECT_DATE << endl;
