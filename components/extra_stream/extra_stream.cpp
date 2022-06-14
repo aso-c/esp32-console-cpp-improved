@@ -45,6 +45,33 @@
 #include "include/extra_stream"
 
 
+using namespace std;
+
+namespace aso
+{
+
+//    class format
+//    {
+//    public:
+//	format (const char *fmtstr);
+//    }; /* format */
+
+format::format(const char *fmt):
+	fmt_str(fmt)
+	{};
+
+ostream& operator << (ostream& os, const format& fmt)
+
+{
+    return os << " ==== Format string is: \"" << fmt.fmt_str << "\" ====";
+
+}; /* ostream& operator << (ostream&, const format&) */
+
+}; /* namespace aso */
+
+
+
+
 
 typedef std::basic_ofstream<char>::__filebuf_type  buffer_t;
 

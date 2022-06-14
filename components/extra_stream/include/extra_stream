@@ -15,6 +15,28 @@
 #define __EXTRA_STREAM_ASO__
 
 
+namespace aso
+{
+
+    class format
+    {
+    public:
+	format (const char*);
+	
+    protected:
+	const char *fmt_str;
+	
+	friend std::ostream& operator << (std::ostream&, const format&);
+
+    }; /* format */
+
+    
+	std::ostream& operator << (std::ostream &os, const format &fmt);
+
+}; /* namespace aso */
+
+
+
 
 // Sources (in russian):
 // https://overcoder.net/q/54881/получение-файла-из-std-fstream
