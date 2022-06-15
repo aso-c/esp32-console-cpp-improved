@@ -56,6 +56,7 @@ namespace aso
 //	format (const char *fmtstr);
 //    }; /* format */
 
+#if 0
 format::format(const char *fmt):
 	fmt_str(fmt)
 	{};
@@ -66,8 +67,8 @@ ostream& operator << (ostream& os, const format& fmt)
     return os << " ==== Format string is: \"" << fmt.fmt_str << "\" ====";
 
 }; /* ostream& operator << (ostream&, const format&) */
+#endif
 
-}; /* namespace aso */
 
 
 
@@ -150,6 +151,7 @@ FILE* cfile(std::istream const& is)
     return nullptr; // stream not recognized
 }; /* cfile(std::istream) */
 
+}; /* namespace aso */
 
 
 

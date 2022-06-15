@@ -197,10 +197,13 @@ static int get_version(int argc, char **argv)
 	<< spi_flash_get_chip_size() / (1024 * 1024) << " MB" << endl;
     cout << "\trevision number: " << (int)info.revision << endl;
 #else
-    fprintf(cfile(cout), "ESP Console Example, Version: %s-%s of %s,\r\n", CONFIG_APP_PROJECT_VER, CONFIG_APP_PROJECT_FLAVOUR, CONFIG_APP_PROJECT_DATE);
-    cout << aso::format("ESP Console Example, Version: %s-%s of %s,\r\n");
+    fprintf(aso::cfile(cout), "ESP Console Example, Version: %s-%s of %s,\r\n", CONFIG_APP_PROJECT_VER, CONFIG_APP_PROJECT_FLAVOUR, CONFIG_APP_PROJECT_DATE);
+    cout << "=== format implementation ======================================================" << endl;
+//    cout << aso::format("ESP Console Example, Version: %s-%s of %s,\r\n");
+     aso::format_impl(cout, "ESP Console Example, Version: %s-%s of %s,\r\n", CONFIG_APP_PROJECT_VER, CONFIG_APP_PROJECT_FLAVOUR, CONFIG_APP_PROJECT_DATE);
 //    cout << "ESP Console Example, Version: " CONFIG_APP_PROJECT_VER "-" CONFIG_APP_PROJECT_FLAVOUR " of " CONFIG_APP_PROJECT_DATE << endl;
-    fprintf(cfile(cout), "\t\t\t\t\t      modified by %s\r\n", CONFIG_APP_PROJECT_MODIFICATOR);
+     cout << "=== format implementation ======================================================" << endl;
+    fprintf(aso::cfile(cout), "\t\t\t\t\t      modified by %s\r\n", CONFIG_APP_PROJECT_MODIFICATOR);
 //    cout << "\t\t\t\t\t      modified by " << CONFIG_APP_PROJECT_MODIFICATOR << endl;
 //    fprintf(cfile(cout), "IDF Version: %s\r\n", esp_get_idf_version());
     cout << "IDF Version: " << esp_get_idf_version() << endl;
