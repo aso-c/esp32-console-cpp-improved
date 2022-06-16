@@ -91,28 +91,44 @@ namespace aso
 //    inline int format_impl(std::ostream& os, const char* format_str, PrnTypes&&... prn_values)
 //    { return fprintf(cfile(os), format_str, prn_values... );};
 
-    template </*typename OutStream,*/ const char* fmt_str, typename... PrnTypes>
-//    template </*typename OutStream, const std::string &fmt_str,*/ typename... PrnTypes>
-    //constexpr decltype(auto) curryN(F&& f, Args&&... args) const;
-    class Format
+//    template </*typename OutStream,*/ const char* fmt_str, typename... PrnTypes>
+////    template </*typename OutStream, const std::string &fmt_str,*/ typename... PrnTypes>
+//    //constexpr decltype(auto) curryN(F&& f, Args&&... args) const;
+    class Formatter
     {
     public:
-//	template <typename OutStream, const char* fmt_str, PrnTypes&&... prnvalues>
-//	OutStream& operator() (OutStream& os) {format_impl(os, fmt_str, prnvalues...); return os;};
-	template <typename OutStream/*, const char* fmt_str*/>
-	OutStream& exec(OutStream& os) {implementation(os); return os;};
-	//constexpr decltype(auto) operator()(As&&... as) const;
+	virtual int Run(std::ostream&) = 0;
+	virtual int Run(std::ofstream&) = 0;
+	virtual ~Formatter() {};
+////	template <typename OutStream, const char* fmt_str, PrnTypes&&... prnvalues>
+////	OutStream& operator() (OutStream& os) {format_impl(os, fmt_str, prnvalues...); return os;};
+//	template <typename OutStream/*, const char* fmt_str*/>
+//	OutStream& exec(OutStream& os) {implementation(os); return os;};
+//	//constexpr decltype(auto) operator()(As&&... as) const;
 
-    private:
-	template <typename OutStream, OutStream os, PrnTypes&&... prnvalues>
-	int implementation(/*OutStream& oss*/) {return format_impl(os, fmt_str, prnvalues...);};
-    }; /* Format */
+//    private:
+//	template <typename OutStream, OutStream os, PrnTypes&&... prnvalues>
+//	int implementation(/*OutStream& oss*/) {return format_impl(os, fmt_str, prnvalues...);};
+    }; /* Formatter */
+
+	template <typename... fmt_Types>
+	class inFormat: public Formatter
+	{
+	public:
+	    int Run(std::ostream& os) {return 0;}
+	    int Run(std::ofstream& os) {return 0;}
+	    ;
+	};
+
 
     // aso::format with variadic parameters implementation
-    template <typename OutStream, const char* fmt_str, typename... PrnTypes>
-    Format<OutStream, fmt_str, PrnType...s> format()
+    template <typename OutStream, /*const char* fmt_str,*/ typename... PrnTypes>
+    inline Formatter&&
+    format(const char* format_str, PrnTypes... prnparams)
     {
-	;
+
+	ret = inFormat<prnparams>;
+	return ret;
     }; /* format*/
 
 #if 0
