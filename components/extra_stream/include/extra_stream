@@ -121,29 +121,44 @@ namespace aso
 	;
     }; /* inFormat */
 
-    inline std::ostream& myfprintf(std::ostream& os, const char* formatstr) {
-	fprintf(cfile(os), formatstr);
-	return os;
-    };
+    template <typename OutStream/*, const char* fmt_str*/ /*,typename... PrnTypes*/>
+    inline int format_envelop(OutStream& os, const char* formatstr) {
+	return fprintf(cfile(os), formatstr); };
 
 #if 1
     // aso::format with variadic parameters implementation, variant 3
-//    template </*typename OutStream,*/ /*const char* fmt_str,*/ typename... PrnTypes>
+  //  template <typename OutStream/*, const char* fmt_str*/ /*,typename... PrnTypes*/>
 //    OutStream& (*format(const char* format_str, PrnTypes&&... prnparams))(OutStream&)
 //    std::ostream& (*format(const char* format_str, PrnTypes&&... prnparams))(std::ostream&)
     //std::ostream& (*format(const char* format_str, ...))(std::ostream&)
 //    std::ostream& (*format(const char* format_str))(std::ostream&)
-    inline std::function<std::ostream&(std::ostream&)>
+//    inline std::function<std::ostream&(std::ostream&)>
+//    inline std::function<int(OutStream&)>
+//	format(const char* format_str)
+//    {
+//	std::cout << "Proverka vyzova functcii 'aso::format" << std::endl;
+////	std::function<std::ostream&(std::ostream&)> res = std::bind(myfprintf, std::placeholders::_1, format_str);
+////	return res;
+//	return std::bind(format_envelop<OutStream>, std::placeholders::_1, format_str);
+//    }; /* format */
+
+    inline std::function<int(std::ostream&)>
 	format(const char* format_str)
-//    decltype([=](std::ostream& os){return os;}) format(const char* format_str, ...)
     {
-	std::cout << "Proverka vyzova functcii 'aso::format" << std::endl;
+	std::cout << "Proverka vyzova functcii 'aso::format | std::ostream" << std::endl;
 //	std::function<std::ostream&(std::ostream&)> res = std::bind(myfprintf, std::placeholders::_1, format_str);
 //	return res;
-	return std::bind(myfprintf, std::placeholders::_1, format_str);
-//	return [=](std::ostream& os) {return os;};
-//	return [=](OutStream& os) {return os;};
+	return std::bind(format_envelop<std::ostream>, std::placeholders::_1, format_str);
     }; /* format */
+
+    inline std::function<int(std::ofstream&)>
+	fformat(const char* format_str)
+    {
+	std::cout << "Proverka vyzova functcii 'aso::format | std::ofstream" << std::endl;
+	return std::bind(format_envelop<std::ofstream>, std::placeholders::_1, format_str);
+    }; /* format */
+
+
 
 //    inline std::ostream& operator << (std::ostream &os, const std::function<std::ostream&(std::ostream&)>&& /*fn*/) {
 //	return /*fn(os)*/ os; }
@@ -184,8 +199,11 @@ std::ofstream& (*format(const char* str_format, OutTypes&&... prn_params))(std::
 
 }; /* namespace aso */
 
-inline std::ostream& operator << (std::ostream &os, const std::function<std::ostream&(std::ostream&)> fn) {
-	return fn(os); }
+//inline std::ostream& operator << (std::ostream &os, const std::function<std::ostream&(std::ostream&)> fn) {
+//	return fn(os); }
+template <typename OutStream>
+inline OutStream& operator << (OutStream &os, const std::function<int(OutStream&)> fn) {
+	fn (os); return os; }
 
 
 #endif // __EXTRA_STREAM_ASO__
