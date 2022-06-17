@@ -111,25 +111,59 @@ namespace aso
 //	int implementation(/*OutStream& oss*/) {return format_impl(os, fmt_str, prnvalues...);};
     }; /* Formatter */
 
-	template <typename... fmt_Types>
-	class inFormat: public Formatter
-	{
-	public:
-	    int Run(std::ostream& os) {return 0;}
-	    int Run(std::ofstream& os) {return 0;}
-	    ;
-	};
 
+    template <typename... fmt_Types>
+    class inFormat: public Formatter
+    {
+    public:
+	int Run(std::ostream& os) {return 0;}
+	int Run(std::ofstream& os) {return 0;}
+	;
+    }; /* inFormat */
+
+
+// Test
+    int inline sum2(int lhs, int rhs) {
+      return lhs + rhs;
+    }
+
+////    auto inline curried_sum2(int lhs) {
+//    inline int (*curried_sum2(int lhs))(int)
+//    {
+////      return [=](int rhs) {
+////        return sum2(lhs, rhs);
+////      };
+//	return std::bind( sum2, lhs  );
+//    }
+
+#if 1
+#if 0
+    // aso::format with variadic parameters implementation, variant 3
+//    template </*typename OutStream,*/ /*const char* fmt_str,*/ typename... PrnTypes>
+//    OutStream& (*format(const char* format_str, PrnTypes&&... prnparams))(OutStream&)
+//    std::ostream& (*format(const char* format_str, PrnTypes&&... prnparams))(std::ostream&)
+    //std::ostream& (*format(const char* format_str, ...))(std::ostream&)
+    decltype([=](std::ostream& os){return os;}) format(const char* format_str, ...)
+    {
+	std::cout << "Proverka vyzova functcii 'aso::format" << std::endl;
+	return [=](std::ostream& os) {return os;};
+//	return [=](OutStream& os) {return os;};
+    }; /* format */
+#endif
+
+#else
 
     // aso::format with variadic parameters implementation
     template <typename OutStream, /*const char* fmt_str,*/ typename... PrnTypes>
     inline Formatter&&
-    format(const char* format_str, PrnTypes... prnparams)
+    format(const char* format_str, PrnTypes&&... prnparams)
     {
 
-	ret = inFormat<prnparams>;
+	ret = inFormat<...prnparams>;
 	return ret;
     }; /* format*/
+
+    #endif
 
 #if 0
 // Template for the iostream manipulator
