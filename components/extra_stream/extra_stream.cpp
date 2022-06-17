@@ -35,6 +35,7 @@
 
 
 
+#include <functional>
 #include <iostream>
 //#include <iomanip>
 #include <fstream>
