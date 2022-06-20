@@ -87,6 +87,14 @@ namespace aso
     inline int format_impl(OutStream& os, const char* format_str, PrnTypes&&... prn_values)
     { return fprintf(cfile(os), format_str, prn_values... );};
 
+    inline std::ostream& format_impl(std::ostream& os)
+    {
+	fprintf(cfile(os), "Printout through the format_impl with inner definition of the printint string:\r\n"
+		"::==> "
+		"ESP Console Example, Version: %%s-%%s of %%s,\r\n");
+	return os;
+    }; /* format_impl */
+
 //    template <typename... PrnTypes>
 //    inline int format_impl(std::ostream& os, const char* format_str, PrnTypes&&... prn_values)
 //    { return fprintf(cfile(os), format_str, prn_values... );};
@@ -122,8 +130,9 @@ namespace aso
     }; /* inFormat */
 
     template <typename OutStream/*, const char* fmt_str*/ /*,typename... PrnTypes*/>
-    inline int format_envelop(OutStream& os, const char* formatstr) {
-	return fprintf(cfile(os), formatstr); };
+//    inline int format_envelop(OutStream& os, const char* formatstr) {
+    inline int format_envelop(OutStream& os, const std::string &&formatstr) {
+	return fprintf(cfile(os), formatstr.c_str()); };
 
 #if 1
     // aso::format with variadic parameters implementation, variant 3
@@ -144,11 +153,10 @@ namespace aso
 
     inline std::function<int(std::ostream&)>
 	format(const char* format_str)
+//	format(const std::string &format_str)
     {
 	std::cout << "Proverka vyzova functcii 'aso::format | std::ostream" << std::endl;
-//	std::function<std::ostream&(std::ostream&)> res = std::bind(myfprintf, std::placeholders::_1, format_str);
-//	return res;
-	return std::bind(format_envelop<std::ostream>, std::placeholders::_1, format_str);
+	return std::bind(format_envelop<std::ostream>, std::placeholders::_1, /*std::forward<const std::string &>*/(format_str));
     }; /* format */
 
     inline std::function<int(std::ofstream&)>
@@ -199,8 +207,6 @@ std::ofstream& (*format(const char* str_format, OutTypes&&... prn_params))(std::
 
 }; /* namespace aso */
 
-//inline std::ostream& operator << (std::ostream &os, const std::function<std::ostream&(std::ostream&)> fn) {
-//	return fn(os); }
 template <typename OutStream>
 inline OutStream& operator << (OutStream &os, const std::function<int(OutStream&)> fn) {
 	fn (os); return os; }

@@ -206,7 +206,8 @@ static int get_version(int argc, char **argv)
      cout << "=== format implementation ======================================================" << endl;
      cout << "=== aso::format test call ======================================================" << endl;
      //aso::format( "ESP Console Example, Version: %s-%s of %s,\r\n", CONFIG_APP_PROJECT_VER, CONFIG_APP_PROJECT_FLAVOUR, CONFIG_APP_PROJECT_DATE);
-     cout << aso::format( "ESP Console Example, Version: %s-%s of %s,\r\n");
+//     cout << aso::format( "ESP Console Example, Version: %s-%s of %s,\r\n");
+     cout << aso::format_impl;
      cout << "=== aso::format test call ======================================================" << endl;
     fprintf(aso::cfile(cout), "\t\t\t\t\t      modified by %s\r\n", CONFIG_APP_PROJECT_MODIFICATOR);
 //    cout << "\t\t\t\t\t      modified by " << CONFIG_APP_PROJECT_MODIFICATOR << endl;
@@ -243,12 +244,15 @@ static int get_version(int argc, char **argv)
 
 static void register_version(void)
 {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
     const esp_console_cmd_t cmd = {
         .command = "version",
         .help = "Get version of chip and SDK",
         .hint = NULL,
         .func = &get_version,
     };
+#pragma GCC diagnostic pop
     ESP_ERROR_CHECK( esp_console_cmd_register(&cmd) );
 }
 
@@ -258,19 +262,24 @@ static int restart(int argc, char **argv)
 {
     ESP_LOGI(TAG, "Restarting");
     esp_restart();
+    return -1;	// stub for supress warning only
 }
 
 static void register_restart(void)
 {
+#pragma GCC diagnostic push
+//#pragma -Wmissing-field-initializers
+//#pragma GCC diagnostic [warning|error|ignored] OPTION
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
     const esp_console_cmd_t cmd = {
         .command = "restart",
         .help = "Software reset of the chip",
         .hint = NULL,
         .func = &restart,
     };
+#pragma GCC diagnostic pop
     ESP_ERROR_CHECK( esp_console_cmd_register(&cmd) );
 }
-
 
 
 /** 'free' command prints available heap memory */
@@ -284,12 +293,15 @@ static int free_mem(int argc, char **argv)
 
 static void register_free(void)
 {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
     const esp_console_cmd_t cmd = {
         .command = "free",
         .help = "Get the current size of free heap memory",
         .hint = NULL,
         .func = &free_mem,
     };
+#pragma GCC diagnostic pop
     ESP_ERROR_CHECK( esp_console_cmd_register(&cmd) );
 }; /* register_free */
 
@@ -305,12 +317,15 @@ static int heap_size(int argc, char **argv)
 
 static void register_heap(void)
 {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
     const esp_console_cmd_t heap_cmd = {
         .command = "heap",
         .help = "Get minimum size of free heap memory that was available during program execution",
         .hint = NULL,
         .func = &heap_size,
     };
+#pragma GCC diagnostic pop
     ESP_ERROR_CHECK( esp_console_cmd_register(&heap_cmd) );
 
 }; /* register_heap */
@@ -339,12 +354,15 @@ static int tasks_info(int argc, char **argv)
 
 static void register_tasks(void)
 {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
     const esp_console_cmd_t cmd = {
         .command = "tasks",
         .help = "Get information about running tasks",
         .hint = NULL,
         .func = &tasks_info,
     };
+#pragma GCC diagnostic pop
     ESP_ERROR_CHECK( esp_console_cmd_register(&cmd) );
 }
 
