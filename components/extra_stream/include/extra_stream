@@ -76,7 +76,7 @@ namespace aso
 	//const char *format_str;
 	const std::string f_str;
 
-	friend std::ostream& operator << (std::ostream&, const format&);
+	//friend std::ostream& operator << (std::ostream&, const format&);
 
     }; /* format */
 
@@ -93,13 +93,15 @@ namespace aso
     }; /* format::output */
 
 
-	inline std::ostream& operator << (std::ostream &os, const format &fmt)
-	{
-	    return fmt.output(os);
-//		os << "Proverka vyzova functcii 'aso::format | std::ostream" << std::endl;
-//		fprintf(cfile(os), fmt.f_str.c_str());
-//		return os;
-	}; /* ostream& operator << (ostream &os, const format &) */
+    template<typename OutStream>
+    /*inline*/ OutStream& operator << (OutStream& os, const format &fmt)
+//    inline std::ostream& operator << (std::ostream &os, const format &fmt)
+    {
+	return fmt.output(os);
+    }; /* template <OutStream> OutStream& operator << (OutStream &, const format &) */
+//    }; /* ostream& operator << (ostream &os, const format &) */
+
+//    template<> std::ostream& operator << <std::ostream>(std::ostream&, const format &fmt);
 #endif
 
 
@@ -238,6 +240,22 @@ std::ofstream& (*format(const char* str_format, OutTypes&&... prn_params))(std::
 template <typename OutStream>
 inline OutStream& operator << (OutStream &os, const std::function<int(OutStream&)> fn) {
 	fn (os); return os; }
+
+//template<typename OutStream>
+//inline OutStream& operator << (OutStream &os, const aso::format &fmt)
+//{
+//	return fmt.output(os);
+//}; /* template <OutStream> OutStream& operator << (OutStream &, const format &) */
+
+//template<typename OutStream>
+///*inline*/ OutStream& operator << (OutStream &os, const aso::format &fmt)
+////    inline std::ostream& operator << (std::ostream &os, const format &fmt)
+//{
+//	return fmt.output(os);
+//}; /* template <OutStream> OutStream& operator << (OutStream &, const format &) */
+////    }; /* ostream& operator << (ostream &os, const format &) */
+//
+//template std::ostream& operator << <std::ostream>(std::ostream&, const aso::format &fmt);
 
 
 #endif // __EXTRA_STREAM_ASO__
