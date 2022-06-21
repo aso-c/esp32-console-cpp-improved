@@ -65,54 +65,80 @@ namespace aso
     // Overloads for cin iostreams
     FILE* cfile(std::istream const& is);
 
-#if 1
+//    class format
+//    {
+//    public:
+//	format (std::string&&);
+//	template <typename OutStream>
+//	OutStream& output(OutStream&) const;
+//
+//    private:
+//	const std::string f_str;
+//    }; /* format */
+
+    template <typename ...PrnTypes>
     class format
     {
     public:
-	format (std::string&&);
+	format (const std::string&&, const PrnTypes&&... prn_values);
 	template <typename OutStream>
-	OutStream& output(OutStream&) const;
+	    OutStream& output(OutStream&) const;
 
-    protected:
-	//const char *format_str;
+    private:
 	const std::string f_str;
-
-	//friend std::ostream& operator << (std::ostream&, const format&);
-
     }; /* format */
 
-    inline format::format (std::string&& fmt_str):
-	f_str(fmt_str)
+    // Comnstructor
+    template <typename ...PrnTypes>
+    inline format<PrnTypes...>::format(const std::string&& fmt_str, const PrnTypes&&... prnvals):
+        f_str(fmt_str)
     {};
 
+    // helper for aso::format::output
+//    template <typename OutStream>
+//    extern OutStream& output_helper(OutStream& os, const std::string&& ...);
+    extern std::ostream& output_helper(std::ostream& os, const std::string& ...);
+    extern std::ofstream& output_helper(std::ofstream& os, const std::string& ...);
 
-//    template <>
+    // General definition of the format::output
+    template <typename ...PrnTypes> template <typename OutStream>
+    inline OutStream&
+	format<PrnTypes...>::output(OutStream& os) const
+    {
+	output_helper(os, f_str/*, const PrnTypes&&... prnvalues*/);
+	return os;
+    }; /* format::output */
+
+
+//    template <typename ...PrnTypes>
 //    inline std::ostream&
-//    format::output<std::ostream>(std::ostream& os) const
+//    format<PrnTypes...>::output(std::ostream& os) const
 //    {
-//	os << "Proverka vyzova functcii 'aso::format | std::ostream" << std::endl;
-//	fprintf(cfile(os), f_str.c_str());
-//	return os;
+//    	os << "Proverka vyzova functcii 'aso::format | std::ostream" << std::endl;
+//    	fprintf(cfile(os), f_str.c_str());
+//    	return os;
 //    }; /* format::output */
 //
-    // General definition of the format::output
-    // is prohibited
-//    template <typename OutStream>
-//    inline OutStream&
-//    format::output(OutStream& os) const
+//
+//    template <typename ...PrnTypes>
+//    std::ofstream&
+//    format<PrnTypes...>::output(std::ofstream& os) const
 //    {
-//#error "General implementation of aso::format::output() is invalid."
+//    	os << "Proverka vyzova functcii 'aso::format | std::ofstream" << std::endl;
+//    	fprintf(cfile(os), f_str.c_str());
+//    	return os;
 //    }; /* format::output */
 
 
-    template<typename OutStream>
-    /*inline*/ OutStream& operator << (OutStream& os, const format &fmt)
+    template<typename OutStream, typename... PrnTypes>
+//    template<typename OutStream>
+//    /*inline*/ OutStream& operator << (OutStream& os, const format &fmt)
+    /*inline*/ OutStream& operator << (OutStream& os, const format<PrnTypes...> &fmt)
     {
 	return fmt.output(os);
     }; /* template <OutStream> OutStream& operator << (OutStream &, const format &) */
 
 //    template<> std::ostream& operator << <std::ostream>(std::ostream&, const format &fmt);
-#endif
 
 
 // Implementation of the 'format' procedeure

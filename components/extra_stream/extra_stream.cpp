@@ -153,23 +153,43 @@ FILE* cfile(std::istream const& is)
 }; /* cfile(std::istream) */
 
 
-template <>
-std::ostream&
-format::output<std::ostream>(std::ostream& os) const
+//--[ class format ]-------------------------------------------------------------------------------
+
+//// Comnstructor
+//template <typename... PrnTypes>
+//format<PrnTypes...prnvals>::format(const std::string&& fmt_str, PrnTypes... prnvals):
+//    f_str(fmt_str)
+//{};
+
+
+// helper for aso::format::output instances:
+// external defined procedures
+template <typename OutStream>
+OutStream& output_helper(OutStream& os, const std::string&& ...);
+
+
+//template <>
+//std::ostream&
+//format::output<std::ostream>(std::ostream& os) const
+std::ostream& output_helper(std::ostream& os, const std::string& str ...)
 {
 	os << "Proverka vyzova functcii 'aso::format | std::ostream" << std::endl;
-	fprintf(cfile(os), f_str.c_str());
+	fprintf(cfile(os), str.c_str());
 	return os;
 }; /* format::output */
 
-template <>
-std::ofstream&
-format::output<std::ofstream>(std::ofstream& os) const
+
+//template <>
+//std::ofstream&
+//format::output<std::ofstream>(std::ofstream& os) const
+std::ofstream& output_helper(std::ofstream& os, const std::string& str ...)
 {
 	os << "Proverka vyzova functcii 'aso::format | std::ofstream" << std::endl;
-	fprintf(cfile(os), f_str.c_str());
+	fprintf(cfile(os), str.c_str());
 	return os;
 }; /* format::output */
+
+//--[ end of class format ]------------------------------------------------------------------------
 
 
 
