@@ -69,8 +69,8 @@ namespace aso
     class format
     {
     public:
-//	format (const char*);
-	format (std::string&& fmt_str): f_str(fmt_str) {};
+	format (std::string&&);
+	std::ostream& output(std::ostream&) const;
 
     protected:
 	//const char *format_str;
@@ -80,12 +80,25 @@ namespace aso
 
     }; /* format */
 
+    inline format::format (std::string&& fmt_str):
+	f_str(fmt_str)
+    {};
+
+    inline std::ostream&
+    format::output(std::ostream& os) const
+    {
+	os << "Proverka vyzova functcii 'aso::format | std::ostream" << std::endl;
+	fprintf(cfile(os), f_str.c_str());
+	return os;
+    }; /* format::output */
+
 
 	inline std::ostream& operator << (std::ostream &os, const format &fmt)
 	{
-		os << "Proverka vyzova functcii 'aso::format | std::ostream" << std::endl;
-		fprintf(cfile(os), fmt.f_str.c_str());
-		return os;
+	    return fmt.output(os);
+//		os << "Proverka vyzova functcii 'aso::format | std::ostream" << std::endl;
+//		fprintf(cfile(os), fmt.f_str.c_str());
+//		return os;
 	}; /* ostream& operator << (ostream &os, const format &) */
 #endif
 
