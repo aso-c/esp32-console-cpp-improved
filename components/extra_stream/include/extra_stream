@@ -85,40 +85,23 @@ namespace aso
 	f_str(fmt_str)
     {};
 
+
+//    template <>
 //    inline std::ostream&
-//    format::output(std::ostream& os) const
+//    format::output<std::ostream>(std::ostream& os) const
 //    {
 //	os << "Proverka vyzova functcii 'aso::format | std::ostream" << std::endl;
 //	fprintf(cfile(os), f_str.c_str());
 //	return os;
 //    }; /* format::output */
-
-    template <>
-    inline std::ostream&
-    format::output<std::ostream>(std::ostream& os) const
-    {
-	os << "Proverka vyzova functcii 'aso::format | std::ostream" << std::endl;
-	fprintf(cfile(os), f_str.c_str());
-	return os;
-    }; /* format::output */
-
-//    template <>
-//    inline std::ofstream&
-//    format::output<std::ofstream>(std::ofstream& os) const
-//    {
-//	os << "Proverka vyzova functcii 'aso::format | std::ofstream" << std::endl;
-//	fprintf(cfile(os), f_str.c_str());
-//	return os;
-//    }; /* format::output */
-
+//
+    // General definition of the format::output
+    // is prohibited
 //    template <typename OutStream>
 //    inline OutStream&
 //    format::output(OutStream& os) const
 //    {
 //#error "General implementation of aso::format::output() is invalid."
-////	os << "Proverka vyzova functcii 'aso::format | std::ostream" << std::endl;
-////	fprintf(cfile(os), f_str.c_str());
-////	return os;
 //    }; /* format::output */
 
 

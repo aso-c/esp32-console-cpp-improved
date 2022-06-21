@@ -154,7 +154,16 @@ FILE* cfile(std::istream const& is)
 
 
 template <>
-inline std::ofstream&
+std::ostream&
+format::output<std::ostream>(std::ostream& os) const
+{
+	os << "Proverka vyzova functcii 'aso::format | std::ostream" << std::endl;
+	fprintf(cfile(os), f_str.c_str());
+	return os;
+}; /* format::output */
+
+template <>
+std::ofstream&
 format::output<std::ofstream>(std::ofstream& os) const
 {
 	os << "Proverka vyzova functcii 'aso::format | std::ofstream" << std::endl;
