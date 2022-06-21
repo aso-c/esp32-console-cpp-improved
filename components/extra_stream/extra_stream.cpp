@@ -152,6 +152,18 @@ FILE* cfile(std::istream const& is)
     return nullptr; // stream not recognized
 }; /* cfile(std::istream) */
 
+
+template <>
+inline std::ofstream&
+format::output<std::ofstream>(std::ofstream& os) const
+{
+	os << "Proverka vyzova functcii 'aso::format | std::ofstream" << std::endl;
+	fprintf(cfile(os), f_str.c_str());
+	return os;
+}; /* format::output */
+
+
+
 }; /* namespace aso */
 
 

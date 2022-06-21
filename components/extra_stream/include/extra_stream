@@ -70,7 +70,6 @@ namespace aso
     {
     public:
 	format (std::string&&);
-	//std::ostream& output(std::ostream&) const;
 	template <typename OutStream>
 	OutStream& output(OutStream&) const;
 
@@ -94,14 +93,33 @@ namespace aso
 //	return os;
 //    }; /* format::output */
 
-    template <typename OutStream>
-    inline OutStream&
-    format::output(OutStream& os) const
+    template <>
+    inline std::ostream&
+    format::output<std::ostream>(std::ostream& os) const
     {
 	os << "Proverka vyzova functcii 'aso::format | std::ostream" << std::endl;
 	fprintf(cfile(os), f_str.c_str());
 	return os;
     }; /* format::output */
+
+//    template <>
+//    inline std::ofstream&
+//    format::output<std::ofstream>(std::ofstream& os) const
+//    {
+//	os << "Proverka vyzova functcii 'aso::format | std::ofstream" << std::endl;
+//	fprintf(cfile(os), f_str.c_str());
+//	return os;
+//    }; /* format::output */
+
+//    template <typename OutStream>
+//    inline OutStream&
+//    format::output(OutStream& os) const
+//    {
+//#error "General implementation of aso::format::output() is invalid."
+////	os << "Proverka vyzova functcii 'aso::format | std::ostream" << std::endl;
+////	fprintf(cfile(os), f_str.c_str());
+////	return os;
+//    }; /* format::output */
 
 
     template<typename OutStream>
