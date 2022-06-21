@@ -70,7 +70,9 @@ namespace aso
     {
     public:
 	format (std::string&&);
-	std::ostream& output(std::ostream&) const;
+	//std::ostream& output(std::ostream&) const;
+	template <typename OutStream>
+	OutStream& output(OutStream&) const;
 
     protected:
 	//const char *format_str;
@@ -84,8 +86,17 @@ namespace aso
 	f_str(fmt_str)
     {};
 
-    inline std::ostream&
-    format::output(std::ostream& os) const
+//    inline std::ostream&
+//    format::output(std::ostream& os) const
+//    {
+//	os << "Proverka vyzova functcii 'aso::format | std::ostream" << std::endl;
+//	fprintf(cfile(os), f_str.c_str());
+//	return os;
+//    }; /* format::output */
+
+    template <typename OutStream>
+    inline OutStream&
+    format::output(OutStream& os) const
     {
 	os << "Proverka vyzova functcii 'aso::format | std::ostream" << std::endl;
 	fprintf(cfile(os), f_str.c_str());
@@ -95,11 +106,9 @@ namespace aso
 
     template<typename OutStream>
     /*inline*/ OutStream& operator << (OutStream& os, const format &fmt)
-//    inline std::ostream& operator << (std::ostream &os, const format &fmt)
     {
 	return fmt.output(os);
     }; /* template <OutStream> OutStream& operator << (OutStream &, const format &) */
-//    }; /* ostream& operator << (ostream &os, const format &) */
 
 //    template<> std::ostream& operator << <std::ostream>(std::ostream&, const format &fmt);
 #endif
