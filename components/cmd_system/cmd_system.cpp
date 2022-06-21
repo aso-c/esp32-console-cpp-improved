@@ -206,8 +206,9 @@ static int get_version(int argc, char **argv)
      cout << "=== format implementation ======================================================" << endl;
      cout << "=== aso::format test call ======================================================" << endl;
      //aso::format( "ESP Console Example, Version: %s-%s of %s,\r\n", CONFIG_APP_PROJECT_VER, CONFIG_APP_PROJECT_FLAVOUR, CONFIG_APP_PROJECT_DATE);
+     operator << (cout, aso::format( "ESP Console Example, Version: %%s-%%s of %%s,\r\n"));
 //     cout << aso::format( "ESP Console Example, Version: %s-%s of %s,\r\n");
-     cout << aso::format_impl;
+//     cout << aso::formatter_impl<"ESP Console Example, Version: %%s-%%s of %%s,\r\n">;
      cout << "=== aso::format test call ======================================================" << endl;
     fprintf(aso::cfile(cout), "\t\t\t\t\t      modified by %s\r\n", CONFIG_APP_PROJECT_MODIFICATOR);
 //    cout << "\t\t\t\t\t      modified by " << CONFIG_APP_PROJECT_MODIFICATOR << endl;
