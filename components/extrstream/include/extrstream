@@ -106,7 +106,7 @@ namespace aso
     inline OutStream&
 	format<PrnTypes...>::output(OutStream& os) const
     {
-	output_helper(os, f_str.c_str()/*, const PrnTypes&&... prnvalues*/);
+	output_helper(os, f_str.c_str(), "My_test#1_param", "My_test#2_param", "My_test_#3_param"/*, const PrnTypes&&... prnvalues*/);
 	return os;
     }; /* format::output */
 

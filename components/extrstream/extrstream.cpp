@@ -35,6 +35,9 @@
 
 
 
+//#include "../extrstream/include/extrstream"
+
+#include <stdarg.h>
 #include <functional>
 #include <iostream>
 //#include <iomanip>
@@ -43,7 +46,8 @@
 
 #include <stdio.h>
 
-#include <extrstream>
+#include "include/extrstream"
+
 
 
 using namespace std;
@@ -173,9 +177,14 @@ OutStream& output_helper(OutStream& os, const char* ...);
 //format::output<std::ostream>(std::ostream& os) const
 std::ostream& output_helper(std::ostream& os, const char* str ...)
 {
-	os << "Proverka vyzova functcii 'aso::format | std::ostream" << std::endl;
-	fprintf(cfile(os), str, "My_test#1_param", "My_test#2_param", "My_test_#3_param");
-	return os;
+	va_list vargs;
+
+    os << "Proverka vyzova functcii 'aso::format | std::ostream" << std::endl;
+//    fprintf(cfile(os), str, "My_test#1_param", "My_test#2_param", "My_test_#3_param");
+    va_start(vargs, str);
+    vfprintf(cfile(os), str, vargs);
+    va_end(vargs);
+    return os;
 }; /* format::output */
 
 

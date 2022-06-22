@@ -55,10 +55,13 @@ static const char* TAG = "example";
 static void initialize_filesystem(void)
 {
     static wl_handle_t wl_handle;
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
     const esp_vfs_fat_mount_config_t mount_config = {
             .format_if_mount_failed = true,
             .max_files = 4,
     };
+#pragma GCC diagnostic pop
     esp_err_t err = esp_vfs_fat_spiflash_mount(MOUNT_PATH, "storage", &mount_config, &wl_handle);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Failed to mount FATFS (%s)", esp_err_to_name(err));
@@ -91,6 +94,8 @@ static void initialize_console(void)
     /* Move the caret to the beginning of the next line on '\n' */
     esp_vfs_dev_uart_port_set_tx_line_endings(CONFIG_ESP_CONSOLE_UART_NUM, ESP_LINE_ENDINGS_CRLF);
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
     /* Configure UART. Note that REF_TICK is used so that the baud rate remains
      * correct while APB frequency is changing in light sleep mode.
      */
@@ -105,6 +110,7 @@ static void initialize_console(void)
         .source_clk = UART_SCLK_XTAL,
 #endif
     };
+#pragma GCC diagnostic pop
     /* Install UART driver for interrupt-driven reads and writes */
     ESP_ERROR_CHECK( uart_driver_install(CONFIG_ESP_CONSOLE_UART_NUM,
             256, 0, 0, NULL, 0) );
@@ -113,6 +119,8 @@ static void initialize_console(void)
     /* Tell VFS to use UART driver */
     esp_vfs_dev_uart_use_driver(CONFIG_ESP_CONSOLE_UART_NUM);
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
     /* Initialize the console */
     esp_console_config_t console_config = {
             .max_cmdline_length = 256,
@@ -121,6 +129,7 @@ static void initialize_console(void)
             .hint_color = atoi(LOG_COLOR_CYAN)
 #endif
     };
+#pragma GCC diagnostic pop
     ESP_ERROR_CHECK( esp_console_init(&console_config) );
 
     /* Configure linenoise line completion library */
