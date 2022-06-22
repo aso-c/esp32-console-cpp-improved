@@ -1,4 +1,4 @@
-idf_component_register(SRCS "extra_stream.cpp"
+idf_component_register(SRCS "extrstream.cpp"
                     INCLUDE_DIRS "include"
                     REQUIRES cxx)
 

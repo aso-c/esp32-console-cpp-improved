@@ -2,17 +2,17 @@
 // iostream extentions for advanced formatting &
 // additional compatibility with C stdio layer.
 //
-// extra_stream
+// extrstream
 // Header file
 //
 // author: Solomatov A.A. (aso)
-// ver.  : v.0.1
-// date  : 07.06.22.
+// ver.  : v.0.7
+// date  : 20.06.22.
 //
 
 
-#ifndef __EXTRA_STREAM_ASO__
-#define __EXTRA_STREAM_ASO__
+#ifndef __EXTRSTREAM_ASO__
+#define __EXTRSTREAM_ASO__
 
 
 namespace aso
@@ -95,17 +95,18 @@ namespace aso
     {};
 
     // helper for aso::format::output
+    // additional procedures can be added if needed
 //    template <typename OutStream>
 //    extern OutStream& output_helper(OutStream& os, const std::string&& ...);
-    extern std::ostream& output_helper(std::ostream& os, const std::string& ...);
-    extern std::ofstream& output_helper(std::ofstream& os, const std::string& ...);
+    extern std::ostream& output_helper(std::ostream& os, const char* ...);
+    extern std::ofstream& output_helper(std::ofstream& os, const char* ...);
 
     // General definition of the format::output
     template <typename ...PrnTypes> template <typename OutStream>
     inline OutStream&
 	format<PrnTypes...>::output(OutStream& os) const
     {
-	output_helper(os, f_str/*, const PrnTypes&&... prnvalues*/);
+	output_helper(os, f_str.c_str()/*, const PrnTypes&&... prnvalues*/);
 	return os;
     }; /* format::output */
 
@@ -294,4 +295,4 @@ inline OutStream& operator << (OutStream &os, const std::function<int(OutStream&
 //template std::ostream& operator << <std::ostream>(std::ostream&, const aso::format &fmt);
 
 
-#endif // __EXTRA_STREAM_ASO__
+#endif // __EXTRSTREAM_ASO__

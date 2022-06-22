@@ -2,12 +2,12 @@
 // iostream extentions for advanced formatting &
 // additional compatibility with C stdio layer.
 //
-// extra_stream.cpp
+// extrstream.cpp
 // Implementation file
 //
 // author: Solomatov A.A. (aso)
-// ver.  : v.0.1
-// date  : 07.06.22.
+// ver.  : v.0.7
+// date  : 20.06.22.
 //
 
 
@@ -43,7 +43,7 @@
 
 #include <stdio.h>
 
-#include "include/extra_stream"
+#include <extrstream>
 
 
 using namespace std;
@@ -165,16 +165,16 @@ FILE* cfile(std::istream const& is)
 // helper for aso::format::output instances:
 // external defined procedures
 template <typename OutStream>
-OutStream& output_helper(OutStream& os, const std::string&& ...);
+OutStream& output_helper(OutStream& os, const char* ...);
 
 
 //template <>
 //std::ostream&
 //format::output<std::ostream>(std::ostream& os) const
-std::ostream& output_helper(std::ostream& os, const std::string& str ...)
+std::ostream& output_helper(std::ostream& os, const char* str ...)
 {
 	os << "Proverka vyzova functcii 'aso::format | std::ostream" << std::endl;
-	fprintf(cfile(os), str.c_str());
+	fprintf(cfile(os), str, "My_test#1_param", "My_test#2_param", "My_test_#3_param");
 	return os;
 }; /* format::output */
 
@@ -182,10 +182,10 @@ std::ostream& output_helper(std::ostream& os, const std::string& str ...)
 //template <>
 //std::ofstream&
 //format::output<std::ofstream>(std::ofstream& os) const
-std::ofstream& output_helper(std::ofstream& os, const std::string& str ...)
+std::ofstream& output_helper(std::ofstream& os, const char* str ...)
 {
 	os << "Proverka vyzova functcii 'aso::format | std::ofstream" << std::endl;
-	fprintf(cfile(os), str.c_str());
+	fprintf(cfile(os), str);
 	return os;
 }; /* format::output */
 
