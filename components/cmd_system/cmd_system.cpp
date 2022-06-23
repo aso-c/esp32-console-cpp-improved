@@ -41,9 +41,10 @@
 #include "cmd_system.h"
 #include "sdkconfig.h"
 
+#include <utility>
 #include <functional>
+#include <tuple>
 
-//#include "../extrstream/include/extrstream"
 #include "include/extrstream"
 
 
@@ -203,13 +204,13 @@ static int get_version(int argc, char **argv)
     fprintf(aso::cfile(cout), "ESP Console Example, Version: %s-%s of %s,\r\n", CONFIG_APP_PROJECT_VER, CONFIG_APP_PROJECT_FLAVOUR, CONFIG_APP_PROJECT_DATE);
     cout << "=== format implementation ======================================================" << endl;
 //    cout << aso::format("ESP Console Example, Version: %s-%s of %s,\r\n");
-     aso::format_impl(cout, "ESP Console Example, Version: %s-%s of %s,\r\n", CONFIG_APP_PROJECT_VER, CONFIG_APP_PROJECT_FLAVOUR, CONFIG_APP_PROJECT_DATE);
+    aso::format_impl(cout, "ESP Console Example, Version: %s-%s of %s,\r\n", CONFIG_APP_PROJECT_VER, CONFIG_APP_PROJECT_FLAVOUR, CONFIG_APP_PROJECT_DATE);
 //    cout << "ESP Console Example, Version: " CONFIG_APP_PROJECT_VER "-" CONFIG_APP_PROJECT_FLAVOUR " of " CONFIG_APP_PROJECT_DATE << endl;
-     cout << "=== format implementation ======================================================" << endl;
-     cout << "=== aso::format test call ======================================================" << endl;
-     //aso::format( "ESP Console Example, Version: %s-%s of %s,\r\n", CONFIG_APP_PROJECT_VER, CONFIG_APP_PROJECT_FLAVOUR, CONFIG_APP_PROJECT_DATE);
+    cout << "=== format implementation ======================================================" << endl;
+    cout << "=== aso::format test call ======================================================" << endl;
+    cout << aso::format</*std::string, std::string, std::string*/>( "ESP Console Example, Version: %s-%s of %s,\r\n"/*, CONFIG_APP_PROJECT_VER, CONFIG_APP_PROJECT_FLAVOUR, CONFIG_APP_PROJECT_DATE*/);
   //   operator << (cout, aso::format( "ESP Console Example, Version: %%s-%%s of %%s,\r\n"));
-    cout << aso::format<>("ESP Console Example, Version: %s-%s of %s,\r\n");
+    //cout << aso::format<>("ESP Console Example, Version: %s-%s of %s,\r\n");
 //     cout << aso::format( "ESP Console Example, Version: %s-%s of %s,\r\n");
 //     cout << aso::formatter_impl<"ESP Console Example, Version: %%s-%%s of %%s,\r\n">;
      cout << "=== aso::format test call ======================================================" << endl;

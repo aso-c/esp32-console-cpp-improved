@@ -35,8 +35,6 @@
 
 
 
-//#include "../extrstream/include/extrstream"
-
 #include <stdarg.h>
 #include <functional>
 #include <iostream>
@@ -180,7 +178,6 @@ std::ostream& output_helper(std::ostream& os, const char* str ...)
 	va_list vargs;
 
     os << "Proverka vyzova functcii 'aso::format | std::ostream" << std::endl;
-//    fprintf(cfile(os), str, "My_test#1_param", "My_test#2_param", "My_test_#3_param");
     va_start(vargs, str);
     vfprintf(cfile(os), str, vargs);
     va_end(vargs);
@@ -193,9 +190,13 @@ std::ostream& output_helper(std::ostream& os, const char* str ...)
 //format::output<std::ofstream>(std::ofstream& os) const
 std::ofstream& output_helper(std::ofstream& os, const char* str ...)
 {
-	os << "Proverka vyzova functcii 'aso::format | std::ofstream" << std::endl;
-	fprintf(cfile(os), str);
-	return os;
+	va_list vargs;
+
+    os << "Proverka vyzova functcii 'aso::format | std::ofstream" << std::endl;
+    va_start(vargs, str);
+    vfprintf(cfile(os), str, vargs);
+    va_end(vargs);
+    return os;
 }; /* format::output */
 
 //--[ end of class format ]------------------------------------------------------------------------
