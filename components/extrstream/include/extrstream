@@ -88,8 +88,18 @@ namespace aso
 	const std::string f_str;
 	std::tuple<PrnTypes&&...> prn_values;
 
-	template<typename OutStream, std::size_t item, typename... Types>
+	template<typename OutStream, /*std::size_t item,*/ typename... Types>
 	static void tuple_call_helper(OutStream& os, const format<PrnTypes...>*, /*const std::size_t item,*/ Types&&... callitems);
+
+	template<typename OutStream/*, std::size_t item*//*, typename... Types*/>
+	static void tuple_call_helper(OutStream& os, const format<PrnTypes...>*, /*const std::size_t item,*/ PrnTypes&&... callitems);
+
+	template<typename OutStream, typename... Types>
+	static void terminal_tuple_call_helper(OutStream& os, const format<PrnTypes...>*, Types&&... callitems);
+
+//	template <typename ...TypesNo>
+//	static void generator(TypesNo ...itemno) {/*std::cout << "Call generator with " << sizeof...(TypesNo) << " items" << std::endl;*/ generator(sizeof...(TypesNo) + 1, itemno...);};
+//	static void generator(PrnTypes...itemno) {std::cout << "Call generator with " << sizeof...(itemno) << " items" << std::endl;};
 
 //	namespace
 //	    {
@@ -118,6 +128,13 @@ namespace aso
     extern std::ostringstream& output_helper(std::ostringstream& os, const char* ...);
     extern std::stringstream& output_helper(std::stringstream& os, const char* ...);
 
+
+    template <typename ...TypesNo>
+    inline void generator(TypesNo ...itemno) {std::cout << "Call generator with " << sizeof...(TypesNo) << " items" << std::endl; generator(sizeof...(TypesNo) + 1, itemno...);};
+    template <>
+    inline void generator<std::size_t, std::size_t, std::size_t>(std::size_t a, std::size_t b, std::size_t c) {std::cout << "Call generator with " << 3 /*sizeof...(itemno)*/ << " items" << std::endl;};
+
+
     // General definition of the format::output
     template <typename ...PrnTypes> template <typename OutStream>
     inline OutStream&
@@ -125,20 +142,47 @@ namespace aso
     {
 //	output_helper(os, f_str.c_str(), "My_test#1_param", "My_test#2_param", "My_test_#3_param"/*, const PrnTypes&&... prnvalues*/);
 	//output_helper(os, f_str.c_str()/*, PrnTypes&&... prnvalues*/);
-	tuple_call_helper<OutStream, sizeof...(PrnTypes)>(os, this/**, sizeof...(PrnTypes)*/);
+	if (sizeof...(PrnTypes) == 0)
+	    generator();
+//	    terminal_tuple_call_helper<OutStream>(os, this);
+	else
+	    generator();
+//	tuple_call_helper<OutStream/*, sizeof...(PrnTypes)*/>(os, this/***//*, sizeof...(PrnTypes)*/);
 	return os;
     }; /* format::output */
 
 
+//    template <typename ...PrnTypes>
+//    template<typename OutStream, /*std::size_t item,*/ typename... Types>
+//    inline void format<PrnTypes...>::tuple_call_helper(OutStream& os, const format* obj, /*const std::size_t item,*/ Types&&... callitems)
+//    {
+//	    constexpr std::size_t item = sizeof...(PrnTypes) - sizeof...(Types);
+//
+//	//std::cout << "Call tuple_call_helper() with all items: " /*<< sizeof...(Types)*/ << " and item " /*<<  sizeof...(PrnTypes) - sizeof...(Types)*/ << std::endl;
+//	if (item == 0)
+//	    output_helper(os, obj->f_str.c_str(), callitems...);
+////	    terminal_tuple_call_helper<OutStream, Types...>(os, obj, callitems...);
+//	else
+//	    tuple_call_helper/*<OutStream, item-1, Types...>*/(os, obj, /*item-1,*/ "TEST"/*std::get<item-1>(obj->prn_values)*/, callitems...);
+//    }; /* format<PrnTypes...>::tuple_call_helper */
+//
+//    template <typename ...PrnTypes>
+//    template<typename OutStream/*, std::size_t item*//*, typename... Types*/>
+//    inline void format<PrnTypes...>::tuple_call_helper<OutStream, PrnTypes...>/*<OutStream, item, PrnTypes...>*/(OutStream& os, const format* obj, /*const std::size_t item,*/ PrnTypes&&... prnitems)
+//    {
+//
+//	std::cout << "Call tuple_call_helper() with all items: " << sizeof...(PrnTypes) << " and --==ZERO==-- item " << std::endl;
+//	output_helper(os, obj->f_str.c_str(), prnitems...);
+//    }; /* format<PrnTypes...>::tuple_call_helper */
+
+
+
     template <typename ...PrnTypes>
-    template<typename OutStream, std::size_t item, typename... Types>
-    inline void format<PrnTypes...>::tuple_call_helper(OutStream& os, const format* obj, /*const std::size_t item,*/ Types&&... callitems)
+    template<typename OutStream, typename... Types>
+    inline void format<PrnTypes...>::terminal_tuple_call_helper(OutStream& os, const format<PrnTypes...>* obj, Types&&... callitems)
     {
-	std::cout << "Call tuple_call_helper() with " << sizeof...(Types) << " and item " << item << std::endl;
-	if (item == 0)
-	    output_helper(os, obj->f_str.c_str(), callitems...);
-	else
-	    tuple_call_helper<OutStream, item-1, Types...>(os, obj, /*item-1,*/ std::get<item-1>(obj->prn_values), callitems...);
+	std::cout << "Terminate calling of the tuple_call_helper() with all items " << sizeof...(Types) << std::endl;
+	output_helper(os, obj->f_str.c_str(), callitems...);
     }; /* format<PrnTypes...>::tuple_call_helper */
 
 
