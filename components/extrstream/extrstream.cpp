@@ -173,30 +173,32 @@ OutStream& output_helper(OutStream& os, const char* ...);
 //template <>
 //std::ostream&
 //format::output<std::ostream>(std::ostream& os) const
-std::ostream& output_helper(std::ostream& os, const char* str ...)
+std::ostream& output_helper(std::ostream& ostrm, const char* str ...)
 {
 	va_list vargs;
 
-    os << "Proverka vyzova functcii 'aso::format | std::ostream" << std::endl;
+    ostrm << "Proverka vyzova functcii 'aso::format | std::ostream" << std::endl;
     va_start(vargs, str);
-    vfprintf(cfile(os), str, vargs);
+    vfprintf(cfile(ostrm), str, vargs);
+    fflush(cfile(ostrm)); // ofs << std::flush; doesn't help
     va_end(vargs);
-    return os;
+    return ostrm;
 }; /* format::output */
 
 
 //template <>
 //std::ofstream&
 //format::output<std::ofstream>(std::ofstream& os) const
-std::ofstream& output_helper(std::ofstream& os, const char* str ...)
+std::ofstream& output_helper(std::ofstream& ofs, const char* str ...)
 {
 	va_list vargs;
 
-    os << "Proverka vyzova functcii 'aso::format | std::ofstream" << std::endl;
+    ofs << "Proverka vyzova functcii 'aso::format | std::ofstream" << std::endl;
     va_start(vargs, str);
-    vfprintf(cfile(os), str, vargs);
+    vfprintf(cfile(ofs), str, vargs);
+    fflush(cfile(ofs)); // ofs << std::flush; doesn't help
     va_end(vargs);
-    return os;
+    return ofs;
 }; /* format::output */
 
 //--[ end of class format ]------------------------------------------------------------------------

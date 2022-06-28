@@ -141,7 +141,7 @@ CONFIG_STORE_HISTORY=y
 #
 # Application manager
 #
-CONFIG_APP_PROJECT_DATE="24.06.22"
+CONFIG_APP_PROJECT_DATE="28.06.22"
 CONFIG_APP_PROJECT_FLAVOUR="unencrypted-iostream-formatstring"
 CONFIG_APP_PROJECT_MODIFICATOR="aso"
 # end of Application manager
