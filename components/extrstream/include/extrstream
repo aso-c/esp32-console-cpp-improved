@@ -65,38 +65,28 @@ namespace aso
     // Overloads for cin iostreams
     FILE* cfile(std::istream const& is);
 
-//    class format
-//    {
-//    public:
-//	format (std::string&&);
-//	template <typename OutStream>
-//	OutStream& output(OutStream&) const;
-//
-//    private:
-//	const std::string f_str;
-//    }; /* format */
-
     template <typename ...PrnTypes>
-    class format
+    class Formatter
     {
     public:
-	format (const std::string&&, PrnTypes&&... /*prn_values*/);
+	Formatter (const std::string&&, PrnTypes&&... /*prn_values*/);
 	template <typename OutStream>
 	    OutStream& output(OutStream&) const;
 
     private:
-	const std::string f_str;
-	std::tuple<PrnTypes&&...> prn_values;
+//	const std::string f_str;
+//	std::tuple<std::string&&, PrnTypes&&...> items;
+	std::tuple<std::string, std::string, std::string, std::string> items;
 
 
 	template<typename OutStream, /*std::size_t item,*/ typename... Types>
-	static void tuple_call_helper(OutStream& os, const format<PrnTypes...>*, /*const std::size_t item,*/ Types&&... callitems);
+	static void tuple_call_helper(OutStream& os, const Formatter<PrnTypes...>*, /*const std::size_t item,*/ Types&&... callitems);
 
 	template<typename OutStream/*, std::size_t item*//*, typename... Types*/>
-	static void tuple_call_helper(OutStream& os, const format<PrnTypes...>*, /*const std::size_t item,*/ PrnTypes&&... callitems);
+	static void tuple_call_helper(OutStream& os, const Formatter<PrnTypes...>*, /*const std::size_t item,*/ PrnTypes&&... callitems);
 
 	template<typename OutStream, typename... Types>
-	static void terminal_tuple_call_helper(OutStream& os, const format<PrnTypes...>*, Types&&... callitems);
+	static void terminal_tuple_call_helper(OutStream& os, const Formatter<PrnTypes...>*, Types&&... callitems);
 
 //	namespace
 //	    {
@@ -109,13 +99,18 @@ namespace aso
 //
 //	    } //
 
-    }; /* format */
+    }; /* Formatter */
+
 
     // Comnstructor
     template <typename ...PrnTypes>
-    inline format<PrnTypes...>::format(const std::string&& fmt_str, PrnTypes&&... prnvals):
-        f_str(fmt_str),
-	prn_values(std::make_tuple(prnvals...))
+    inline Formatter<PrnTypes...>::Formatter(const std::string&& fmt_str, PrnTypes&&... prnvals):
+//	prn_items(std::make_tuple<std::string&&, PrnTypes...>(/*std::forward<const std::string>(fmt_str)*/fmt_str, std::forward<const PrnTypes>(prnvals)...))
+//	items(fmt_str, std::forward<PrnTypes>(prnvals)...)
+	items(std::forward<const std::string>(fmt_str),
+		std::string("abc"),
+		std::string("cde"),
+		std::string("fgh"))
     {};
 
     // helper for aso::format::output
@@ -126,75 +121,6 @@ namespace aso
     extern std::stringstream& output_helper(std::stringstream& os, const char* ...);
 
 
-//    template <typename ... Limit>
-//    class Sequencer_base
-//    {
-//    public:
-//	template <typename ... SeqNo>
-//	static void generate(const std::tuple<Limit...>&, const std::string&, SeqNo&&... items);
-//
-//    };
-//
-//    template <typename ... Limit>
-//    class Sequencer: public Sequencer_base<Limit...>
-//    {
-//    public:
-//	using Sequencer_base<Limit...>::generate;
-//	static void generate(const std::tuple<Limit...>&, const std::string&, Limit&&... items);
-//	static void generate_loc(std::tuple<Limit...>& data, const std::string&, Limit&&... items);
-//
-//	template <typename ... SeqNo>
-//	static void generate(const std::tuple<Limit...>& values, const std::string& fstr, Limit&&... items) {};
-//
-////	template <typename ... SeqNo>
-////	static void generate(SeqNo&... items);
-//    };
-//
-//
-//    // Printout parameters of the variadic call functions
-////    template <typename PrintItem>
-//    std::ostream& print_items(std::ostream& os/*, PrintItem& item*/);
-//    template <typename PrintItem, typename... PrnTypes>
-//    std::ostream& print_items(std::ostream& os, PrintItem&& prnitem, PrnTypes&&... items);
-//
-//
-//
-//    template <typename ... Limit>
-//	template <typename ... SeqNo>
-//	void Sequencer_base<Limit...>::generate(const std::tuple<Limit...>& values, const std::string& fstr, SeqNo&&... items)
-//    {
-//	std::cout << "Recursive call with " << sizeof...(SeqNo) << " items" << " and " << sizeof...(Limit) << " limits "  << std::endl;
-//	print_items(std::cout, items...);
-//	generate(values, fstr, std::get<sizeof...(Limit) - sizeof...(SeqNo) - 1>(values), items...);
-//    }
-//
-//
-//
-//    template <typename ... Limit>
-//	void Sequencer<Limit...>::generate(const std::tuple<Limit...>& values, const std::string& fstr, Limit&&... items)
-//    {
-//	std::cout << "End of Recusion" << " with limit " << sizeof...(Limit) << std::endl;
-//	std::cout << "Parameters are: ";
-//	print_items(std::cout, fstr, items...) << ", " << std::endl;
-//    }
-//
-////    template <typename ... Limit>
-////	template <typename ... SeqNo>
-////	void Sequencer_base<Limit...>::generate<Limit...>(const std::tuple<Limit...>& values, const std::string& fstr, Limit&&... items)
-////    {
-////	std::cout << "End of Recusion" << " with limit " << sizeof...(Limit) << std::endl;
-////	std::cout << "Parameters are: ";
-////	print_items(std::cout, fstr, items...) << ", " << std::endl;
-////    }
-//
-//
-//    template <typename ... Limit>
-//	void Sequencer<Limit...>::generate_loc(std::tuple<Limit...>& data, const std::string& fstr, Limit&&... items)
-//    {
-//	std::cout << "End of Recusion with limit" << sizeof...(Limit) <<  " in generate_loc()" << std::endl;
-//	std::cout << "Parameters are: " << std::endl;
-//	print_items(std::cout, fstr, items...) << ", " << std::endl;
-//    }
 
 
 
@@ -218,101 +144,40 @@ namespace aso
     }
 
 
-    template <typename ItemType, typename... ItemTypes, std::size_t... itemsno>
-    inline void call_ex(const char *str);
-
-    template <std::size_t... itemsno>
-    inline void call_end(const char *str);
 
 
-    template <typename... ItemTypes>
-    inline void generate_call(const char *str/*, ItemType item, ItemTypes... items*/)
-    {
-	std::cout << "Call " << sizeof...(ItemTypes) << " items" << std::endl
-		<< "Starting position" << std::endl;
-//	generate_call<range-1>(str, str[sizeof...(AllTypes) - sizeof...(ItemTypes) - 1], items...);
-	call_ex/*(str)*/<ItemTypes...>(str);
-    }
-
-    template <std::size_t... itemno, typename ItemType, typename... ItemTypes>
-    inline void generate_call(const char str[]/*, ItemType item, ItemTypes... items*/)
-    {
-	std::cout << "Call " << sizeof...(ItemTypes) << " items" << std::endl
-		<< " with generated items number " << sizeof...(itemno) << std::endl;
-//	generate_call<range-1>(str, str[sizeof...(AllTypes) - sizeof...(ItemTypes) - 1], items...);
-	call_ex<ItemType, ItemTypes...>(str);
-    }
-
-//    template <std::size_t... itemsno>
-//    inline void generate_call(const char *str/*, ItemType item, ItemTypes... items*/)
-//    {
-//	std::cout << "Stop a recursion" << std::endl
-//		<< " with generated items number " << sizeof...(itemsno) << std::endl;
-////	generate_call<range-1>(str, str[sizeof...(AllTypes) - sizeof...(ItemTypes) - 1], items...);
-//	call_end(str/*, itemsno...*/);
-//    }
-
-    template <typename ItemType, typename... ItemTypes, std::size_t... itemsno>
-    inline void call_ex(const char str[])
-    {
-	generate_call<sizeof...(itemsno), itemsno..., ItemTypes...>(str);
-    }
-
-    template <std::size_t... itemsno>
-    inline void call_end(const char str[])
-    {
-	std::cout << "Finalyze recursive call" << std::endl
-	<< " with generated items number " << sizeof...(itemsno) << std::endl;
-    }
-
-
-
-//    template <typename... AllTypes,typename... ItemTypes>
-//    inline void generate_items(const char *str)
-//    {
-//	std::cout << "Call " << sizeof...(ItemTypes) << " items" << std::endl;
-//	generate_items(str[10/*sizeof...(AllTypes) - sizeof(ItemTypes)*/ - 1], items...);
-//    }
-
-
-//    template <typename... AllTypes>
-//    template<>
-//    inline void generate_call<0>(const char *str, AllTypes... items)
-//    {
-//	std::cout << "Stop it!" << std::endl << "Final Call with " << sizeof...(items) << " items & range 0" << std::endl;
-//    }
 
 
     template <std::size_t limit, typename... ParamTypes>
-    class calling
+    class Sequencer
     {
     public:
-	static void sequencer(ParamTypes ... paramseq)
+	static void generate(ParamTypes ... paramseq)
 	{
 	    std::cout << "Recursive call with limit " << limit << " and " << sizeof...(paramseq) << " params" << std::endl;
 	    print_items(std::cout, std::forward<std::size_t&&>(paramseq)...);
 	    std::cout << "---------------------" << std::endl;
-	    calling<limit-1, ParamTypes..., typename std::size_t>::sequencer(paramseq..., sizeof...(paramseq));
+	    Sequencer<limit-1, ParamTypes..., typename std::size_t>::generate(paramseq..., sizeof...(paramseq));
 	}
-    }; /* calling */
+    }; /* Sequencer */
 
     template<typename... ParamTypes>
-    class calling<0, ParamTypes...>
+    class Sequencer<0, ParamTypes...>
     {
     public:
-	static void sequencer(ParamTypes... paramseq)
+	static void generate(ParamTypes... paramseq)
 	{
 	    std::cout << "Stop the Recursiom" << " with " << sizeof...(paramseq) << " params" << std::endl;
 	    print_items(std::cout, paramseq...);
 	    std::cout << "== End ALL, Final STOP ========" << std::endl;
 	};
-    }; /* calling */
+    }; /* Sequencer */
 
 
     // General definition of the format::output
     template <typename ...PrnTypes> template <typename OutStream>
     inline OutStream&
-	format<PrnTypes...>::output(OutStream& os) const
+	Formatter<PrnTypes...>::output(OutStream& os) const
     {
 //	output_helper(os, f_str.c_str(), "My_test#1_param", "My_test#2_param", "My_test_#3_param"/*, const PrnTypes&&... prnvalues*/);
 	//output_helper(os, f_str.c_str()/*, PrnTypes&&... prnvalues*/);
@@ -324,10 +189,12 @@ namespace aso
 	    //Sequencer<PrnTypes...>::generate(std::get<0>(prn_values)/*"abcd"*/, std::get<1>(prn_values), std::get<2>(prn_values));
 //	    Sequencer<PrnTypes...>::generate(prn_values, f_str);
 	    //generate_call<PrnTypes...>("abcdefghiklmn");
-	    calling<sizeof...(PrnTypes)>::sequencer();
+	    Sequencer<sizeof...(PrnTypes)>::generate();
 //	tuple_call_helper<OutStream/*, sizeof...(PrnTypes)*/>(os, this/***//*, sizeof...(PrnTypes)*/);
 	return os;
     }; /* format::output */
+
+
 
 
 //    template <typename ...PrnTypes>
@@ -350,15 +217,25 @@ namespace aso
 //    }; /* format::output */
 
 
+
+    template<typename... PrnTypes>
+    inline const Formatter<PrnTypes...> format(const std::string&& formatstr, PrnTypes&&... prn_values)
+    {
+//	return std::forward<const Formatter<PrnTypes...>>(Formatter<PrnTypes...>(std::forward<const std::string>(formatstr)/*formatstr*/, std::forward<const PrnTypes>(prn_values)/*prn_values*/...));
+	return Formatter<PrnTypes...>(std::forward<const std::string>(formatstr), std::forward<PrnTypes>(prn_values)...);
+    }; /* format */
+
     template<typename OutStream, typename... PrnTypes>
 //    template<typename OutStream>
 //    /*inline*/ OutStream& operator << (OutStream& os, const format &fmt)
-    /*inline*/ OutStream& operator << (OutStream& os, const format<PrnTypes...> &fmt)
+    OutStream& operator << (OutStream& os, const Formatter<PrnTypes...> &&fmt)
     {
 	return fmt.output(os);
     }; /* template <OutStream> OutStream& operator << (OutStream &, const format &) */
 
 //    template<> std::ostream& operator << <std::ostream>(std::ostream&, const format &fmt);
+
+
 
 
 

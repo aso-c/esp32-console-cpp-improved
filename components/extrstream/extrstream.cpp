@@ -87,7 +87,7 @@ typedef __gnu_cxx::stdio_filebuf<char>             io_buffer_t;
 //
 FILE* cfile_impl(buffer_t* const fb)
 {
-    return (static_cast<io_buffer_t* const>(fb))->file(); //type std::__c_file
+    return (static_cast<io_buffer_t* /*const*/>(fb))->file(); //type std::__c_file
 }; /* cfile_impl */
 
 
