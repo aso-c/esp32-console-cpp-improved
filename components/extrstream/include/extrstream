@@ -148,8 +148,6 @@ namespace aso
 
 
 
-
-
     //    template <>
     inline std::ostream& print_items(std::ostream& os/*, PrintItem& item*/)
     {
@@ -172,51 +170,33 @@ namespace aso
 
 
 
-    template <std::size_t limit, typename... ParamTypes>
-    class Sequence_seed
-    {
-    public:
-	static void generator(ParamTypes ... paramseq)
-	{
-	    std::cout << "====>> Recursive call in class 'Sequence_seed'"
-		    << "with limit " << limit << " and " << sizeof...(paramseq) << " params" << std::endl;
-	    print_items(std::cout, std::forward<std::size_t&&>(paramseq)...);
-	    std::cout << "---------------------" << std::endl;
-	    Sequence_seed<limit-1, ParamTypes..., typename std::size_t>::generator(paramseq..., sizeof...(paramseq));
-	}
-    }; /* Sequence_seed */
 
-    template<typename... ParamTypes>
-    class Sequence_seed<0, ParamTypes...>
-    {
-    public:
-	static void generator(ParamTypes... paramseq)
-	{
-	    std::cout << "Stop the Recursiom in class '::Sequence_seed'" << std::endl
-		    << " with " << sizeof...(paramseq) << " params" << std::endl;
-	    print_items(std::cout, paramseq...);
-	    std::cout << "== End ALL, Final STOP ========" << std::endl;
-	};
-    }; /* Sequence_seed */
 
     template <typename... AllParamTypes>
     class Sequence
     {
     public:
-	static void generator() {
-	    Sequence_seed<sizeof...(AllParamTypes)>::generator(); };
+	/*static*/ void generator() {
+	    //Sequence_seed<sizeof...(AllParamTypes)>::generator();
+	    seed.generator();
+	    };
+
+
+
+
 
 	    template <std::size_t limit, typename... ParamTypes>
 	    class Sequence_seed
 	    {
 	    public:
-		static void generator(ParamTypes ... paramseq)
+		/*static*/ void generator(ParamTypes ... paramseq)
 		{
-		    std::cout << "====>> Recursive call in class 'Sequence::Sequence_seed'" << std::endl
+		    std::cout << "====>> Recursive call in class 'Sequence::Sequence_seed', non-static method" << std::endl
 			    << "with limit " << limit << " and " << sizeof...(paramseq) << " params" << std::endl;
 		    print_items(std::cout, std::forward<std::size_t&&>(paramseq)...);
 		    std::cout << "---------------------" << std::endl;
-		    Sequence_seed<limit-1, ParamTypes..., typename std::size_t>::generator(paramseq..., sizeof...(paramseq));
+		    //Sequence_seed<limit-1, ParamTypes..., typename std::size_t>::generator(paramseq..., sizeof...(paramseq));
+		    Sequence_seed<limit-1, ParamTypes..., typename std::size_t>().generator(paramseq..., sizeof...(paramseq));
 		}
 	    }; /* Sequence_seed */
 
@@ -225,30 +205,16 @@ namespace aso
 	    class Sequence_seed<0, ParamTypes...>
 	    {
 	    public:
-		static void generator(ParamTypes... paramseq)
+		/*static*/ void generator(ParamTypes... paramseq)
 		{
-		    std::cout << "Stop the Recursiom in class 'Sequence::Sequence_seed'" << std::endl
+		    std::cout << "Stop the Recursiom in class 'Sequence::Sequence_seed', non-static method" << std::endl
 			    << " with " << sizeof...(paramseq) << " params" << std::endl;
 		    print_items(std::cout, paramseq...);
 		    std::cout << "== End ALL, Final STOP ========" << std::endl;
 		};
 	    }; /* Sequence_seed */
 
-//	template <std::size_t limit, typename... ParamTypes>
-//	class Inner_Sequencer: public Sequence_seed<limit, ParamTypes...> {};
-//
-//	template<typename... ParamTypes>
-//	class Inner_Sequencer<0, ParamTypes...>
-//	{
-//	public:
-//	    static void generator(ParamTypes... paramseq)
-//	    {
-//		std::cout << "Stop the Recursiom" << " with " << sizeof...(paramseq) << " params"
-//			<< "In the Sequence::Sequence_seed"<< std::endl;
-//		print_items(std::cout, paramseq...);
-//		std::cout << "== End ALL, Final STOP ========" << std::endl;
-//	    }; /* generator */
-//	}; /* Sequence::Inner_Sequencer */
+	Sequence_seed<sizeof...(AllParamTypes)> seed;
 
     }; /* Sequence */
 
@@ -265,7 +231,9 @@ namespace aso
 	    //generate_call<PrnTypes...>("abcdefghiklmn");
 //	Sequence<sizeof...(PrnTypes)>::generator();
 	//Sequence<PrnTypes...>::generator();
-	Sequence<PrnTypes...>::generator();
+    //	Sequence<PrnTypes...>::generator();
+	Sequence<PrnTypes...> sequencer;
+	sequencer.generator();
 //	tuple_call_helper<OutStream/*, sizeof...(PrnTypes)*/>(os, this/***//*, sizeof...(PrnTypes)*/);
 	return os;
     }; /* format::output */
