@@ -65,6 +65,37 @@ namespace aso
     // Overloads for cin iostreams
     FILE* cfile(std::istream const& is);
 
+    // Adjust variables any types for generate tuple from it
+    template <typename T>
+    struct tuple_adj
+    {
+	T value(T v) {return v;};
+	typedef T type;
+    }; /* tuple_adj */
+    // Specialization for reference T&
+    template <typename T>
+    struct tuple_adj<T&>
+    {
+	T value(T v) {return v;};
+	typedef T type;
+    }; /* tuple_adj */
+    // Specialization for rvalue reference T&&
+    template <typename T>
+    struct tuple_adj<T&&>
+    {
+	T value(T v) {return v;};
+	typedef T type;
+    }; /* tuple_adj */
+    // Specialization for const char *
+    template <>
+    struct tuple_adj<const char*>
+    {
+	std::string value(const char* v) {return std::string(v);};
+	typedef std::string type;
+    }; /* tuple_adj */
+
+
+
     template <typename ...PrnTypes>
     class Formatter
     {
@@ -75,8 +106,8 @@ namespace aso
 
     private:
 //	const std::string f_str;
-//	std::tuple<std::string&&, PrnTypes&&...> items;
-	std::tuple<std::string, std::string, std::string, std::string> items;
+	std::tuple<std::string, PrnTypes...> items;
+//	std::tuple<std::string, std::remove_reference<PrnTypes&&> /*decltype(refine4tuple<PrnTypes&&>::type)*/...> items;
 
 
 	template<typename OutStream, /*std::size_t item,*/ typename... Types>
@@ -107,10 +138,10 @@ namespace aso
     inline Formatter<PrnTypes...>::Formatter(const std::string&& fmt_str, PrnTypes&&... prnvals):
 //	prn_items(std::make_tuple<std::string&&, PrnTypes...>(/*std::forward<const std::string>(fmt_str)*/fmt_str, std::forward<const PrnTypes>(prnvals)...))
 //	items(fmt_str, std::forward<PrnTypes>(prnvals)...)
-	items(std::forward<const std::string>(fmt_str),
-		std::string("abc"),
+	items(std::forward<const std::string>(fmt_str), prnvals...
+		/*std::string("abc"),
 		std::string("cde"),
-		std::string("fgh"))
+		std::string("fgh")*/)
     {};
 
     // helper for aso::format::output

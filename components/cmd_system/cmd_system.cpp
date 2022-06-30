@@ -202,17 +202,25 @@ static int get_version(int argc, char **argv)
     cout << "\trevision number: " << (int)info.revision << endl;
 #else
     fprintf(aso::cfile(cout), "ESP Console Example, Version: %s-%s of %s,\r\n", CONFIG_APP_PROJECT_VER, CONFIG_APP_PROJECT_FLAVOUR, CONFIG_APP_PROJECT_DATE);
+#if 0
     cout << "=== format implementation ======================================================" << endl;
 //    cout << aso::format("ESP Console Example, Version: %s-%s of %s,\r\n");
     aso::format_impl(cout, "ESP Console Example, Version: %s-%s of %s,\r\n", CONFIG_APP_PROJECT_VER, CONFIG_APP_PROJECT_FLAVOUR, CONFIG_APP_PROJECT_DATE);
 //    cout << "ESP Console Example, Version: " CONFIG_APP_PROJECT_VER "-" CONFIG_APP_PROJECT_FLAVOUR " of " CONFIG_APP_PROJECT_DATE << endl;
     cout << "=== format implementation ======================================================" << endl;
+#endif
     cout << "=== aso::format test call ======================================================" << endl;
-//    cout << aso::Formatter<std::string, std::string, std::string>( "ESP Console Example, Version: %s-%%s of %%s,\r\n", CONFIG_APP_PROJECT_VER, CONFIG_APP_PROJECT_FLAVOUR, CONFIG_APP_PROJECT_DATE);
+    int i = 27;
+    const int ci = 63;
+    int& ri = i;
+    const int& cri = ci;
+    int&& rri = 73;
+    const int&& crri = 773;
     cout << aso::format("ESP Console Example, Version: %s-%%s of %%s,\r\n",
-	    /*std::string(*/CONFIG_APP_PROJECT_VER/*)*/,
+	    1973, i, ci, ri, cri, rri, crri,
+	    CONFIG_APP_PROJECT_VER,
 	    CONFIG_APP_PROJECT_FLAVOUR,
-	    CONFIG_APP_PROJECT_DATE);
+	    CONFIG_APP_PROJECT_DATE) << endl;
   //   operator << (cout, aso::format( "ESP Console Example, Version: %%s-%%s of %%s,\r\n"));
     //cout << aso::format<>("ESP Console Example, Version: %s-%s of %s,\r\n");
 //     cout << aso::format( "ESP Console Example, Version: %s-%s of %s,\r\n");
