@@ -100,17 +100,15 @@ namespace aso
     class Formatter
     {
     public:
-	Formatter (const std::string&&, PrnTypes&&... /*prn_values*/);
+	Formatter (const std::string&&, PrnTypes&&...);
 	template <typename OutStream>
 	    OutStream& output(OutStream&) const;
 
     private:
-//	const std::string f_str;
 	std::tuple<std::string, PrnTypes...> items;
-//	std::tuple<std::string, std::remove_reference<PrnTypes&&> /*decltype(refine4tuple<PrnTypes&&>::type)*/...> items;
 
 
-	template<typename OutStream, /*std::size_t item,*/ typename... Types>
+	template<typename OutStream, typename... Types>
 	static void tuple_call_helper(OutStream& os, const Formatter<PrnTypes...>*, /*const std::size_t item,*/ Types&&... callitems);
 
 	template<typename OutStream/*, std::size_t item*//*, typename... Types*/>
@@ -138,10 +136,7 @@ namespace aso
     inline Formatter<PrnTypes...>::Formatter(const std::string&& fmt_str, PrnTypes&&... prnvals):
 //	prn_items(std::make_tuple<std::string&&, PrnTypes...>(/*std::forward<const std::string>(fmt_str)*/fmt_str, std::forward<const PrnTypes>(prnvals)...))
 //	items(fmt_str, std::forward<PrnTypes>(prnvals)...)
-	items(std::forward<const std::string>(fmt_str), prnvals...
-		/*std::string("abc"),
-		std::string("cde"),
-		std::string("fgh")*/)
+	items(std::forward<const std::string>(fmt_str), prnvals...)
     {};
 
     // helper for aso::format::output
@@ -177,32 +172,85 @@ namespace aso
 
 
 
-
-
     template <std::size_t limit, typename... ParamTypes>
-    class Sequencer
+    class Sequence_seed
     {
     public:
-	static void generate(ParamTypes ... paramseq)
+	static void generator(ParamTypes ... paramseq)
 	{
-	    std::cout << "Recursive call with limit " << limit << " and " << sizeof...(paramseq) << " params" << std::endl;
+	    std::cout << "====>> Recursive call in class 'Sequence_seed'"
+		    << "with limit " << limit << " and " << sizeof...(paramseq) << " params" << std::endl;
 	    print_items(std::cout, std::forward<std::size_t&&>(paramseq)...);
 	    std::cout << "---------------------" << std::endl;
-	    Sequencer<limit-1, ParamTypes..., typename std::size_t>::generate(paramseq..., sizeof...(paramseq));
+	    Sequence_seed<limit-1, ParamTypes..., typename std::size_t>::generator(paramseq..., sizeof...(paramseq));
 	}
-    }; /* Sequencer */
+    }; /* Sequence_seed */
 
     template<typename... ParamTypes>
-    class Sequencer<0, ParamTypes...>
+    class Sequence_seed<0, ParamTypes...>
     {
     public:
-	static void generate(ParamTypes... paramseq)
+	static void generator(ParamTypes... paramseq)
 	{
-	    std::cout << "Stop the Recursiom" << " with " << sizeof...(paramseq) << " params" << std::endl;
+	    std::cout << "Stop the Recursiom in class '::Sequence_seed'" << std::endl
+		    << " with " << sizeof...(paramseq) << " params" << std::endl;
 	    print_items(std::cout, paramseq...);
 	    std::cout << "== End ALL, Final STOP ========" << std::endl;
 	};
-    }; /* Sequencer */
+    }; /* Sequence_seed */
+
+    template <typename... AllParamTypes>
+    class Sequence
+    {
+    public:
+	static void generator() {
+	    Sequence_seed<sizeof...(AllParamTypes)>::generator(); };
+
+	    template <std::size_t limit, typename... ParamTypes>
+	    class Sequence_seed
+	    {
+	    public:
+		static void generator(ParamTypes ... paramseq)
+		{
+		    std::cout << "====>> Recursive call in class 'Sequence::Sequence_seed'" << std::endl
+			    << "with limit " << limit << " and " << sizeof...(paramseq) << " params" << std::endl;
+		    print_items(std::cout, std::forward<std::size_t&&>(paramseq)...);
+		    std::cout << "---------------------" << std::endl;
+		    Sequence_seed<limit-1, ParamTypes..., typename std::size_t>::generator(paramseq..., sizeof...(paramseq));
+		}
+	    }; /* Sequence_seed */
+
+
+	    template<typename... ParamTypes>
+	    class Sequence_seed<0, ParamTypes...>
+	    {
+	    public:
+		static void generator(ParamTypes... paramseq)
+		{
+		    std::cout << "Stop the Recursiom in class 'Sequence::Sequence_seed'" << std::endl
+			    << " with " << sizeof...(paramseq) << " params" << std::endl;
+		    print_items(std::cout, paramseq...);
+		    std::cout << "== End ALL, Final STOP ========" << std::endl;
+		};
+	    }; /* Sequence_seed */
+
+//	template <std::size_t limit, typename... ParamTypes>
+//	class Inner_Sequencer: public Sequence_seed<limit, ParamTypes...> {};
+//
+//	template<typename... ParamTypes>
+//	class Inner_Sequencer<0, ParamTypes...>
+//	{
+//	public:
+//	    static void generator(ParamTypes... paramseq)
+//	    {
+//		std::cout << "Stop the Recursiom" << " with " << sizeof...(paramseq) << " params"
+//			<< "In the Sequence::Sequence_seed"<< std::endl;
+//		print_items(std::cout, paramseq...);
+//		std::cout << "== End ALL, Final STOP ========" << std::endl;
+//	    }; /* generator */
+//	}; /* Sequence::Inner_Sequencer */
+
+    }; /* Sequence */
 
 
     // General definition of the format::output
@@ -212,15 +260,12 @@ namespace aso
     {
 //	output_helper(os, f_str.c_str(), "My_test#1_param", "My_test#2_param", "My_test_#3_param"/*, const PrnTypes&&... prnvalues*/);
 	//output_helper(os, f_str.c_str()/*, PrnTypes&&... prnvalues*/);
-	if (sizeof...(PrnTypes) == 0)
-//	    generator();
-	std::cout << "stop the recursion" << std::endl;
-//	    terminal_tuple_call_helper<OutStream>(os, this);
-	else
 	    //Sequencer<PrnTypes...>::generate(std::get<0>(prn_values)/*"abcd"*/, std::get<1>(prn_values), std::get<2>(prn_values));
 //	    Sequencer<PrnTypes...>::generate(prn_values, f_str);
 	    //generate_call<PrnTypes...>("abcdefghiklmn");
-	    Sequencer<sizeof...(PrnTypes)>::generate();
+//	Sequence<sizeof...(PrnTypes)>::generator();
+	//Sequence<PrnTypes...>::generator();
+	Sequence<PrnTypes...>::generator();
 //	tuple_call_helper<OutStream/*, sizeof...(PrnTypes)*/>(os, this/***//*, sizeof...(PrnTypes)*/);
 	return os;
     }; /* format::output */
