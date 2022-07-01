@@ -158,7 +158,7 @@ namespace aso
 	    {
 		std::cout << "Stop the Recursiom in class 'Formatter::Call_sequencer', non-static method" << std::endl
 			<< " with " << sizeof...(params) + 1 << " params" << std::endl;
-		print_items(std::cout, params...);
+		print_items(std::cout, std::get<params>(parent->items)...);
 		std::cout << "== End ALL, Final STOP ========" << std::endl;
 		std::cout << "####### Limit: " << 0 << std::endl;
 		std::cout << "=====================" << std::endl;
