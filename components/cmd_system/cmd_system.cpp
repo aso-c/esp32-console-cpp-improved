@@ -216,8 +216,8 @@ static int get_version(int argc, char **argv)
     const int& cri = ci;
     int&& rri = 73;
     const int&& crri = 773;
-    cout << aso::format("ESP Console Example, Version: %s-%%s of %%s,\r\n",
-	    1973, i, ci, ri, cri, rri, crri,
+    cout << aso::format("ESP Console Example, Version: %s-%s of %s,\r\n",
+	    /*1973, i, ci, ri, cri, rri, crri,*/
 	    CONFIG_APP_PROJECT_VER,
 	    CONFIG_APP_PROJECT_FLAVOUR,
 	    CONFIG_APP_PROJECT_DATE) << endl;
