@@ -123,126 +123,23 @@ static int get_version(int argc, char **argv)
 	esp_chip_info_t info;
 
     esp_chip_info(&info);
-#ifdef __WITH_STDIO__
 
-#ifdef __MAX_UNFOLDED_OUTPUT__
-    printf("ESP Console Example, Version: %s-%s of %s,\r\n", CONFIG_APP_PROJECT_VER, CONFIG_APP_PROJECT_FLAVOUR, CONFIG_APP_PROJECT_DATE);
-    printf("\t\t\t\t\t      modified by %s\r\n", CONFIG_APP_PROJECT_MODIFICATOR);
-    printf("IDF Version: %s\r\n", esp_get_idf_version());
-    printf("Chip info:\r\n");
-    printf("\tmodel:%s\r\n", info.model == CHIP_ESP32 ? "ESP32" : "Unknow");
-    printf("\tcores:%d\r\n", info.cores);
-    printf("\tfeature:%s%s%s%s%d%s\r\n",
-           info.features & CHIP_FEATURE_WIFI_BGN ? "/802.11bgn" : "",
-           info.features & CHIP_FEATURE_BLE ? "/BLE" : "",
-           info.features & CHIP_FEATURE_BT ? "/BT" : "",
-           info.features & CHIP_FEATURE_EMB_FLASH ? "/Embedded-Flash:" : "/External-Flash:",
-           spi_flash_get_chip_size() / (1024 * 1024), " MB");
-    printf("\trevision number:%d\r\n", info.revision);
-#else
-    printf("ESP Console Example, Version: %s of %s\r\n", CONFIG_APP_PROJECT_VER "-" CONFIG_APP_PROJECT_FLAVOUR, CONFIG_APP_PROJECT_DATE);
-    printf("\t\t\t\t\t      modified by %s\r\n", CONFIG_APP_PROJECT_MODIFICATOR);
-    printf("IDF Version: %s\r\n", esp_get_idf_version());
-    printf("Chip info:\r\n");
-    printf("\tmodel:%s\r\n", info.model == CHIP_ESP32 ? "ESP32" : "Unknow");
-    printf("\tcores:%d\r\n", info.cores);
-    printf("\tfeature:%s%s%s%s%d%s\r\n",
-           info.features & CHIP_FEATURE_WIFI_BGN ? "/802.11bgn" : "",
-           info.features & CHIP_FEATURE_BLE ? "/BLE" : "",
-           info.features & CHIP_FEATURE_BT ? "/BT" : "",
-           info.features & CHIP_FEATURE_EMB_FLASH ? "/Embedded-Flash:" : "/External-Flash:",
-           spi_flash_get_chip_size() / (1024 * 1024), " MB");
-    printf("\trevision number:%d\r\n", info.revision);
-#endif
-
-#else
-
-#ifdef __WITH_BOOST__
-    printf("ESP Console Example, Version: %s-%s of %s,\r\n", CONFIG_APP_PROJECT_VER, CONFIG_APP_PROJECT_FLAVOUR, CONFIG_APP_PROJECT_DATE);
-    printf("\t\t\t\t\t      modified by %s\r\n", CONFIG_APP_PROJECT_MODIFICATOR);
-    printf("IDF Version: %s\r\n", esp_get_idf_version());
-    printf("Chip info:\r\n");
-    printf("\tmodel:%s\r\n", info.model == CHIP_ESP32 ? "ESP32" : "Unknow");
-    printf("\tcores:%d\r\n", info.cores);
-    printf("\tfeature:%s%s%s%s%d%s\r\n",
-           info.features & CHIP_FEATURE_WIFI_BGN ? "/802.11bgn" : "",
-           info.features & CHIP_FEATURE_BLE ? "/BLE" : "",
-           info.features & CHIP_FEATURE_BT ? "/BT" : "",
-           info.features & CHIP_FEATURE_EMB_FLASH ? "/Embedded-Flash:" : "/External-Flash:",
-           spi_flash_get_chip_size() / (1024 * 1024), " MB");
-    printf("\trevision number:%d\r\n", info.revision);
-#elif defined(__WITH_MY_FORMAT__)
-    fprintf(cfile(cout), "ESP Console Example, Version: %s-%s of %s,\r\n", CONFIG_APP_PROJECT_VER, CONFIG_APP_PROJECT_FLAVOUR, CONFIG_APP_PROJECT_DATE);
-    fprintf(cfile(cout), "\t\t\t\t\t      modified by %s\r\n", CONFIG_APP_PROJECT_MODIFICATOR);
-    fprintf(cfile(cout), "IDF Version: %s\r\n", esp_get_idf_version());
-    fprintf(cfile(cout), "Chip info:\r\n");
-    fprintf(cfile(cout), "\tmodel:%s\r\n", info.model == CHIP_ESP32 ? "ESP32" : "Unknow");
-    fprintf(cfile(cout), "\tcores:%d\r\n", info.cores);
-    fprintf(cfile(cout), "\tfeature:%s%s%s%s%d%s\r\n",
-           info.features & CHIP_FEATURE_WIFI_BGN ? "/802.11bgn" : "",
-           info.features & CHIP_FEATURE_BLE ? "/BLE" : "",
-           info.features & CHIP_FEATURE_BT ? "/BT" : "",
-           info.features & CHIP_FEATURE_EMB_FLASH ? "/Embedded-Flash:" : "/External-Flash:",
-           spi_flash_get_chip_size() / (1024 * 1024), " MB");
-    fprintf(cfile(cout), "\trevision number:%d\r\n", info.revision);
-#elif defined(__MAX_UNFOLDED_OUTPUT__)
-    cout << "ESP Console Example, Version: " << CONFIG_APP_PROJECT_VER << '-' << CONFIG_APP_PROJECT_FLAVOUR
-	 << " of " << CONFIG_APP_PROJECT_DATE << endl;
-    cout << "\t\t\t\t\t      modified by " << CONFIG_APP_PROJECT_MODIFICATOR << endl;
-    cout << "IDF Version: " << esp_get_idf_version() << endl;
-    cout << "Chip info: " << endl;
-    cout << "\tmodel: " << (info.model == CHIP_ESP32 ? "ESP32" : "Unknow") << endl;
-    cout << "\tcores: " << (int)info.cores << endl;
-    cout << "\tfeature:"
-	<< (info.features & CHIP_FEATURE_WIFI_BGN ? "802.11bgn/" : "")
-	<< (info.features & CHIP_FEATURE_BLE ? "BLE/" : "")
-	<< (info.features & CHIP_FEATURE_BT ? "BT/" : "")
-	<< (info.features & CHIP_FEATURE_EMB_FLASH ? "Embedded-Flash:" : "External-Flash:")
-	<< spi_flash_get_chip_size() / (1024 * 1024) << " MB" << endl;
-    cout << "\trevision number: " << (int)info.revision << endl;
-#else
-    fprintf(aso::cfile(cout), "ESP Console Example, Version: %s-%s of %s,\r\n", CONFIG_APP_PROJECT_VER, CONFIG_APP_PROJECT_FLAVOUR, CONFIG_APP_PROJECT_DATE);
-#if 0
-    cout << "=== format implementation ======================================================" << endl;
-//    cout << aso::format("ESP Console Example, Version: %s-%s of %s,\r\n");
-    aso::format_impl(cout, "ESP Console Example, Version: %s-%s of %s,\r\n", CONFIG_APP_PROJECT_VER, CONFIG_APP_PROJECT_FLAVOUR, CONFIG_APP_PROJECT_DATE);
-//    cout << "ESP Console Example, Version: " CONFIG_APP_PROJECT_VER "-" CONFIG_APP_PROJECT_FLAVOUR " of " CONFIG_APP_PROJECT_DATE << endl;
-    cout << "=== format implementation ======================================================" << endl;
-#endif
-    cout << "=== aso::format test call ======================================================" << endl;
-    int i = 27;
-    const int ci = 63;
-    int& ri = i;
-    const int& cri = ci;
-    int&& rri = 73;
-    const int&& crri = 773;
-    cout << aso::format("ESP Console Example, Version: %s-%s of %s,\r\n",
-	    /*1973, i, ci, ri, cri, rri, crri,*/
+    cout << aso::format("ESP Console Example, Version: %s-%s of %s,",
 	    CONFIG_APP_PROJECT_VER,
 	    CONFIG_APP_PROJECT_FLAVOUR,
-	    CONFIG_APP_PROJECT_DATE) << endl;
-  //   operator << (cout, aso::format( "ESP Console Example, Version: %%s-%%s of %%s,\r\n"));
-    //cout << aso::format<>("ESP Console Example, Version: %s-%s of %s,\r\n");
-//     cout << aso::format( "ESP Console Example, Version: %s-%s of %s,\r\n");
-//     cout << aso::formatter_impl<"ESP Console Example, Version: %%s-%%s of %%s,\r\n">;
-     cout << "=== aso::format test call ======================================================" << endl;
-    fprintf(aso::cfile(cout), "\t\t\t\t\t      modified by %s\r\n", CONFIG_APP_PROJECT_MODIFICATOR);
-//    cout << "\t\t\t\t\t      modified by " << CONFIG_APP_PROJECT_MODIFICATOR << endl;
-//    fprintf(cfile(cout), "IDF Version: %s\r\n", esp_get_idf_version());
+	    CONFIG_APP_PROJECT_DATE) << std::endl;
+    cout << aso::format("\t\t\t\t\t      modified by %s", CONFIG_APP_PROJECT_MODIFICATOR) << std::endl;
     cout << "IDF Version: " << esp_get_idf_version() << endl;
-//    fprintf(cfile(cout), "Chip info:\r\n");
     cout << "Chip info: " << endl;
-//    fprintf(cfile(cout), "\tmodel:%s\r\n", info.model == CHIP_ESP32 ? "ESP32" : "Unknow");
     cout << "\tmodel: " << (info.model == CHIP_ESP32 ? "ESP32" : "Unknow") << endl;
-//    fprintf(cfile(cout), "\tcores:%d\r\n", info.cores);
     cout << "\tcores: " << (int)info.cores << endl;
-#if 0
-    fprintf(cfile(cout), "\tfeature:%s%s%s%s%d%s\r\n",
+#if 1
+    cout << aso::format("\tfeature:%s%s%s%s%d%s",
            info.features & CHIP_FEATURE_WIFI_BGN ? "/802.11bgn" : "",
            info.features & CHIP_FEATURE_BLE ? "/BLE" : "",
            info.features & CHIP_FEATURE_BT ? "/BT" : "",
            info.features & CHIP_FEATURE_EMB_FLASH ? "/Embedded-Flash:" : "/External-Flash:",
-           spi_flash_get_chip_size() / (1024 * 1024), " MB");
+           spi_flash_get_chip_size() / (1024 * 1024), " MB") << std::endl;
 #else
     cout << "\tfeature:"
 	<< (info.features & CHIP_FEATURE_WIFI_BGN ? "802.11bgn/" : "")
@@ -251,11 +148,8 @@ static int get_version(int argc, char **argv)
 	<< (info.features & CHIP_FEATURE_EMB_FLASH ? "Embedded-Flash:" : "External-Flash:")
 	<< spi_flash_get_chip_size() / (1024 * 1024) << " MB" << endl;
 #endif
-//    fprintf(cfile(cout), "\trevision number:%d\r\n", info.revision);
     cout << "\trevision number: " << (int)info.revision << endl;
-#endif
 
-#endif
     return 0;
 }
 
@@ -360,7 +254,8 @@ static int tasks_info(int argc, char **argv)
     }
     fputs("Task Name\tStatus\tPrio\tHWM\tTask#", stdout);
 #ifdef CONFIG_FREERTOS_VTASKLIST_INCLUDE_COREID
-    fputs("\tAffinity", stdout);
+    //fputs("\tAffinity", stdout);
+    cout << "\tAffinity";
 #endif
     fputs("\n", stdout);
     vTaskList(task_list_buffer);

@@ -177,7 +177,6 @@ std::ostream& output_helper(std::ostream& ostrm, const /*char* */ std::string& s
 {
 	va_list vargs;
 
-    ostrm << "Proverka vyzova functcii 'aso::format | std::ostream" << std::endl;
     va_start(vargs, str);
     vfprintf(cfile(ostrm), str.c_str(), vargs);
     fflush(cfile(ostrm)); // ofs << std::flush; doesn't help
@@ -193,7 +192,6 @@ std::ofstream& output_helper(std::ofstream& ofs, const /*char* */ std::string& s
 {
 	va_list vargs;
 
-    ofs << "Proverka vyzova functcii 'aso::format | std::ofstream" << std::endl;
     va_start(vargs, str);
     vfprintf(cfile(ofs), str.c_str(), vargs);
     fflush(cfile(ofs)); // ofs << std::flush; doesn't help

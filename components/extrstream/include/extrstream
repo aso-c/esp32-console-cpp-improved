@@ -66,35 +66,12 @@ namespace aso
     FILE* cfile(std::istream const& is);
 
 
-
-    //    template <>
-    inline std::ostream& print_items(std::ostream& os/*, PrintItem& item*/)
-    {
-//	os << "--------------------------------" << std::endl;
-//	os << "Last param" << std::endl;
-//	os << "Value:     " << item << std::endl;
-	os << "End of Recursion!" << std::endl;
-	return os << "================================" << std::endl;
-    }
-
-    template <typename PrintItem, typename... PrnTypes>
-    inline std::ostream& print_items(std::ostream& os, PrintItem&& prnitem, PrnTypes&&... items)
-    {
-	os << "--------------------------------" << std::endl;
-	os << "Param reverse Number : " << sizeof...(PrnTypes) + 1 << std::endl;
-	os << "Parameter value ===>>: " << prnitem << std::endl;
-	return print_items(os, items...);
-    }
-
-
-
-
     // helper for aso::format::output
     // additional procedures can be added if needed
-    extern std::ostream& output_helper(std::ostream& os, const /*char* */ std::string& ...);
-    extern std::ofstream& output_helper(std::ofstream& os, const /*char* */ std::string& ...);
-    extern std::ostringstream& output_helper(std::ostringstream& os, const /*char* */ std::string& ...);
-    extern std::stringstream& output_helper(std::stringstream& os, const /*char* */ std::string& ...);
+    extern std::ostream& output_helper(std::ostream& os, const std::string& ...);
+    extern std::ofstream& output_helper(std::ofstream& os, const std::string& ...);
+    extern std::ostringstream& output_helper(std::ostringstream& os, const std::string& ...);
+    extern std::stringstream& output_helper(std::stringstream& os, const std::string& ...);
 
 
     template <typename ...PrnTypes>
@@ -108,83 +85,27 @@ namespace aso
     private:
 	std::tuple<std::string, PrnTypes...> items;
 
-
-//	template<typename OutStream, typename... Types>
-//	static void tuple_call_helper(OutStream& os, const Formatter<PrnTypes...>*, /*const std::size_t item,*/ Types&&... callitems);
-//
-//	template<typename OutStream/*, std::size_t item*//*, typename... Types*/>
-//	static void tuple_call_helper(OutStream& os, const Formatter<PrnTypes...>*, /*const std::size_t item,*/ PrnTypes&&... callitems);
-//
-//	template<typename OutStream, typename... Types>
-//	static void terminal_tuple_call_helper(OutStream& os, const Formatter<PrnTypes...>*, Types&&... callitems);
-
-
-    private:
-
-	template <typename OutStream , typename... Types>
-	OutStream& format_impl(OutStream& ostr, /*std::string&&, Prn*/ Types...paramsN) const
-	{
-		std::cout << "========= format_implementation call =========" << std::endl;
-		std::cout << "  Calling the format implementation" << std::endl
-			<< " with " << sizeof...(paramsN) << " params" << std::endl;
-		print_items(std::cout, paramsN...);
-//		print_items(std::cout, std::get<(paramsN)>(items)...);
-		std::cout << "== End of calling the format_implementation ==" << std::endl;
-		return ostr;
-	}
-
 	void generator() {
 	    caller.generator(); };
 
-
-
-	//template <std::size_t limit, typename... ParamTypes>
 	template <std::size_t limit, std::size_t... params>
 	class Call_sequencer
 	{
 	public:
 	    template <typename Outstream>
-//	    Outstream& generate(const Formatter* parent, Outstream& ostr, ParamTypes ... paramseq) const
-	    Outstream& generate(const Formatter* parent, Outstream& ostr) const
-	    {
-		std::cout << "====>> Recursive call in class 'Formatter::Call_sequencer', non-static method" << std::endl
-			<< "with limit " << limit << " and " << sizeof...(params) + 1 << " params" << std::endl;
-		print_items(std::cout, std::forward<std::size_t&&>(params)...);
-		std::cout << "---------------------" << std::endl;
-		std::cout << "=====================" << std::endl;
-		std::cout << "Limit: " << limit << std::endl;
-		std::cout << "#####################" << std::endl;
-		return Call_sequencer<limit-1, limit-1, params...>().generate(parent, ostr);
-	    };
+	    Outstream& generate(const Formatter* parent, Outstream& ostr) const {
+		return Call_sequencer<limit-1, limit-1, params...>().generate(parent, ostr); };
+
 	}; /* Call_sequencer */
 
-//	template <typename OutStream, typename FParam, typename...TParams>
-//	OutStream& helper_adapter(OutStream& ostr, Fparam&& fmtstr, TParams... params)
-//	{
-//	    output_helper(ostr, fmtstr.c_str(), );
-//	}
-
-
-//	template<typename... ParamTypes>
 	template <std::size_t... params>
 	class Call_sequencer<0, params...>
 	{
 	public:
 	    template <typename OutStream>
-	    OutStream& generate(const Formatter* parent, OutStream& ostr) const
-	    {
-		std::cout << "Stop the Recursiom in class 'Formatter::Call_sequencer', non-static method" << std::endl
-			<< " with " << sizeof...(params) + 1 << " params" << std::endl;
-		print_items(std::cout, std::get<params>(parent->items)...);
-		std::cout << "== End ALL, Final STOP ========" << std::endl;
-		std::cout << "####### Limit: " << 0 << std::endl;
-		std::cout << "=====================" << std::endl;
-		std::cout << "=====================" << std::endl;
-		//return parent->format_impl(ostr, paramseq...);
-		output_helper(ostr, std::get<params>(parent->items)...);
-
-		return ostr;
-	    };
+	    OutStream& generate(const Formatter* parent, OutStream& ostr) const {
+		return output_helper(ostr, std::get<params>(parent->items)...);
+	    }; /* generate */
 	}; /* Call_sequencer<0, ParamTypes...> */
 
 	Call_sequencer<sizeof...(PrnTypes) + 1> caller;
@@ -198,63 +119,16 @@ namespace aso
 	items(std::forward<const std::string>(fmt_str), prnvals...)
     {};
 
+
     // helper for aso::format::output
     // additional procedures can be added if needed
-    extern std::ostream& output_helper(std::ostream& os, const char* ...);
-    extern std::ofstream& output_helper(std::ofstream& os, const char* ...);
-    extern std::ostringstream& output_helper(std::ostringstream& os, const char* ...);
-    extern std::stringstream& output_helper(std::stringstream& os, const char* ...);
+    extern std::ostream& output_helper(std::ostream& os, const std::string& ...);
+    extern std::ofstream& output_helper(std::ofstream& os, const std::string& ...);
+    extern std::ostringstream& output_helper(std::ostringstream& os, const std::string& ...);
+    extern std::stringstream& output_helper(std::stringstream& os, const std::string& ...);
 
 
 
-
-//    template <typename... AllParamTypes>
-//    class Sequence
-//    {
-//    public:
-//	/*static*/ void generator() const {
-//	    //Sequence_seed<sizeof...(AllParamTypes)>::generator();
-//	    seed.generator();
-//	    };
-//
-////	    template <std::size_t limit, typename... ParamTypes>
-//	    template <std::size_t limit, std::size_t... paramsNo>
-//	    class Sequence_seed
-//	    {
-//	    public:
-//		/*static*/ void generator(/*ParamTypes ... paramseq*/) const
-//		{
-//		    std::cout << "====>> Recursive call in class 'Sequence::Sequence_seed', non-static method" << std::endl
-//			    << "with limit " << limit << " and " << sizeof...(paramsNo) + 1 << " params" << std::endl;
-//		    print_items(std::cout, std::forward<std::size_t&&>(paramsNo)...);
-//		    std::cout << "---------------------" << std::endl;
-//		    std::cout << "Limit: " << limit << std::endl;
-//		    std::cout << "---------------------" << std::endl;
-//		    //Sequence_seed<limit-1, ParamTypes..., typename std::size_t>::generator(paramseq..., sizeof...(paramseq));
-//		    //Sequence_seed<limit-1, ParamTypes..., typename std::size_t>().generator(paramseq..., sizeof...(paramseq));
-//		    Sequence_seed<limit-1, limit-1, paramsNo...>().generator();
-//		}
-//	    }; /* Sequence_seed */
-//
-//
-//	    //template<typename... ParamTypes>
-//	    template </*std::size_t limit,*/ std::size_t... paramsNo>
-//	    class Sequence_seed<0, paramsNo...>
-//	    //class Sequence_seed<0, ParamTypes...>
-//	    {
-//	    public:
-//		/*static*/ void generator(/*ParamTypes... paramseq*/) const
-//		{
-//		    std::cout << "Stop the Recursiom in class 'Sequence::Sequence_seed', non-static method" << std::endl
-//			    << " with " << sizeof...(paramsNo) << " params" << std::endl;
-//		    print_items(std::cout, paramsNo...);
-//		    std::cout << "== End ALL, Final STOP ========" << std::endl;
-//		};
-//	    }; /* Sequence_seed */
-//
-//	static Sequence_seed<sizeof...(AllParamTypes)> seed;
-//
-//    }; /* Sequence */
 
 
     // General definition of the format::output
@@ -262,229 +136,32 @@ namespace aso
     inline OutStream&
 	Formatter<PrnTypes...>::output(OutStream& os) const
     {
-//	output_helper(os, f_str.c_str(), "My_test#1_param", "My_test#2_param", "My_test_#3_param"/*, const PrnTypes&&... prnvalues*/);
-	//output_helper(os, f_str.c_str()/*, PrnTypes&&... prnvalues*/);
-	    //Sequencer<PrnTypes...>::generate(std::get<0>(prn_values)/*"abcd"*/, std::get<1>(prn_values), std::get<2>(prn_values));
-//	    Sequencer<PrnTypes...>::generate(prn_values, f_str);
-	    //generate_call<PrnTypes...>("abcdefghiklmn");
-//	Sequence<sizeof...(PrnTypes)>::generator();
-	//Sequence<PrnTypes...>::generator();
-//    	Sequence<PrnTypes...>::generator();
-//    	Sequence<PrnTypes...>::seed.generator();
-//	Sequence<PrnTypes...> sequencer;
-	//sequencer.generator();
 	caller.generate(this, os);
-//	tuple_call_helper<OutStream/*, sizeof...(PrnTypes)*/>(os, this/***//*, sizeof...(PrnTypes)*/);
 	return os;
     }; /* format::output */
 
 
 
-
-//    template <typename ...PrnTypes>
-//    inline std::ostream&
-//    format<PrnTypes...>::output(std::ostream& os) const
-//    {
-//    	os << "Proverka vyzova functcii 'aso::format | std::ostream" << std::endl;
-//    	fprintf(cfile(os), f_str.c_str());
-//    	return os;
-//    }; /* format::output */
-//
-//
-//    template <typename ...PrnTypes>
-//    std::ofstream&
-//    format<PrnTypes...>::output(std::ofstream& os) const
-//    {
-//    	os << "Proverka vyzova functcii 'aso::format | std::ofstream" << std::endl;
-//    	fprintf(cfile(os), f_str.c_str());
-//    	return os;
-//    }; /* format::output */
-
-
-
+    // Create object Formatter from passed parameters
+    // for formatting output according format string as (x)prinf() library
+    // (Using (x)printf() library with iostream sequence.)
     template<typename... PrnTypes>
     inline const Formatter<PrnTypes...> format(const std::string&& formatstr, PrnTypes&&... prn_values)
     {
-//	return std::forward<const Formatter<PrnTypes...>>(Formatter<PrnTypes...>(std::forward<const std::string>(formatstr)/*formatstr*/, std::forward<const PrnTypes>(prn_values)/*prn_values*/...));
 	return Formatter<PrnTypes...>(std::forward<const std::string>(formatstr), std::forward<PrnTypes>(prn_values)...);
     }; /* format */
 
     template<typename OutStream, typename... PrnTypes>
-//    template<typename OutStream>
-//    /*inline*/ OutStream& operator << (OutStream& os, const format &fmt)
-    OutStream& operator << (OutStream& os, const Formatter<PrnTypes...> &&fmt)
+    inline OutStream& operator << (OutStream& os, const Formatter<PrnTypes...> &&fmt)
     {
 	return fmt.output(os);
     }; /* template <OutStream> OutStream& operator << (OutStream &, const format &) */
 
-//    template<> std::ostream& operator << <std::ostream>(std::ostream&, const format &fmt);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// Implementation of the 'format' procedeure
-    template <typename OutStream, typename... PrnTypes>
-//    inline int format_impl(std::ofstream& os, const char* format_str, PrnTypes&&... prn_values)
-    inline int format_impl(OutStream& os, const char* format_str, PrnTypes&&... prn_values)
-    { return fprintf(cfile(os), format_str, prn_values... );};
-
-    // Implementation of the formatting procedeure
-    // with embedded format string
-//    template </*typename OutStream, *//*const char format_str[]*/const std::string&& format_str/*, typename... PrnTypes*/>
-//    inline std::ostream& formatter_impl(std::ostream& os)
-//    inline std::ostream& formatter_impl(std::ostream& os)
-//    {
-//	fprintf(cfile(os), "Printout through the format_impl with inner definition of the printint string:\r\n"
-//		"::==> %s", format_str);
-//	return os;
-//    }; /* format_impl */
-
-
-#if 0
-//    template <typename... PrnTypes>
-//    inline int format_impl(std::ostream& os, const char* format_str, PrnTypes&&... prn_values)
-//    { return fprintf(cfile(os), format_str, prn_values... );};
-
-//    template </*typename OutStream,*/ const char* fmt_str, typename... PrnTypes>
-////    template </*typename OutStream, const std::string &fmt_str,*/ typename... PrnTypes>
-//    //constexpr decltype(auto) curryN(F&& f, Args&&... args) const;
-    class Formatter
-    {
-    public:
-	virtual int Run(std::ostream&) = 0;
-	virtual int Run(std::ofstream&) = 0;
-	virtual ~Formatter() {};
-////	template <typename OutStream, const char* fmt_str, PrnTypes&&... prnvalues>
-////	OutStream& operator() (OutStream& os) {format_impl(os, fmt_str, prnvalues...); return os;};
-//	template <typename OutStream/*, const char* fmt_str*/>
-//	OutStream& exec(OutStream& os) {implementation(os); return os;};
-//	//constexpr decltype(auto) operator()(As&&... as) const;
-
-//    private:
-//	template <typename OutStream, OutStream os, PrnTypes&&... prnvalues>
-//	int implementation(/*OutStream& oss*/) {return format_impl(os, fmt_str, prnvalues...);};
-    }; /* Formatter */
-
-
-    template <typename... fmt_Types>
-    class inFormat: public Formatter
-    {
-    public:
-	int Run(std::ostream& os) {return 0;}
-	int Run(std::ofstream& os) {return 0;}
-	;
-    }; /* inFormat */
-
-    template <typename OutStream/*, const char* fmt_str*/ /*,typename... PrnTypes*/>
-//    inline int format_envelop(OutStream& os, const char* formatstr) {
-    inline int format_envelop(OutStream& os, const std::string &&formatstr) {
-	return fprintf(cfile(os), formatstr.c_str()); };
-#endif
-
-#if 0
-#if 1
-    // aso::format with variadic parameters implementation, variant 3
-  //  template <typename OutStream/*, const char* fmt_str*/ /*,typename... PrnTypes*/>
-//    OutStream& (*format(const char* format_str, PrnTypes&&... prnparams))(OutStream&)
-//    std::ostream& (*format(const char* format_str, PrnTypes&&... prnparams))(std::ostream&)
-    //std::ostream& (*format(const char* format_str, ...))(std::ostream&)
-//    std::ostream& (*format(const char* format_str))(std::ostream&)
-//    inline std::function<std::ostream&(std::ostream&)>
-//    inline std::function<int(OutStream&)>
-//	format(const char* format_str)
-//    {
-//	std::cout << "Proverka vyzova functcii 'aso::format" << std::endl;
-////	std::function<std::ostream&(std::ostream&)> res = std::bind(myfprintf, std::placeholders::_1, format_str);
-////	return res;
-//	return std::bind(format_envelop<OutStream>, std::placeholders::_1, format_str);
-//    }; /* format */
-
-    inline std::function<int(std::ostream&)>
-	format(const char* format_str)
-//	format(const std::string &&format_str)
-    {
-	std::cout << "Proverka vyzova functcii 'aso::format | std::ostream" << std::endl;
-	return std::bind(format_envelop<std::ostream>, std::placeholders::_1, std::string(format_str));
-    }; /* format */
-
-    inline std::function<int(std::ofstream&)>
-	fformat(const char* format_str)
-    {
-	std::cout << "Proverka vyzova functcii 'aso::format | std::ofstream" << std::endl;
-	return std::bind(format_envelop<std::ofstream>, std::placeholders::_1, format_str);
-    }; /* format */
-
-
-
-//    inline std::ostream& operator << (std::ostream &os, const std::function<std::ostream&(std::ostream&)>&& /*fn*/) {
-//	return /*fn(os)*/ os; }
-
-
-#else
-
-    // aso::format with variadic parameters implementation
-    template <typename OutStream, /*const char* fmt_str,*/ typename... PrnTypes>
-    inline Formatter&&
-    format(const char* format_str, PrnTypes&&... prnparams)
-    {
-
-	ret = inFormat<...prnparams>;
-	return ret;
-    }; /* format*/
-
-#endif
-#endif
-
-#if 0
-// Template for the iostream manipulator
-// that implemented partial application of the function callfunc
-// with fixing ParamType parameter
-//template <typename ParamType, ostream& (*callfunc)(ostream&, ParamType)>
-template <typename... OutTypes>
-//ostream& (*format(ParamType value))(ostream&)
-//ostream& (*format(const std::string &str_format, OutTypes... prn_params))(ostream&)
-std::ofstream& (*format(const char* str_format, OutTypes&&... prn_params))(std::ofstream&)
-{
-	static ParamType val = 0;
-	struct PartApp { static ostream& exec(ostream& out) {return callfunc(out, val);}; };
-
-    val = value;
-    return PartApp::exec;
-}; /* format */
-#endif
-
-
 }; /* namespace aso */
+
 
 template <typename OutStream>
 inline OutStream& operator << (OutStream &os, const std::function<int(OutStream&)> fn) {
 	fn (os); return os; }
-
-//template<typename OutStream>
-//inline OutStream& operator << (OutStream &os, const aso::format &fmt)
-//{
-//	return fmt.output(os);
-//}; /* template <OutStream> OutStream& operator << (OutStream &, const format &) */
-
-//template<typename OutStream>
-///*inline*/ OutStream& operator << (OutStream &os, const aso::format &fmt)
-////    inline std::ostream& operator << (std::ostream &os, const format &fmt)
-//{
-//	return fmt.output(os);
-//}; /* template <OutStream> OutStream& operator << (OutStream &, const format &) */
-////    }; /* ostream& operator << (ostream &os, const format &) */
-//
-//template std::ostream& operator << <std::ostream>(std::ostream&, const aso::format &fmt);
-
 
 #endif // __EXTRSTREAM_ASO__
