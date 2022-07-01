@@ -81,8 +81,8 @@ namespace aso
     inline std::ostream& print_items(std::ostream& os, PrintItem&& prnitem, PrnTypes&&... items)
     {
 	os << "--------------------------------" << std::endl;
-	os << "Param back no:     " << sizeof...(PrnTypes) + 1 << std::endl;
-	os << "Param value ===>>: " << prnitem << std::endl;
+	os << "Param reverse Number : " << sizeof...(PrnTypes) + 1 << std::endl;
+	os << "Parameter value ===>>: " << prnitem << std::endl;
 	return print_items(os, items...);
     }
 
@@ -112,10 +112,17 @@ namespace aso
 
 
     private:
-	    //template <typename... AllParamTypes>
-	    //class Sequence
-	    //{
-	    //public:
+
+	template <typename OutStream , typename... Types>
+	OutStream& format_impl(OutStream& ostr, /*std::string&&, Prn*/Types...paramsN) const
+	{
+		std::cout << "========= format_implementation call =========" << std::endl;
+		std::cout << "  Calling the format implementation" << std::endl
+			<< " with " << sizeof...(paramsN) << " params" << std::endl;
+		print_items(std::cout, paramsN...);
+		std::cout << "== End of calling the format_implementation ==" << std::endl;
+		return ostr;
+	}
 
 	void generator() {
 	    caller.generator(); };
@@ -124,13 +131,14 @@ namespace aso
 	class Call_sequencer
 	{
 	public:
-	    void generate(ParamTypes ... paramseq) const
+	    template <typename Outstream>
+	    Outstream& generate(const Formatter* parent, Outstream& ostr, ParamTypes ... paramseq) const
 	    {
 		std::cout << "====>> Recursive call in class 'Formatter::Call_sequencer', non-static method" << std::endl
 			<< "with limit " << limit << " and " << sizeof...(paramseq) << " params" << std::endl;
 		print_items(std::cout, std::forward<std::size_t&&>(paramseq)...);
 		std::cout << "---------------------" << std::endl;
-		Call_sequencer<limit-1, ParamTypes..., typename std::size_t>().generate(paramseq..., sizeof...(paramseq));
+		return Call_sequencer<limit-1, ParamTypes..., typename std::size_t>().generate(parent, ostr, paramseq..., sizeof...(paramseq));
 	    };
 	}; /* Call_sequencer */
 
@@ -138,18 +146,18 @@ namespace aso
 	class Call_sequencer<0, ParamTypes...>
 	{
 	public:
-	    void generate(ParamTypes... paramseq) const
+	    template <typename OutStream>
+	    OutStream& generate(const Formatter* parent, OutStream& ostr, ParamTypes... paramseq) const
 	    {
 		std::cout << "Stop the Recursiom in class 'Formatter::Call_sequencer', non-static method" << std::endl
 			<< " with " << sizeof...(paramseq) << " params" << std::endl;
 		print_items(std::cout, paramseq...);
 		std::cout << "== End ALL, Final STOP ========" << std::endl;
+		return parent->format_impl(ostr, paramseq...);
 	    };
 	}; /* Call_sequencer<0, ParamTypes...> */
 
 	Call_sequencer<sizeof...(PrnTypes)> caller;
-
-	    //}; /* Sequence */
 
     }; /* Formatter */
 
@@ -157,8 +165,6 @@ namespace aso
     // Comnstructor
     template <typename ...PrnTypes>
     inline Formatter<PrnTypes...>::Formatter(const std::string&& fmt_str, PrnTypes&&... prnvals):
-//	prn_items(std::make_tuple<std::string&&, PrnTypes...>(/*std::forward<const std::string>(fmt_str)*/fmt_str, std::forward<const PrnTypes>(prnvals)...))
-//	items(fmt_str, std::forward<PrnTypes>(prnvals)...)
 	items(std::forward<const std::string>(fmt_str), prnvals...)
     {};
 
@@ -170,50 +176,59 @@ namespace aso
     extern std::stringstream& output_helper(std::stringstream& os, const char* ...);
 
 
+//    class helper
+//    {
+//	friend class Formatter;
+//
+//	extern std::ostream& format(std::ostream& os, const char* ...);
+//	extern std::ofstream& format(std::ofstream& os, const char* ...);
+//	extern std::ostringstream& format(std::ostringstream& os, const char* ...);
+//	extern std::stringstream& format(std::stringstream& os, const char* ...);
+//    }; /* helper */
 
 
 
-    template <typename... AllParamTypes>
-    class Sequence
-    {
-    public:
-	/*static*/ void generator() const {
-	    //Sequence_seed<sizeof...(AllParamTypes)>::generator();
-	    seed.generator();
-	    };
-
-	    template <std::size_t limit, typename... ParamTypes>
-	    class Sequence_seed
-	    {
-	    public:
-		/*static*/ void generator(ParamTypes ... paramseq)
-		{
-		    std::cout << "====>> Recursive call in class 'Sequence::Sequence_seed', non-static method" << std::endl
-			    << "with limit " << limit << " and " << sizeof...(paramseq) << " params" << std::endl;
-		    print_items(std::cout, std::forward<std::size_t&&>(paramseq)...);
-		    std::cout << "---------------------" << std::endl;
-		    //Sequence_seed<limit-1, ParamTypes..., typename std::size_t>::generator(paramseq..., sizeof...(paramseq));
-		    Sequence_seed<limit-1, ParamTypes..., typename std::size_t>().generator(paramseq..., sizeof...(paramseq));
-		}
-	    }; /* Sequence_seed */
-
-
-	    template<typename... ParamTypes>
-	    class Sequence_seed<0, ParamTypes...>
-	    {
-	    public:
-		/*static*/ void generator(ParamTypes... paramseq)
-		{
-		    std::cout << "Stop the Recursiom in class 'Sequence::Sequence_seed', non-static method" << std::endl
-			    << " with " << sizeof...(paramseq) << " params" << std::endl;
-		    print_items(std::cout, paramseq...);
-		    std::cout << "== End ALL, Final STOP ========" << std::endl;
-		};
-	    }; /* Sequence_seed */
-
-	Sequence_seed<sizeof...(AllParamTypes)> seed;
-
-    }; /* Sequence */
+//    template <typename... AllParamTypes>
+//    class Sequence
+//    {
+//    public:
+//	/*static*/ void generator() const {
+//	    //Sequence_seed<sizeof...(AllParamTypes)>::generator();
+//	    seed.generator();
+//	    };
+//
+//	    template <std::size_t limit, typename... ParamTypes>
+//	    class Sequence_seed
+//	    {
+//	    public:
+//		/*static*/ void generator(ParamTypes ... paramseq)
+//		{
+//		    std::cout << "====>> Recursive call in class 'Sequence::Sequence_seed', non-static method" << std::endl
+//			    << "with limit " << limit << " and " << sizeof...(paramseq) << " params" << std::endl;
+//		    print_items(std::cout, std::forward<std::size_t&&>(paramseq)...);
+//		    std::cout << "---------------------" << std::endl;
+//		    //Sequence_seed<limit-1, ParamTypes..., typename std::size_t>::generator(paramseq..., sizeof...(paramseq));
+//		    Sequence_seed<limit-1, ParamTypes..., typename std::size_t>().generator(paramseq..., sizeof...(paramseq));
+//		}
+//	    }; /* Sequence_seed */
+//
+//
+//	    template<typename... ParamTypes>
+//	    class Sequence_seed<0, ParamTypes...>
+//	    {
+//	    public:
+//		/*static*/ void generator(ParamTypes... paramseq)
+//		{
+//		    std::cout << "Stop the Recursiom in class 'Sequence::Sequence_seed', non-static method" << std::endl
+//			    << " with " << sizeof...(paramseq) << " params" << std::endl;
+//		    print_items(std::cout, paramseq...);
+//		    std::cout << "== End ALL, Final STOP ========" << std::endl;
+//		};
+//	    }; /* Sequence_seed */
+//
+//	Sequence_seed<sizeof...(AllParamTypes)> seed;
+//
+//    }; /* Sequence */
 
 
     // General definition of the format::output
@@ -231,7 +246,7 @@ namespace aso
     //	Sequence<PrnTypes...>::generator();
 //	Sequence<PrnTypes...> sequencer;
 //	sequencer.generator();
-	caller.generate();
+	caller.generate(this, os);
 //	tuple_call_helper<OutStream/*, sizeof...(PrnTypes)*/>(os, this/***//*, sizeof...(PrnTypes)*/);
 	return os;
     }; /* format::output */
