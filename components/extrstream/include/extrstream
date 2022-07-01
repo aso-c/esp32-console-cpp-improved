@@ -65,87 +65,6 @@ namespace aso
     // Overloads for cin iostreams
     FILE* cfile(std::istream const& is);
 
-    // Adjust variables any types for generate tuple from it
-    template <typename T>
-    struct tuple_adj
-    {
-	T value(T v) {return v;};
-	typedef T type;
-    }; /* tuple_adj */
-    // Specialization for reference T&
-    template <typename T>
-    struct tuple_adj<T&>
-    {
-	T value(T v) {return v;};
-	typedef T type;
-    }; /* tuple_adj */
-    // Specialization for rvalue reference T&&
-    template <typename T>
-    struct tuple_adj<T&&>
-    {
-	T value(T v) {return v;};
-	typedef T type;
-    }; /* tuple_adj */
-    // Specialization for const char *
-    template <>
-    struct tuple_adj<const char*>
-    {
-	std::string value(const char* v) {return std::string(v);};
-	typedef std::string type;
-    }; /* tuple_adj */
-
-
-
-    template <typename ...PrnTypes>
-    class Formatter
-    {
-    public:
-	Formatter (const std::string&&, PrnTypes&&...);
-	template <typename OutStream>
-	    OutStream& output(OutStream&) const;
-
-    private:
-	std::tuple<std::string, PrnTypes...> items;
-
-
-	template<typename OutStream, typename... Types>
-	static void tuple_call_helper(OutStream& os, const Formatter<PrnTypes...>*, /*const std::size_t item,*/ Types&&... callitems);
-
-	template<typename OutStream/*, std::size_t item*//*, typename... Types*/>
-	static void tuple_call_helper(OutStream& os, const Formatter<PrnTypes...>*, /*const std::size_t item,*/ PrnTypes&&... callitems);
-
-	template<typename OutStream, typename... Types>
-	static void terminal_tuple_call_helper(OutStream& os, const Formatter<PrnTypes...>*, Types&&... callitems);
-
-//	namespace
-//	    {
-//
-//	        template<class TCallback, class TTuple, std::size_t... Indices>
-//	        auto callTuple_( TCallback& callback, const TTuple& tuple, std::index_sequence<Indices...> )
-//	        {
-//	            return callback( std::get<Indices>( tuple )... );
-//	        }
-//
-//	    } //
-
-    }; /* Formatter */
-
-
-    // Comnstructor
-    template <typename ...PrnTypes>
-    inline Formatter<PrnTypes...>::Formatter(const std::string&& fmt_str, PrnTypes&&... prnvals):
-//	prn_items(std::make_tuple<std::string&&, PrnTypes...>(/*std::forward<const std::string>(fmt_str)*/fmt_str, std::forward<const PrnTypes>(prnvals)...))
-//	items(fmt_str, std::forward<PrnTypes>(prnvals)...)
-	items(std::forward<const std::string>(fmt_str), prnvals...)
-    {};
-
-    // helper for aso::format::output
-    // additional procedures can be added if needed
-    extern std::ostream& output_helper(std::ostream& os, const char* ...);
-    extern std::ofstream& output_helper(std::ofstream& os, const char* ...);
-    extern std::ostringstream& output_helper(std::ostringstream& os, const char* ...);
-    extern std::stringstream& output_helper(std::stringstream& os, const char* ...);
-
 
 
     //    template <>
@@ -170,20 +89,98 @@ namespace aso
 
 
 
+    template <typename ...PrnTypes>
+    class Formatter
+    {
+    public:
+	Formatter (const std::string&&, PrnTypes&&...);
+	template <typename OutStream>
+	    OutStream& output(OutStream&) const;
+
+    private:
+	std::tuple<std::string, PrnTypes...> items;
+
+
+	template<typename OutStream, typename... Types>
+	static void tuple_call_helper(OutStream& os, const Formatter<PrnTypes...>*, /*const std::size_t item,*/ Types&&... callitems);
+
+	template<typename OutStream/*, std::size_t item*//*, typename... Types*/>
+	static void tuple_call_helper(OutStream& os, const Formatter<PrnTypes...>*, /*const std::size_t item,*/ PrnTypes&&... callitems);
+
+	template<typename OutStream, typename... Types>
+	static void terminal_tuple_call_helper(OutStream& os, const Formatter<PrnTypes...>*, Types&&... callitems);
+
+
+    private:
+	    //template <typename... AllParamTypes>
+	    //class Sequence
+	    //{
+	    //public:
+
+	void generator() {
+	    caller.generator(); };
+
+	template <std::size_t limit, typename... ParamTypes>
+	class Call_sequencer
+	{
+	public:
+	    void generate(ParamTypes ... paramseq) const
+	    {
+		std::cout << "====>> Recursive call in class 'Formatter::Call_sequencer', non-static method" << std::endl
+			<< "with limit " << limit << " and " << sizeof...(paramseq) << " params" << std::endl;
+		print_items(std::cout, std::forward<std::size_t&&>(paramseq)...);
+		std::cout << "---------------------" << std::endl;
+		Call_sequencer<limit-1, ParamTypes..., typename std::size_t>().generate(paramseq..., sizeof...(paramseq));
+	    };
+	}; /* Call_sequencer */
+
+	template<typename... ParamTypes>
+	class Call_sequencer<0, ParamTypes...>
+	{
+	public:
+	    void generate(ParamTypes... paramseq) const
+	    {
+		std::cout << "Stop the Recursiom in class 'Formatter::Call_sequencer', non-static method" << std::endl
+			<< " with " << sizeof...(paramseq) << " params" << std::endl;
+		print_items(std::cout, paramseq...);
+		std::cout << "== End ALL, Final STOP ========" << std::endl;
+	    };
+	}; /* Call_sequencer<0, ParamTypes...> */
+
+	Call_sequencer<sizeof...(PrnTypes)> caller;
+
+	    //}; /* Sequence */
+
+    }; /* Formatter */
+
+
+    // Comnstructor
+    template <typename ...PrnTypes>
+    inline Formatter<PrnTypes...>::Formatter(const std::string&& fmt_str, PrnTypes&&... prnvals):
+//	prn_items(std::make_tuple<std::string&&, PrnTypes...>(/*std::forward<const std::string>(fmt_str)*/fmt_str, std::forward<const PrnTypes>(prnvals)...))
+//	items(fmt_str, std::forward<PrnTypes>(prnvals)...)
+	items(std::forward<const std::string>(fmt_str), prnvals...)
+    {};
+
+    // helper for aso::format::output
+    // additional procedures can be added if needed
+    extern std::ostream& output_helper(std::ostream& os, const char* ...);
+    extern std::ofstream& output_helper(std::ofstream& os, const char* ...);
+    extern std::ostringstream& output_helper(std::ostringstream& os, const char* ...);
+    extern std::stringstream& output_helper(std::stringstream& os, const char* ...);
+
+
+
 
 
     template <typename... AllParamTypes>
     class Sequence
     {
     public:
-	/*static*/ void generator() {
+	/*static*/ void generator() const {
 	    //Sequence_seed<sizeof...(AllParamTypes)>::generator();
 	    seed.generator();
 	    };
-
-
-
-
 
 	    template <std::size_t limit, typename... ParamTypes>
 	    class Sequence_seed
@@ -232,8 +229,9 @@ namespace aso
 //	Sequence<sizeof...(PrnTypes)>::generator();
 	//Sequence<PrnTypes...>::generator();
     //	Sequence<PrnTypes...>::generator();
-	Sequence<PrnTypes...> sequencer;
-	sequencer.generator();
+//	Sequence<PrnTypes...> sequencer;
+//	sequencer.generator();
+	caller.generate();
 //	tuple_call_helper<OutStream/*, sizeof...(PrnTypes)*/>(os, this/***//*, sizeof...(PrnTypes)*/);
 	return os;
     }; /* format::output */
