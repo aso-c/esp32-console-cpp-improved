@@ -133,21 +133,12 @@ static int get_version(int argc, char **argv)
     cout << "Chip info: " << endl;
     cout << "\tmodel: " << (info.model == CHIP_ESP32 ? "ESP32" : "Unknow") << endl;
     cout << "\tcores: " << (int)info.cores << endl;
-#if 1
     cout << aso::format("\tfeature:%s%s%s%s%d%s",
            info.features & CHIP_FEATURE_WIFI_BGN ? "/802.11bgn" : "",
            info.features & CHIP_FEATURE_BLE ? "/BLE" : "",
            info.features & CHIP_FEATURE_BT ? "/BT" : "",
            info.features & CHIP_FEATURE_EMB_FLASH ? "/Embedded-Flash:" : "/External-Flash:",
            spi_flash_get_chip_size() / (1024 * 1024), " MB") << std::endl;
-#else
-    cout << "\tfeature:"
-	<< (info.features & CHIP_FEATURE_WIFI_BGN ? "802.11bgn/" : "")
-	<< (info.features & CHIP_FEATURE_BLE ? "BLE/" : "")
-	<< (info.features & CHIP_FEATURE_BT ? "BT/" : "")
-	<< (info.features & CHIP_FEATURE_EMB_FLASH ? "Embedded-Flash:" : "External-Flash:")
-	<< spi_flash_get_chip_size() / (1024 * 1024) << " MB" << endl;
-#endif
     cout << "\trevision number: " << (int)info.revision << endl;
 
     return 0;
