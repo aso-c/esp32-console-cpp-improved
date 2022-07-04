@@ -40,7 +40,7 @@ namespace aso
     // #include <fstream>
     // #include <ext/stdio_filebuf.h>
     //
-    // /* [ -->  #include "include/extra_stream" <-- Not needeed on user file? ]
+    // /* [ -->  #include "include/extrstream" <-- Not needeed on user file? ]
     //
     //
     // int main(){
@@ -86,29 +86,29 @@ namespace aso
 	std::tuple<std::string, PrnTypes...> items;
 
 	void generator() {
-	    caller.generator(); };
+	    caller.sequence(); };
 
 	template <std::size_t limit, std::size_t... params>
-	class Call_sequencer
+	class Calling
 	{
 	public:
 	    template <typename Outstream>
-	    Outstream& generate(const Formatter* parent, Outstream& ostr) const {
-		return Call_sequencer<limit-1, limit-1, params...>().generate(parent, ostr); };
+	    Outstream& sequence(const Formatter* parent, Outstream& ostr) const {
+		return Calling<limit-1, limit-1, params...>().sequence(parent, ostr); };
 
-	}; /* Call_sequencer */
+	}; /* Calling */
 
 	template <std::size_t... params>
-	class Call_sequencer<0, params...>
+	class Calling<0, params...>
 	{
 	public:
 	    template <typename OutStream>
-	    OutStream& generate(const Formatter* parent, OutStream& ostr) const {
+	    OutStream& sequence(const Formatter* parent, OutStream& ostr) const {
 		return output_helper(ostr, std::get<params>(parent->items)...);
-	    }; /* generate */
-	}; /* Call_sequencer<0, ParamTypes...> */
+	    }; /* sequence */
+	}; /* Calling<0, ParamTypes...> */
 
-	Call_sequencer<sizeof...(PrnTypes) + 1> caller;
+	Calling<sizeof...(PrnTypes) + 1> caller;
 
     }; /* Formatter */
 
@@ -136,7 +136,7 @@ namespace aso
     inline OutStream&
 	Formatter<PrnTypes...>::output(OutStream& os) const
     {
-	caller.generate(this, os);
+	caller.sequence(this, os);
 	return os;
     }; /* format::output */
 
