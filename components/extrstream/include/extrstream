@@ -66,12 +66,12 @@ namespace aso
     FILE* cfile(std::istream const& is);
 
 
-    // helpers for aso::Formatter::output
-    // additional procedures can be defined by needed
-    extern std::ostream& output_helper(std::ostream& os, const std::string& ...);
-    extern std::ofstream& output_helper(std::ofstream& os, const std::string& ...);
-    extern std::ostringstream& output_helper(std::ostringstream& os, const std::string& ...);
-    extern std::stringstream& output_helper(std::stringstream& os, const std::string& ...);
+//    // helpers for aso::Formatter::output
+//    // additional procedures can be defined by needed
+//    extern std::ostream& output_helper(std::ostream& os, const std::string& ...);
+//    extern std::ofstream& output_helper(std::ofstream& os, const std::string& ...);
+//    extern std::ostringstream& output_helper(std::ostringstream& os, const std::string& ...);
+//    extern std::stringstream& output_helper(std::stringstream& os, const std::string& ...);
 
 
     template <typename ...PrnTypes>
@@ -100,20 +100,13 @@ namespace aso
 	{
 	public:
 	    template <typename OutStream>
-	    static OutStream& sequence(const std::tuple<std::string, PrnTypes...>& argstuple, OutStream& ostr) {
+	    static OutStream& sequence(const std::tuple<std::string, PrnTypes...>& argstuple, OutStream& ostr) /*{
 		return output_helper(ostr, std::get<params>(argstuple)...);
-	    }; /* sequence */
+	    }*/; /* sequence */
 	}; /* Calling<0, ParamTypes...> */
 
 
     }; /* Formatter */
-
-
-    // Comnstructor
-    template <typename ...PrnTypes>
-    inline Formatter<PrnTypes...>::Formatter(const std::string&& fmt_str, PrnTypes&&... prnvals):
-	items(std::forward<const std::string>(fmt_str), prnvals...)
-    {};
 
 
     // helper for aso::format::output
@@ -124,7 +117,21 @@ namespace aso
     extern std::stringstream& output_helper(std::stringstream& os, const std::string& ...);
 
 
+    template <typename ...PrnTypes>
+    template <std::size_t... params>
+    template <typename OutStream>
+    inline OutStream&
+    Formatter<PrnTypes...>::Calling<0, params...>::sequence(const std::tuple<std::string, PrnTypes...>& argstuple,
+								OutStream& ostr) {
+	return output_helper(ostr, std::get<params>(argstuple)...); }; /* sequence */
 
+
+
+    // Comnstructor
+    template <typename ...PrnTypes>
+    inline Formatter<PrnTypes...>::Formatter(const std::string&& fmt_str, PrnTypes&&... prnvals):
+	items(std::forward<const std::string>(fmt_str), prnvals...)
+    {};
 
 
     // General definition of the format::output
