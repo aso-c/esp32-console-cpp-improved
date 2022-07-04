@@ -93,8 +93,8 @@ namespace aso
 	{
 	public:
 	    template <typename Outstream>
-	    Outstream& sequence(const Formatter* parent, Outstream& ostr) const {
-		return Calling<limit-1, limit-1, params...>().sequence(parent, ostr); };
+	    Outstream& sequence(const std::tuple<std::string, PrnTypes...>& argstuple/*const Formatter* parent*/, Outstream& ostr) const {
+		return Calling<limit-1, limit-1, params...>().sequence(argstuple/*parent*/, ostr); };
 
 	}; /* Calling */
 
@@ -103,8 +103,8 @@ namespace aso
 	{
 	public:
 	    template <typename OutStream>
-	    OutStream& sequence(const Formatter* parent, OutStream& ostr) const {
-		return output_helper(ostr, std::get<params>(parent->items)...);
+	    OutStream& sequence(const std::tuple<std::string, PrnTypes...>& argstuple/*const Formatter* parent*/, OutStream& ostr) const {
+		return output_helper(ostr, std::get<params>(/*parent->items*/argstuple)...);
 	    }; /* sequence */
 	}; /* Calling<0, ParamTypes...> */
 
@@ -136,7 +136,7 @@ namespace aso
     inline OutStream&
 	Formatter<PrnTypes...>::output(OutStream& os) const
     {
-	caller.sequence(this, os);
+	caller.sequence(items/*this*/, os);
 	return os;
     }; /* format::output */
 
