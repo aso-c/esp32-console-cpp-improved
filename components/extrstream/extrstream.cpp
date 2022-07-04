@@ -40,6 +40,7 @@
 #include <iostream>
 //#include <iomanip>
 #include <fstream>
+#include <sstream>
 #include <ext/stdio_filebuf.h>
 
 #include <stdio.h>
@@ -52,29 +53,6 @@ using namespace std;
 
 namespace aso
 {
-
-//    class format
-//    {
-//    public:
-//	format (const char *fmtstr);
-//    }; /* format */
-
-#if 0
-format::format(const char *fmt):
-	fmt_str(fmt)
-	{};
-
-ostream& operator << (ostream& os, const format& fmt)
-
-{
-    return os << " ==== Format string is: \"" << fmt.fmt_str << "\" ====";
-
-}; /* ostream& operator << (ostream&, const format&) */
-#endif
-
-
-
-
 
 
 typedef std::basic_ofstream<char>::__filebuf_type  buffer_t;
@@ -111,6 +89,11 @@ FILE* cfile(std::ifstream const& ifs)
 
 
 
+//
+// Text from this source:
+// https://overcoder.net/q/54881/получение-файла-из-std-fstream
+// https://overcoder.net/q/54881/%D0%BF%D0%BE%D0%BB%D1%83%D1%87%D0%B5%D0%BD%D0%B8%D0%B5-%D1%84%D0%B0%D0%B9%D0%BB%D0%B0-%D0%B8%D0%B7-std-fstream
+// https://ask-dev.ru/info/113124/getting-a-file-from-a-stdfstream
 //
 // Limitations: (комментарии приветствуются)
 //
@@ -155,25 +138,15 @@ FILE* cfile(std::istream const& is)
 }; /* cfile(std::istream) */
 
 
-//--[ class format ]-------------------------------------------------------------------------------
-
-//// Comnstructor
-//template <typename... PrnTypes>
-//format<PrnTypes...prnvals>::format(const std::string&& fmt_str, PrnTypes... prnvals):
-//    f_str(fmt_str)
-//{};
+//--[ class Formatter ]----------------------------------------------------------------------------
 
 
-// helper for aso::format::output instances:
-// external defined procedures
-template <typename OutStream>
-OutStream& output_helper(OutStream& os, const char* ...);
+// helpers for aso::Formatter::output
+// additional procedures can be defined by needed
 
 
-//template <>
-//std::ostream&
-//format::output<std::ostream>(std::ostream& os) const
-std::ostream& output_helper(std::ostream& ostrm, const /*char* */ std::string& str ...)
+// Format string output helper for std::ostream
+std::ostream& output_helper(std::ostream& ostrm, const std::string& str ...)
 {
 	va_list vargs;
 
@@ -182,13 +155,11 @@ std::ostream& output_helper(std::ostream& ostrm, const /*char* */ std::string& s
     fflush(cfile(ostrm)); // ofs << std::flush; doesn't help
     va_end(vargs);
     return ostrm;
-}; /* format::output */
+}; /* std::ostream& output_helper(std::ostream&, const std::string& ...) */
 
 
-//template <>
-//std::ofstream&
-//format::output<std::ofstream>(std::ofstream& os) const
-std::ofstream& output_helper(std::ofstream& ofs, const /*char* */ std::string& str ...)
+// Format string output helper for std::ofstream
+std::ofstream& output_helper(std::ofstream& ofs, const std::string& str...)
 {
 	va_list vargs;
 
@@ -197,9 +168,46 @@ std::ofstream& output_helper(std::ofstream& ofs, const /*char* */ std::string& s
     fflush(cfile(ofs)); // ofs << std::flush; doesn't help
     va_end(vargs);
     return ofs;
-}; /* format::output */
+}; /* std::ofstream& output_helper(std::ofstream&, const std::string&...) */
 
-//--[ end of class format ]------------------------------------------------------------------------
+// Format string output helper for std::ostringstream
+std::ostringstream& output_helper(std::ostringstream& ostr, const std::string& formatstr...)
+{
+	va_list vargs, vargs_pre;
+	char* outbuf = nullptr;
+
+    va_start(vargs, formatstr);
+    va_copy(vargs_pre, vargs);
+    outbuf = (char*)malloc(vsnprintf(nullptr, 0, formatstr.c_str(), vargs_pre) * sizeof(char) / sizeof(std::size_t) + 1);
+    vsprintf(outbuf, formatstr.c_str(), vargs);
+    ostr << outbuf;
+    free(outbuf);
+    va_end(vargs_pre);
+    va_end(vargs);
+
+    return ostr;
+}; /* std::ostringstream& output_helper(std::ostringstream& ofs, const std::string&...) */
+
+// Format string output helper for std::stringstream
+std::stringstream& output_helper(std::stringstream& strstr, const std::string& formatstr...)
+{
+	va_list vargs, vargs_pre;
+	char* outbuf = nullptr;
+
+    va_start(vargs, formatstr);
+    va_copy(vargs_pre, vargs);
+    outbuf = (char*)malloc(vsnprintf(nullptr, 0, formatstr.c_str(), vargs_pre) * sizeof(char) / sizeof(std::size_t) + 1);
+    vsprintf(outbuf, formatstr.c_str(), vargs);
+    strstr << outbuf;
+    free(outbuf);
+    va_end(vargs_pre);
+    va_end(vargs);
+
+    return strstr;
+}; /* std::stringstream& output_helper(std::stringstream& ofs, const std::string&...) */
+
+
+//--[ end of class Formatter ]---------------------------------------------------------------------
 
 
 

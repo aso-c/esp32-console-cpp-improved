@@ -66,8 +66,8 @@ namespace aso
     FILE* cfile(std::istream const& is);
 
 
-    // helper for aso::format::output
-    // additional procedures can be added if needed
+    // helpers for aso::Formatter::output
+    // additional procedures can be defined by needed
     extern std::ostream& output_helper(std::ostream& os, const std::string& ...);
     extern std::ofstream& output_helper(std::ofstream& os, const std::string& ...);
     extern std::ostringstream& output_helper(std::ostringstream& os, const std::string& ...);
@@ -85,16 +85,12 @@ namespace aso
     private:
 	std::tuple<std::string, PrnTypes...> items;
 
-//	void generator() {
-//	    caller.sequence(); };
-
 	template <std::size_t limit, std::size_t... params>
 	class Calling
 	{
 	public:
 	    template <typename Outstream>
-	    static Outstream& sequence(const std::tuple<std::string, PrnTypes...>& argstuple, Outstream& ostr) /*const*/ {
-//		return Calling<limit-1, limit-1, params...>().sequence(argstuple, ostr); };
+	    static Outstream& sequence(const std::tuple<std::string, PrnTypes...>& argstuple, Outstream& ostr) {
 		return Calling<limit-1, limit-1, params...>::sequence(argstuple, ostr); };
 
 	}; /* Calling */
@@ -104,12 +100,11 @@ namespace aso
 	{
 	public:
 	    template <typename OutStream>
-	    static OutStream& sequence(const std::tuple<std::string, PrnTypes...>& argstuple/*const Formatter* parent*/, OutStream& ostr) /*const*/ {
+	    static OutStream& sequence(const std::tuple<std::string, PrnTypes...>& argstuple, OutStream& ostr) {
 		return output_helper(ostr, std::get<params>(argstuple)...);
 	    }; /* sequence */
 	}; /* Calling<0, ParamTypes...> */
 
-//	Calling<sizeof...(PrnTypes) + 1> caller;
 
     }; /* Formatter */
 
@@ -137,7 +132,6 @@ namespace aso
     inline OutStream&
 	Formatter<PrnTypes...>::output(OutStream& os) const
     {
-//	caller.sequence(items, os);
 	Calling<sizeof...(PrnTypes) + 1>::sequence(items, os);
 	return os;
     }; /* format::output */
