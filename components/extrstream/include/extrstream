@@ -85,16 +85,17 @@ namespace aso
     private:
 	std::tuple<std::string, PrnTypes...> items;
 
-	void generator() {
-	    caller.sequence(); };
+//	void generator() {
+//	    caller.sequence(); };
 
 	template <std::size_t limit, std::size_t... params>
 	class Calling
 	{
 	public:
 	    template <typename Outstream>
-	    Outstream& sequence(const std::tuple<std::string, PrnTypes...>& argstuple/*const Formatter* parent*/, Outstream& ostr) const {
-		return Calling<limit-1, limit-1, params...>().sequence(argstuple/*parent*/, ostr); };
+	    static Outstream& sequence(const std::tuple<std::string, PrnTypes...>& argstuple, Outstream& ostr) /*const*/ {
+//		return Calling<limit-1, limit-1, params...>().sequence(argstuple, ostr); };
+		return Calling<limit-1, limit-1, params...>::sequence(argstuple, ostr); };
 
 	}; /* Calling */
 
@@ -103,12 +104,12 @@ namespace aso
 	{
 	public:
 	    template <typename OutStream>
-	    OutStream& sequence(const std::tuple<std::string, PrnTypes...>& argstuple/*const Formatter* parent*/, OutStream& ostr) const {
-		return output_helper(ostr, std::get<params>(/*parent->items*/argstuple)...);
+	    static OutStream& sequence(const std::tuple<std::string, PrnTypes...>& argstuple/*const Formatter* parent*/, OutStream& ostr) /*const*/ {
+		return output_helper(ostr, std::get<params>(argstuple)...);
 	    }; /* sequence */
 	}; /* Calling<0, ParamTypes...> */
 
-	Calling<sizeof...(PrnTypes) + 1> caller;
+//	Calling<sizeof...(PrnTypes) + 1> caller;
 
     }; /* Formatter */
 
@@ -136,7 +137,8 @@ namespace aso
     inline OutStream&
 	Formatter<PrnTypes...>::output(OutStream& os) const
     {
-	caller.sequence(items/*this*/, os);
+//	caller.sequence(items, os);
+	Calling<sizeof...(PrnTypes) + 1>::sequence(items, os);
 	return os;
     }; /* format::output */
 
