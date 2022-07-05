@@ -14,6 +14,7 @@
 #ifndef __EXTRSTREAM_ASO__
 #define __EXTRSTREAM_ASO__
 
+#include <functional>
 
 namespace aso
 {
@@ -66,12 +67,41 @@ namespace aso
     FILE* cfile(std::istream const& is);
 
 
-//    // helpers for aso::Formatter::output
-//    // additional procedures can be defined by needed
-//    extern std::ostream& output_helper(std::ostream& os, const std::string& ...);
-//    extern std::ofstream& output_helper(std::ofstream& os, const std::string& ...);
-//    extern std::ostringstream& output_helper(std::ostringstream& os, const std::string& ...);
-//    extern std::stringstream& output_helper(std::stringstream& os, const std::string& ...);
+    template <typename ...ParamTypes>
+    class Tiny
+    {
+    public:
+	template <std::size_t limit, std::size_t... params>
+	class Tuple
+	{
+	public:
+	    template <typename TypeRet>
+	    static TypeRet Caller(std::function<TypeRet(ParamTypes...)>&& fn, const std::tuple<ParamTypes...>& argstuple /*, TypeRet& ostr*/) {
+		return Tuple<limit-1, limit-1, params...>::Caller(fn, argstuple/*, ostr*/); };
+
+	    template <typename TypeRet>
+	    static TypeRet Caller(std::function<TypeRet(ParamTypes...)>& fn, const std::tuple<ParamTypes...>& argstuple /*, TypeRet& ostr*/) {
+		return Tuple<limit-1, limit-1, params...>::Caller(fn, argstuple/*, ostr*/); };
+	}; /* Tuple */
+
+	template <std::size_t... params>
+	class Tuple<0, params...>
+	{
+	public:
+	    template <typename TypeRet>
+	    static TypeRet Caller(std::function<TypeRet(ParamTypes...)>&& fn, const std::tuple<ParamTypes...>& argstuple/*, TypeRet& ostr*/) {
+//	   	return output_helper(ostr, std::get<params>(argstuple)...); };
+	   	return fn(std::get<params>(argstuple)...); };
+
+	    template <typename TypeRet>
+	    static TypeRet Caller(std::function<TypeRet(ParamTypes...)>& fn, const std::tuple<ParamTypes...>& argstuple/*, TypeRet& ostr*/) {
+	   	return fn(std::get<params>(argstuple)...); };
+	}; /* Tuple<0, ParamTypes...> */
+
+
+    }; /* Tiny */
+
+
 
 
     template <typename ...PrnTypes>
@@ -100,9 +130,7 @@ namespace aso
 	{
 	public:
 	    template <typename OutStream>
-	    static OutStream& sequence(const std::tuple<std::string, PrnTypes...>& argstuple, OutStream& ostr) /*{
-		return output_helper(ostr, std::get<params>(argstuple)...);
-	    }*/; /* sequence */
+	    static OutStream& sequence(const std::tuple<std::string, PrnTypes...>& argstuple, OutStream& ostr);
 	}; /* Calling<0, ParamTypes...> */
 
 
@@ -123,7 +151,7 @@ namespace aso
     inline OutStream&
     Formatter<PrnTypes...>::Calling<0, params...>::sequence(const std::tuple<std::string, PrnTypes...>& argstuple,
 								OutStream& ostr) {
-	return output_helper(ostr, std::get<params>(argstuple)...); }; /* sequence */
+	return output_helper(ostr, std::get<params>(argstuple)...); };
 
 
 
@@ -139,8 +167,14 @@ namespace aso
     inline OutStream&
 	Formatter<PrnTypes...>::output(OutStream& os) const
     {
-	Calling<sizeof...(PrnTypes) + 1>::sequence(items, os);
-	return os;
+	auto call_helper = [&os](const std::string& fstr, PrnTypes... prnitems) mutable -> OutStream&
+		{return output_helper(os, fstr, prnitems...);};
+	return Tiny<std::string, PrnTypes...>::template Tuple<sizeof...(PrnTypes) + 1>::
+		template Caller<OutStream&>(call_helper, items);
+//		template Caller<OutStream>(
+//			[&os](std::string& fstr, PrnTypes... prnitems){return output_helper(os, fstr, prnitems...);}, items);
+//	Calling<sizeof...(PrnTypes) + 1>::sequence(items, os);
+//	return os;
     }; /* format::output */
 
 
