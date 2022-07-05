@@ -6,8 +6,8 @@
 // Implementation file
 //
 // author: Solomatov A.A. (aso)
-// ver.  : v.0.7
-// date  : 20.06.22.
+// ver.  : v.1.1
+// date  : 05.07.22.
 //
 
 
