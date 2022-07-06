@@ -68,43 +68,6 @@ namespace aso
     FILE* cfile(std::istream const& is);
 
 
-//    template <typename ...ParamTypes>
-//    class Tuple
-//    {
-//    public:
-//
-//	template <typename TypeRet>
-//	static TypeRet lite_caller(std::function<TypeRet(ParamTypes...)>&& fn, const std::tuple<ParamTypes...>& argstuple) {
-//	    return Tiny<sizeof...(ParamTypes)>::template Caller<TypeRet>(fn, argstuple); };
-//
-//	template <typename TypeRet>
-//	static TypeRet lite_caller(std::function<TypeRet(ParamTypes...)>& fn, const std::tuple<ParamTypes...>& argstuple) {
-//	return Tiny<sizeof...(ParamTypes)>::template Caller<TypeRet>(fn, argstuple); };
-//
-//    private:
-//
-//	template <std::size_t limit, std::size_t... params>
-//	class Tiny
-//	{
-//	public:
-//
-//	    template <typename TypeRet>
-//	    static TypeRet Caller(std::function<TypeRet(ParamTypes...)>& fn, const std::tuple<ParamTypes...>& argstuple) {
-//		return Tiny<limit-1, limit-1, params...>::Caller(fn, argstuple); };
-//	}; /* Tiny */
-//
-//	template <std::size_t... params>
-//	class Tiny<0, params...>
-//	{
-//	public:
-//
-//	    template <typename TypeRet>
-//	    static TypeRet Caller(std::function<TypeRet(ParamTypes...)>& fn, const std::tuple<ParamTypes...>& argstuple/*, TypeRet& ostr*/) {
-//	   	return fn(std::get<params>(argstuple)...); };
-//	}; /* Tiny<0, ParamTypes...> */
-//
-//    }; /* Tuple */
-
 
 
     template <typename ...PrnTypes>
@@ -113,7 +76,7 @@ namespace aso
     public:
 	Formatter (const std::string&&, PrnTypes&&...);
 	template <typename OutStream>
-	    OutStream& output(OutStream&) const;
+	    OutStream& output(OutStream&/*&*/) const;
 
     private:
 	std::tuple<std::string, PrnTypes...> items;
@@ -138,9 +101,9 @@ namespace aso
     // General definition of the format::output
     template <typename ...PrnTypes> template <typename OutStream>
     inline OutStream&
-	Formatter<PrnTypes...>::output(OutStream& os) const
+	Formatter<PrnTypes...>::output(OutStream&/*&*/ os) const
     {
-	return Tuple<std::string, PrnTypes...>::template lite_caller<OutStream&>([&os](const std::string& fstr, PrnTypes... prnitems) mutable -> OutStream&
+	return simple<std::string, PrnTypes...>::template tuple_caller<OutStream&>([&os](const std::string& fstr, PrnTypes... prnitems) mutable -> OutStream&
 		{return output_helper(os, fstr, prnitems...);}, items);
     }; /* format::output */
 
