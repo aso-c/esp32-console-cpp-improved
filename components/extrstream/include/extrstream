@@ -103,8 +103,17 @@ namespace aso
     inline OutStream&
 	Formatter<PrnTypes...>::output(OutStream&/*&*/ os) const
     {
-	return simple<std::string, PrnTypes...>::template tuple_caller<OutStream&>([&os](const std::string& fstr, PrnTypes... prnitems) mutable -> OutStream&
-		{return output_helper(os, fstr, prnitems...);}, items);
+	auto exec = [&os](const std::string& fstr, PrnTypes... prnitems) mutable -> OutStream&
+		{return output_helper(os, fstr, prnitems...);};
+//	return simple<std::string, PrnTypes...>::template tuple_caller<OutStream&>([&os](const std::string& fstr, PrnTypes... prnitems) mutable -> OutStream&
+//		{return output_helper(os, fstr, prnitems...);}, items);
+//	return simple_tuple_caller([&os](const std::string& fstr, PrnTypes... prnitems) mutable -> OutStream&
+//		{return output_helper(os, fstr, prnitems...);}, items);
+	//return simple_tuple_caller<OutStream&, PrnTypes...>(exec, items);
+//	return simple<PrnTypes...>::tuple_caller3(exec, items);
+	return simple<const std::string, PrnTypes...>::
+		template Tuple<sizeof...(PrnTypes) + 1>::
+		template caller<OutStream&>(exec, items);
     }; /* format::output */
 
 

@@ -32,7 +32,16 @@ namespace aso
 	static TypeRet tuple_caller(std::function<TypeRet(ParamTypes...)>& fn, const std::tuple<ParamTypes...>& argstuple) {
 	return Tuple<sizeof...(ParamTypes)>::template caller<TypeRet>(fn, argstuple); };
 
-    private:
+	template <typename TypeRet, TypeRet(*fn)(ParamTypes...)>
+	static TypeRet tuple_caller2(/*std::function<TypeRet(ParamTypes...)>&& fn,*/ const std::tuple<ParamTypes...>& argstuple) {
+	    return Tuple<sizeof...(ParamTypes)>::template caller<TypeRet>(fn, argstuple); };
+
+	template <typename TypeRet, typename FnType>
+	static TypeRet tuple_caller3( FnType&& fn, const std::tuple<ParamTypes...>& argstuple) {
+	    return Tuple<sizeof...(ParamTypes)>::template caller<TypeRet>(fn, argstuple); };
+
+//    private:
+    public:
 
 	template <std::size_t limit, std::size_t... params>
 	class Tuple
@@ -41,6 +50,10 @@ namespace aso
 
 	    template <typename TypeRet>
 	    static TypeRet caller(std::function<TypeRet(ParamTypes...)>& fn, const std::tuple<ParamTypes...>& argstuple) {
+		return Tuple<limit-1, limit-1, params...>::caller(fn, argstuple); };
+
+	    template <typename TypeRet>
+	    static TypeRet caller(std::function<TypeRet(ParamTypes...)>&& fn, const std::tuple<ParamTypes...>& argstuple) {
 		return Tuple<limit-1, limit-1, params...>::caller(fn, argstuple); };
 	}; /* Tuple */
 
@@ -57,11 +70,26 @@ namespace aso
     }; /* simple */
 
 
-    template <typename ReType, typename ...ParamTypes>
-    inline ReType simple_tuplecaller(std::function<ReType(ParamTypes...)>&& fn, const std::tuple<ParamTypes...>& tupleargs)
+    template <typename ReType, typename FnT, typename ...ParamTypes>
+//    inline ReType simple_tuplecaller(std::function<ReType(ParamTypes...)>&& fn, const std::tuple<ParamTypes...>& tupleargs)
+    inline ReType simple_tuplecaller(std::function<FnT>&& fn, const std::tuple<ParamTypes...>& tupleargs)
     {
 	return simple<ParamTypes...>::tuple_caller(fn, tupleargs);
     }; /* simple_tuplecaller */
+
+    template <typename ReType, typename FnT, typename ...ParamTypes>
+//    inline ReType simple_tuplecaller(std::function<ReType(ParamTypes...)>& fn, const std::tuple<ParamTypes...>& tupleargs)
+    inline ReType simple_tuplecaller(std::function<FnT>& fn, const std::tuple<ParamTypes...>& tupleargs)
+    {
+	return simple<ParamTypes...>::tuple_caller(fn, tupleargs);
+    }; /* simple_tuplecaller */
+
+
+//    template <typename ...ParamTypes>
+//    template <typename ReType, /*std::function<ReType(ParamTypes...)>&& fn*/ ReType(*fn)(ParamTypes...)>
+//    inline ReType simple_tuple_caller(const std::tuple<ParamTypes...>& tupleargs) {
+//	return simple<ParamTypes...>::tuple_caller(fn, tupleargs);
+//    };
 
 }; // aso
 
