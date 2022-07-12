@@ -6,7 +6,7 @@
 // Header file
 //
 // author: Solomatov A.A. (aso)
-// ver.  : v.1.0.4
+// ver.  : v.1.0.5
 // date  : 12.07.22.
 //
 // Copyright (c) 2022 Andrey "aso" Solomatov
@@ -22,11 +22,16 @@
 //#include <tuplecall>
 //      . . .
 //
-//    Tuple<Type_List>::simple_call(exec, items);
+//
+//    aso::simple_tuplecall(exec, items);
+//
+// or, if needed:
+//
+//    aso::Tuple<Type_List>::simple_call(exec, items);
 //
 // or
 //
-//    Tuple<Type_List>::simple::call(exec, items);
+//    aso::Tuple<Type_List>::simple::call(exec, items);
 //
 //
 
@@ -95,12 +100,10 @@ inline auto Tuple<ParamTypes...>::simple::call(FnType fn, const std::tuple<Param
 
 
     template <typename FnT, typename ...ParamTypes>
-//    template <typename FnT>
-//    template <typename ...ParamTypes>
     inline auto simple_tuplecall(FnT fn, const std::tuple<ParamTypes...>& argstuple) -> typename std::result_of<FnT(ParamTypes...)>::type
     {
 	return Tuple<ParamTypes...>::simple_call(fn, argstuple);
-    }; /* simple_tuplecaller */
+    }; /* simple_tuplecall */
 
 }; // namespace aso
 
