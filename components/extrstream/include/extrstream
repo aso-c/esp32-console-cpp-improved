@@ -15,7 +15,7 @@
 #define __EXTRSTREAM_ASO__
 
 #include <functional>
-#include "tuplecaller"
+#include "tuplecall"
 
 namespace aso
 {
@@ -111,9 +111,8 @@ namespace aso
 //		{return output_helper(os, fstr, prnitems...);}, items);
 	//return simple_tuple_caller<OutStream&, PrnTypes...>(exec, items);
 //	return simple<PrnTypes...>::tuple_caller3(exec, items);
-	return simple<const std::string, PrnTypes...>::
-		template Tuple<sizeof...(PrnTypes) + 1>::
-		template caller<OutStream&>(exec, items);
+	//return simple<const std::string, PrnTypes...>::template Tuple<sizeof...(PrnTypes) + 1>::template caller<OutStream&>(exec, items);
+	return simple<const std::string, PrnTypes...>::template Tuple<sizeof...(PrnTypes) + 1>::/*template*/ caller2/*<exec>*/(exec, items);
     }; /* format::output */
 
 
