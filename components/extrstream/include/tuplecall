@@ -15,16 +15,20 @@
 
 //
 // Usage:
-//	Tuple<Type_List>::simple::call(exec, items);
 //
-// It's slightly ugly, but it works.
-// Sorry, this is a first early release.
+//#include <functional>
+//      . . .
+//
+//#include <tuplecall>
+//      . . .
+//
+//    Tuple<Type_List>::simple::call(exec, items);
+//
 //
 
 #ifndef __TUPLECALL_ASO__
 #define __TUPLECALL_ASO__
 
-#include <functional>
 
 namespace aso
 {
@@ -46,9 +50,21 @@ namespace aso
 //	static TypeRet tuple_caller2(/*std::function<TypeRet(ParamTypes...)>&& fn,*/ const std::tuple<ParamTypes...>& argstuple) {
 //	    return simple_caller<sizeof...(ParamTypes)>::invoke(fn, argstuple); };
 //
-//	template <typename TypeRet, typename FnType>
-//	static TypeRet tuple_caller3( FnType&& fn, const std::tuple<ParamTypes...>& argstuple) {
-//	    return simple_caller<sizeof...(ParamTypes)>::invoke(fn, argstuple); };
+	template <typename FnType>
+	static auto simple_call( FnType fn, const std::tuple<ParamTypes...>& argstuple) -> typename std::result_of<FnType(ParamTypes...)>::type
+	{
+	    return simple::call(fn, argstuple);
+	};
+
+    public:
+    	class simple
+    	{
+    	public:
+
+    	    template <typename FnType>
+    	    static auto call(FnType fn, const std::tuple<ParamTypes...>& argstuple) -> typename std::result_of<FnType(ParamTypes...)>::type;
+
+    	}; /* simple */
 
 
     private:
@@ -77,26 +93,14 @@ namespace aso
 
 	}; /* caller<0, ParamTypes...> */
 
-    public:
-    	class simple
-    	{
-    	public:
-
-    	    template <typename FnType>
-    	    static auto call(FnType fn, const std::tuple<ParamTypes...>& argstuple) -> typename std::result_of<FnType(ParamTypes...)>::type
-    	    /*{
-    		return caller<sizeof...(ParamTypes)>::invoke(fn, argstuple); }*/;
-
-    	}; /* simple */
-
     }; /* Tuple */
 
 
 template <typename ...ParamTypes>
 template <typename FnType>
-inline auto Tuple<ParamTypes...>::simple::call(FnType fn, const std::tuple<ParamTypes...>& argstuple) -> typename std::result_of<FnType(ParamTypes...)>::type
-    {
+inline auto Tuple<ParamTypes...>::simple::call(FnType fn, const std::tuple<ParamTypes...>& argstuple) -> typename std::result_of<FnType(ParamTypes...)>::type {
 	return caller<sizeof...(ParamTypes)>::invoke(fn, argstuple); };
+
 
 
     template <typename ReType, typename FnT, typename ...ParamTypes>
