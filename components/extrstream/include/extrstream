@@ -101,11 +101,13 @@ namespace aso
     // General definition of the format::output
     template <typename ...PrnTypes> template <typename OutStream>
     inline OutStream&
-	Formatter<PrnTypes...>::output(OutStream&/*&*/ os) const
+	Formatter<PrnTypes...>::output(OutStream& os) const
     {
 //	return Tuple<const std::string, PrnTypes...>::simple::call([&os](const std::string& fstr, PrnTypes... prnitems) mutable -> OutStream&
 //		{return output_helper(os, fstr, prnitems...);}, items);
-	return Tuple<const std::string, PrnTypes...>::simple_call([&os](const std::string& fstr, PrnTypes... prnitems) mutable -> OutStream&
+//	return Tuple<const std::string, PrnTypes...>::simple_call([&os](const std::string& fstr, PrnTypes... prnitems) mutable -> OutStream&
+//		{return output_helper(os, fstr, prnitems...);}, items);
+	return simple_tuplecall/*<const std::string, PrnTypes...>*/([&os](const std::string& fstr, PrnTypes... prnitems) mutable -> OutStream&
 		{return output_helper(os, fstr, prnitems...);}, items);
     }; /* format::output */
 
