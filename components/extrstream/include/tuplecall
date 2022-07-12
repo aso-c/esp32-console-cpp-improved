@@ -15,7 +15,7 @@
 
 //
 // Usage:
-//	simple<Type_List>::template Tuple<sizeof...(Type_List)>::template caller<Return_Type>(exec, items);
+//	Tuple<Type_List>::template simple_caller<sizeof...(Type_List)>::invoke(exec, items);
 //
 // It's slightly ugly, but it works.
 // Sorry, this is a first early release.
@@ -30,124 +30,69 @@ namespace aso
 {
 
     template <typename ...ParamTypes>
-    class simple
+    class Tuple
     {
     public:
 
 	template <typename TypeRet>
 	static TypeRet tuple_caller(std::function<TypeRet(ParamTypes...)>&& fn, const std::tuple<ParamTypes...>& argstuple) {
-	    return Tuple<sizeof...(ParamTypes)>::template caller<TypeRet>(fn, argstuple); };
+	    return simple_caller<sizeof...(ParamTypes)>::invoke(fn, argstuple); };
 
 	template <typename TypeRet>
 	static TypeRet tuple_caller(std::function<TypeRet(ParamTypes...)>& fn, const std::tuple<ParamTypes...>& argstuple) {
-	return Tuple<sizeof...(ParamTypes)>::template caller<TypeRet>(fn, argstuple); };
+	return simple_caller<sizeof...(ParamTypes)>::invoke(fn, argstuple); };
 
 	template <typename TypeRet, TypeRet(*fn)(ParamTypes...)>
 	static TypeRet tuple_caller2(/*std::function<TypeRet(ParamTypes...)>&& fn,*/ const std::tuple<ParamTypes...>& argstuple) {
-	    return Tuple<sizeof...(ParamTypes)>::template caller<TypeRet>(fn, argstuple); };
+	    return simple_caller<sizeof...(ParamTypes)>::invoke(fn, argstuple); };
 
 	template <typename TypeRet, typename FnType>
 	static TypeRet tuple_caller3( FnType&& fn, const std::tuple<ParamTypes...>& argstuple) {
-	    return Tuple<sizeof...(ParamTypes)>::template caller<TypeRet>(fn, argstuple); };
+	    return simple_caller<sizeof...(ParamTypes)>::invoke(fn, argstuple); };
 
-//	template <typename FnType>
-//	static auto tuple_caller4( FnType&& fn, const std::tuple<ParamTypes...>& argstuple) -> decltype(auto) {
-//	    return Tuple<sizeof...(ParamTypes)>::template caller<decltype(fn(ParamTypes...))>(fn, argstuple); };
 
 	//    private:
     public:
 
 	template <std::size_t limit, std::size_t... params>
-	class Tuple
+	class simple_caller
 	{
 	public:
 
-	    template <typename TypeRet>
-	    static TypeRet caller(std::function<TypeRet(ParamTypes...)>& fn, const std::tuple<ParamTypes...>& argstuple) {
-		return Tuple<limit-1, limit-1, params...>::caller(fn, argstuple); };
-
-	    template <typename TypeRet>
-	    static TypeRet caller(std::function<TypeRet(ParamTypes...)>&& fn, const std::tuple<ParamTypes...>& argstuple) {
-		return Tuple<limit-1, limit-1, params...>::caller(fn, argstuple); };
-
-//	    template <typename FnType>
-//	    static auto caller2(/*std::function<*/FnType/*>*/&& fn, const std::tuple<ParamTypes...>&& argstuple) -> typename std::result_of<FnType(ParamTypes...)>::type
-//	    {
-//		return Tuple<limit-1, limit-1, params...>::caller2(std::forward<FnType>(fn), argstuple); };
-//
-//	    template <typename FnType>
-//	    static auto caller2(/*std::function<*/FnType/*>*/& fn, const std::tuple<ParamTypes...>&& argstuple) -> typename std::result_of<FnType(ParamTypes...)>::type
-//	    {
-//		return Tuple<limit-1, limit-1, params...>::caller2(std::forward<FnType>(fn), argstuple); };
-
 	    template <typename FnType>
-	    static auto caller2(/*std::function<*/FnType/*>*/ fn, const std::tuple<ParamTypes...>& argstuple) -> typename std::result_of<FnType(ParamTypes...)>::type
+	    static auto invoke(FnType fn, const std::tuple<ParamTypes...>& argstuple) -> typename std::result_of<FnType(ParamTypes...)>::type
 	    {
-		return Tuple<limit-1, limit-1, params...>::caller2(/*std::forward<FnType>(*/fn/*)*/, argstuple); };
+		return simple_caller<limit-1, limit-1, params...>::invoke(fn, argstuple); };
 
-//	    template <typename FnType>
-//	    static auto caller2(/*std::function<*/FnType/*>*/& fn, const std::tuple<ParamTypes...>&& argstuple) -> typename std::result_of<FnType(ParamTypes...)>::type/*auto*/
-//	    {
-//		return Tuple<limit-1, limit-1, params...>::caller2(/*std::forward<FnType>(*/fn/*)*/, argstuple); };
-
-//	    template <typename FnType>
-//	    static auto caller2(std::function<FnType>& fn, const std::tuple<ParamTypes...>& argstuple) -> decltype(fn()/*auto*/)
-//	    {
-//		return Tuple<limit-1, limit-1, params...>::caller2(std::forward<FnType>(fn), argstuple); };
-//
-//	    template <typename FnType>
-//	    static auto caller2(std::function<FnType> fn, const std::tuple<ParamTypes...>& argstuple) -> decltype(fn()/*auto*/)
-//	    {
-//		return Tuple<limit-1, limit-1, params...>::caller2(std::forward<FnType>(fn), argstuple); };
-
-//	    template <typename FnType>
-//	    static auto caller2(FnType&& fn, const std::tuple<ParamTypes...>& argstuple) -> decltype(fn()/*auto*/)
-//	    {
-//		return Tuple<limit-1, limit-1, params...>::caller2(std::forward<FnType>(fn), argstuple); };
-
-	}; /* Tuple */
+	}; /* simple_caller */
 
 	template <std::size_t... params>
-	class Tuple<0, params...>
+	class simple_caller<0, params...>
 	{
 	public:
 
-	    template <typename TypeRet>
-	    static TypeRet caller(std::function<TypeRet(ParamTypes...)>& fn, const std::tuple<ParamTypes...>& argstuple/*, TypeRet& ostr*/) {
-	   	return fn(std::get<params>(argstuple)...); };
-
 	    template <typename FnType>
-	    static auto caller2(std::function<FnType>&& fn, const std::tuple<ParamTypes...>& argstuple) -> decltype(fn(/*argstuple...*/)/*auto*/)
+	    static auto invoke(FnType& fn, const std::tuple<ParamTypes...>& argstuple) -> typename std::result_of<FnType(ParamTypes...)>::type
 	    {
 		return fn(std::get<params>(argstuple)...); };
 
-	    template <typename FnType>
-	    static auto caller2(/*std::function<*/FnType/*>*/& fn, const std::tuple<ParamTypes...>& argstuple) -> decltype(fn(/*argstuple...*/)/*auto*/)
-	    {
-		return fn(std::get<params>(argstuple)...); };
+	}; /* simple_caller<0, ParamTypes...> */
 
-	    template <typename FnType>
-	    static auto caller2(/*std::function<*/FnType/*>*/& fn, const std::tuple<ParamTypes...>& argstuple) -> typename std::result_of<FnType(ParamTypes...)>::type
-	    {
-		return fn(std::get<params>(argstuple)...); };
-
-	}; /* Tuple<0, ParamTypes...> */
-
-    }; /* simple */
+    }; /* Tuple */
 
 
     template <typename ReType, typename FnT, typename ...ParamTypes>
 //    inline ReType simple_tuplecaller(std::function<ReType(ParamTypes...)>&& fn, const std::tuple<ParamTypes...>& tupleargs)
     inline ReType simple_tuplecaller(std::function<FnT>&& fn, const std::tuple<ParamTypes...>& tupleargs)
     {
-	return simple<ParamTypes...>::tuple_caller(fn, tupleargs);
+	return Tuple<ParamTypes...>::tuple_caller(fn, tupleargs);
     }; /* simple_tuplecaller */
 
     template <typename ReType, typename FnT, typename ...ParamTypes>
 //    inline ReType simple_tuplecaller(std::function<ReType(ParamTypes...)>& fn, const std::tuple<ParamTypes...>& tupleargs)
     inline ReType simple_tuplecaller(std::function<FnT>& fn, const std::tuple<ParamTypes...>& tupleargs)
     {
-	return simple<ParamTypes...>::tuple_caller(fn, tupleargs);
+	return Tuple<ParamTypes...>::tuple_caller(fn, tupleargs);
     }; /* simple_tuplecaller */
 
 
