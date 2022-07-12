@@ -38,6 +38,11 @@
 #ifndef __TUPLECALL_ASO__
 #define __TUPLECALL_ASO__
 
+// Protect against compiling without C++ or with a version earlier than C++11
+#if !defined(__cplusplus) || __cplusplus < 201103L
+#error insufficient level of C++ standard: <tuplecall> required C++11 or later
+#endif
+
 
 namespace aso
 {
@@ -48,7 +53,12 @@ namespace aso
     public:
 
 	template <typename FnType>
+#if __cplusplus < 201402L	// С++2014
+//#if __cplusplus < 201703L	// С++2017
 	static auto simple_call( FnType fn, const std::tuple<ParamTypes...>& argstuple) -> typename std::result_of<FnType(ParamTypes...)>::type
+#else
+	static decltype(auto) simple_call( FnType fn, const std::tuple<ParamTypes...>& argstuple)
+#endif
 	{
 	    return simple::call(fn, argstuple);
 	};
