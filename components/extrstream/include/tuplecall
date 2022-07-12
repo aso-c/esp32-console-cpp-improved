@@ -53,22 +53,26 @@ namespace aso
     public:
 
 	template <typename FnType>
-#if __cplusplus < 201402L	// С++2014
-//#if __cplusplus < 201703L	// С++2017
-	static auto simple_call( FnType fn, const std::tuple<ParamTypes...>& argstuple) -> typename std::result_of<FnType(ParamTypes...)>::type
+#if __cplusplus < 201402L	// before С++2014
+//#if __cplusplus < 201703L	// prev С++2017
+	static auto simple_call( FnType fn, const std::tuple<ParamTypes...>& argstuple) ->
+					typename std::result_of<FnType(ParamTypes...)>::type {
 #else
-	static decltype(auto) simple_call( FnType fn, const std::tuple<ParamTypes...>& argstuple)
+	static decltype(auto) simple_call( FnType fn, const std::tuple<ParamTypes...>& argstuple) {
 #endif
-	{
-	    return simple::call(fn, argstuple);
-	};
+	    return simple::call(fn, argstuple);	};
 
     	class simple
     	{
     	public:
 
     	    template <typename FnType>
-    	    static auto call(FnType fn, const std::tuple<ParamTypes...>& argstuple) -> typename std::result_of<FnType(ParamTypes...)>::type;
+#if __cplusplus < 201402L	// before С++2014
+    	    static auto call(FnType fn, const std::tuple<ParamTypes...>& argstuple) ->
+				typename std::result_of<FnType(ParamTypes...)>::type;
+#else
+    	    static decltype(auto) call(FnType fn, const std::tuple<ParamTypes...>& argstuple);
+#endif
 
     	}; /* simple */
 
@@ -81,8 +85,12 @@ namespace aso
 	public:
 
 	    template <typename FnType>
-	    static auto invoke(FnType fn, const std::tuple<ParamTypes...>& argstuple) -> typename std::result_of<FnType(ParamTypes...)>::type
-	    {
+#if __cplusplus < 201402L	// before С++2014
+	    static auto invoke(FnType fn, const std::tuple<ParamTypes...>& argstuple) ->
+				    typename std::result_of<FnType(ParamTypes...)>::type
+#else
+	    static decltype(auto) invoke(FnType fn, const std::tuple<ParamTypes...>& argstuple) {
+#endif
 		return caller<limit-1, limit-1, params...>::invoke(fn, argstuple); };
 
 	}; /* caller */
@@ -93,8 +101,11 @@ namespace aso
 	public:
 
 	    template <typename FnType>
-	    static auto invoke(FnType& fn, const std::tuple<ParamTypes...>& argstuple) -> typename std::result_of<FnType(ParamTypes...)>::type
-	    {
+#if __cplusplus < 201402L	// before С++2014
+	    static auto invoke(FnType& fn, const std::tuple<ParamTypes...>& argstuple) -> typename std::result_of<FnType(ParamTypes...)>::type {
+#else
+	    static decltype(auto) invoke(FnType& fn, const std::tuple<ParamTypes...>& argstuple) {
+#endif
 		return fn(std::get<params>(argstuple)...); };
 
 	}; /* caller<0, ParamTypes...> */
@@ -102,15 +113,26 @@ namespace aso
     }; /* Tuple */
 
 
-template <typename ...ParamTypes>
-template <typename FnType>
-inline auto Tuple<ParamTypes...>::simple::call(FnType fn, const std::tuple<ParamTypes...>& argstuple) -> typename std::result_of<FnType(ParamTypes...)>::type {
+
+    template <typename ...ParamTypes>
+    template <typename FnType>
+#if __cplusplus < 201402L	// before С++2014
+    inline auto Tuple<ParamTypes...>::simple::call(FnType fn, const std::tuple<ParamTypes...>& argstuple) ->
+							typename std::result_of<FnType(ParamTypes...)>::type {
+#else
+    inline decltype(auto) Tuple<ParamTypes...>::simple::call(FnType fn, const std::tuple<ParamTypes...>& argstuple) {
+#endif
 	return caller<sizeof...(ParamTypes)>::invoke(fn, argstuple); };
 
 
 
     template <typename FnT, typename ...ParamTypes>
-    inline auto simple_tuplecall(FnT fn, const std::tuple<ParamTypes...>& argstuple) -> typename std::result_of<FnT(ParamTypes...)>::type
+#if __cplusplus < 201402L	// before С++2014
+    inline auto simple_tuplecall(FnT fn, const std::tuple<ParamTypes...>& argstuple) ->
+					typename std::result_of<FnT(ParamTypes...)>::type
+#else
+    inline decltype(auto) simple_tuplecall(FnT fn, const std::tuple<ParamTypes...>& argstuple)
+#endif
     {
 	return Tuple<ParamTypes...>::simple_call(fn, argstuple);
     }; /* simple_tuplecall */
