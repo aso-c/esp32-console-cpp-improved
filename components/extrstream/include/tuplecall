@@ -6,7 +6,7 @@
 // Header file
 //
 // author: Solomatov A.A. (aso)
-// ver.  : v.1.0.3
+// ver.  : v.1.0.4
 // date  : 12.07.22.
 //
 // Copyright (c) 2022 Andrey "aso" Solomatov
@@ -84,12 +84,19 @@ namespace aso
 
     	    template <typename FnType>
     	    static auto call(FnType fn, const std::tuple<ParamTypes...>& argstuple) -> typename std::result_of<FnType(ParamTypes...)>::type
-    	    {
-    		return caller<sizeof...(ParamTypes)>::invoke(fn, argstuple); };
+    	    /*{
+    		return caller<sizeof...(ParamTypes)>::invoke(fn, argstuple); }*/;
 
     	}; /* simple */
 
     }; /* Tuple */
+
+
+template <typename ...ParamTypes>
+template <typename FnType>
+inline auto Tuple<ParamTypes...>::simple::call(FnType fn, const std::tuple<ParamTypes...>& argstuple) -> typename std::result_of<FnType(ParamTypes...)>::type
+    {
+	return caller<sizeof...(ParamTypes)>::invoke(fn, argstuple); };
 
 
     template <typename ReType, typename FnT, typename ...ParamTypes>
