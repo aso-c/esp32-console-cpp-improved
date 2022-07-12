@@ -6,7 +6,7 @@
 // Header file
 //
 // author: Solomatov A.A. (aso)
-// ver.  : v.1.0.2
+// ver.  : v.1.0.3
 // date  : 12.07.22.
 //
 // Copyright (c) 2022 Andrey "aso" Solomatov
@@ -15,7 +15,7 @@
 
 //
 // Usage:
-//	Tuple<Type_List>::template simple_caller<sizeof...(Type_List)>::invoke(exec, items);
+//	Tuple<Type_List>::simple::call(exec, items);
 //
 // It's slightly ugly, but it works.
 // Sorry, this is a first early release.
@@ -34,40 +34,39 @@ namespace aso
     {
     public:
 
-	template <typename TypeRet>
-	static TypeRet tuple_caller(std::function<TypeRet(ParamTypes...)>&& fn, const std::tuple<ParamTypes...>& argstuple) {
-	    return simple_caller<sizeof...(ParamTypes)>::invoke(fn, argstuple); };
+//	template <typename TypeRet>
+//	static TypeRet tuple_caller(std::function<TypeRet(ParamTypes...)>&& fn, const std::tuple<ParamTypes...>& argstuple) {
+//	    return simple_caller<sizeof...(ParamTypes)>::invoke(fn, argstuple); };
+//
+//	template <typename TypeRet>
+//	static TypeRet tuple_caller(std::function<TypeRet(ParamTypes...)>& fn, const std::tuple<ParamTypes...>& argstuple) {
+//	return simple_caller<sizeof...(ParamTypes)>::invoke(fn, argstuple); };
+//
+//	template <typename TypeRet, TypeRet(*fn)(ParamTypes...)>
+//	static TypeRet tuple_caller2(/*std::function<TypeRet(ParamTypes...)>&& fn,*/ const std::tuple<ParamTypes...>& argstuple) {
+//	    return simple_caller<sizeof...(ParamTypes)>::invoke(fn, argstuple); };
+//
+//	template <typename TypeRet, typename FnType>
+//	static TypeRet tuple_caller3( FnType&& fn, const std::tuple<ParamTypes...>& argstuple) {
+//	    return simple_caller<sizeof...(ParamTypes)>::invoke(fn, argstuple); };
 
-	template <typename TypeRet>
-	static TypeRet tuple_caller(std::function<TypeRet(ParamTypes...)>& fn, const std::tuple<ParamTypes...>& argstuple) {
-	return simple_caller<sizeof...(ParamTypes)>::invoke(fn, argstuple); };
 
-	template <typename TypeRet, TypeRet(*fn)(ParamTypes...)>
-	static TypeRet tuple_caller2(/*std::function<TypeRet(ParamTypes...)>&& fn,*/ const std::tuple<ParamTypes...>& argstuple) {
-	    return simple_caller<sizeof...(ParamTypes)>::invoke(fn, argstuple); };
-
-	template <typename TypeRet, typename FnType>
-	static TypeRet tuple_caller3( FnType&& fn, const std::tuple<ParamTypes...>& argstuple) {
-	    return simple_caller<sizeof...(ParamTypes)>::invoke(fn, argstuple); };
-
-
-	//    private:
-    public:
+    private:
 
 	template <std::size_t limit, std::size_t... params>
-	class simple_caller
+	class caller
 	{
 	public:
 
 	    template <typename FnType>
 	    static auto invoke(FnType fn, const std::tuple<ParamTypes...>& argstuple) -> typename std::result_of<FnType(ParamTypes...)>::type
 	    {
-		return simple_caller<limit-1, limit-1, params...>::invoke(fn, argstuple); };
+		return caller<limit-1, limit-1, params...>::invoke(fn, argstuple); };
 
-	}; /* simple_caller */
+	}; /* caller */
 
 	template <std::size_t... params>
-	class simple_caller<0, params...>
+	class caller<0, params...>
 	{
 	public:
 
@@ -76,7 +75,19 @@ namespace aso
 	    {
 		return fn(std::get<params>(argstuple)...); };
 
-	}; /* simple_caller<0, ParamTypes...> */
+	}; /* caller<0, ParamTypes...> */
+
+    public:
+    	class simple
+    	{
+    	public:
+
+    	    template <typename FnType>
+    	    static auto call(FnType fn, const std::tuple<ParamTypes...>& argstuple) -> typename std::result_of<FnType(ParamTypes...)>::type
+    	    {
+    		return caller<sizeof...(ParamTypes)>::invoke(fn, argstuple); };
+
+    	}; /* simple */
 
     }; /* Tuple */
 
