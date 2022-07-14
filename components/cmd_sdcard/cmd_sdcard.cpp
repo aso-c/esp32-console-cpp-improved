@@ -156,7 +156,9 @@ public:
 
     esp_err_t act_mnt();	// action for 'mount' command
     esp_err_t act_umnt();	// action for 'unmount' command
-    esp_err_t act_ls();	// action for list/dir command
+    esp_err_t act_info();	// action for 'info' command
+    esp_err_t act_pwd();	// action for pwd command
+    esp_err_t act_ls();		// action for list/dir command
     esp_err_t act_cat();	// action for 'cat' command
     esp_err_t act_type();	// action for 'type' command
 
@@ -175,7 +177,7 @@ private:
     public:
 
 	// sucommand id
-	enum cmd_id { none, mount, unmount, ls, cat, type, helping, unknown = -1 };
+	enum cmd_id { none, mount, unmount, info, pwd, ls, cat, type, helping, unknown = -1 };
 
 	static Syntax& get();
 	cmd_id id();	// Return subcommand id
@@ -260,6 +262,14 @@ esp_err_t SDctrl::exec(int argc, char **argv)
 //    case SDctrl::Syntax::unmount:
     case Syntax::unmount:
 	return instance.act_umnt();
+
+//    get current directory name
+    case Syntax::info:
+	return instance.act_info();
+
+//    get current directory name
+    case Syntax::pwd:
+	return instance.act_pwd();
 
 //    case SDctrl::Syntax::ls:
     case Syntax::ls:
@@ -378,6 +388,28 @@ esp_err_t SDctrl::act_umnt()
 
     return 0;
 }; /* SDctrl::act_umnt */
+
+
+// print info about the mounted SD-card
+esp_err_t SDctrl::act_info()
+{
+    cout << "\"info\" command execution" << endl;
+
+    cout << endl;
+
+    return 0;
+}; /* SDctrl::act_info */
+
+
+// action for pwd command
+esp_err_t SDctrl::act_pwd()
+{
+    cout << "\"pwd\" command execution" << endl;
+
+    cout << endl;
+
+    return 0;
+}; /* SDctrl::act_pwd */
 
 
 // action for list/dir command
@@ -536,19 +568,33 @@ void** SDctrl::Syntax::tables()
 		arg_str0(NULL, NULL, "<mountpoint>", NULL),
 		arg_end(2),
 	};
-    // syntax3: ls | dir [<pattern>] "list directory contents on SD-card"
+//----------------------------------------------------------------------------------------------------------------------
+    // syntax3: info "information about mounted SD-card"
+	static void* arg_info[] = {
+		arg_rex1(NULL, NULL, "i|info", NULL, 0, "information about mounted SD-card"),
+//		arg_str0(NULL, NULL, "<pattern>", "file pattern or path"),
+		arg_end(2),
+	};
+    // syntax4: pwd "current directory name"
+	static void* arg_pwd[] = {
+		arg_rex1(NULL, NULL, "p|pwd", NULL, 0, "current directory name"),
+//		arg_str0(NULL, NULL, "<pattern>", "file pattern or path"),
+		arg_end(2),
+	};
+//----------------------------------------------------------------------------------------------------------------------
+    // syntax5: ls | dir [<pattern>] "list directory contents on SD-card"
 	static void* arg_ls[] = {
 		arg_rex1(NULL, NULL, "ls|dir", NULL, 0, "list directory contents on SD-card"),
 		arg_str0(NULL, NULL, "<pattern>", "file pattern or path"),
 		arg_end(2),
 	};
-    // syntax4: cat <filename> "print file to stdout (console output)"
+    // syntax6: cat <filename> "print file to stdout (console output)"
 	static void* arg_cat[] = {
 		arg_rex1(NULL, NULL, "cat", NULL, 0, NULL),
 		arg_str1(NULL, NULL, "<file>", NULL),
 		arg_end(2),
 	};
-    // syntax5: type [filename] "type from the keyboard to file & screen or screen only; <file name> - name of the file is to be printed; if omitted - print to screen only"
+    // syntax7: type [filename] "type from the keyboard to file & screen or screen only; <file name> - name of the file is to be printed; if omitted - print to screen only"
 	static void* arg_type[] = {
 		arg_rex1(NULL, NULL, "type", NULL, 0, "type from the keyboard to file & screen or screen only; if file omitted - print to screen only"),
 		arg_str0(NULL, NULL, "<file>", "file name to be printed or the name of where the typed text is saved"),
@@ -558,6 +604,8 @@ void** SDctrl::Syntax::tables()
 	static void* syntaxes[] = {
 		arg_mnt,
 		arg_umnt,
+		arg_info,
+		arg_pwd,
 		arg_ls,
 		arg_cat,
 		arg_type,
@@ -584,6 +632,10 @@ SDctrl::Syntax::id()
     	return mount;
     if (strcmp(parent.argv[1], "umount") == 0 || strcmp(parent.argv[1], "u") == 0)
 	return unmount;
+    if (strcmp(parent.argv[1], "info") == 0 || strcmp(parent.argv[1], "i") == 0)
+	return info;
+    if (strcmp(parent.argv[1], "pwd") == 0 || strcmp(parent.argv[1], "p") == 0)
+	return pwd;
     if (strcmp(parent.argv[1], "ls") == 0 || strcmp(parent.argv[1], "dir") == 0)
 	return ls;
     if (strcmp(parent.argv[1], "cat") == 0 || strcmp(parent.argv[1], "c") == 0)

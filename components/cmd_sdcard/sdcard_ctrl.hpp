@@ -19,6 +19,7 @@
  *    -	sd - main command for manipulation with SD-caed
  *	+ m, mount	- mount sdcard, options: [<card>] [<mountpoint>];
  *	+ u, umount	- unmount sdcard, options: [<card>|<mountpiont>];
+ *	+ pwd		- get current directory name, w/o options;
  *	+ ls, dir	- list of files in sdcard, options: [<file pattern>];
  *	+ cd <dir>	- change dir;
  *	+ cat <file>	- print file to console
@@ -151,7 +152,10 @@ public:
 //    esp_err_t unmount(const char *base_path, sdmmc_card_t *card);	// Unmount mounted SD-card "card", mounted onto mountpath
     void card_info(FILE* outfile);		// Print the card info
 
-    esp_err_t cat();	// type file contents - error, file name is absent
+    esp_err_t pwd();	// print current directory name
+    esp_err_t ls();	// print a list of files in the required directory
+
+    esp_err_t cat();	// type file contents - error, if file name is absent
     esp_err_t cat(const char fname[]);	// type file contents
 
     esp_err_t type();	// type text from keyboard to screen
