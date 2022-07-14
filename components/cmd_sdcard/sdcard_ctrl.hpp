@@ -29,7 +29,9 @@
  */
 
 
-#ifdef __cplusplus
+#ifndef __cplusplus
+#error "The sdcard_ctrl file usable in C++ projects only."
+#endif
 
 
 namespace SDMMC	//-----------------------------------------------------------------------------------------------------
@@ -152,6 +154,7 @@ public:
 //    esp_err_t unmount(const char *base_path, sdmmc_card_t *card);	// Unmount mounted SD-card "card", mounted onto mountpath
     void card_info(FILE* outfile);		// Print the card info
 
+    esp_err_t info();	// print the SD-card info (wrapper for the external caller)
     esp_err_t pwd();	// print current directory name
     esp_err_t ls();	// print a list of files in the required directory
 
@@ -263,10 +266,6 @@ void app_main(void)
     ESP_LOGI(TAG, "Card unmounted");
 }
 
-#endif
-
-#else
-#error "The sdcard_ctrl file usable in C++ projects only."
 #endif
 
 //--[ sdcard_ctrl.hpp ]----------------------------------------------------------------------------

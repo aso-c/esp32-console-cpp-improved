@@ -204,6 +204,23 @@ void Server::card_info(FILE* outfile)
 }; /* Server::card_info */
 
 
+// print the SD-card info (wrapper for the external caller)
+esp_err_t Server::info()
+{
+    cout << "Command \"SD-card info\" is not yet implemented now." << endl;
+    //card_info(stdout);
+    return ESP_OK;
+}; /* Server::info */
+
+
+// print current directory name
+esp_err_t Server::pwd()
+{
+    cout << "Command \"pwd\" is not yet implemented now." << endl;
+    return ESP_OK;
+}; /* Server::pwd */
+
+
 // type file contents - error, file name is absent
 esp_err_t Server::cat()
 {

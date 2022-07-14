@@ -393,9 +393,9 @@ esp_err_t SDctrl::act_umnt()
 // print info about the mounted SD-card
 esp_err_t SDctrl::act_info()
 {
-    cout << "\"info\" command execution" << endl;
-
-    cout << endl;
+//    cout << "\"info\" command execution" << endl;
+    sd_server.info();
+//    cout << endl;
 
     return 0;
 }; /* SDctrl::act_info */
@@ -404,9 +404,9 @@ esp_err_t SDctrl::act_info()
 // action for pwd command
 esp_err_t SDctrl::act_pwd()
 {
-    cout << "\"pwd\" command execution" << endl;
-
-    cout << endl;
+//    cout << "\"pwd\" command execution" << endl;
+    sd_server.pwd();
+//    cout << endl;
 
     return 0;
 }; /* SDctrl::act_pwd */
