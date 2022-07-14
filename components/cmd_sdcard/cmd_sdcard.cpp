@@ -157,7 +157,8 @@ public:
     esp_err_t act_mnt();	// action for 'mount' command
     esp_err_t act_umnt();	// action for 'unmount' command
     esp_err_t act_info();	// action for 'info' command
-    esp_err_t act_pwd();	// action for pwd command
+    esp_err_t act_pwd();	// action for 'pwd' command
+    esp_err_t act_cd();		// action for 'cd' command
     esp_err_t act_ls();		// action for list/dir command
     esp_err_t act_cat();	// action for 'cat' command
     esp_err_t act_type();	// action for 'type' command
@@ -177,7 +178,7 @@ private:
     public:
 
 	// sucommand id
-	enum cmd_id { none, mount, unmount, info, pwd, ls, cat, type, helping, unknown = -1 };
+	enum cmd_id { none, mount, unmount, info, pwd, cd, ls, cat, type, helping, unknown = -1 };
 
 	static Syntax& get();
 	cmd_id id();	// Return subcommand id
@@ -270,6 +271,10 @@ esp_err_t SDctrl::exec(int argc, char **argv)
 //    get current directory name
     case Syntax::pwd:
 	return instance.act_pwd();
+
+//    get current directory name
+    case Syntax::cd:
+	return instance.act_cd();
 
 //    case SDctrl::Syntax::ls:
     case Syntax::ls:
@@ -412,6 +417,31 @@ esp_err_t SDctrl::act_pwd()
 }; /* SDctrl::act_pwd */
 
 
+// action for 'cd' command
+esp_err_t SDctrl::act_cd()
+{
+    cout << "\"pwd\" command execution" << endl;
+    switch (argc)
+    {
+    case 2:
+	cout << "...without parameters - Error." << endl;
+	cout << "The command \"cd\" required directory name to change." << endl;
+	break;
+
+    case 3:
+	cout << "...with one parameter - specified the path name to change." << endl;
+	sd_server.cd(argv[2]);
+	break;
+
+    default:
+	cout << "more than one parameter - unknown set of parameters." << endl;
+    }; /* switch argc */
+    cout << endl;
+
+    return 0;
+}; /* SDctrl::act_cd */
+
+
 // action for list/dir command
 esp_err_t SDctrl::act_ls()
 {
@@ -420,14 +450,16 @@ esp_err_t SDctrl::act_ls()
     {
     case 2:
 	cout << "...without parameters - use current dir." << endl;
+	sd_server.ls();
 	break;
 
     case 3:
 	cout << "...with one parameter - use pattern or directory." << endl;
+	sd_server.ls(argv[2]);
 	break;
 
     default:
-	cout << "more than one parameter - unknown parameters config." << endl;
+	cout << "more than one parameter - unknown set of parameters." << endl;
     }; /* switch argc */
     cout << endl;
 
@@ -581,10 +613,16 @@ void** SDctrl::Syntax::tables()
 //		arg_str0(NULL, NULL, "<pattern>", "file pattern or path"),
 		arg_end(2),
 	};
+    // syntax5: cd [<path>] "change current directory to <path>"
+	static void* arg_cd[] = {
+		arg_rex1(NULL, NULL, "cd", NULL, 0, "change current directory to <path>"),
+		arg_str0(NULL, NULL, "<path>", "path to which the current directory is changed"),
+		arg_end(2),
+	};
 //----------------------------------------------------------------------------------------------------------------------
-    // syntax5: ls | dir [<pattern>] "list directory contents on SD-card"
+    // syntax5: ls | dir [<pattern>] "print directory contents on SD-card"
 	static void* arg_ls[] = {
-		arg_rex1(NULL, NULL, "ls|dir", NULL, 0, "list directory contents on SD-card"),
+		arg_rex1(NULL, NULL, "ls|dir", NULL, 0, "print directory contents on SD-card"),
 		arg_str0(NULL, NULL, "<pattern>", "file pattern or path"),
 		arg_end(2),
 	};
@@ -606,6 +644,7 @@ void** SDctrl::Syntax::tables()
 		arg_umnt,
 		arg_info,
 		arg_pwd,
+		arg_cd,
 		arg_ls,
 		arg_cat,
 		arg_type,
@@ -636,6 +675,8 @@ SDctrl::Syntax::id()
 	return info;
     if (strcmp(parent.argv[1], "pwd") == 0 || strcmp(parent.argv[1], "p") == 0)
 	return pwd;
+    if (strcmp(parent.argv[1], "cd") == 0)
+	return cd;
     if (strcmp(parent.argv[1], "ls") == 0 || strcmp(parent.argv[1], "dir") == 0)
 	return ls;
     if (strcmp(parent.argv[1], "cat") == 0 || strcmp(parent.argv[1], "c") == 0)

@@ -20,6 +20,7 @@
  *	+ m, mount	- mount sdcard, options: [<card>] [<mountpoint>];
  *	+ u, umount	- unmount sdcard, options: [<card>|<mountpiont>];
  *	+ pwd		- get current directory name, w/o options;
+ *	+ cd		- change a current directory
  *	+ ls, dir	- list of files in sdcard, options: [<file pattern>];
  *	+ cd <dir>	- change dir;
  *	+ cat <file>	- print file to console
@@ -156,7 +157,9 @@ public:
 
     esp_err_t info();	// print the SD-card info (wrapper for the external caller)
     esp_err_t pwd();	// print current directory name
-    esp_err_t ls();	// print a list of files in the required directory
+    esp_err_t cd(const char dirname[]);	// change a current directory
+    esp_err_t ls();	// print a list of files in the current directory
+    esp_err_t ls(const char pattern[]);	// print a list of files in the specified directory
 
     esp_err_t cat();	// type file contents - error, if file name is absent
     esp_err_t cat(const char fname[]);	// type file contents

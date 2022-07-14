@@ -3,9 +3,11 @@
  * Implementation file
  * 	File: sdcard_ctrl.cpp
  *	Author:  aso (Solomatov A.A.)
- *	Created: 28.04.2022
- *	Version: 0.1
+ *	Created: 14.07.2022
+ *	Version: 0.6
  */
+
+//#define __PURE_C__
 
 
 #include <cstdlib>
@@ -219,6 +221,33 @@ esp_err_t Server::pwd()
     cout << "Command \"pwd\" is not yet implemented now." << endl;
     return ESP_OK;
 }; /* Server::pwd */
+
+
+// change a current directory
+esp_err_t Server::cd(const char dirname[])
+{
+    cout << "Command \"cd\" is not yet implemented now." << endl;
+    cout << "Change directory to " << '"' << dirname << '"' << endl;
+    return ESP_OK;
+};
+
+
+// print a list of files in the current directory
+esp_err_t Server::ls()
+{
+    cout << "Command \"ls\" is not yet implemented now." << endl;
+    cout << "Print files from the current directory" << endl;
+    return ESP_OK;
+}; /* Server::ls */
+
+
+// print a list of files in the specified directory
+esp_err_t Server::ls(const char pattern[])
+{
+    cout << "Command \"ls\" is not yet implemented now." << endl;
+    cout << "Used pattern: " << '"' << pattern << '"' << endl;
+    return ESP_OK;
+}; /* Server::ls */
 
 
 // type file contents - error, file name is absent
