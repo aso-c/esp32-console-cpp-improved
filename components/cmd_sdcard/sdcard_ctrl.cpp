@@ -218,9 +218,25 @@ esp_err_t Server::info()
 // print current directory name
 esp_err_t Server::pwd()
 {
-    cout << "Command \"pwd\" is not yet implemented now." << endl;
+//    cout << "Command \"pwd\" is not yet implemented now." << endl;
+	char* buf = getcwd(NULL, 0);
+
+    if (!buf)
+	return errno;
+    cout << "PWD is: " << buf << endl;
+    free(buf);
     return ESP_OK;
 }; /* Server::pwd */
+
+
+// change a current directory - eror handler
+esp_err_t Server::cd()
+{
+    cout << "Error: invoke command \"cd\" without parameters." << endl;
+    cout << "The command \"cd\" required directory name to change." << endl;
+
+    return ESP_OK;
+}; /* Server::cd */
 
 
 // change a current directory
@@ -228,8 +244,8 @@ esp_err_t Server::cd(const char dirname[])
 {
     cout << "Command \"cd\" is not yet implemented now." << endl;
     cout << "Change directory to " << '"' << dirname << '"' << endl;
-    return ESP_OK;
-};
+    return ESP_ERR_INVALID_ARG;
+}; /* Server::cd */
 
 
 // print a list of files in the current directory

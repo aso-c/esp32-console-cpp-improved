@@ -420,12 +420,11 @@ esp_err_t SDctrl::act_pwd()
 // action for 'cd' command
 esp_err_t SDctrl::act_cd()
 {
-    cout << "\"pwd\" command execution" << endl;
+    cout << "\"cd\" command execution" << endl;
     switch (argc)
     {
     case 2:
-	cout << "...without parameters - Error." << endl;
-	cout << "The command \"cd\" required directory name to change." << endl;
+	sd_server.cd();
 	break;
 
     case 3:
