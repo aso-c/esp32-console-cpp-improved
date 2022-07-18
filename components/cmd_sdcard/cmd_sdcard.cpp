@@ -137,25 +137,66 @@ bool isempty(const char *str)
 SDMMC::Server sd_server;
 
 
+//--[ the filesystem operating commands ]----------------------------------------------------------
+
+///////////////////////////////
+// List of all fs cmd:
+//	pwd, cd, ls, rm
+///////////////////////////////
 
 
+// The pwd command --------------------------------------------------------------------------------
 static int pwd_act(int argc, char **argv)
 {
     return sd_server.pwd();
 }; /* pwd_act */
 
-
 void register_pwd(void)
 {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
     const esp_console_cmd_t cmd = {
 	    .command = "pwd",
 	    .help = "Get current directory name",
 	    .hint = NULL,
 	    .func = pwd_act,
     };
+#pragma GCC diagnostic pop
+
     register_cmd(&cmd);
 
 }; /* register_pwd */
+
+
+// 'cd' command -----------------------------------------------------------------------------------
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+static int cd_act(int argc, char **argv)
+{
+    return sd_server.pwd();
+}; /* cd_act */
+
+void register_cd(void)
+{
+    static void* cdargs[] = {
+	    arg_str1(NULL, NULL, "<dir>", "directory name to change"),
+	    arg_end(1)
+    };
+
+//#pragma GCC diagnostic push
+//#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+    const esp_console_cmd_t cmd = {
+	    .command = "cd",
+	    .help = "Change current directory name",
+	    .hint = NULL/*"enter the directory name for change"*/,
+	    .func = cd_act,
+	    .argtable = cdargs
+    };
+//#pragma GCC diagnostic pop
+
+    register_cmd(&cmd);
+
+}; /* register_cd */
 
 
 // Register all fs command
@@ -163,17 +204,13 @@ void register_fs_cmd_all(void)
 {
 
     register_pwd();
-//    static void *args[] = {
-//	    arg_rex1(NULL, NULL, "h|help", "h | help", 0/*REG_ICASE*/, "help for command 'sdcard'"),
-//	    arg_rem ("|", NULL),
-//	    arg_rex1(NULL, NULL, "<subcommand>", NULL, 0/*REG_ICASE*/, "other subcommand of command 'sdcard'"),
-//	    arg_strn(NULL, NULL, "<options>", 0, 2, "subcommand options"),
-//	    arg_end(2),
-//    };
+    register_cd();
 
 }; /* register_fs_cmd_all */
 
 
+
+//--[ SD card control commands]--------------------------------------------------------------------
 
 // argument tables for any subcommand of sdcard commqand
 //static void

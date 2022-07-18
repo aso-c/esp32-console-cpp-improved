@@ -223,7 +223,9 @@ esp_err_t Server::pwd()
 
     if (!buf)
 	return errno;
-    cout << "PWD is: " << buf << endl;
+    cout << endl
+	<< "PWD is: " << buf << endl
+	<< endl;
     free(buf);
     return ESP_OK;
 #else
