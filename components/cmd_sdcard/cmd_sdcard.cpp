@@ -68,36 +68,49 @@ static int sdcard_cmd(int argc, char **argv);
 void register_sdcard_cmd(void)
 {
 
-	static void *args[] = {
-		arg_rex1(NULL, NULL, "h|help", "h | help", 0/*REG_ICASE*/, "help for command 'sdcard'"),
-		arg_rem ("|", NULL),
-		arg_rex1(NULL, NULL, "<subcommand>", NULL, 0/*REG_ICASE*/, "other subcommand of command 'sdcard'"),
-		arg_strn(NULL, NULL, "<options>", 0, 2, "subcommand options"),
-		arg_end(2),
-	};
+    static void *args[] = {
+	    arg_rex1(NULL, NULL, "h|help", "h | help", 0/*REG_ICASE*/, "help for command 'sdcard'"),
+	    arg_rem ("|", NULL),
+	    arg_rex1(NULL, NULL, "<subcommand>", NULL, 0/*REG_ICASE*/, "other subcommand of command 'sdcard'"),
+	    arg_strn(NULL, NULL, "<options>", 0, 2, "subcommand options"),
+	    arg_end(2),
+    };
 
-	const esp_console_cmd_t cmd = {
+    const esp_console_cmd_t cmd = {
 	    .command = "sdcard",
 	    .help = "SD card manipulating main command",
-    //        .hint = "enter subcommand for Sd card operations",
+	    //        .hint = "enter subcommand for Sd card operations",
 	    .hint = NULL,
 	    .func = &sdcard_cmd,
 	    .argtable = &args
-	};
+    };
     register_cmd(&cmd);
 
 
     const esp_console_cmd_t cmd2 = {
-        .command = "sd",
-        .help = "shortcut for 'sdcard' command",
-//        .hint = "enter subcommand for Sd card operations",
-        .hint = NULL,
-        .func = &sdcard_cmd,
-	.argtable = NULL
+	    .command = "sd",
+	    .help = "shortcut for 'sdcard' command",
+	    //        .hint = "enter subcommand for Sd card operations",
+	    .hint = NULL,
+	    .func = &sdcard_cmd,
+	    .argtable = NULL
     };
     register_cmd(&cmd2);
 
 }; /* register_sdcard_all */
+
+
+class esp_console_cmd
+{
+public:
+
+    esp_console_cmd (const esp_console_cmd_t&& cmd_def): cmd(&cmd_def) {};
+
+    void registrate() {ESP_ERROR_CHECK(esp_console_cmd_register(cmd));};
+
+private:
+    const esp_console_cmd_t* cmd;
+}; /* esp_console_cmd */
 
 
 // Register command procedure
@@ -122,6 +135,44 @@ bool isempty(const char *str)
 
 
 SDMMC::Server sd_server;
+
+
+
+
+static int pwd_act(int argc, char **argv)
+{
+    return sd_server.pwd();
+}; /* pwd_act */
+
+
+void register_pwd(void)
+{
+    const esp_console_cmd_t cmd = {
+	    .command = "pwd",
+	    .help = "Get current directory name",
+	    .hint = NULL,
+	    .func = pwd_act,
+    };
+    register_cmd(&cmd);
+
+}; /* register_pwd */
+
+
+// Register all fs command
+void register_fs_cmd_all(void)
+{
+
+    register_pwd();
+//    static void *args[] = {
+//	    arg_rex1(NULL, NULL, "h|help", "h | help", 0/*REG_ICASE*/, "help for command 'sdcard'"),
+//	    arg_rem ("|", NULL),
+//	    arg_rex1(NULL, NULL, "<subcommand>", NULL, 0/*REG_ICASE*/, "other subcommand of command 'sdcard'"),
+//	    arg_strn(NULL, NULL, "<options>", 0, 2, "subcommand options"),
+//	    arg_end(2),
+//    };
+
+}; /* register_fs_cmd_all */
+
 
 
 // argument tables for any subcommand of sdcard commqand
@@ -179,7 +230,7 @@ private:
     public:
 
 	// sucommand id
-	enum cmd_id { none, mount, unmount, info, pwd, cd, ls, cat, type, helping, unknown = -1 };
+	enum cmd_id { none, mount, unmount, info, pwd, cd, ls, rm, cat, type, helping, unknown = -1 };
 
 	static Syntax& get();
 	cmd_id id();	// Return subcommand id

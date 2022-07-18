@@ -18,6 +18,9 @@ extern "C" {
 // Register all SD-card commands
 void register_sdcard_cmd(void);
 
+// Register all fs command
+void register_fs_cmd_all(void);
+
 #ifdef __cplusplus
 }
 #endif
