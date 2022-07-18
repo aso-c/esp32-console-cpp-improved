@@ -146,6 +146,7 @@ SDMMC::Server sd_server;
 
 
 // The pwd command --------------------------------------------------------------------------------
+
 static int pwd_act(int argc, char **argv)
 {
     return sd_server.pwd();
@@ -169,8 +170,7 @@ void register_pwd(void)
 
 
 // 'cd' command -----------------------------------------------------------------------------------
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+
 static int cd_act(int argc, char **argv)
 {
     cout << "\"cd\" command execution" << endl;
@@ -182,10 +182,7 @@ static int cd_act(int argc, char **argv)
 
     case 2:
 	cout << "...with one parameter - OK, specified the path name to change." << endl;
-	//return sd_server.cd(argv[1]);
-	cout << "The command \"cd\" is not implemented yet" << endl
-		<< endl;
-	return ESP_ERR_NOT_SUPPORTED;
+	return sd_server.cd(argv[1]);
 	break;
 
     default:
@@ -199,32 +196,74 @@ static int cd_act(int argc, char **argv)
 void register_cd(void)
 {
     static void* cdargs[] = {
-	    arg_str1(NULL, NULL, "<dir>", "directory name to change"),
+	    arg_str0(NULL, NULL, "<pattern>", "directory name to change"),
 	    arg_end(1)
     };
 
-//#pragma GCC diagnostic push
-//#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
     const esp_console_cmd_t cmd = {
 	    .command = "cd",
 	    .help = "Change current directory name",
-	    .hint = NULL/*"enter the directory name for change"*/,
+	    .hint = NULL,
 	    .func = cd_act,
 	    .argtable = cdargs
     };
-//#pragma GCC diagnostic pop
 
     register_cmd(&cmd);
 
 }; /* register_cd */
 
 
-// Register all fs command
+// 'ls' command -----------------------------------------------------------------------------------
+static int ls_act(int argc, char **argv)
+{
+    cout << "\"cd\" command execution" << endl;
+    switch (argc)
+    {
+    case 1:
+	cout << "...without parameters - OK, list all files in the current directory." << endl;
+	return sd_server.ls();
+	break;
+
+    case 2:
+	cout << "...with one parameter - OK, print the files in the desired directory and/or according a pattern." << endl;
+	return sd_server.ls(argv[1]);
+	break;
+
+    default:
+	cout << "more than one parameter - unknown set of parameters." << endl;
+    }; /* switch argc */
+    cout << endl;
+
+    return ESP_ERR_INVALID_ARG;
+}; /* ls_act */
+
+void register_ls(void)
+{
+    static void* cdargs[] = {
+	    arg_str1(NULL, NULL, "<dir>", "directory name to change"),
+	    arg_end(1)
+    };
+
+    const esp_console_cmd_t cmd = {
+	    .command = "ls",
+	    .help = "List contents of a directory according pattern",
+	    .hint = NULL/*"enter the directory name for change"*/,
+	    .func = ls_act,
+	    .argtable = cdargs
+    };
+
+    register_cmd(&cmd);
+
+}; /* register_ls */
+
+
+// register all fs commands -----------------------------------------------------------------------
 void register_fs_cmd_all(void)
 {
 
     register_pwd();
     register_cd();
+    register_ls();
 
 }; /* register_fs_cmd_all */
 
