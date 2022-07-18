@@ -173,7 +173,27 @@ void register_pwd(void)
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 static int cd_act(int argc, char **argv)
 {
-    return sd_server.pwd();
+    cout << "\"cd\" command execution" << endl;
+    switch (argc)
+    {
+    case 1:
+	return sd_server.cd();
+	break;
+
+    case 2:
+	cout << "...with one parameter - OK, specified the path name to change." << endl;
+	//return sd_server.cd(argv[1]);
+	cout << "The command \"cd\" is not implemented yet" << endl
+		<< endl;
+	return ESP_ERR_NOT_SUPPORTED;
+	break;
+
+    default:
+	cout << "more than one parameter - unknown set of parameters." << endl;
+    }; /* switch argc */
+    cout << endl;
+
+    return ESP_ERR_INVALID_ARG;
 }; /* cd_act */
 
 void register_cd(void)
@@ -513,12 +533,12 @@ esp_err_t SDctrl::act_cd()
     switch (argc)
     {
     case 2:
-	sd_server.cd();
+	return sd_server.cd();
 	break;
 
     case 3:
 	cout << "...with one parameter - specified the path name to change." << endl;
-	sd_server.cd(argv[2]);
+	return sd_server.cd(argv[2]);
 	break;
 
     default:
@@ -526,7 +546,7 @@ esp_err_t SDctrl::act_cd()
     }; /* switch argc */
     cout << endl;
 
-    return 0;
+    return ESP_ERR_INVALID_ARG;
 }; /* SDctrl::act_cd */
 
 
@@ -538,12 +558,12 @@ esp_err_t SDctrl::act_ls()
     {
     case 2:
 	cout << "...without parameters - use current dir." << endl;
-	sd_server.ls();
+	return sd_server.ls();
 	break;
 
     case 3:
 	cout << "...with one parameter - use pattern or directory." << endl;
-	sd_server.ls(argv[2]);
+	return sd_server.ls(argv[2]);
 	break;
 
     default:
@@ -551,7 +571,7 @@ esp_err_t SDctrl::act_ls()
     }; /* switch argc */
     cout << endl;
 
-    return 0;
+    return ESP_ERR_INVALID_ARG;
 }; /* SDctrl::act_ls */
 
 
