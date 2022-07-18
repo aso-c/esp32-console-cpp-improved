@@ -7,7 +7,7 @@
  *	Version: 0.6
  */
 
-//#define __PURE_C__
+#define __PURE_C__
 
 
 #include <cstdlib>
@@ -209,8 +209,8 @@ void Server::card_info(FILE* outfile)
 // print the SD-card info (wrapper for the external caller)
 esp_err_t Server::info()
 {
-    cout << "Command \"SD-card info\" is not yet implemented now." << endl;
-    //card_info(stdout);
+    //cout << "Command \"SD-card info\" is not yet implemented now." << endl;
+    card_info(stdout);
     return ESP_OK;
 }; /* Server::info */
 
@@ -218,7 +218,7 @@ esp_err_t Server::info()
 // print current directory name
 esp_err_t Server::pwd()
 {
-//    cout << "Command \"pwd\" is not yet implemented now." << endl;
+#ifdef __PURE_C__
 	char* buf = getcwd(NULL, 0);
 
     if (!buf)
@@ -226,6 +226,10 @@ esp_err_t Server::pwd()
     cout << "PWD is: " << buf << endl;
     free(buf);
     return ESP_OK;
+#else
+    cout << "Command \"pwd\" is not yet implemented now for C++ edition." << endl;
+    return ESP_ERR_INVALID_VERSION;
+#endif
 }; /* Server::pwd */
 
 
@@ -235,16 +239,21 @@ esp_err_t Server::cd()
     cout << "Error: invoke command \"cd\" without parameters." << endl;
     cout << "The command \"cd\" required directory name to change." << endl;
 
-    return ESP_OK;
+    return ESP_ERR_INVALID_ARG;
 }; /* Server::cd */
 
 
 // change a current directory
 esp_err_t Server::cd(const char dirname[])
 {
-    cout << "Command \"cd\" is not yet implemented now." << endl;
-    cout << "Change directory to " << '"' << dirname << '"' << endl;
-    return ESP_ERR_INVALID_ARG;
+#ifdef __PURE_C__
+    chdir(dirname);
+    return ESP_OK;
+#else
+    //    cout << "Command \"cd\" is not yet implemented now for C++ edition." << endl;
+    //    cout << "Change directory to " << '"' << dirname << '"' << endl;
+    return ESP_ERR_INVALID_VERSION;
+#endif
 }; /* Server::cd */
 
 
