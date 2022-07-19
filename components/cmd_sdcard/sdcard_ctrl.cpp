@@ -13,18 +13,30 @@
 #include <cstdlib>
 #include <iostream>
 #include <iomanip>
-#include <stdarg.h>
+//#include <stdarg.h>
+#include <cstdarg>
 
-#include <string.h>
+//#include <string.h>
+#include <cstring>
 #include <sys/unistd.h>
 #include "esp_log.h"
 #include "esp_console.h"
 #include "esp_system.h"
 #include <argtable3/argtable3.h>
-#include <sys/unistd.h>
+//#include <sys/unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <regex>
+#ifdef __PURE_C__
+//#include <fcntl.h>
+#include <dirent.h>
+#else
+#if __cplusplus < 201703L
+#include <fcntl.h>
+#include <dirent.h>
+#else
+#endif // __cplusplus < 201703L
+#endif // ifdef __PURE_C__
 
 #include "esp_vfs_fat.h"
 #include "sdmmc_cmd.h"
@@ -32,8 +44,8 @@
 
 #include "sdcard_ctrl.hpp"
 
-
 //#include <stdio.h>
+//#include <cstdio>
 
 //using namespace idf;
 using namespace std;
@@ -202,7 +214,7 @@ int Slot::def_num;
 // Print the card info
 void Server::card_info(FILE* outfile)
 {
-    sdmmc_card_print_info(outfile/*stdout*/, card);
+    sdmmc_card_print_info(outfile, card);
 }; /* Server::card_info */
 
 
@@ -224,7 +236,7 @@ esp_err_t Server::pwd()
     if (!buf)
 	return errno;
     cout << endl
-	<< "PWD is: " << buf << endl
+	<< "PWD is: \"" << buf << '"' << endl
 	<< endl;
     free(buf);
     return ESP_OK;
@@ -261,16 +273,77 @@ esp_err_t Server::cd(const char dirname[])
 // print a list of files in the current directory
 esp_err_t Server::ls()
 {
-    cout << "Command \"ls\" is not yet implemented now." << endl;
-    cout << "Print files from the current directory" << endl;
+//    cout << "Command \"ls\" is not yet implemented now." << endl;
+//    cout << "Print files from the current directory" << endl;
+#if defined(__PURE_C__) || __cplusplus < 201703L
+	DIR *dir;	// Directory descriptor
+	struct dirent *entry; // Directory entry
+	//char path[256];
+	char* path = getcwd(NULL, 0);
+
+    dir = opendir(/*getcwd(NULL*/"/sdcard/"/*path*//*, 255)*/);
+    free(path);
+    if (!dir) {
+//	perror("diropen");
+	cerr << "Error opening current directory" << endl;
+//	exit(1);
+	return ESP_FAIL;
+    }; /* if !dir */
+
+//        while ( (entry = readdir(dir)) != NULL)
+    for ( (entry = readdir(dir)); entry != NULL; entry = readdir(dir))
+    {
+//	printf("%d - %s [%d] %d\n",
+//		entry->d_ino, entry->d_name, entry->d_type, entry->d_reclen);
+	cout << "inode: " << entry->d_ino << ", name: " << entry->d_name
+		<< "[type " << entry->d_type << "]; record length is: " /*<< entry->d_reclen*/ << endl;
+    }; /* for entry = readdir(dir); entry != NULL; entry = readdir(dir) */
+    if (errno != 0)
+    {
+	cerr << "Any error occured during reading of the current directory" << endl;
+	closedir(dir);
+	return ESP_FAIL;
+    }; /* if errno != 0 */
+    closedir(dir);
+#else
+#endif
     return ESP_OK;
 }; /* Server::ls */
 
 // print a list of files in the specified directory
 esp_err_t Server::ls(const char pattern[])
 {
-    cout << "Command \"ls\" is not yet implemented now." << endl;
-    cout << "Used pattern: " << '"' << pattern << '"' << endl;
+//    cout << "Command \"ls\" is not yet implemented now." << endl;
+//    cout << "Used pattern: " << '"' << pattern << '"' << endl;
+    cout << "Print content in directory " << '"' << pattern << '"' << endl;
+#if defined(__PURE_C__) || __cplusplus < 201703L
+	DIR *dir;	// Directory descriptor
+	struct dirent *entry; // Directory entry
+
+    dir = opendir(pattern);
+    if (!dir) {
+	cerr << "Error opening directory <" << pattern << '>' << endl
+		<< "with error code " << errno << endl;
+	return ESP_FAIL;
+    }; /* if !dir */
+
+    for ( struct dirent *entry = readdir(dir); entry != NULL; entry = readdir(dir))
+    {
+//	printf("%d - %s [%d] %d\n",
+//		entry->d_ino, entry->d_name, entry->d_type, entry->d_reclen);
+	cout << "inode: " << entry->d_ino << ", name: " << entry->d_name
+		<< "[type " << entry->d_type << "]; record length is: " /*<< entry->d_reclen*/ << endl;
+    }; /* for entry = readdir(dir); entry != NULL; entry = readdir(dir) */
+    if (errno != 0)
+    {
+	cerr << "Any error occured during reading of the current directory" << endl
+		<< "with error code " << errno << endl;
+	closedir(dir);
+	return ESP_FAIL;
+    }; /* if errno != 0 */
+    closedir(dir);
+#else
+#endif
     return ESP_OK;
 }; /* Server::ls */
 
