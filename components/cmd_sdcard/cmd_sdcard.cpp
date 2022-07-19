@@ -196,7 +196,7 @@ static int cd_act(int argc, char **argv)
 void register_cd(void)
 {
     static void* cdargs[] = {
-	    arg_str0(NULL, NULL, "<pattern>", "directory name to change"),
+	    arg_str1(NULL, NULL, "<dir>", "directory name to change"),
 	    arg_end(1)
     };
 
@@ -216,7 +216,7 @@ void register_cd(void)
 // 'ls' command -----------------------------------------------------------------------------------
 static int ls_act(int argc, char **argv)
 {
-    cout << "\"cd\" command execution" << endl;
+    cout << "\"ls\" command execution" << endl;
     switch (argc)
     {
     case 1:
@@ -239,8 +239,8 @@ static int ls_act(int argc, char **argv)
 
 void register_ls(void)
 {
-    static void* cdargs[] = {
-	    arg_str1(NULL, NULL, "<dir>", "directory name to change"),
+    static void* lsargs[] = {
+	    arg_str0(NULL, NULL, "<pattern>", "pattern of the file for listing"),
 	    arg_end(1)
     };
 
@@ -249,12 +249,56 @@ void register_ls(void)
 	    .help = "List contents of a directory according pattern",
 	    .hint = NULL/*"enter the directory name for change"*/,
 	    .func = ls_act,
-	    .argtable = cdargs
+	    .argtable = lsargs
     };
 
     register_cmd(&cmd);
 
 }; /* register_ls */
+
+
+// 'rm' command -----------------------------------------------------------------------------------
+
+static int rm_act(int argc, char **argv)
+{
+    cout << "\"rm\" command execution" << endl;
+    switch (argc)
+    {
+    case 1:
+	return sd_server.rm();
+	break;
+
+    case 2:
+	cout << "...with one parameter - OK, specified the filename to delete." << endl;
+	return sd_server.cd(argv[1]);
+	break;
+
+    default:
+	cout << "more than one parameter - unknown set of parameters." << endl;
+    }; /* switch argc */
+    cout << endl;
+
+    return ESP_ERR_INVALID_ARG;
+}; /* cd_act */
+
+void register_rm(void)
+{
+    static void* rmargs[] = {
+	    arg_str1(NULL, NULL, "<filename>", "filename name for delete"),
+	    arg_end(1)
+    };
+
+    const esp_console_cmd_t cmd = {
+	    .command = "rm",
+	    .help = "Delete a file or set of files matching the pattern <filename>",
+	    .hint = NULL,
+	    .func = rm_act,
+	    .argtable = rmargs
+    };
+
+    register_cmd(&cmd);
+
+}; /* register_rm */
 
 
 // register all fs commands -----------------------------------------------------------------------
@@ -264,6 +308,7 @@ void register_fs_cmd_all(void)
     register_pwd();
     register_cd();
     register_ls();
+    register_rm();
 
 }; /* register_fs_cmd_all */
 

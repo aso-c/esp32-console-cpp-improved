@@ -235,7 +235,7 @@ esp_err_t Server::pwd()
 }; /* Server::pwd */
 
 
-// change a current directory - eror handler
+// change a current directory - error handler
 esp_err_t Server::cd()
 {
     cout << "Error: invoke command \"cd\" without parameters." << endl;
@@ -244,7 +244,6 @@ esp_err_t Server::cd()
     return ESP_ERR_INVALID_ARG;
 }; /* Server::cd */
 
-
 // change a current directory
 esp_err_t Server::cd(const char dirname[])
 {
@@ -252,8 +251,8 @@ esp_err_t Server::cd(const char dirname[])
     chdir(dirname);
     return ESP_OK;
 #else
-    //    cout << "Command \"cd\" is not yet implemented now for C++ edition." << endl;
-    //    cout << "Change directory to " << '"' << dirname << '"' << endl;
+    cout << "Change directory to " << '"' << dirname << '"' << endl;
+    cout << "Command \"cd\" is not yet implemented now for C++ edition." << endl;
     return ESP_ERR_INVALID_VERSION;
 #endif
 }; /* Server::cd */
@@ -267,7 +266,6 @@ esp_err_t Server::ls()
     return ESP_OK;
 }; /* Server::ls */
 
-
 // print a list of files in the specified directory
 esp_err_t Server::ls(const char pattern[])
 {
@@ -275,6 +273,32 @@ esp_err_t Server::ls(const char pattern[])
     cout << "Used pattern: " << '"' << pattern << '"' << endl;
     return ESP_OK;
 }; /* Server::ls */
+
+
+// // remove files - error handler
+esp_err_t Server::rm()
+{
+    cout << "Error: invoke command \"rm\" without parameters." << endl;
+    cout << "Missing filename to delete." << endl;
+
+    return ESP_ERR_INVALID_ARG;
+}; /* Server::rm */
+
+// remove files according a pattern
+esp_err_t Server::rm(const char pattern[])
+{
+#ifdef __PURE_C__
+    cout << "Delete file " << '"' << pattern << '"' << endl;
+    cout << "Command \"rm\" is not yet implemented now for C edition." << endl;
+    return ESP_ERR_INVALID_VERSION;
+    //return ESP_OK;
+#else
+    cout << "Delete file " << '"' << pattern << '"' << endl;
+    cout << "Command \"rm\" is not yet implemented now for C++ edition." << endl;
+    return ESP_ERR_INVALID_VERSION;
+#endif
+}; /* Server::rm */
+
 
 
 // type file contents - error, file name is absent

@@ -157,10 +157,12 @@ public:
 
     esp_err_t info();	// print the SD-card info (wrapper for the external caller)
     esp_err_t pwd();	// print current directory name
-    esp_err_t cd();	// change a current directory - eror handler
+    esp_err_t cd();	// change a current directory - error handler
     esp_err_t cd(const char dirname[]);	// change a current directory
-    esp_err_t ls();	// print a list of files in the current directory
+    esp_err_t ls();	// print a list all files from the current directory
     esp_err_t ls(const char pattern[]);	// print a list of files in the specified directory
+    esp_err_t rm();	// remove files - error handler
+    esp_err_t rm(const char pattern[]);	// remove files according a pattern
 
     esp_err_t cat();	// type file contents - error, if file name is absent
     esp_err_t cat(const char fname[]);	// type file contents
