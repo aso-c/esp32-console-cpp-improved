@@ -323,9 +323,6 @@ esp_err_t Server::rm()
 {
     ESP_LOGE("Console::rm", "invoke command \"%s\" without parameters.\n%s", "rm",
 	     "Missing filename to remove.");
-//    cout << "Error: invoke command \"rm\" without parameters." << endl;
-//    cout << "Missing filename to delete." << endl;
-
     return ESP_ERR_INVALID_ARG;
 }; /* Server::rm */
 
@@ -335,7 +332,6 @@ esp_err_t Server::rm(const char pattern[])
     cout << "Delete file " << '"' << pattern << '"' << endl;
 #ifdef __PURE_C__
     ESP_LOGW("Console::rm", "Command \"%s\" is not yet implemented now for C edition.", "rm");
-//    cout << "Command \"rm\" is not yet implemented now for C edition." << endl;
     return ESP_ERR_INVALID_VERSION;
     //return ESP_OK;
 #else
@@ -353,8 +349,6 @@ esp_err_t Server::cat()
     cout << endl
 	 << "*** Printing contents of the file <XXXX fname>. ***" << endl
 	 << endl;
-//    cout << TAG << ": " << "Error: file name is required, mandatory parameter is absent" << endl;
-//    cout << endl;
     ESP_LOGE("Console::cat", "invoke command \"%s\" without parameters.\n%s", "cat",
 	     "Missing filename for print to output.");
 
@@ -368,7 +362,8 @@ esp_err_t Server::cat(const char fname[])
     cout << endl
 	 << "*** Printing contents of the file <" << fname << ">. ***" << endl
 	 << endl;
-    cout << TAG << ": " << "Procedure \"cat(" << fname << ")\" is not yet released now" << endl;
+//    cout << TAG << ": " << "Procedure \"cat(" << fname << ")\" is not yet released now" << endl;
+    ESP_LOGW("Console::cat", "Command \"%s %s \" is not yet implemented now", "cat", fname);
     cout << "Exit..." << endl;
     cout << endl
 	 << "*** End of printing file " << fname << ". **************" << endl
@@ -385,8 +380,6 @@ esp_err_t Server::type()
 //	 << "Press 'q' or <Enter> twice for exit..." << endl
 	 << "Press <Enter> twice for exit..." << endl
 	 << endl;
-//    cout << TAG << ": " << "Procedure \"cat(fname)\" is not yet released now" << endl;
-//    cout << "Exit..." << endl;
 
 	char c = '\0', prevc;
     do {
@@ -411,7 +404,8 @@ esp_err_t Server::type(const char fname[])
     cout << endl
 	 << "**** Type the text on keyboard to screen and file <" << fname << ">. ****" << endl
 	 << endl;
-    cout << TAG << ": " << "Procedure \"cat(fname)\" is not yet released now" << endl;
+//    cout << TAG << ": " << "Procedure \"cat(fname)\" is not yet released now" << endl;
+    ESP_LOGW("Console::type", "Command \"%s %s \" is not yet implemented now", "type", fname);
     cout << "Exit..." << endl;
     cout << endl
 	 << "**** End of typing the text on keyboard for the screen&file. ****" << endl

@@ -279,7 +279,7 @@ static int rm_act(int argc, char **argv)
     cout << endl;
 
     return ESP_ERR_INVALID_ARG;
-}; /* cd_act */
+}; /* rm_act */
 
 void register_rm(void)
 {
@@ -301,6 +301,95 @@ void register_rm(void)
 }; /* register_rm */
 
 
+// 'cat' command -----------------------------------------------------------------------------------
+
+static int cat_act(int argc, char **argv)
+{
+    cout << "\"cat\" command execution" << endl;
+    switch (argc)
+    {
+    case 1:
+	return sd_server.cat();
+	break;
+
+    case 2:
+	cout << "...with one parameter - OK, specified the filename to delete." << endl;
+	return sd_server.cat(argv[1]);
+	break;
+
+    default:
+	cout << "more than one parameter - unknown set of parameters." << endl;
+    }; /* switch argc */
+    cout << endl;
+
+    return ESP_ERR_INVALID_ARG;
+}; /* cat_act */
+
+void register_cat(void)
+{
+    static void* catargs[] = {
+	    arg_str1(NULL, NULL, "<filename>", "name of the files for type to output"),
+	    arg_end(1)
+    };
+
+    const esp_console_cmd_t cmd = {
+	    .command = "cat",
+	    .help = "Type a file contents to standard output (default - to screen)",
+	    .hint = NULL,
+	    .func = cat_act,
+	    .argtable = catargs
+    };
+
+    register_cmd(&cmd);
+
+}; /* register_cat */
+
+
+// 'type' command -----------------------------------------------------------------------------------
+
+static int type_act(int argc, char **argv)
+{
+    cout << "\"cat\" command execution" << endl;
+    switch (argc)
+    {
+    case 1:
+	//cout << "...without parameters - type to screen only." << endl;
+	return sd_server.type();
+	break;
+
+    case 2:
+	cout << "...with one parameter - OK, save type output to file & output to screen." << endl;
+	return sd_server.type(argv[1]);
+	break;
+
+    default:
+	cout << "more than one parameter - unknown set of parameters." << endl;
+    }; /* switch argc */
+    cout << endl;
+
+    return ESP_ERR_INVALID_ARG;
+}; /* type_act */
+
+void register_type(void)
+{
+    static void* typeargs[] = {
+	    arg_str0(NULL, NULL, "<filename>", "filename for storage keyboard type output"),
+	    arg_end(1)
+    };
+
+    const esp_console_cmd_t cmd = {
+	    .command = "type",
+	    .help = "Type from a keyboard to standard output (default - to screen) and to file (if specified)",
+	    .hint = NULL,
+	    .func = type_act,
+	    .argtable = typeargs
+    };
+
+    register_cmd(&cmd);
+
+}; /* register_type */
+
+
 // register all fs commands -----------------------------------------------------------------------
 void register_fs_cmd_all(void)
 {
@@ -309,6 +398,8 @@ void register_fs_cmd_all(void)
     register_cd();
     register_ls();
     register_rm();
+    register_cat();
+    register_type();
 
 }; /* register_fs_cmd_all */
 
