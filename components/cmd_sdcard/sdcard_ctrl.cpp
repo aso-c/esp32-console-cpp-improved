@@ -251,8 +251,6 @@ esp_err_t Server::pwd()
 // change a current directory - error handler
 esp_err_t Server::cd()
 {
-//    cout << "Error: invoke command \"cd\" without parameters." << endl;
-//    cout << "The command \"cd\" required directory name to change." << endl;
     ESP_LOGE("Console::cd", "invoke command \"%s\" without parameters.\n%s", "cd",
 	     "This command required directory name to change.");
 
@@ -283,41 +281,6 @@ esp_err_t Server::cd(const char dirname[])
 // print a list of files in the current directory
 esp_err_t Server::ls()
 {
-//    cout << "Command \"ls\" is not yet implemented now." << endl;
-//    cout << "Print files from the current directory" << endl;
-//#if defined(__PURE_C__) || __cplusplus < 201703L
-//	DIR *dir;	// Directory descriptor
-//	struct dirent *entry; // Directory entry
-//	//char path[256];
-//	char* path = getcwd(NULL, 0);
-//
-//    dir = opendir(/*getcwd(NULL*/"/sdcard/"/*path*//*, 255)*/);
-//    free(path);
-//    if (!dir) {
-////	perror("diropen");
-//	cerr << "Error opening current directory" << endl;
-////	exit(1);
-//	return ESP_FAIL;
-//    }; /* if !dir */
-//
-////        while ( (entry = readdir(dir)) != NULL)
-//    for ( (entry = readdir(dir)); entry != NULL; entry = readdir(dir))
-//    {
-////	printf("%d - %s [%d] %d\n",
-////		entry->d_ino, entry->d_name, entry->d_type, entry->d_reclen);
-//	cout << "inode: " << entry->d_ino << ", name: " << entry->d_name
-//		<< "[type " << entry->d_type << "]; record length is: " /*<< entry->d_reclen*/ << endl;
-//    }; /* for entry = readdir(dir); entry != NULL; entry = readdir(dir) */
-//    if (errno != 0)
-//    {
-//	cerr << "Any error occured during reading of the current directory" << endl;
-//	closedir(dir);
-//	return ESP_FAIL;
-//    }; /* if errno != 0 */
-//    closedir(dir);
-//#else
-//#endif
-//    return ESP_OK;
     return ls(".");
 }; /* Server::ls */
 
@@ -330,8 +293,6 @@ esp_err_t Server::ls(const char pattern[])
 
     dir = opendir(pattern);
     if (!dir) {
-//	cerr << "Error opening directory <" << pattern << '>' << endl;
-////		<< "with error code " << errno << endl;
 	ESP_LOGE("Console::ls", "Error opening directory %s", pattern);
 	perror("Console::ls");
 	return ESP_FAIL;
@@ -341,33 +302,29 @@ esp_err_t Server::ls(const char pattern[])
 
     for ( struct dirent *entry = readdir(dir); entry != NULL; entry = readdir(dir))
     {
-//	printf("%d - %s [%d] %d\n",
-//		entry->d_ino, entry->d_name, entry->d_type, entry->d_reclen);
 	cout << "inode: " << entry->d_ino << ", name: " << entry->d_name
 		<< "[type " << entry->d_type << "]; record length is: " /*<< entry->d_reclen*/ << endl;
     }; /* for entry = readdir(dir); entry != NULL; entry = readdir(dir) */
     if (errno != 0)
     {
 	cerr << "Any error occured during reading of the current directory" << endl;
-//		<< "with error code " << errno << endl;
 	perror("Console::ls");
-//	closedir(dir);
-//	return ESP_FAIL;
 	ret = ESP_FAIL;
     }; /* if errno != 0 */
     closedir(dir);
 #else
 #endif
-    return ESP_OK;
     return ret;
 }; /* Server::ls */
 
 
-// // remove files - error handler
+// remove files - error handler
 esp_err_t Server::rm()
 {
-    cout << "Error: invoke command \"rm\" without parameters." << endl;
-    cout << "Missing filename to delete." << endl;
+    ESP_LOGE("Console::rm", "invoke command \"%s\" without parameters.\n%s", "rm",
+	     "Missing filename to remove.");
+//    cout << "Error: invoke command \"rm\" without parameters." << endl;
+//    cout << "Missing filename to delete." << endl;
 
     return ESP_ERR_INVALID_ARG;
 }; /* Server::rm */
@@ -375,14 +332,15 @@ esp_err_t Server::rm()
 // remove files according a pattern
 esp_err_t Server::rm(const char pattern[])
 {
-#ifdef __PURE_C__
     cout << "Delete file " << '"' << pattern << '"' << endl;
-    cout << "Command \"rm\" is not yet implemented now for C edition." << endl;
+#ifdef __PURE_C__
+    ESP_LOGW("Console::rm", "Command \"%s\" is not yet implemented now for C edition.", "rm");
+//    cout << "Command \"rm\" is not yet implemented now for C edition." << endl;
     return ESP_ERR_INVALID_VERSION;
     //return ESP_OK;
 #else
-    cout << "Delete file " << '"' << pattern << '"' << endl;
-    cout << "Command \"rm\" is not yet implemented now for C++ edition." << endl;
+    ESP_LOGW("Console::rm", "Command \"%s\" is not yet implemented now for C++ edition.", "rm");
+//    cout << "Command \"rm\" is not yet implemented now for C++ edition." << endl;
     return ESP_ERR_INVALID_VERSION;
 #endif
 }; /* Server::rm */
@@ -395,9 +353,12 @@ esp_err_t Server::cat()
     cout << endl
 	 << "*** Printing contents of the file <XXXX fname>. ***" << endl
 	 << endl;
-    cout << TAG << ": " << "Error: file name is required, mandatory parameter is absent" << endl;
-    cout << endl
-	 << "*** End of printing file XXXX. ** ******************" << endl;
+//    cout << TAG << ": " << "Error: file name is required, mandatory parameter is absent" << endl;
+//    cout << endl;
+    ESP_LOGE("Console::cat", "invoke command \"%s\" without parameters.\n%s", "cat",
+	     "Missing filename for print to output.");
+
+    cout << "*** End of printing file XXXX. ** ******************" << endl;
     return ESP_ERR_INVALID_ARG;
 }; /* cat */
 

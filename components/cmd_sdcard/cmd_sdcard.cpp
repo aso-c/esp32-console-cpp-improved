@@ -270,7 +270,7 @@ static int rm_act(int argc, char **argv)
 
     case 2:
 	cout << "...with one parameter - OK, specified the filename to delete." << endl;
-	return sd_server.cd(argv[1]);
+	return sd_server.rm(argv[1]);
 	break;
 
     default:
