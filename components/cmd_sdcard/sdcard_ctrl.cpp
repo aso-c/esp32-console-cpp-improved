@@ -48,6 +48,9 @@
 //#include <stdio.h>
 //#include <cstdio>
 
+#include "include/extrstream"
+
+
 //using namespace idf;
 using namespace std;
 
@@ -293,22 +296,37 @@ esp_err_t Server::ls(const char pattern[])
 
     dir = opendir(pattern);
     if (!dir) {
-	ESP_LOGE("Console::ls", "Error opening directory %s", pattern);
+//	ESP_LOGE("Console::ls", "Error opening directory <%s>", pattern);
+	ESP_LOGE("Console::ls", "Error opening directory <%s>, %s", pattern, strerror(errno));
 	perror("Console::ls");
 	return ESP_FAIL;
     }; /* if !dir */
 
 	esp_err_t ret = ESP_OK;
+	int entry_cnt = 0;
 
+    errno = 0;	// clear any possible errors
+    cout << "Files in the directory <" << pattern << ">:" << endl
+	    << "----------------" << endl;
     for ( struct dirent *entry = readdir(dir); entry != NULL; entry = readdir(dir))
     {
-	cout << "inode: " << entry->d_ino << ", name: " << entry->d_name
-		<< "[type " << entry->d_type << "]; record length is: " /*<< entry->d_reclen*/ << endl;
+	entry_cnt++;
+	cout << entry->d_name << endl;
     }; /* for entry = readdir(dir); entry != NULL; entry = readdir(dir) */
+    if (entry_cnt)
+    {
+	cout << "----------------" << endl;
+	cout << aso::format("Total found %d files", entry_cnt) << endl;
+    }
+    else
+	cout << "Files or directory not found, directory is empty." << endl;
+
     if (errno != 0)
     {
-	cerr << "Any error occured during reading of the current directory" << endl;
-	perror("Console::ls");
+//	cerr << "Any error occured during reading of the current directory" << endl;
+//	perror("Console::ls");
+//	ESP_LOGE("Console::ls", "Error opening directory %s", pattern);
+	ESP_LOGE("Console::ls", "Error occured during reading of the directory <%s>, %s", pattern, strerror(errno));
 	ret = ESP_FAIL;
     }; /* if errno != 0 */
     closedir(dir);
