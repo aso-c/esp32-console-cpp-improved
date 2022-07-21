@@ -330,6 +330,7 @@ esp_err_t Server::ls(const char pattern[])
 	ret = ESP_FAIL;
     }; /* if errno != 0 */
     closedir(dir);
+    cout << endl;
 #else
 #endif
     return ret;
@@ -380,13 +381,39 @@ esp_err_t Server::cat(const char fname[])
     cout << endl
 	 << "*** Printing contents of the file <" << fname << ">. ***" << endl
 	 << endl;
-//    cout << TAG << ": " << "Procedure \"cat(" << fname << ")\" is not yet released now" << endl;
-    ESP_LOGW("Console::cat", "Command \"%s %s \" is not yet implemented now", "cat", fname);
-    cout << "Exit..." << endl;
+//    ESP_LOGW("Console::cat", "Command \"%s %s \" is not yet implemented now", "cat", fname);
+//    cout << "Exit..." << endl;
+
+#ifdef __PURE_C__
+
+	FILE *text = fopen(fname, "r"); // open the file for type to screen
+
+    errno = 0;	// clear possible errors
+    text = fopen(fname, "r"); // open the file for type to screen
+    if (!text)
+    {
+	ESP_LOGE("Console::cat", "Error opening file <%s>, %s", fname, strerror(errno));
+	return ESP_FAIL;
+    }; /* if !FILE */
+
+    for (char c = getc(text); !feof(text); c = getc(text))
+	putchar(c);
+
+//    putchar('\n');
+    if (errno)
+    {
+	ESP_LOGE("Console::cat", "Error during type the file %s to output, %s", fname, strerror(errno));
+	return ESP_FAIL;
+    }; /* if errno */
+
+#else
+#endif
+
     cout << endl
 	 << "*** End of printing file " << fname << ". **************" << endl
 	 << endl;
-    return ESP_ERR_INVALID_VERSION;
+//    return ESP_ERR_INVALID_VERSION;
+    return ESP_OK;
 }; /* cat */
 
 
