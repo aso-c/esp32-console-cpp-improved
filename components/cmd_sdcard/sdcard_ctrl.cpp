@@ -292,15 +292,13 @@ esp_err_t Server::ls()
 // print a list of files in the specified directory
 esp_err_t Server::ls(const char pattern[])
 {
-    cout << "List files in " << '"' << pattern << '"' << endl;
-#if defined(__PURE_C__) || __cplusplus < 201703L
+//#if defined(__PURE_C__) || __cplusplus < 201703L
+#ifdef __PURE_C__
 	DIR *dir;	// Directory descriptor
 
     dir = opendir(pattern);
     if (!dir) {
-//	ESP_LOGE("Console::ls", "Error opening directory <%s>", pattern);
 	ESP_LOGE("Console::ls", "Error opening directory <%s>, %s", pattern, strerror(errno));
-	perror("Console::ls");
 	return ESP_FAIL;
     }; /* if !dir */
 
@@ -312,8 +310,6 @@ esp_err_t Server::ls(const char pattern[])
     errno = 0;	// clear any possible errors
     printf("Files in the directory <%s>\n",  pattern);
     printf("----------------\n");
-//    cout << "Files in the directory <" << pattern << ">:" << endl
-//	    << "----------------" << endl;
 
     if (realpath(pattern, pathbuf) == NULL)
     {
@@ -321,17 +317,9 @@ esp_err_t Server::ls(const char pattern[])
 	return ESP_FAIL;
     }; /* if realpath(pattern, pathbuf) == NULL */
 
-    // for test
-    printf("PATH_MAX value is:                       %d\n", PATH_MAX);
-    printf("Realpath of directory to listing is:    \"%s\"\n", pathbuf);
-
 	char * /*const*/ fnbuf = pathbuf + strlen(pathbuf);
 
     fnbuf[0] = '/';
-    // for test
-    fnbuf[1] = '\0';
-    printf("Realpath of listing directory with trailing slash:  \"%s\"\n\n--------------------------\n", pathbuf);
-    //------------
     fnbuf++;
 
 
@@ -340,29 +328,34 @@ esp_err_t Server::ls(const char pattern[])
 	entry_cnt++;
 	strcpy(fnbuf, entry->d_name);
 	stat(/*entry->d_name*/pathbuf, &statbuf);
+
+//	cout << fnbuf
+//		<< endl << '\t' << entry->d_name;
+	if (S_ISLNK(statbuf.st_mode)) // is symlink
+	    printf("%s\n\t%s [symlink]", pathbuf, entry->d_name);
+//	    cout << " [symlink]";
+	if (S_ISREG(statbuf.st_mode))	// обычный файл
+	    printf("%s\n\t%s", pathbuf, entry->d_name);
+//	    cout << fnbuf
+//		<< endl << '\t' << entry->d_name;
+	//S_ISDIR(m)		каталог; уже обработано
 	if (S_ISDIR(statbuf.st_mode))	// fname is directory
-	    cout << pathbuf
-		<< endl << '\t' << aso::format("<%s>", entry->d_name);
-	else
-	{
-	    cout << fnbuf
-		    << endl << '\t' << entry->d_name;
-	    if (S_ISLNK(statbuf.st_mode)) // is symlink
-		cout << " [symlink]";
-	    // if (S_ISREG(statbuf))	// обычный файл
-	    //	;			// nothing works
-		//S_ISDIR(m)		каталог; уже обработано
-	    if (S_ISCHR(statbuf.st_mode)) // is character device
-		cout << " [char dev]";
-	    if (S_ISBLK(statbuf.st_mode)) // is block device
-		cout << " [blk dev]";
-	    if (S_ISFIFO(statbuf.st_mode)) // is FIFO
-		cout << " [FIFO]";
-	    if (S_ISSOCK(statbuf.st_mode)) // is socket
-		cout << " [socket]";
-	}; /* else if S_ISDIR(statbuf) */
+	    printf("%s\n\t<%s>", pathbuf, entry->d_name);
+//	    cout << pathbuf
+//		<< endl << '\t' << aso::format("<%s>", entry->d_name);
+	if (S_ISCHR(statbuf.st_mode)) // is character device
+	    printf("%s\n\t%s [char dev]", pathbuf, entry->d_name);
+//	    cout << " [char dev]";
+	if (S_ISBLK(statbuf.st_mode)) // is block device
+	    printf("%s\n\t%s [blk dev]", pathbuf, entry->d_name);
+//	    cout << " [blk dev]";
+	if (S_ISFIFO(statbuf.st_mode)) // is FIFO
+	    printf("%s\n\t%s [FIFO]", pathbuf, entry->d_name);
+//	    cout << " [FIFO]";
+	if (S_ISSOCK(statbuf.st_mode)) // is socket
+	    printf("%s\n\t%s [socket]", pathbuf, entry->d_name);
+//	    cout << " [socket]";
 	cout << endl;
-	cout << entry->d_name << endl;
     }; /* for entry = readdir(dir); entry != NULL; entry = readdir(dir) */
     if (entry_cnt)
     {

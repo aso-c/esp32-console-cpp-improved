@@ -181,7 +181,7 @@ static int cd_act(int argc, char **argv)
 	break;
 
     case 2:
-	cout << "...with one parameter - OK, specified the path name to change." << endl;
+	//cout << "...with one parameter - OK, specified the path name to change." << endl;
 	return sd_server.cd(argv[1]);
 	break;
 
@@ -220,17 +220,19 @@ static int ls_act(int argc, char **argv)
     switch (argc)
     {
     case 1:
-	cout << "...without parameters - OK, list all files in the current directory." << endl;
+	//cout << "...without parameters - OK, list all files in the current directory." << endl;
 	return sd_server.ls();
 	break;
 
     case 2:
-	cout << "...with one parameter - OK, print the files in the desired directory and/or according a pattern." << endl;
+	//cout << "...with one parameter - OK, print the files in the desired directory and/or according a pattern." << endl;
 	return sd_server.ls(argv[1]);
 	break;
 
     default:
-	cout << "more than one parameter - unknown set of parameters." << endl;
+//	cout << "more than one parameter - too many parameters." << endl;
+	ESP_LOGE("ls command", "%d parameters - too many parameters, more then one parameters is not allowed.", argc);
+
     }; /* switch argc */
     cout << endl;
 
@@ -246,7 +248,7 @@ void register_ls(void)
 
     const esp_console_cmd_t cmd = {
 	    .command = "ls",
-	    .help = "List contents of a directory according pattern",
+	    .help = "List contents of a directory according pattern, list non-directory files is not available now. ((( Sorry.",
 	    .hint = NULL/*"enter the directory name for change"*/,
 	    .func = ls_act,
 	    .argtable = lsargs
@@ -313,7 +315,7 @@ static int cat_act(int argc, char **argv)
 	break;
 
     case 2:
-	cout << "...with one parameter - OK, specified the filename to delete." << endl;
+//	cout << "...with one parameter - OK, specified the filename to cat." << endl;
 	return sd_server.cat(argv[1]);
 	break;
 
