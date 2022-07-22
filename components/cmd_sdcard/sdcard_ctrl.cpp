@@ -10,6 +10,7 @@
 #define __PURE_C__
 
 
+#include <limits>
 #include <cstdlib>
 #include <iostream>
 #include <iomanip>
@@ -27,6 +28,7 @@
 //#include <sys/unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <unistd.h>
 #include <regex>
 #ifdef __PURE_C__
 //#include <fcntl.h>
@@ -291,6 +293,17 @@ esp_err_t Server::ls()
 esp_err_t Server::ls(const char pattern[])
 {
     cout << "List files in " << '"' << pattern << '"' << endl;
+//----------------------------------------------------------------
+    char pathbuf0[PATH_MAX];
+    if (realpath(pattern, pathbuf0) == NULL)
+    {
+	ESP_LOGE("Console::ls", "Error canonicalizing path \"<%s>\", %s", pattern, strerror(errno));
+	return ESP_FAIL;
+    }; /* if realpath(pattern, pathbuf) == NULL */
+
+    // for test
+    printf("Realpath of directory to listing is:    \"%s\"\n", pathbuf0);
+//----------------------------------------------------------------
 #if defined(__PURE_C__) || __cplusplus < 201703L
 	DIR *dir;	// Directory descriptor
 
@@ -303,14 +316,50 @@ esp_err_t Server::ls(const char pattern[])
     }; /* if !dir */
 
 	esp_err_t ret = ESP_OK;
+	struct stat statbuf;
+	char pathbuf[PATH_MAX];
 	int entry_cnt = 0;
 
     errno = 0;	// clear any possible errors
-    cout << "Files in the directory <" << pattern << ">:" << endl
-	    << "----------------" << endl;
+    printf("Files in the directory <%s>\n",  pattern);
+    printf("----------------\n");
+//    cout << "Files in the directory <" << pattern << ">:" << endl
+//	    << "----------------" << endl;
+
+    if (realpath(pattern, pathbuf) == NULL)
+    {
+	ESP_LOGE("Console::ls", "Error canonicalizing path \"<%s>\", %s", pattern, strerror(errno));
+	return ESP_FAIL;
+    }; /* if realpath(pattern, pathbuf) == NULL */
+
+    // for test
+    printf("Realpath of directory to listing is:\n\t\"%s\"\n", pathbuf);
+
+
     for ( struct dirent *entry = readdir(dir); entry != NULL; entry = readdir(dir))
     {
 	entry_cnt++;
+	stat(entry->d_name, &statbuf);
+//	if (S_ISDIR(statbuf.st_mode))	// fname is directory
+//	    cout << aso::format("<%s>", entry->d_name);
+//	else
+//	{
+//	    cout << entry->d_name;
+//	    if (S_ISLNK(statbuf.st_mode)) // is symlink
+//		cout << " [symlink]";
+//	    // if (S_ISREG(statbuf))	// обычный файл
+//	    //	;			// nothing works
+//		//S_ISDIR(m)		каталог; уже обработано
+//	    if (S_ISCHR(statbuf.st_mode)) // is character device
+//		cout << " [char dev]";
+//	    if (S_ISBLK(statbuf.st_mode)) // is block device
+//		cout << " [blk dev]";
+//	    if (S_ISFIFO(statbuf.st_mode)) // is FIFO
+//		cout << " [FIFO]";
+//	    if (S_ISSOCK(statbuf.st_mode)) // is socket
+//		cout << " [socket]";
+//	}; /* else if S_ISDIR(statbuf) */
+//	cout << endl;
 	cout << entry->d_name << endl;
     }; /* for entry = readdir(dir); entry != NULL; entry = readdir(dir) */
     if (entry_cnt)
@@ -323,9 +372,6 @@ esp_err_t Server::ls(const char pattern[])
 
     if (errno != 0)
     {
-//	cerr << "Any error occured during reading of the current directory" << endl;
-//	perror("Console::ls");
-//	ESP_LOGE("Console::ls", "Error opening directory %s", pattern);
 	ESP_LOGE("Console::ls", "Error occured during reading of the directory <%s>, %s", pattern, strerror(errno));
 	ret = ESP_FAIL;
     }; /* if errno != 0 */
