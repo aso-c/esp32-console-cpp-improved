@@ -22,6 +22,19 @@ namespace aso
 
 
 
+    //
+    // Naiv implementation of the boost::format() analogue for the format string output
+    // Usage:
+    //
+    //     cout << aso::boost("Hellow, my name is %s" and I am %d years old.", "John, 29) << endl;
+    //
+    // or:
+    //
+    //     cout << aso::boost("Hellow, my name is %s" and I am %d years old.") % "John % 29 << endl;
+    //
+    // Check the operation priority when the second form is used.
+    //
+    //
     // Sources (in russian):
     // https://overcoder.net/q/54881/получение-файла-из-std-fstream
     // https://overcoder.net/q/54881/%D0%BF%D0%BE%D0%BB%D1%83%D1%87%D0%B5%D0%BD%D0%B8%D0%B5-%D1%84%D0%B0%D0%B9%D0%BB%D0%B0-%D0%B8%D0%B7-std-fstream
