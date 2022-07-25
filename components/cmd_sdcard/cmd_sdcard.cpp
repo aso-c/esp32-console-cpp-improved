@@ -186,7 +186,8 @@ static int cd_act(int argc, char **argv)
 	break;
 
     default:
-	cout << "more than one parameter - unknown set of parameters." << endl;
+	//cout << "more than one parameter - unknown set of parameters." << endl;
+	ESP_LOGE("cd command", "too many parameters (%d), where to go?", argc);
     }; /* switch argc */
     cout << endl;
 
@@ -231,7 +232,7 @@ static int ls_act(int argc, char **argv)
 
     default:
 //	cout << "more than one parameter - too many parameters." << endl;
-	ESP_LOGE("ls command", "%d parameters - too many parameters, more then one parameters is not allowed.", argc);
+	ESP_LOGE("ls command", "too many parameters (%d), which directory is to be printed?", argc);
 
     }; /* switch argc */
     cout << endl;
@@ -276,7 +277,8 @@ static int rm_act(int argc, char **argv)
 	break;
 
     default:
-	cout << "more than one parameter - unknown set of parameters." << endl;
+//	cout << "more than one parameter - unknown set of parameters." << endl;
+	ESP_LOGE("rm command", "too many parameters (%d), unable select file to remove.", argc);
     }; /* switch argc */
     cout << endl;
 
@@ -320,7 +322,8 @@ static int cat_act(int argc, char **argv)
 	break;
 
     default:
-	cout << "more than one parameter - unknown set of parameters." << endl;
+	// cout << "more than one parameter - unknown set of parameters." << endl;
+	ESP_LOGE("cat command", "too many parameters (%d), unable select file to print.", argc);
     }; /* switch argc */
     cout << endl;
 
@@ -365,7 +368,8 @@ static int type_act(int argc, char **argv)
 	break;
 
     default:
-	cout << "more than one parameter - unknown set of parameters." << endl;
+//	cout << "more than one parameter - unknown set of parameters." << endl;
+	ESP_LOGE("type command", "too many parameters (%d), in which file the output to be saved?", argc);
     }; /* switch argc */
     cout << endl;
 
@@ -601,16 +605,18 @@ void SDctrl::store(int argcnt, char *argvalue[])
 // Handler for "subcommand missing" error.
 esp_err_t SDctrl::err_none()
 {
-    cout << "Subcommand missing." << endl
-	 << syntax.hint << endl;
+    ESP_LOGE("sdcard command", "subcommand missing, what to run?");
+//    cout << "Subcommand missing." << endl
+    cout << syntax.hint << endl;
     return ESP_OK;
 }; /* SDcmd::err_none */
 
 // Handler for "subcommand unknown" error.
 esp_err_t SDctrl::err_unknown()
 {
-    cout << "Unknown options: \"" << argv[1] <<  "\"." << endl
-	 << syntax.hint << endl;
+    ESP_LOGE("sdcard command", "Unknown options: \"%s\".", argv[1]);
+//    cout << "Unknown options: \"" << argv[1] <<  "\"." << endl
+    cout << syntax.hint << endl;
     return ESP_OK;
 }; /* SDcmd::err_unknown */
 
@@ -620,12 +626,11 @@ esp_err_t SDctrl::act_mnt()
 {
     esp_err_t res;
 
-    cout << "\"mount\" command execution" << endl;
+    //cout << "\"mount\" command execution" << endl;
     switch (argc)
     {
     case 2:
-	cout << "...without parameters - use default values." << endl;
-//	return sd_server.mount();
+	//cout << "...without parameters - use default values." << endl;
 	res = sd_server.mount();
 	break;
 
@@ -642,8 +647,9 @@ esp_err_t SDctrl::act_mnt()
 	break;
 
     default:
-	cout << "more than two parameters - obscure set of parameters." << endl;
-					//  unclear set of parameters
+//	cout << "more than two parameters - obscure set of parameters." << endl;
+//					//  unclear set of parameters
+	ESP_LOGE("sdcard mount command", "more than two parameters (%d) - is not allowed", argc - 2);
 	res = ESP_FAIL;
     }; /* switch argc */
     cout << endl;
@@ -673,7 +679,8 @@ esp_err_t SDctrl::act_umnt()
 	break;
 
     default:
-	cout << "more than one parameter - unclear set of parameters." << endl;
+//	cout << "more than one parameter - unclear set of parameters." << endl;
+	ESP_LOGE("sdcard umount command", "more than one parameters (%d) - is not allowed", argc - 2);
     }; /* switch argc */
     cout << endl;
 
@@ -719,7 +726,8 @@ esp_err_t SDctrl::act_cd()
 	break;
 
     default:
-	cout << "more than one parameter - unknown set of parameters." << endl;
+//	cout << "more than one parameter - unknown set of parameters." << endl;
+	ESP_LOGE("sdcard cd command", "more than one parameters (%d) - where to go?", argc - 2);
     }; /* switch argc */
     cout << endl;
 
@@ -744,7 +752,8 @@ esp_err_t SDctrl::act_ls()
 	break;
 
     default:
-	cout << "more than one parameter - unknown set of parameters." << endl;
+//	cout << "more than one parameter - unknown set of parameters." << endl;
+	ESP_LOGE("sdcard ls command", "more than one parameters (%d) - what directory to listing?", argc - 2);
     }; /* switch argc */
     cout << endl;
 
@@ -769,7 +778,8 @@ esp_err_t SDctrl::act_cat()
 	break;
 
     default:
-	cout << "Any parameters error." << endl;
+//	cout << "Any parameters error." << endl;
+	ESP_LOGE("sdcard cat command", "more than one parameters (%d) - what file is to be printed?", argc - 2);
     }; /* switch argc */
     cout << endl;
 
@@ -794,7 +804,8 @@ esp_err_t SDctrl::act_type()
 	break;
 
     default:
-	cout << "Any parameters error." << endl;
+//	cout << "Any parameters error." << endl;
+	ESP_LOGE("sdcard cat command", "more than one parameters (%d) - what file save the type output?", argc - 2);
     }; /* switch argc */
     cout << endl;
 

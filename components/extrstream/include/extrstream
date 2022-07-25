@@ -76,9 +76,15 @@ namespace aso
     public:
 	Formatter (const std::string&&, PrnTypes&&...);
 	template <typename OutStream>
-	    OutStream& output(OutStream&/*&*/) const;
+	    OutStream& output(OutStream&) const;
+	Formatter(const std::tuple<std::string, PrnTypes...>&& data): items(data) {};
+
+	template<typename T>
+	Formatter<PrnTypes..., T> generate(T&& item) const {
+	    return /*Formatter<PrnTypes..., T>(*/std::tuple_cat(items, std::make_tuple(std::forward<T>(item)));};
 
     private:
+
 	std::tuple<std::string, PrnTypes...> items;
 
     }; /* Formatter */
@@ -127,6 +133,14 @@ namespace aso
     {
 	return fmt.output(os);
     }; /* template <OutStream> OutStream& operator << (OutStream &, const format &) */
+
+
+    // Generate call 'format' with parameters from the expression
+    template<typename T, typename...PrnTypes>
+    inline Formatter<PrnTypes..., T> operator %(const Formatter<PrnTypes...> fmt, T prnitem) {
+//	return Formatter<PrnTypes..., T>(fmt, prnitem);
+	return fmt.generate(std::forward<T>(prnitem));
+    };
 
 }; /* namespace aso */
 
