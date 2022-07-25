@@ -329,20 +329,29 @@ esp_err_t Server::ls(const char pattern[])
 	strcpy(fnbuf, entry->d_name);
 	stat(pathbuf, &statbuf);
 
-	if (S_ISLNK(statbuf.st_mode)) // is symlink
-	    printf("%s\n\t%s [symlink]", pathbuf, entry->d_name);
-	if (S_ISREG(statbuf.st_mode))	// обычный файл
-	    printf("%s\n\t%s (file)", pathbuf, entry->d_name);
-	if (S_ISDIR(statbuf.st_mode))	// fname is directory
-	    printf("%s\n\t<%s> <DIR>", pathbuf, entry->d_name);
-	if (S_ISCHR(statbuf.st_mode)) // is character device
-	    printf("%s\n\t%s [char dev]", pathbuf, entry->d_name);
-	if (S_ISBLK(statbuf.st_mode)) // is block device
-	    printf("%s\n\t%s [blk dev]", pathbuf, entry->d_name);
-	if (S_ISFIFO(statbuf.st_mode)) // is FIFO
-	    printf("%s\n\t%s [FIFO]", pathbuf, entry->d_name);
-	if (S_ISSOCK(statbuf.st_mode)) // is socket
-	    printf("%s\n\t%s [socket]", pathbuf, entry->d_name);
+//	if (S_ISLNK(statbuf.st_mode)) // is symlink
+//	    printf("%s\n\t%s [symlink]", pathbuf, entry->d_name);
+//	if (S_ISREG(statbuf.st_mode))	// обычный файл
+//	    printf("%s\n\t%s (file)", pathbuf, entry->d_name);
+//	if (S_ISDIR(statbuf.st_mode))	// fname is directory
+//	    printf("%s\n\t<%s> <DIR>", pathbuf, entry->d_name);
+//	if (S_ISCHR(statbuf.st_mode)) // is character device
+//	    printf("%s\n\t%s [char dev]", pathbuf, entry->d_name);
+//	if (S_ISBLK(statbuf.st_mode)) // is block device
+//	    printf("%s\n\t%s [blk dev]", pathbuf, entry->d_name);
+//	if (S_ISFIFO(statbuf.st_mode)) // is FIFO
+//	    printf("%s\n\t%s [FIFO]", pathbuf, entry->d_name);
+//	if (S_ISSOCK(statbuf.st_mode)) // is socket
+//	    printf("%s\n\t%s [socket]", pathbuf, entry->d_name);
+	printf("%s\n\t%s %s", pathbuf, entry->d_name,
+		(S_ISLNK(statbuf.st_mode))? "[symlink]":
+		(S_ISREG(statbuf.st_mode))? "(file)":
+		(S_ISDIR(statbuf.st_mode))? "<DIR>":
+		(S_ISCHR(statbuf.st_mode))? "[char dev]":
+		(S_ISBLK(statbuf.st_mode))? "[blk dev]":
+		(S_ISFIFO(statbuf.st_mode))? "[FIFO]":
+		(S_ISSOCK(statbuf.st_mode))? "[socket]":
+			"[unknown type]");
 	cout << endl;
     }; /* for entry = readdir(dir); entry != NULL; entry = readdir(dir) */
     if (entry_cnt)
