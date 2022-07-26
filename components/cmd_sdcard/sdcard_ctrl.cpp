@@ -14,21 +14,19 @@
 #include <cstdlib>
 #include <iostream>
 #include <iomanip>
-//#include <stdarg.h>
 #include <cstdarg>
 
-//#include <string.h>
 #include <cstring>
+#include <cctype>
 #include <sys/unistd.h>
 #include <cerrno>
 #include "esp_log.h"
 #include "esp_console.h"
 #include "esp_system.h"
 #include <argtable3/argtable3.h>
-//#include <sys/unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <unistd.h>
+//#include <unistd.h>
 #include <regex>
 #ifdef __PURE_C__
 //#include <fcntl.h>
@@ -317,7 +315,7 @@ esp_err_t Server::ls(const char pattern[])
 	return ESP_FAIL;
     }; /* if realpath(pattern, pathbuf) == NULL */
 
-	char * /*const*/ fnbuf = pathbuf + strlen(pathbuf);
+	char * fnbuf = pathbuf + strlen(pathbuf);
 
     fnbuf[0] = '/';
     fnbuf++;
@@ -329,20 +327,6 @@ esp_err_t Server::ls(const char pattern[])
 	strcpy(fnbuf, entry->d_name);
 	stat(pathbuf, &statbuf);
 
-//	if (S_ISLNK(statbuf.st_mode)) // is symlink
-//	    printf("%s\n\t%s [symlink]", pathbuf, entry->d_name);
-//	if (S_ISREG(statbuf.st_mode))	// обычный файл
-//	    printf("%s\n\t%s (file)", pathbuf, entry->d_name);
-//	if (S_ISDIR(statbuf.st_mode))	// fname is directory
-//	    printf("%s\n\t<%s> <DIR>", pathbuf, entry->d_name);
-//	if (S_ISCHR(statbuf.st_mode)) // is character device
-//	    printf("%s\n\t%s [char dev]", pathbuf, entry->d_name);
-//	if (S_ISBLK(statbuf.st_mode)) // is block device
-//	    printf("%s\n\t%s [blk dev]", pathbuf, entry->d_name);
-//	if (S_ISFIFO(statbuf.st_mode)) // is FIFO
-//	    printf("%s\n\t%s [FIFO]", pathbuf, entry->d_name);
-//	if (S_ISSOCK(statbuf.st_mode)) // is socket
-//	    printf("%s\n\t%s [socket]", pathbuf, entry->d_name);
 	printf("%s\n\t%s %s", pathbuf, entry->d_name,
 		(S_ISLNK(statbuf.st_mode))? "[symlink]":
 		(S_ISREG(statbuf.st_mode))? "(file)":
@@ -484,14 +468,92 @@ esp_err_t Server::type()
 // type text from keyboard to file and to screen
 esp_err_t Server::type(const char fname[])
 {
-    cout << endl
-	 << "**** Type the text on keyboard to screen and file <" << fname << ">. ****" << endl
-	 << endl;
-//    cout << TAG << ": " << "Procedure \"cat(fname)\" is not yet released now" << endl;
+	struct stat statbuf;
+
+    // Test file 'fname' for existing
+    errno = 0;	// clear all error state
+    if (stat(fname, &statbuf) == -1)
+    {
+	if (errno == ENOENT)	// error "file does not exist"
+	{
+	    ESP_LOGI("console::type", "OK, opening the file \"%s\".", fname);
+	}
+	else	// error other than "file does not exist"
+	{
+	    ESP_LOGE("console::type", "Error test existing file %s: %s", fname , strerror(errno));
+	    return ESP_FAIL;
+	}
+    } /* if stat(fname, &statbuf) == -1 */
+    else
+    {	// Error - file fname is exist
+#define TYPE_ANSWER_BUF_SIZE 10
+
+	    char reply[TYPE_ANSWER_BUF_SIZE];
+
+	printf("File %s is exist.\nDo you want use this file? (yes(add)/over(write)/No): ", fname);
+//	cin >> reply;
+
+//	    char c = '\0';
+
+	for (char/*int*/ c, i = 0; i < TYPE_ANSWER_BUF_SIZE; i++)
+	{
+	    cin >> noskipws >> c;
+	    cout << c;
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wchar-subscripts"
+//#pragma GCC diagnostic ignored "-Werror=char-subscripts"
+	    reply[i] = c;
+#pragma GCC diagnostic pop
+
+	    if (c == '\n')
+	    {
+		cout << "<LF>" << endl;
+		cout << "Exit from the input read loop" << endl;
+		break;
+	    }
+	    if (c == '\r')
+	    {
+		cout << "<CR>" << endl;
+		cout << "Exit from the input read loop" << endl;
+	    };
+	}; /* for char c, i = 0; i < TYPE_ANSWER_BUF_SIZE; i++ */
+	switch (tolower(reply[0]))
+	{
+	case 'a':
+	case 'y':
+	    ESP_LOGI("console::type <filename>", "OK, open the file %s to add.", fname);
+	    break;
+
+	case 'o':
+	case 'w':
+	    ESP_LOGW("console::type <filename>", "OK, open the file %s to owerwrite.", fname);
+	    break;
+
+	case 'n':
+	    ESP_LOGW("console::type <filename>", "User cancel opening file %s.", fname);
+	    return ESP_FAIL;
+	    break;
+
+	default:
+	    ESP_LOGW("console::type <filename>", "H.z. cho, input char value is: [%d]", (int)reply[0]);
+
+	}; /* switch tolower(reply[0]) */
+    }; /* else if stat(fname, &statbuf) == -1 */
+
+
+
+
+
+    cout /*<< endl*/
+//    << "**** Type the text on keyboard to screen and file <" << fname << ">. ****" << endl
+    << aso::format("**** Type the text on keyboard to screen and file [%s]. ****") % fname  << endl
+    << endl;
+
+
     ESP_LOGW("Console::type", "Command \"%s %s \" is not yet implemented now", "type", fname);
     cout << "Exit..." << endl;
     cout << endl
-	 << "**** End of typing the text on keyboard for the screen&file. ****" << endl
+	 << aso::format("**** End of typing the text on keyboard for the screen and the file %s. ****") % fname << endl
 	 << endl;
     return ESP_ERR_INVALID_VERSION;
 }; /* type */
