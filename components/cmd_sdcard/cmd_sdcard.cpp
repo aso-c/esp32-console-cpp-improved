@@ -354,7 +354,7 @@ void register_cat(void)
 
 static int type_act(int argc, char **argv)
 {
-    cout << "\"cat\" command execution" << endl;
+    cout << "\"type\" command execution" << endl;
     switch (argc)
     {
     case 1:
@@ -805,7 +805,7 @@ esp_err_t SDctrl::act_type()
 
     default:
 //	cout << "Any parameters error." << endl;
-	ESP_LOGE("sdcard cat command", "more than one parameters (%d) - what file save the type output?", argc - 2);
+	ESP_LOGE("sdcard type command", "more than one parameters (%d) - what file save the type output?", argc - 2);
     }; /* switch argc */
     cout << endl;
 

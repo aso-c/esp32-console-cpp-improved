@@ -287,11 +287,17 @@ esp_err_t Server::ls()
     return ls(".");
 }; /* Server::ls */
 
+// Printout one entry of the dir, pure C edition
+void ls_entry_printout_pure_C(const char fullpath[], const char name[]);
+// Printout one entry of the dir, C++ edition
+void ls_entry_printout_Cpp(const char fullpath[], const char name[]);
+
+
 // print a list of files in the specified directory
 esp_err_t Server::ls(const char pattern[])
 {
 //#if defined(__PURE_C__) || __cplusplus < 201703L
-#ifdef __PURE_C__
+//#ifdef __PURE_C__
 	DIR *dir;	// Directory descriptor
 
     dir = opendir(pattern);
@@ -325,18 +331,23 @@ esp_err_t Server::ls(const char pattern[])
     {
 	entry_cnt++;
 	strcpy(fnbuf, entry->d_name);
-	stat(pathbuf, &statbuf);
+//	stat(pathbuf, &statbuf);
 
-	printf("%s\n\t%s %s", pathbuf, entry->d_name,
-		(S_ISLNK(statbuf.st_mode))? "[symlink]":
-		(S_ISREG(statbuf.st_mode))? "(file)":
-		(S_ISDIR(statbuf.st_mode))? "<DIR>":
-		(S_ISCHR(statbuf.st_mode))? "[char dev]":
-		(S_ISBLK(statbuf.st_mode))? "[blk dev]":
-		(S_ISFIFO(statbuf.st_mode))? "[FIFO]":
-		(S_ISSOCK(statbuf.st_mode))? "[socket]":
-			"[unknown type]");
-	cout << endl;
+#ifdef __PURE_C__
+	ls_entry_printout_pure_C(pathbuf, entry->d_name);
+#else
+	ls_entry_printout_Cpp(pathbuf, entry->d_name);
+#endif
+//	printf("%s\n\t%s %s", pathbuf, entry->d_name,
+//		(S_ISLNK(statbuf.st_mode))? "[symlink]":
+//		(S_ISREG(statbuf.st_mode))? "(file)":
+//		(S_ISDIR(statbuf.st_mode))? "<DIR>":
+//		(S_ISCHR(statbuf.st_mode))? "[char dev]":
+//		(S_ISBLK(statbuf.st_mode))? "[blk dev]":
+//		(S_ISFIFO(statbuf.st_mode))? "[FIFO]":
+//		(S_ISSOCK(statbuf.st_mode))? "[socket]":
+//			"[unknown type]");
+//	cout << endl;
     }; /* for entry = readdir(dir); entry != NULL; entry = readdir(dir) */
     if (entry_cnt)
     {
@@ -353,10 +364,43 @@ esp_err_t Server::ls(const char pattern[])
     }; /* if errno != 0 */
     closedir(dir);
     cout << endl;
-#else
-#endif
+//#else
+//#endif
     return ret;
 }; /* Server::ls */
+
+
+void ls_entry_printout_pure_C(const char fullpath[], const char name[])
+{
+	struct stat statbuf;
+
+//    for ( struct dirent *entry = readdir(dir); entry != NULL; entry = readdir(dir))
+//    {
+//	entry_cnt++;
+//	strcpy(fnbuf, entry->d_name);
+//	stat(pathbuf, &statbuf);
+	stat(fullpath, &statbuf);
+
+	printf("%s\n\t%s %s\n", fullpath/*buf*/, /*entry->d_*/name,
+		(S_ISLNK(statbuf.st_mode))? "[symlink]":
+		(S_ISREG(statbuf.st_mode))? "(file)":
+		(S_ISDIR(statbuf.st_mode))? "<DIR>":
+		(S_ISCHR(statbuf.st_mode))? "[char dev]":
+		(S_ISBLK(statbuf.st_mode))? "[blk dev]":
+		(S_ISFIFO(statbuf.st_mode))? "[FIFO]":
+		(S_ISSOCK(statbuf.st_mode))? "[socket]":
+			"[unknown type]");
+//	cout << endl;
+//    }; /* for entry = readdir(dir); entry != NULL; entry = readdir(dir) */
+//    ;
+}; /* ls_entry_printout_pure_C */
+
+// Printout one entry of the dir, C++ edition
+void ls_entry_printout_Cpp(const char fullpath[], const char name[])
+{
+     ;
+}; /* ls_entry_printout_Cpp */
+
 
 
 // remove files - error handler
@@ -468,81 +512,75 @@ esp_err_t Server::type()
 // type text from keyboard to file and to screen
 esp_err_t Server::type(const char fname[])
 {
-	struct stat statbuf;
+#define TYPE_FN_TAG "console::type <filename>"
 
     // Test file 'fname' for existing
     errno = 0;	// clear all error state
-    if (stat(fname, &statbuf) == -1)
+    if (access(fname, F_OK) == -1)
     {
 	if (errno == ENOENT)	// error "file does not exist"
 	{
-	    ESP_LOGI("console::type", "OK, opening the file \"%s\".", fname);
+		struct stat statbuf;
+
+	    if (!stat(fname, &statbuf))	// but if the fname still exists here, then it is a directory
+	    {
+		ESP_LOGE(TYPE_FN_TAG, "Error: path %s exist, and is not a file, but a %s.\nOperation is not permitted.",
+			fname, (S_ISLNK(statbuf.st_mode))? "symlink":
+			(S_ISDIR(statbuf.st_mode))? "directory":
+			(S_ISCHR(statbuf.st_mode))? "character device":
+			(S_ISBLK(statbuf.st_mode))? "block device":
+			(S_ISFIFO(statbuf.st_mode))? "FIFO channel":
+			(S_ISSOCK(statbuf.st_mode))? "socket":
+				"(unknown type)");
+		return ESP_ERR_NOT_SUPPORTED;
+	    }
+	    ESP_LOGI(TYPE_FN_TAG, "OK, file \"%s\" does not exist, opening this file.", fname);
 	}
 	else	// error other than "file does not exist"
 	{
-	    ESP_LOGE("console::type", "Error test existing file %s: %s", fname , strerror(errno));
+	    ESP_LOGE(TYPE_FN_TAG, "Error test existing file %s: %s", fname , strerror(errno));
 	    return ESP_FAIL;
 	}
     } /* if stat(fname, &statbuf) == -1 */
     else
     {	// Error - file fname is exist
-#define TYPE_ANSWER_BUF_SIZE 10
 
-	    char reply[TYPE_ANSWER_BUF_SIZE];
+	    char c;
 
-	printf("File %s is exist.\nDo you want use this file? (yes(add)/over(write)/No): ", fname);
-//	cin >> reply;
+	printf("File %s is exist.\nDo you want use this file? [yes(add)/over(write)/No]: ", fname);
+	cin >> noskipws >> c;
+	cout << c;
 
-//	    char c = '\0';
+	if (c == '\n')
+	    cout << "<LF>";
+	cout << endl;
 
-	for (char/*int*/ c, i = 0; i < TYPE_ANSWER_BUF_SIZE; i++)
-	{
-	    cin >> noskipws >> c;
-	    cout << c;
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wchar-subscripts"
-//#pragma GCC diagnostic ignored "-Werror=char-subscripts"
-	    reply[i] = c;
-#pragma GCC diagnostic pop
-
-	    if (c == '\r')
-	    {
-		cout << "<CR>" << endl;
-		cout << "Exit from the input read loop?" << endl;
-		if (cin.eof())
-		    break;
-		else continue;
-	    };
-	    if (c == '\n')
-	    {
-		cout << "<LF>" << endl;
-		cout << "Exit from the input read loop" << endl;
-		if (cin.eof())
-		    break;
-		else continue;
-	    }
-	}; /* for char c, i = 0; i < TYPE_ANSWER_BUF_SIZE; i++ */
-	switch (tolower(reply[0]))
+	switch (tolower(c))
 	{
 	case 'a':
 	case 'y':
-	    ESP_LOGI("console::type <filename>", "OK, open the file %s to add.", fname);
+	    ESP_LOGI(TYPE_FN_TAG, "OK, open the file %s to add.", fname);
 	    break;
 
 	case 'o':
 	case 'w':
-	    ESP_LOGW("console::type <filename>", "OK, open the file %s to owerwrite.", fname);
+	    ESP_LOGW(TYPE_FN_TAG, "OK, open the file %s to owerwrite.", fname);
 	    break;
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wimplicit-fallthrough="
+	case '\n':
+	    cout << "Enter char '\\n'" << endl;
 	case 'n':
 	    ESP_LOGW("console::type <filename>", "User cancel opening file %s.", fname);
-	    return ESP_FAIL;
+	    return ESP_ERR_NOT_FOUND;
 	    break;
+#pragma GCC diagnostic pop
 
 	default:
-	    ESP_LOGW("console::type <filename>", "H.z. cho, input char value is: [%d]", (int)reply[0]);
-
-	}; /* switch tolower(reply[0]) */
+	    ESP_LOGW(TYPE_FN_TAG, "Error: H.z. cho in input, input char value is: [%d]", (int)c);
+	    return ESP_ERR_INVALID_ARG;
+	}; /* switch tolower(c) */
     }; /* else if stat(fname, &statbuf) == -1 */
 
 
@@ -561,6 +599,7 @@ esp_err_t Server::type(const char fname[])
 	 << aso::format("**** End of typing the text on keyboard for the screen and the file %s. ****") % fname << endl
 	 << endl;
     return ESP_ERR_INVALID_VERSION;
+#undef TYPE_FN_TAG
 }; /* type */
 
 
