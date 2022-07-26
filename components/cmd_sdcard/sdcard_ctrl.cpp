@@ -505,17 +505,22 @@ esp_err_t Server::type(const char fname[])
 	    reply[i] = c;
 #pragma GCC diagnostic pop
 
+	    if (c == '\r')
+	    {
+		cout << "<CR>" << endl;
+		cout << "Exit from the input read loop?" << endl;
+		if (cin.eof())
+		    break;
+		else continue;
+	    };
 	    if (c == '\n')
 	    {
 		cout << "<LF>" << endl;
 		cout << "Exit from the input read loop" << endl;
-		break;
+		if (cin.eof())
+		    break;
+		else continue;
 	    }
-	    if (c == '\r')
-	    {
-		cout << "<CR>" << endl;
-		cout << "Exit from the input read loop" << endl;
-	    };
 	}; /* for char c, i = 0; i < TYPE_ANSWER_BUF_SIZE; i++ */
 	switch (tolower(reply[0]))
 	{
