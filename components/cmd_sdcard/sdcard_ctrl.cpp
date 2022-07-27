@@ -307,7 +307,6 @@ esp_err_t Server::ls(const char pattern[])
     }; /* if !dir */
 
 	esp_err_t ret = ESP_OK;
-	struct stat statbuf;
 	char pathbuf[PATH_MAX + 1];
 	int entry_cnt = 0;
 
@@ -331,23 +330,12 @@ esp_err_t Server::ls(const char pattern[])
     {
 	entry_cnt++;
 	strcpy(fnbuf, entry->d_name);
-//	stat(pathbuf, &statbuf);
 
 #ifdef __PURE_C__
 	ls_entry_printout_pure_C(pathbuf, entry->d_name);
 #else
 	ls_entry_printout_Cpp(pathbuf, entry->d_name);
 #endif
-//	printf("%s\n\t%s %s", pathbuf, entry->d_name,
-//		(S_ISLNK(statbuf.st_mode))? "[symlink]":
-//		(S_ISREG(statbuf.st_mode))? "(file)":
-//		(S_ISDIR(statbuf.st_mode))? "<DIR>":
-//		(S_ISCHR(statbuf.st_mode))? "[char dev]":
-//		(S_ISBLK(statbuf.st_mode))? "[blk dev]":
-//		(S_ISFIFO(statbuf.st_mode))? "[FIFO]":
-//		(S_ISSOCK(statbuf.st_mode))? "[socket]":
-//			"[unknown type]");
-//	cout << endl;
     }; /* for entry = readdir(dir); entry != NULL; entry = readdir(dir) */
     if (entry_cnt)
     {
@@ -374,31 +362,35 @@ void ls_entry_printout_pure_C(const char fullpath[], const char name[])
 {
 	struct stat statbuf;
 
-//    for ( struct dirent *entry = readdir(dir); entry != NULL; entry = readdir(dir))
-//    {
-//	entry_cnt++;
-//	strcpy(fnbuf, entry->d_name);
-//	stat(pathbuf, &statbuf);
-	stat(fullpath, &statbuf);
-
-	printf("%s\n\t%s %s\n", fullpath/*buf*/, /*entry->d_*/name,
-		(S_ISLNK(statbuf.st_mode))? "[symlink]":
-		(S_ISREG(statbuf.st_mode))? "(file)":
-		(S_ISDIR(statbuf.st_mode))? "<DIR>":
-		(S_ISCHR(statbuf.st_mode))? "[char dev]":
-		(S_ISBLK(statbuf.st_mode))? "[blk dev]":
-		(S_ISFIFO(statbuf.st_mode))? "[FIFO]":
-		(S_ISSOCK(statbuf.st_mode))? "[socket]":
-			"[unknown type]");
-//	cout << endl;
-//    }; /* for entry = readdir(dir); entry != NULL; entry = readdir(dir) */
-//    ;
+    stat(fullpath, &statbuf);
+    printf("%s\n\t%s %s\n", fullpath, name,
+	    (S_ISLNK(statbuf.st_mode))? "[symlink]":
+	    (S_ISREG(statbuf.st_mode))? "(file)":
+	    (S_ISDIR(statbuf.st_mode))? "<DIR>":
+	    (S_ISCHR(statbuf.st_mode))? "[char dev]":
+	    (S_ISBLK(statbuf.st_mode))? "[blk dev]":
+	    (S_ISFIFO(statbuf.st_mode))? "[FIFO]":
+	    (S_ISSOCK(statbuf.st_mode))? "[socket]":
+	    "[unknown type]");
 }; /* ls_entry_printout_pure_C */
 
 // Printout one entry of the dir, C++ edition
 void ls_entry_printout_Cpp(const char fullpath[], const char name[])
 {
-     ;
+	struct stat statbuf;
+
+    stat(fullpath, &statbuf);
+//    cout << aso::format("%s\n\t%s %s", fullpath, name,
+    cout << fullpath << endl
+	<< aso::format("\t%s %s", name,
+	    (S_ISLNK(statbuf.st_mode))? "[symlink]":
+	    (S_ISREG(statbuf.st_mode))? "(file)":
+	    (S_ISDIR(statbuf.st_mode))? "<DIR>":
+	    (S_ISCHR(statbuf.st_mode))? "[char dev]":
+	    (S_ISBLK(statbuf.st_mode))? "[blk dev]":
+	    (S_ISFIFO(statbuf.st_mode))? "[FIFO]":
+	    (S_ISSOCK(statbuf.st_mode))? "[socket]":
+	    "[unknown type]") << endl;
 }; /* ls_entry_printout_Cpp */
 
 
