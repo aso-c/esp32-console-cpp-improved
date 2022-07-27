@@ -380,6 +380,8 @@ esp_err_t Server::ls(const char pattern[])
 }; /* Server::ls */
 
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
 // Listing the entries of the opened directory
 // Pure C edition
 // Parameters:
@@ -424,8 +426,6 @@ int listing_direntries_pureC(DIR *dir, const char path[])
 // Return:
 //	>=0 - listed entries counter;
 //	<0  - error - -1*(ESP_ERR_xxx) or ESP_FAIL (-1) immediately
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-function"
 //-Wunused-function
 int listing_direntries_Cpp(DIR *dir, const char path[])
 {
@@ -479,23 +479,11 @@ void ls_entry_printout_Cpp(const char fullpath[], const char name[])
 	struct stat statbuf;
 
     stat(fullpath, &statbuf);
-//    cout << aso::format("%s\n\t%s %s", fullpath, name,
     cout << fullpath << endl
-//	<< aso::format("\t%s %s", name,
-//	    (S_ISLNK(statbuf.st_mode))? "[symlink]":
-//	    (S_ISREG(statbuf.st_mode))? "(file)":
-//	    (S_ISDIR(statbuf.st_mode))? "<DIR>":
-//	    (S_ISCHR(statbuf.st_mode))? "[char dev]":
-//	    (S_ISBLK(statbuf.st_mode))? "[blk dev]":
-//	    (S_ISFIFO(statbuf.st_mode))? "[FIFO]":
-//	    (S_ISSOCK(statbuf.st_mode))? "[socket]":
-//	    "[unknown type]") << endl;
 	<< aso::format("\t%s ") % name
 	<< aso::format((S_ISDIR(statbuf.st_mode))? "<DIR>":
 	    (S_ISREG(statbuf.st_mode))? "(file)": "[%s]",
 		(S_ISLNK(statbuf.st_mode))? "symlink":
-//		    (S_ISREG(statbuf.st_mode))? "(file)":
-//		    (S_ISDIR(statbuf.st_mode))? "<DIR>":
 		(S_ISCHR(statbuf.st_mode))? "char dev":
 		(S_ISBLK(statbuf.st_mode))? "blk dev":
 		(S_ISFIFO(statbuf.st_mode))? "FIFO":
@@ -616,6 +604,8 @@ esp_err_t Server::type(const char fname[])
 {
 #define TYPE_FN_TAG "console::type <filename>"
 
+	FILE *storage;
+
     // Test file 'fname' for existing
     errno = 0;	// clear all error state
     if (access(fname, F_OK) == -1)
@@ -637,6 +627,7 @@ esp_err_t Server::type(const char fname[])
 		return ESP_ERR_NOT_SUPPORTED;
 	    }
 	    ESP_LOGI(TYPE_FN_TAG, "OK, file \"%s\" does not exist, opening this file.", fname);
+	    cout << aso::format("Open file %s for the write") % fname << endl;
 	}
 	else	// error other than "file does not exist"
 	{
@@ -662,11 +653,13 @@ esp_err_t Server::type(const char fname[])
 	case 'a':
 	case 'y':
 	    ESP_LOGI(TYPE_FN_TAG, "OK, open the file %s to add.", fname);
+	    cout << aso::format("File %s is opened for add+write.") % fname << endl;
 	    break;
 
 	case 'o':
 	case 'w':
 	    ESP_LOGW(TYPE_FN_TAG, "OK, open the file %s to owerwrite.", fname);
+	    cout << aso::format("File %s is opened to truncate+write (overwrite).") % fname << endl;
 	    break;
 
 #pragma GCC diagnostic push
@@ -685,18 +678,18 @@ esp_err_t Server::type(const char fname[])
 	}; /* switch tolower(c) */
     }; /* else if stat(fname, &statbuf) == -1 */
 
-
-
-
-
-    cout /*<< endl*/
-//    << "**** Type the text on keyboard to screen and file <" << fname << ">. ****" << endl
-    << aso::format("**** Type the text on keyboard to screen and file [%s]. ****") % fname  << endl
+    cout << aso::format("**** Type the text on keyboard to screen and file [%s]. ****") % fname  << endl
     << endl;
+
+
 
 
     ESP_LOGW("Console::type", "Command \"%s %s \" is not yet implemented now", "type", fname);
     cout << "Exit..." << endl;
+
+    cout << aso::format("Close the file %s.") % fname << endl;
+
+
     cout << endl
 	 << aso::format("**** End of typing the text on keyboard for the screen and the file %s. ****") % fname << endl
 	 << endl;
