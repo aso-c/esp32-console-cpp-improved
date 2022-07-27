@@ -424,6 +424,9 @@ int listing_direntries_pureC(DIR *dir, const char path[])
 // Return:
 //	>=0 - listed entries counter;
 //	<0  - error - -1*(ESP_ERR_xxx) or ESP_FAIL (-1) immediately
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
+//-Wunused-function
 int listing_direntries_Cpp(DIR *dir, const char path[])
 {
 	char pathbuf[PATH_MAX + 1];
@@ -449,6 +452,7 @@ int listing_direntries_Cpp(DIR *dir, const char path[])
     }; /* for entry = readdir(dir); entry != NULL; entry = readdir(dir) */
     return cnt;
 }; /* listing_direntries_Cpp */
+#pragma GCC diagnostic pop
 
 
 
@@ -477,15 +481,26 @@ void ls_entry_printout_Cpp(const char fullpath[], const char name[])
     stat(fullpath, &statbuf);
 //    cout << aso::format("%s\n\t%s %s", fullpath, name,
     cout << fullpath << endl
-	<< aso::format("\t%s %s", name,
-	    (S_ISLNK(statbuf.st_mode))? "[symlink]":
-	    (S_ISREG(statbuf.st_mode))? "(file)":
-	    (S_ISDIR(statbuf.st_mode))? "<DIR>":
-	    (S_ISCHR(statbuf.st_mode))? "[char dev]":
-	    (S_ISBLK(statbuf.st_mode))? "[blk dev]":
-	    (S_ISFIFO(statbuf.st_mode))? "[FIFO]":
-	    (S_ISSOCK(statbuf.st_mode))? "[socket]":
-	    "[unknown type]") << endl;
+//	<< aso::format("\t%s %s", name,
+//	    (S_ISLNK(statbuf.st_mode))? "[symlink]":
+//	    (S_ISREG(statbuf.st_mode))? "(file)":
+//	    (S_ISDIR(statbuf.st_mode))? "<DIR>":
+//	    (S_ISCHR(statbuf.st_mode))? "[char dev]":
+//	    (S_ISBLK(statbuf.st_mode))? "[blk dev]":
+//	    (S_ISFIFO(statbuf.st_mode))? "[FIFO]":
+//	    (S_ISSOCK(statbuf.st_mode))? "[socket]":
+//	    "[unknown type]") << endl;
+	<< aso::format("\t%s ") % name
+	<< aso::format((S_ISDIR(statbuf.st_mode))? "<DIR>":
+	    (S_ISREG(statbuf.st_mode))? "(file)": "[%s]",
+		(S_ISLNK(statbuf.st_mode))? "symlink":
+//		    (S_ISREG(statbuf.st_mode))? "(file)":
+//		    (S_ISDIR(statbuf.st_mode))? "<DIR>":
+		(S_ISCHR(statbuf.st_mode))? "char dev":
+		(S_ISBLK(statbuf.st_mode))? "blk dev":
+		(S_ISFIFO(statbuf.st_mode))? "FIFO":
+		(S_ISSOCK(statbuf.st_mode))? "socket":
+			"unknown/other type") << endl;
 }; /* ls_entry_printout_Cpp */
 
 
