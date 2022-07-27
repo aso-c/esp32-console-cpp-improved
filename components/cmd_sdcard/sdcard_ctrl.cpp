@@ -287,10 +287,26 @@ esp_err_t Server::ls()
     return ls(".");
 }; /* Server::ls */
 
+
+//
+// Listing the entries of the opened directory
+// Parameters:
+//	dir  - opened directory stream;
+//	path - full path of this directory
+// Return:
+//	>=0 - listed entries counter;
+//	<0  - error - -1*(ESP_ERR_xxx) or ESP_FAIL (-1) immediately
+// Pure C edition
+static int listing_direntries_pureC(DIR *dir, const char path[]);
+// C++ edition
+static int listing_direntries_Cpp(DIR *dir, const char path[]);
+
+
+
 // Printout one entry of the dir, pure C edition
-void ls_entry_printout_pure_C(const char fullpath[], const char name[]);
+static void ls_entry_printout_pure_C(const char fullpath[], const char name[]);
 // Printout one entry of the dir, C++ edition
-void ls_entry_printout_Cpp(const char fullpath[], const char name[]);
+static void ls_entry_printout_Cpp(const char fullpath[], const char name[]);
 
 
 // print a list of files in the specified directory
@@ -298,6 +314,7 @@ esp_err_t Server::ls(const char pattern[])
 {
 //#if defined(__PURE_C__) || __cplusplus < 201703L
 //#ifdef __PURE_C__
+    	int entry_cnt = 0;
 	DIR *dir;	// Directory descriptor
 
     dir = opendir(pattern);
@@ -307,36 +324,41 @@ esp_err_t Server::ls(const char pattern[])
     }; /* if !dir */
 
 	esp_err_t ret = ESP_OK;
-	char pathbuf[PATH_MAX + 1];
-	int entry_cnt = 0;
 
-    errno = 0;	// clear any possible errors
     printf("Files in the directory <%s>\n",  pattern);
     printf("----------------\n");
 
-    if (realpath(pattern, pathbuf) == NULL)
-    {
-	ESP_LOGE("Console::ls", "Error canonicalizing path \"<%s>\", %s", pattern, strerror(errno));
-	return ESP_FAIL;
-    }; /* if realpath(pattern, pathbuf) == NULL */
-
-	char * fnbuf = pathbuf + strlen(pathbuf);
-
-    fnbuf[0] = '/';
-    fnbuf++;
-
-
-    for ( struct dirent *entry = readdir(dir); entry != NULL; entry = readdir(dir))
-    {
-	entry_cnt++;
-	strcpy(fnbuf, entry->d_name);
-
 #ifdef __PURE_C__
-	ls_entry_printout_pure_C(pathbuf, entry->d_name);
+    entry_cnt = listing_direntries_pureC(dir, pattern);
 #else
-	ls_entry_printout_Cpp(pathbuf, entry->d_name);
+    entry_cnt = listing_direntries_Cpp(dir, pattern);
 #endif
-    }; /* for entry = readdir(dir); entry != NULL; entry = readdir(dir) */
+//	char pathbuf[PATH_MAX + 1];
+//	int entry_cnt = 0;
+//
+//    errno = 0;	// clear any possible errors
+//    if (realpath(pattern, pathbuf) == NULL)
+//    {
+//	ESP_LOGE("Console::ls", "Error canonicalizing path \"<%s>\", %s", pattern, strerror(errno));
+//	return ESP_FAIL;
+//    }; /* if realpath(pattern, pathbuf) == NULL */
+//
+//	char * fnbuf = pathbuf + strlen(pathbuf);
+//
+//    fnbuf[0] = '/';
+//    fnbuf++;
+//
+//    for ( struct dirent *entry = readdir(dir); entry != NULL; entry = readdir(dir))
+//    {
+//	entry_cnt++;
+//	strcpy(fnbuf, entry->d_name);
+//
+//#ifdef __PURE_C__
+//	ls_entry_printout_pure_C(pathbuf, entry->d_name);
+//#else
+//	ls_entry_printout_Cpp(pathbuf, entry->d_name);
+//#endif
+//    }; /* for entry = readdir(dir); entry != NULL; entry = readdir(dir) */
     if (entry_cnt)
     {
 	cout << "----------------" << endl;
@@ -356,6 +378,79 @@ esp_err_t Server::ls(const char pattern[])
 //#endif
     return ret;
 }; /* Server::ls */
+
+
+// Listing the entries of the opened directory
+// Pure C edition
+// Parameters:
+//	dir  - opened directory stream;
+//	path - full path of this directory
+// Return:
+//	>=0 - listed entries counter;
+//	<0  - error - -1*(ESP_ERR_xxx) or ESP_FAIL (-1) immediately
+int listing_direntries_pureC(DIR *dir, const char path[])
+{
+	char pathbuf[PATH_MAX + 1];
+	char * fnbuf;
+	int cnt = 0;
+
+    if (realpath(path, pathbuf) == NULL)
+    {
+	ESP_LOGE("Console::ls", "Error canonicalizing path \"<%s>\", %s", path, strerror(errno));
+	return ESP_FAIL;
+    }; /* if realpath(pattern, pathbuf) == NULL */
+
+    errno = 0;	// clear any possible errors
+    fnbuf = pathbuf + strlen(pathbuf);
+    fnbuf[0] = '/';
+    fnbuf++;
+
+    for ( struct dirent *entry = readdir(dir); entry != NULL; entry = readdir(dir))
+    {
+	cnt++;
+	strcpy(fnbuf, entry->d_name);
+
+	ls_entry_printout_pure_C(pathbuf, entry->d_name);
+    }; /* for entry = readdir(dir); entry != NULL; entry = readdir(dir) */
+    return cnt;
+}; /* listing_direntries_pureC */
+
+
+// Listing the entries of the opened directory
+// C++ edition
+// Parameters:
+//	dir  - opened directory stream;
+//	path - full path of this directory
+// Return:
+//	>=0 - listed entries counter;
+//	<0  - error - -1*(ESP_ERR_xxx) or ESP_FAIL (-1) immediately
+int listing_direntries_Cpp(DIR *dir, const char path[])
+{
+	char pathbuf[PATH_MAX + 1];
+	char * fnbuf;
+	int cnt = 0;
+
+    if (realpath(path, pathbuf) == NULL)
+    {
+	ESP_LOGE("Console::ls", "Error canonicalizing path \"<%s>\", %s", path, strerror(errno));
+	return ESP_FAIL;
+    }; /* if realpath(pattern, pathbuf) == NULL */
+
+    errno = 0;	// clear any possible errors
+    fnbuf = pathbuf + strlen(pathbuf);
+    fnbuf[0] = '/';
+    fnbuf++;
+
+    for ( struct dirent *entry = readdir(dir); entry != NULL; entry = readdir(dir))
+    {
+	cnt++;
+	strcpy(fnbuf, entry->d_name);
+	ls_entry_printout_Cpp(pathbuf, entry->d_name);
+    }; /* for entry = readdir(dir); entry != NULL; entry = readdir(dir) */
+    return cnt;
+}; /* listing_direntries_Cpp */
+
+
 
 
 void ls_entry_printout_pure_C(const char fullpath[], const char name[])
