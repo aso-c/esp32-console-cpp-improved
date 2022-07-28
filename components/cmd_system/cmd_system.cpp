@@ -131,7 +131,7 @@ static int get_version(int argc, char **argv)
     cout << aso::format("\t\t\t\t\t      modified by %s") % CONFIG_APP_PROJECT_MODIFICATOR << std::endl;
     cout << "IDF Version: " << esp_get_idf_version() << endl;
     cout << "Chip info: " << endl;
-    cout << "\tmodel: " << (info.model == CHIP_ESP32 ? "ESP32" : "Unknow") << endl;
+    cout << "\tmodel: " << (info.model == CHIP_ESP32 ? "ESP32" : "Unknown") << endl;
     cout << "\tcores: " << (int)info.cores << endl;
     cout << aso::format("\tfeature:%s%s%s%s%d%s")
          % (info.features & CHIP_FEATURE_WIFI_BGN ? "/802.11bgn" : "")

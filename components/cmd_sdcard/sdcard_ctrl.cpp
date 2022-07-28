@@ -45,7 +45,6 @@
 
 #include "sdcard_ctrl.hpp"
 
-//#include <stdio.h>
 //#include <cstdio>
 
 #include "include/extrstream"
@@ -173,7 +172,6 @@ int Slot::def_num;
     // Unmount default mounted SD-card
     esp_err_t Server::unmount()
     {
-//	return ESP_ERR_NOT_SUPPORTED;
 	cout << TAG << ": " << "Call: unmount(" << mounting.target << ");" << endl;
 	ret = unmount(mounting.target);
 	return ret;
@@ -219,6 +217,7 @@ int Slot::def_num;
 void Server::card_info(FILE* outfile)
 {
     sdmmc_card_print_info(outfile, card);
+    fprintf(outfile, "Sector: %d Bytes\n", card->csd.sector_size);
 }; /* Server::card_info */
 
 
@@ -599,12 +598,18 @@ esp_err_t Server::type()
     return ESP_OK;
 }; /* type */
 
+// Generates an error message if the struct stat
+// refers to an object, other than a file.
+// fname - the name of the object referenced by the struct stat.
+static esp_err_t err4existent(const char fname[], const struct stat* statbuf);
+
+
 // type text from keyboard to file and to screen
 esp_err_t Server::type(const char fname[])
 {
 #define TYPE_FN_TAG "console::type <filename>"
 
-	FILE *storage;
+	FILE *storage = NULL;
 
     // Test file 'fname' for existing
     errno = 0;	// clear all error state
@@ -616,18 +621,21 @@ esp_err_t Server::type(const char fname[])
 
 	    if (!stat(fname, &statbuf))	// but if the fname still exists here, then it is a directory
 	    {
-		ESP_LOGE(TYPE_FN_TAG, "Error: path %s exist, and is not a file, but a %s.\nOperation is not permitted.",
-			fname, (S_ISLNK(statbuf.st_mode))? "symlink":
-			(S_ISDIR(statbuf.st_mode))? "directory":
-			(S_ISCHR(statbuf.st_mode))? "character device":
-			(S_ISBLK(statbuf.st_mode))? "block device":
-			(S_ISFIFO(statbuf.st_mode))? "FIFO channel":
-			(S_ISSOCK(statbuf.st_mode))? "socket":
-				"(unknown type)");
-		return ESP_ERR_NOT_SUPPORTED;
+//		ESP_LOGE(TYPE_FN_TAG, "Error: path %s exist, and is not a file, but a %s.\nOperation is not permitted.",
+//			fname, (S_ISLNK(statbuf.st_mode))? "symlink":
+//			(S_ISDIR(statbuf.st_mode))? "directory":
+//			(S_ISCHR(statbuf.st_mode))? "character device":
+//			(S_ISBLK(statbuf.st_mode))? "block device":
+//			(S_ISFIFO(statbuf.st_mode))? "FIFO channel":
+//			(S_ISSOCK(statbuf.st_mode))? "socket":
+//				"(unknown type)");
+//		return ESP_ERR_NOT_SUPPORTED;
+		return err4existent(fname, &statbuf);
 	    }
 	    ESP_LOGI(TYPE_FN_TAG, "OK, file \"%s\" does not exist, opening this file.", fname);
 	    cout << aso::format("Open file %s for the write") % fname << endl;
+	    errno = 0;	// clear error state
+	    storage = fopen(fname, "w");
 	}
 	else	// error other than "file does not exist"
 	{
@@ -638,7 +646,12 @@ esp_err_t Server::type(const char fname[])
     else
     {	// Error - file fname is exist
 
+	    struct stat statbuf;
 	    char c;
+
+	// fname exists, check that is a regular file
+	if (!stat(fname, &statbuf) && !S_ISREG(statbuf.st_mode))
+	    return err4existent(fname, &statbuf);
 
 	printf("File %s is exist.\nDo you want use this file? [yes(add)/over(write)/No]: ", fname);
 	cin >> noskipws >> c;
@@ -654,12 +667,14 @@ esp_err_t Server::type(const char fname[])
 	case 'y':
 	    ESP_LOGI(TYPE_FN_TAG, "OK, open the file %s to add.", fname);
 	    cout << aso::format("File %s is opened for add+write.") % fname << endl;
+	    storage = fopen(fname, "a");
 	    break;
 
 	case 'o':
 	case 'w':
 	    ESP_LOGW(TYPE_FN_TAG, "OK, open the file %s to owerwrite.", fname);
 	    cout << aso::format("File %s is opened to truncate+write (overwrite).") % fname << endl;
+	    storage = fopen(fname, "w");
 	    break;
 
 #pragma GCC diagnostic push
@@ -678,6 +693,12 @@ esp_err_t Server::type(const char fname[])
 	}; /* switch tolower(c) */
     }; /* else if stat(fname, &statbuf) == -1 */
 
+    if (storage == NULL)
+    {
+	ESP_LOGE(TYPE_FN_TAG, "Any error occured when opening the file %s: %s.", fname, strerror(errno));
+	return ESP_ERR_NOT_FOUND;
+    }; /* if storage == NULL */
+
     cout << aso::format("**** Type the text on keyboard to screen and file [%s]. ****") % fname  << endl
     << endl;
 
@@ -688,6 +709,13 @@ esp_err_t Server::type(const char fname[])
     cout << "Exit..." << endl;
 
     cout << aso::format("Close the file %s.") % fname << endl;
+    fsync(fileno(storage));
+    fclose(storage);
+    if (errno)
+    {
+	ESP_LOGW(TYPE_FN_TAG, "Any error occured when closing the file %s: %s.", fname, strerror(errno));
+	return ESP_FAIL;
+    }; /* if errno */
 
 
     cout << endl
@@ -695,7 +723,26 @@ esp_err_t Server::type(const char fname[])
 	 << endl;
     return ESP_ERR_INVALID_VERSION;
 #undef TYPE_FN_TAG
-}; /* type */
+}; /* type <file> */
+
+
+// Generates an error message if the struct stat
+// refers to an object, other than a file.
+// fname - the name of the object referenced by the struct stat.
+esp_err_t err4existent(const char fname[], const struct stat* statbuf)
+{
+#define EXIST_FN_TAG "console::type exist chechk"
+    ESP_LOGE(EXIST_FN_TAG, "Error: path %s exist, and is not a file, but a %s.\nOperation is not permitted.",
+	    fname, (S_ISLNK(statbuf->st_mode))? "symlink":
+		    (S_ISDIR(statbuf->st_mode))? "directory":
+		    (S_ISCHR(statbuf->st_mode))? "character device":
+		    (S_ISBLK(statbuf->st_mode))? "block device":
+		    (S_ISFIFO(statbuf->st_mode))? "FIFO channel":
+		    (S_ISSOCK(statbuf->st_mode))? "socket":
+			    "(unknown type)");
+    return ESP_ERR_NOT_SUPPORTED;
+#undef EXIST_FN_TAG
+}; /* err4existent */
 
 
     const char* Server::TAG = "SD/MMC service";

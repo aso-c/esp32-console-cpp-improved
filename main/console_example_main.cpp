@@ -19,8 +19,8 @@
 //#define __WITH_BOOST__
 #define __MAX_UNFOLDED_OUTPUT__
 
-//#include <stdio.h>
-//#include <string.h>
+//#include <cstdio>
+//#include <cstring>
 #include "esp_system.h"
 #include "esp_log.h"
 #include "esp_console.h"
@@ -144,6 +144,9 @@ static void initialize_console(void)
 
     /* Set command history size */
     linenoiseHistorySetMaxLen(100);
+
+    /* Set command maximum length */
+    linenoiseSetMaxLineLen(console_config.max_cmdline_length);
 
     /* Don't return empty lines */
     linenoiseAllowEmpty(false);
