@@ -90,6 +90,8 @@ int Slot::def_num;
 
 //--[ class Server ]------------------------------------------------------------------------------------------------
 
+#define CMD_TAG_PRFX "console::"
+
     // Mount SD-card with default parameters
     esp_err_t Server::mount()
     {
@@ -250,10 +252,12 @@ esp_err_t Server::pwd()
 }; /* Server::pwd */
 
 
+#define CMD_NM "cd"
+
 // change a current directory - error handler
 esp_err_t Server::cd()
 {
-    ESP_LOGE("Console::cd", "invoke command \"%s\" without parameters.\n%s", "cd",
+    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "invoke command \"%s\" without parameters.\n%s", "cd",
 	     "This command required directory name to change.");
 
     return ESP_ERR_INVALID_ARG;
@@ -267,8 +271,8 @@ esp_err_t Server::cd(const char dirname[])
     chdir(dirname);
     if (errno != 0)
     {
-	ESP_LOGE("Console::cd", "fail change directory to %s", dirname);
-	perror("Console::cd");
+	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "fail change directory to %s", dirname);
+	perror(CMD_TAG_PRFX CMD_NM);
 	return ESP_FAIL;
     }; /* if errno != 0 */
     return ESP_OK;
@@ -280,12 +284,15 @@ esp_err_t Server::cd(const char dirname[])
 }; /* Server::cd */
 
 
+
+#undef CMD_NM
+#define CMD_NM "ls"
+
 // print a list of files in the current directory
 esp_err_t Server::ls()
 {
     return ls(".");
 }; /* Server::ls */
-
 
 //
 // Listing the entries of the opened directory
@@ -301,13 +308,6 @@ static int listing_direntries_pureC(DIR *dir, const char path[]);
 static int listing_direntries_Cpp(DIR *dir, const char path[]);
 
 
-
-// Printout one entry of the dir, pure C edition
-static void ls_entry_printout_pure_C(const char fullpath[], const char name[]);
-// Printout one entry of the dir, C++ edition
-static void ls_entry_printout_Cpp(const char fullpath[], const char name[]);
-
-
 // print a list of files in the specified directory
 esp_err_t Server::ls(const char pattern[])
 {
@@ -318,7 +318,7 @@ esp_err_t Server::ls(const char pattern[])
 
     dir = opendir(pattern);
     if (!dir) {
-	ESP_LOGE("Console::ls", "Error opening directory <%s>, %s", pattern, strerror(errno));
+	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Error opening directory <%s>, %s", pattern, strerror(errno));
 	return ESP_FAIL;
     }; /* if !dir */
 
@@ -332,32 +332,6 @@ esp_err_t Server::ls(const char pattern[])
 #else
     entry_cnt = listing_direntries_Cpp(dir, pattern);
 #endif
-//	char pathbuf[PATH_MAX + 1];
-//	int entry_cnt = 0;
-//
-//    errno = 0;	// clear any possible errors
-//    if (realpath(pattern, pathbuf) == NULL)
-//    {
-//	ESP_LOGE("Console::ls", "Error canonicalizing path \"<%s>\", %s", pattern, strerror(errno));
-//	return ESP_FAIL;
-//    }; /* if realpath(pattern, pathbuf) == NULL */
-//
-//	char * fnbuf = pathbuf + strlen(pathbuf);
-//
-//    fnbuf[0] = '/';
-//    fnbuf++;
-//
-//    for ( struct dirent *entry = readdir(dir); entry != NULL; entry = readdir(dir))
-//    {
-//	entry_cnt++;
-//	strcpy(fnbuf, entry->d_name);
-//
-//#ifdef __PURE_C__
-//	ls_entry_printout_pure_C(pathbuf, entry->d_name);
-//#else
-//	ls_entry_printout_Cpp(pathbuf, entry->d_name);
-//#endif
-//    }; /* for entry = readdir(dir); entry != NULL; entry = readdir(dir) */
     if (entry_cnt)
     {
 	cout << "----------------" << endl;
@@ -368,7 +342,7 @@ esp_err_t Server::ls(const char pattern[])
 
     if (errno != 0)
     {
-	ESP_LOGE("Console::ls", "Error occured during reading of the directory <%s>, %s", pattern, strerror(errno));
+	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Error occured during reading of the directory <%s>, %s", pattern, strerror(errno));
 	ret = ESP_FAIL;
     }; /* if errno != 0 */
     closedir(dir);
@@ -377,6 +351,12 @@ esp_err_t Server::ls(const char pattern[])
 //#endif
     return ret;
 }; /* Server::ls */
+
+
+// Printout one entry of the dir, pure C edition
+static void ls_entry_printout_pure_C(const char fullpath[], const char name[]);
+// Printout one entry of the dir, C++ edition
+static void ls_entry_printout_Cpp(const char fullpath[], const char name[]);
 
 
 #pragma GCC diagnostic push
@@ -397,7 +377,7 @@ int listing_direntries_pureC(DIR *dir, const char path[])
 
     if (realpath(path, pathbuf) == NULL)
     {
-	ESP_LOGE("Console::ls", "Error canonicalizing path \"<%s>\", %s", path, strerror(errno));
+	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Error canonicalizing path \"<%s>\", %s", path, strerror(errno));
 	return ESP_FAIL;
     }; /* if realpath(pattern, pathbuf) == NULL */
 
@@ -434,7 +414,7 @@ int listing_direntries_Cpp(DIR *dir, const char path[])
 
     if (realpath(path, pathbuf) == NULL)
     {
-	ESP_LOGE("Console::ls", "Error canonicalizing path \"<%s>\", %s", path, strerror(errno));
+	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Error canonicalizing path \"<%s>\", %s", path, strerror(errno));
 	return ESP_FAIL;
     }; /* if realpath(pattern, pathbuf) == NULL */
 
@@ -492,10 +472,84 @@ void ls_entry_printout_Cpp(const char fullpath[], const char name[])
 
 
 
+#undef CMD_NM
+#define CMD_NM "cp"
+
+// copy files - error handler
+esp_err_t Server::cp()
+{
+    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "too few arguments: invoke command \"%s\" without parameters.\n%s", CMD_NM,
+	     "Don't know what to copy?");
+    return ESP_ERR_INVALID_ARG;
+}; /* Server::cp */
+
+// copy files - error handler
+esp_err_t Server::cp(const char[])
+{
+    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "too few arguments: invoke command \"%s\" with one parameters.\n%s", CMD_NM,
+	     "Don't know where to copy?");
+    return ESP_ERR_INVALID_ARG;
+}; /* Server::cp */
+
+// copy files according a pattern
+esp_err_t Server::cp(const char src[], const char dest[])
+{
+    cout << aso::format("Copy file \"%s\" to \"%s.\"", src, dest) << endl;
+#ifdef __PURE_C__
+    ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Command \"%s\" is not yet implemented now for C edition.", CMD_NM);
+    return ESP_ERR_INVALID_VERSION;
+    //return ESP_OK;
+#else
+    ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Command \"%s\" is not yet implemented now for C++ edition.", CMD_NM);
+//    cout << "Command \"rm\" is not yet implemented now for C++ edition." << endl;
+    return ESP_ERR_INVALID_VERSION;
+#endif
+}; /* Server::cp */
+
+
+
+#undef CMD_NM
+#define CMD_NM "mv"
+
+// move files - error handler
+esp_err_t Server::mv()
+{
+    ESP_LOGE("CMD_TAG_PRFX CMD_NM", "too few arguments: invoke command \"%s\" without parameters.\n%s", CMD_NM,
+	     "Don't know what to move?");
+    return ESP_ERR_INVALID_ARG;
+}; /* Server::mv */
+
+// move files - error handler
+esp_err_t Server::mv(const char[])
+{
+    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "too few arguments: invoke command \"%s\" with one parameters.\n%s", CMD_NM,
+	     "Don't know where to move?");
+    return ESP_ERR_INVALID_ARG;
+}; /* Server::mv */
+
+// move files according a pattern
+esp_err_t Server::mv(const char src[], const char dest[])
+{
+    cout << aso::format("Move file \"%s\" to \"%s.\"", src, dest) << endl;
+#ifdef __PURE_C__
+    ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Command \"%s\" is not yet implemented now for C edition.", CMD_NM);
+    return ESP_ERR_INVALID_VERSION;
+    //return ESP_OK;
+#else
+    ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Command \"%s\" is not yet implemented now for C++ edition.", CMD_NM);
+    return ESP_ERR_INVALID_VERSION;
+#endif
+}; /* Server::mv */
+
+
+
+#undef CMD_NM
+#define CMD_NM "rm"
+
 // remove files - error handler
 esp_err_t Server::rm()
 {
-    ESP_LOGE("Console::rm", "invoke command \"%s\" without parameters.\n%s", "rm",
+    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "invoke command \"%s\" without parameters.\n%s", CMD_NM,
 	     "Missing filename to remove.");
     return ESP_ERR_INVALID_ARG;
 }; /* Server::rm */
@@ -505,17 +559,19 @@ esp_err_t Server::rm(const char pattern[])
 {
     cout << "Delete file " << '"' << pattern << '"' << endl;
 #ifdef __PURE_C__
-    ESP_LOGW("Console::rm", "Command \"%s\" is not yet implemented now for C edition.", "rm");
+    ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Command \"%s\" is not yet implemented now for C edition.", CMD_NM);
     return ESP_ERR_INVALID_VERSION;
     //return ESP_OK;
 #else
-    ESP_LOGW("Console::rm", "Command \"%s\" is not yet implemented now for C++ edition.", "rm");
-//    cout << "Command \"rm\" is not yet implemented now for C++ edition." << endl;
+    ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Command \"%s\" is not yet implemented now for C++ edition.", CMD_NM);
     return ESP_ERR_INVALID_VERSION;
 #endif
 }; /* Server::rm */
 
 
+
+#undef CMD_NM
+#define CMD_NM "cat"
 
 // type file contents - error, file name is absent
 esp_err_t Server::cat()
@@ -523,7 +579,7 @@ esp_err_t Server::cat()
     cout << endl
 	 << "*** Printing contents of the file <XXXX fname>. ***" << endl
 	 << endl;
-    ESP_LOGE("Console::cat", "invoke command \"%s\" without parameters.\n%s", "cat",
+    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "invoke command \"%s\" without parameters.\n%s", CMD_NM,
 	     "Missing filename for print to output.");
 
     cout << "*** End of printing file XXXX. ** ******************" << endl;
@@ -536,7 +592,7 @@ esp_err_t Server::cat(const char fname[])
     cout << endl
 	 << "*** Printing contents of the file <" << fname << ">. ***" << endl
 	 << endl;
-//    ESP_LOGW("Console::cat", "Command \"%s %s \" is not yet implemented now", "cat", fname);
+//    ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Command \"%s %s \" is not yet implemented now", CMD_NM, fname);
 //    cout << "Exit..." << endl;
 
 #ifdef __PURE_C__
@@ -547,7 +603,7 @@ esp_err_t Server::cat(const char fname[])
     text = fopen(fname, "r"); // open the file for type to screen
     if (!text)
     {
-	ESP_LOGE("Console::cat", "Error opening file <%s>, %s", fname, strerror(errno));
+	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Error opening file <%s>, %s", fname, strerror(errno));
 	return ESP_FAIL;
     }; /* if !FILE */
 
@@ -557,7 +613,7 @@ esp_err_t Server::cat(const char fname[])
 //    putchar('\n');
     if (errno)
     {
-	ESP_LOGE("Console::cat", "Error during type the file %s to output, %s", fname, strerror(errno));
+	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Error during type the file %s to output, %s", fname, strerror(errno));
 	return ESP_FAIL;
     }; /* if errno */
 
@@ -571,6 +627,10 @@ esp_err_t Server::cat(const char fname[])
     return ESP_OK;
 }; /* cat */
 
+
+
+#undef CMD_NM
+#define CMD_NM "type"
 
 // type text from keyboard to screen
 esp_err_t Server::type()
@@ -607,8 +667,6 @@ static esp_err_t err4existent(const char fname[], const struct stat* statbuf);
 // type text from keyboard to file and to screen
 esp_err_t Server::type(const char fname[])
 {
-#define TYPE_FN_TAG "console::type <filename>"
-
 	FILE *storage = NULL;
 
     // Test file 'fname' for existing
@@ -620,26 +678,15 @@ esp_err_t Server::type(const char fname[])
 		struct stat statbuf;
 
 	    if (!stat(fname, &statbuf))	// but if the fname still exists here, then it is a directory
-	    {
-//		ESP_LOGE(TYPE_FN_TAG, "Error: path %s exist, and is not a file, but a %s.\nOperation is not permitted.",
-//			fname, (S_ISLNK(statbuf.st_mode))? "symlink":
-//			(S_ISDIR(statbuf.st_mode))? "directory":
-//			(S_ISCHR(statbuf.st_mode))? "character device":
-//			(S_ISBLK(statbuf.st_mode))? "block device":
-//			(S_ISFIFO(statbuf.st_mode))? "FIFO channel":
-//			(S_ISSOCK(statbuf.st_mode))? "socket":
-//				"(unknown type)");
-//		return ESP_ERR_NOT_SUPPORTED;
 		return err4existent(fname, &statbuf);
-	    }
-	    ESP_LOGI(TYPE_FN_TAG, "OK, file \"%s\" does not exist, opening this file.", fname);
+	    ESP_LOGI(CMD_TAG_PRFX CMD_NM, "OK, file \"%s\" does not exist, opening this file.", fname);
 	    cout << aso::format("Open file %s for the write") % fname << endl;
 	    errno = 0;	// clear error state
 	    storage = fopen(fname, "w");
 	}
 	else	// error other than "file does not exist"
 	{
-	    ESP_LOGE(TYPE_FN_TAG, "Error test existing file %s: %s", fname , strerror(errno));
+	    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Error test existing file %s: %s", fname , strerror(errno));
 	    return ESP_FAIL;
 	}
     } /* if stat(fname, &statbuf) == -1 */
@@ -665,14 +712,14 @@ esp_err_t Server::type(const char fname[])
 	{
 	case 'a':
 	case 'y':
-	    ESP_LOGI(TYPE_FN_TAG, "OK, open the file %s to add.", fname);
+	    ESP_LOGI(CMD_TAG_PRFX CMD_NM, "OK, open the file %s to add.", fname);
 	    cout << aso::format("File %s is opened for add+write.") % fname << endl;
 	    storage = fopen(fname, "a");
 	    break;
 
 	case 'o':
 	case 'w':
-	    ESP_LOGW(TYPE_FN_TAG, "OK, open the file %s to owerwrite.", fname);
+	    ESP_LOGW(CMD_TAG_PRFX CMD_NM, "OK, open the file %s to owerwrite.", fname);
 	    cout << aso::format("File %s is opened to truncate+write (overwrite).") % fname << endl;
 	    storage = fopen(fname, "w");
 	    break;
@@ -688,14 +735,14 @@ esp_err_t Server::type(const char fname[])
 #pragma GCC diagnostic pop
 
 	default:
-	    ESP_LOGW(TYPE_FN_TAG, "Error: H.z. cho in input, input char value is: [%d]", (int)c);
+	    ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Error: H.z. cho in input, input char value is: [%d]", (int)c);
 	    return ESP_ERR_INVALID_ARG;
 	}; /* switch tolower(c) */
     }; /* else if stat(fname, &statbuf) == -1 */
 
     if (storage == NULL)
     {
-	ESP_LOGE(TYPE_FN_TAG, "Any error occured when opening the file %s: %s.", fname, strerror(errno));
+	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Any error occured when opening the file %s: %s.", fname, strerror(errno));
 	return ESP_ERR_NOT_FOUND;
     }; /* if storage == NULL */
 
@@ -705,7 +752,7 @@ esp_err_t Server::type(const char fname[])
 
 
 
-    ESP_LOGW("Console::type", "Command \"%s %s \" is not yet implemented now", "type", fname);
+    ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Command \"%s %s \" is not yet implemented now", CMD_NM, fname);
     cout << "Exit..." << endl;
 
     cout << aso::format("Close the file %s.") % fname << endl;
@@ -713,7 +760,7 @@ esp_err_t Server::type(const char fname[])
     fclose(storage);
     if (errno)
     {
-	ESP_LOGW(TYPE_FN_TAG, "Any error occured when closing the file %s: %s.", fname, strerror(errno));
+	ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Any error occured when closing the file %s: %s.", fname, strerror(errno));
 	return ESP_FAIL;
     }; /* if errno */
 
@@ -722,7 +769,6 @@ esp_err_t Server::type(const char fname[])
 	 << aso::format("**** End of typing the text on keyboard for the screen and the file %s. ****") % fname << endl
 	 << endl;
     return ESP_ERR_INVALID_VERSION;
-#undef TYPE_FN_TAG
 }; /* type <file> */
 
 
@@ -743,6 +789,8 @@ esp_err_t err4existent(const char fname[], const struct stat* statbuf)
     return ESP_ERR_NOT_SUPPORTED;
 #undef EXIST_FN_TAG
 }; /* err4existent */
+
+#undef CMD_TAG_PRFX
 
 
     const char* Server::TAG = "SD/MMC service";

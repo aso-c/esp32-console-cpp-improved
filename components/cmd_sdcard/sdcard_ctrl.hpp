@@ -161,6 +161,12 @@ public:
     esp_err_t cd(const char dirname[]);	// change a current directory
     esp_err_t ls();	// print a list all files from the current directory
     esp_err_t ls(const char pattern[]);	// print a list of files in the specified directory
+    esp_err_t cp();	// copy files - error handler
+    esp_err_t cp(const char[]);	// copy files - error handler
+    esp_err_t cp(const char src[], const char dest[]);	// copy files src to dest
+    esp_err_t mv();	// move files - error handler
+    esp_err_t mv(const char[]);	// move files - error handler
+    esp_err_t mv(const char src[], const char dest[]);	// move files from src to dest
     esp_err_t rm();	// remove files - error handler
     esp_err_t rm(const char pattern[]);	// remove files according a pattern
 

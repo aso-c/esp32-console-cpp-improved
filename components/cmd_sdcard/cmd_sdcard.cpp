@@ -260,6 +260,102 @@ void register_ls(void)
 }; /* register_ls */
 
 
+// 'cp' command -----------------------------------------------------------------------------------
+static int cp_act(int argc, char **argv)
+{
+    cout << "\"cp\" command execution" << endl;
+    switch (argc)
+    {
+    case 1:
+	return sd_server.cp();
+	break;
+
+    case 2:
+	return sd_server.cp(argv[1]);
+	break;
+
+    case 3:
+	return sd_server.cp(argv[1], argv[2]);
+	break;
+
+    default:
+	ESP_LOGE("cp command", "too many parameters (%d) for copy file(s), don't know to do.", argc);
+    }; /* switch argc */
+
+    cout << endl;
+
+    return ESP_ERR_INVALID_ARG;
+}; /* cp_act */
+
+void register_cp(void)
+{
+    static void* cpargs[] = {
+	    arg_str1(NULL, NULL, "<src>", "source filename to copy"),
+	    arg_str1(NULL, NULL, "<dest>", "where to copy file"),
+	    arg_end(2)
+    };
+
+    const esp_console_cmd_t cmd = {
+	    .command = "cp",
+	    .help = "Copy a source file to destination.",
+	    .hint = NULL,
+	    .func = cp_act,
+	    .argtable = cpargs
+    };
+
+    register_cmd(&cmd);
+
+}; /* register_cp */
+
+
+// 'mv' command -----------------------------------------------------------------------------------
+static int mv_act(int argc, char **argv)
+{
+    cout << "\"mv\" command execution" << endl;
+    switch (argc)
+    {
+    case 1:
+	return sd_server.mv();
+	break;
+
+    case 2:
+	return sd_server.mv(argv[1]);
+	break;
+
+    case 3:
+	return sd_server.mv(argv[1], argv[2]);
+	break;
+
+    default:
+	ESP_LOGE("mv command", "too many parameters (%d) for move/renaming file, don't know to do.", argc);
+    }; /* switch argc */
+
+    cout << endl;
+
+    return ESP_ERR_INVALID_ARG;
+}; /* mv_act */
+
+void register_mv(void)
+{
+    static void* cpargs[] = {
+	    arg_str1(NULL, NULL, "<src>", "source filename to rename/move"),
+	    arg_str1(NULL, NULL, "<dest>", "where to copy file"),
+	    arg_end(2)
+    };
+
+    const esp_console_cmd_t cmd = {
+	    .command = "mv",
+	    .help = "Rename/move source file to destination.",
+	    .hint = NULL,
+	    .func = mv_act,
+	    .argtable = cpargs
+    };
+
+    register_cmd(&cmd);
+
+}; /* register_mv */
+
+
 // 'rm' command -----------------------------------------------------------------------------------
 
 static int rm_act(int argc, char **argv)
@@ -403,7 +499,9 @@ void register_fs_cmd_all(void)
     register_pwd();
     register_cd();
     register_ls();
-    register_rm();
+    register_ls();
+    register_cp();
+    register_mv();
     register_cat();
     register_type();
 
@@ -412,25 +510,6 @@ void register_fs_cmd_all(void)
 
 
 //--[ SD card control commands]--------------------------------------------------------------------
-
-// argument tables for any subcommand of sdcard commqand
-//static void
-//    *args_help[1+1],	// h | help
-//    *args_mount[3+1],	// m | mount [<device>] [<mountpoint>]
-//    *args_umount[6+1],	// u | umount [ <device> | <mountpoint> ]
-//    *args_ls[2+1],	// ls | dir [<pattern>]
-//    *args_cat[2+1],	// cat <filename>
-//    *args_type[4+1];	// type [<filename>]
-
-//static struct
-//{
-//    void *help[1+1],	// h | help
-//	*mount[3+1],	// m | mount [<device>] [<mountpoint>]
-//	*umount[6+1],	// u | umount [ <device> | <mountpoint> ]
-//	*ls[2+1],	// ls | dir [<pattern>]
-//	*cat[2+1],	// cat <filename>
-//	*type[4+1];	// type [<filename>]
-//} args;
 
 // classs of the SD control command implementation
 class SDctrl
@@ -450,6 +529,9 @@ public:
     esp_err_t act_pwd();	// action for 'pwd' command
     esp_err_t act_cd();		// action for 'cd' command
     esp_err_t act_ls();		// action for list/dir command
+    esp_err_t act_cp();		// action for 'copy file' command
+    esp_err_t act_mv();		// action for rename/move file command
+    esp_err_t act_rm();		// action for remove/delete file command
     esp_err_t act_cat();	// action for 'cat' command
     esp_err_t act_type();	// action for 'type' command
 
@@ -468,7 +550,7 @@ private:
     public:
 
 	// sucommand id
-	enum cmd_id { none, mount, unmount, info, pwd, cd, ls, rm, cat, type, helping, unknown = -1 };
+	enum cmd_id { none, mount, unmount, info, pwd, cd, ls, cp, mv, rm, cat, type, helping, unknown = -1 };
 
 	static Syntax& get();
 	cmd_id id();	// Return subcommand id
@@ -570,6 +652,17 @@ esp_err_t SDctrl::exec(int argc, char **argv)
     case Syntax::ls:
 	return instance.act_ls();
 
+    case Syntax::cp:
+	return instance.act_cp();
+
+//    case SDctrl::Syntax::ls:
+    case Syntax::mv:
+	return instance.act_mv();
+
+//    case SDctrl::Syntax::ls:
+    case Syntax::rm:
+	return instance.act_rm();
+
 //    case SDctrl::Syntax::cat:
     case Syntax::cat:
 	return instance.act_cat();
@@ -615,7 +708,6 @@ esp_err_t SDctrl::err_none()
 esp_err_t SDctrl::err_unknown()
 {
     ESP_LOGE("sdcard command", "Unknown options: \"%s\".", argv[1]);
-//    cout << "Unknown options: \"" << argv[1] <<  "\"." << endl
     cout << syntax.hint << endl;
     return ESP_OK;
 }; /* SDcmd::err_unknown */
@@ -626,7 +718,6 @@ esp_err_t SDctrl::act_mnt()
 {
     esp_err_t res;
 
-    //cout << "\"mount\" command execution" << endl;
     switch (argc)
     {
     case 2:
@@ -647,8 +738,6 @@ esp_err_t SDctrl::act_mnt()
 	break;
 
     default:
-//	cout << "more than two parameters - obscure set of parameters." << endl;
-//					//  unclear set of parameters
 	ESP_LOGE("sdcard mount command", "more than two parameters (%d) - is not allowed", argc - 2);
 	res = ESP_FAIL;
     }; /* switch argc */
@@ -657,7 +746,6 @@ esp_err_t SDctrl::act_mnt()
     if (res == ESP_OK)
 	sd_server.card_info(stdout);
 
-//    return 0;
     return res;
 }; /* SDctrl::act_mnt */
 
@@ -691,10 +779,7 @@ esp_err_t SDctrl::act_umnt()
 // print info about the mounted SD-card
 esp_err_t SDctrl::act_info()
 {
-//    cout << "\"info\" command execution" << endl;
     sd_server.info();
-//    cout << endl;
-
     return 0;
 }; /* SDctrl::act_info */
 
@@ -702,9 +787,7 @@ esp_err_t SDctrl::act_info()
 // action for pwd command
 esp_err_t SDctrl::act_pwd()
 {
-//    cout << "\"pwd\" command execution" << endl;
     sd_server.pwd();
-//    cout << endl;
 
     return 0;
 }; /* SDctrl::act_pwd */
@@ -726,7 +809,6 @@ esp_err_t SDctrl::act_cd()
 	break;
 
     default:
-//	cout << "more than one parameter - unknown set of parameters." << endl;
 	ESP_LOGE("sdcard cd command", "more than one parameters (%d) - where to go?", argc - 2);
     }; /* switch argc */
     cout << endl;
@@ -752,8 +834,92 @@ esp_err_t SDctrl::act_ls()
 	break;
 
     default:
-//	cout << "more than one parameter - unknown set of parameters." << endl;
 	ESP_LOGE("sdcard ls command", "more than one parameters (%d) - what directory to listing?", argc - 2);
+    }; /* switch argc */
+    cout << endl;
+
+    return ESP_ERR_INVALID_ARG;
+}; /* SDctrl::act_ls */
+
+
+// action for 'copy' command
+esp_err_t SDctrl::act_cp()
+{
+    cout << "\"cp\" command execution" << endl;
+    switch (argc)
+    {
+    case 2:
+	cout << "...without parameters - error." << endl;
+	return sd_server.cp();
+	break;
+
+    case 3:
+	cout << "...with one parameter - error." << endl;
+	return sd_server.cp(argv[2]);
+	break;
+
+    case 4:
+	cout << "...with two parameter - copy files." << endl;
+	return sd_server.cp(argv[2], argv[3]);
+	break;
+
+    default:
+	ESP_LOGE("sdcard ls command", "more than two parameters (%d) - don't know what to copy", argc - 2);
+    }; /* switch argc */
+    cout << endl;
+
+    return ESP_ERR_INVALID_ARG;
+}; /* SDctrl::act_cp */
+
+
+// action for 'rename/move' command
+esp_err_t SDctrl::act_mv()
+{
+    cout << "\"mv\" command execution" << endl;
+    switch (argc)
+    {
+    case 2:
+	cout << "...without parameters - error." << endl;
+	return sd_server.mv();
+	break;
+
+    case 3:
+	cout << "...with one parameter - error." << endl;
+	return sd_server.mv(argv[2]);
+	break;
+
+    case 4:
+	cout << "...with two parameter - move/rename files." << endl;
+	return sd_server.mv(argv[2], argv[3]);
+	break;
+
+    default:
+	ESP_LOGE("sdcard mv command", "more than two parameters (%d) - don't know what to rename/move", argc - 2);
+    }; /* switch argc */
+    cout << endl;
+
+    return ESP_ERR_INVALID_ARG;
+}; /* SDctrl::act_mv */
+
+
+// action for list/dir command
+esp_err_t SDctrl::act_rm()
+{
+    cout << "\"rm\" command execution" << endl;
+    switch (argc)
+    {
+    case 2:
+	cout << "...without parameters - error." << endl;
+	return sd_server.rm();
+	break;
+
+    case 3:
+	cout << "...with one parameter - remove file." << endl;
+	return sd_server.rm(argv[2]);
+	break;
+
+    default:
+	ESP_LOGE("sdcard rm command", "more than one parameters (%d) - don't know what to remove", argc - 2);
     }; /* switch argc */
     cout << endl;
 
@@ -768,17 +934,14 @@ esp_err_t SDctrl::act_cat()
     switch (argc)
     {
     case 2:
-	//cout << "...without parameters - error parameter values." << endl;
 	return sd_server.cat();
 	break;
 
     case 3:
-	//cout << "...with one parameter - use file name." << endl;
 	return sd_server.cat(argv[2]);
 	break;
 
     default:
-//	cout << "Any parameters error." << endl;
 	ESP_LOGE("sdcard cat command", "more than one parameters (%d) - what file is to be printed?", argc - 2);
     }; /* switch argc */
     cout << endl;
@@ -794,7 +957,6 @@ esp_err_t SDctrl::act_type()
     switch (argc)
     {
     case 2:
-	//cout << "...without parameters - type to screen only." << endl;
 	return sd_server.type();
 	break;
 
@@ -804,7 +966,6 @@ esp_err_t SDctrl::act_type()
 	break;
 
     default:
-//	cout << "Any parameters error." << endl;
 	ESP_LOGE("sdcard type command", "more than one parameters (%d) - what file save the type output?", argc - 2);
     }; /* switch argc */
     cout << endl;
@@ -916,19 +1077,39 @@ void** SDctrl::Syntax::tables()
 		arg_end(2),
 	};
 //----------------------------------------------------------------------------------------------------------------------
-    // syntax5: ls | dir [<pattern>] "print directory contents on SD-card"
-	static void* arg_ls[] = {
-		arg_rex1(NULL, NULL, "ls|dir", NULL, 0, "print directory contents on SD-card"),
-		arg_str0(NULL, NULL, "<pattern>", "file pattern or path"),
+    // syntax6: cp <src> <dest> "copy file <src> to <dest>"
+	static void* arg_cp[] = {
+		arg_rex1(NULL, NULL, "cp|copy", NULL, 0, "copy file <src> to <dest>"),
+		arg_str1(NULL, NULL, "<src>", NULL/*"file name to copy"*/),
+		arg_str1(NULL, NULL, "<dest>", NULL/*"where file to copy"*/),
+		arg_end(3),
+	};
+    // syntax7: mv <src> <dest> "rename/move file <src> to <dest>"
+	static void* arg_mv[] = {
+		arg_rex1(NULL, NULL, "mv|ren", NULL, 0, "copy file <src> to <dest>"),
+		arg_str1(NULL, NULL, "<src>", "source file name to copy or rename/move"),
+		arg_str1(NULL, NULL, "<dest>", "where file to copy or rename/move"),
+		arg_end(3),
+		};
+    // syntax8: rm [<pattern>] "delete file <pattern>"
+	static void* arg_rm[] = {
+		arg_rex1(NULL, NULL, "rm", NULL, 0, "delete file <pattern>"),
+		arg_str1(NULL, NULL, "<pattern>", NULL/*"file name to delete"*/),
 		arg_end(2),
 	};
-    // syntax6: cat <filename> "print file to stdout (console output)"
+    // syntax9: ls | dir [<pattern>] "print directory contents on SD-card"
+	static void* arg_ls[] = {
+		arg_rex1(NULL, NULL, "ls|dir", NULL, 0, "print directory contents on SD-card"),
+		arg_str0(NULL, NULL, "<pattern>", "file pattern or path for lising or felete"),
+		arg_end(2),
+	};
+    // syntax10: cat <filename> "print file to stdout (console output)"
 	static void* arg_cat[] = {
-		arg_rex1(NULL, NULL, "cat", NULL, 0, NULL),
+		arg_rex1(NULL, NULL, "cat", NULL, 0, "print content of the file to screen"),
 		arg_str1(NULL, NULL, "<file>", NULL),
 		arg_end(2),
 	};
-    // syntax7: type [filename] "type from the keyboard to file & screen or screen only; <file name> - name of the file is to be printed; if omitted - print to screen only"
+    // syntax11: type [filename] "type from the keyboard to file & screen or screen only; <file name> - name of the file is to be printed; if omitted - print to screen only"
 	static void* arg_type[] = {
 		arg_rex1(NULL, NULL, "type", NULL, 0, "type from the keyboard to file & screen or screen only; if file omitted - print to screen only"),
 		arg_str0(NULL, NULL, "<file>", "file name to be printed or the name of where the typed text is saved"),
@@ -941,6 +1122,9 @@ void** SDctrl::Syntax::tables()
 		arg_info,
 		arg_pwd,
 		arg_cd,
+		arg_cp,
+		arg_mv,
+		arg_rm,
 		arg_ls,
 		arg_cat,
 		arg_type,
