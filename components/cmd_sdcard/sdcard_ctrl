@@ -132,7 +132,6 @@ struct Mounting
 
     esp_vfs_fat_sdmmc_mount_config_t cfg;
     const char* target;
-    //ESP_LOGI(TAG, "Initializing SD card");
 
     static const char* MOUNT_POINT_Default;
 
@@ -149,29 +148,29 @@ public:
     esp_err_t mount(int slot_no);		// Mount SD-card slot "slot_no" onto default mount path
     esp_err_t mount(int slot_no, const char mountpoint[]);  // Mount SD-card slot "slot_no" onto default mount path
 
-    esp_err_t unmount();			// Unmount default mounted SD-card
-    esp_err_t unmount(const char mountpath[]);	// Unmount SD-card, that mounted onto "mountpath"
+//    esp_err_t unmount();			// Unmount default mounted SD-card
+    esp_err_t unmount(const char mountpath[] = NULL);	// Unmount SD-card, that mounted onto "mountpath", default - call w/o mountpath
 //    esp_err_t unmount(sdmmc_card_t *card);	// Unmount SD-card "card", mounted onto default mountpath
 //    esp_err_t unmount(const char *base_path, sdmmc_card_t *card);	// Unmount mounted SD-card "card", mounted onto mountpath
     void card_info(FILE* outfile);		// Print the card info
 
     esp_err_t info();	// print the SD-card info (wrapper for the external caller)
     esp_err_t pwd();	// print current directory name
-    esp_err_t cd();	// change a current directory - error handler
-    esp_err_t cd(const char dirname[]);	// change a current directory
-    esp_err_t ls();	// print a list all files from the current directory
-    esp_err_t ls(const char pattern[]);	// print a list of files in the specified directory
-    esp_err_t cp();	// copy files - error handler
-    esp_err_t cp(const char[]);	// copy files - error handler
-    esp_err_t cp(const char src[], const char dest[]);	// copy files src to dest
-    esp_err_t mv();	// move files - error handler
-    esp_err_t mv(const char[]);	// move files - error handler
-    esp_err_t mv(const char src[], const char dest[]);	// move files from src to dest
-    esp_err_t rm();	// remove files - error handler
-    esp_err_t rm(const char pattern[]);	// remove files according a pattern
+//    esp_err_t cd();	// change a current directory - error handler
+    esp_err_t cd(const char dirname[] = NULL);	// change a current directory
+//    esp_err_t ls();	// print a list all files from the current directory
+    esp_err_t ls(const char pattern[] = ".");	// print a list of files in the specified directory
+//    esp_err_t cp();	// copy files - error handler
+//    esp_err_t cp(const char[]);	// copy files - error handler
+    esp_err_t cp(const char src[] = NULL, const char dest[] = NULL);	// copy files src to dest
+//    esp_err_t mv();	// move files - error handler
+//    esp_err_t mv(const char[]);	// move files - error handler
+    esp_err_t mv(const char src[] = NULL, const char dest[] = NULL);	// move files from src to dest
+//    esp_err_t rm();	// remove files - error handler
+    esp_err_t rm(const char pattern[] = NULL);	// remove files according a pattern
 
-    esp_err_t cat();	// type file contents - error, if file name is absent
-    esp_err_t cat(const char fname[]);	// type file contents
+//    esp_err_t cat();	// type file contents - error, if file name is absent
+    esp_err_t cat(const char fname[] = NULL);	// type file contents
 
     esp_err_t type();	// type text from keyboard to screen
     esp_err_t type(const char fname[]);	// type text from keyboard to file and to screen
