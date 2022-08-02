@@ -171,14 +171,6 @@ int Slot::def_num;
     //    ESP_LOGI(TAG, "Card unmounted");
     //------------------------------------------------------------------------------------------
 
-//    // Unmount default mounted SD-card
-//    esp_err_t Server::unmount()
-//    {
-//	cout << TAG << ": " << "Call: unmount(" << mounting.target << ");" << endl;
-//	ret = unmount(mounting.target);
-//	return ret;
-//    }; /* Server::unmount */
-
     // Unmount SD-card, that mounted onto "mountpath"
     esp_err_t Server::unmount(const char mountpath[])
     {
@@ -221,6 +213,8 @@ int Slot::def_num;
 //    }; /* Server::unmount */
 
 
+
+
 // Print the card info
 void Server::card_info(FILE* outfile)
 {
@@ -235,6 +229,7 @@ esp_err_t Server::info()
     card_info(stdout);
     return ESP_OK;
 }; /* Server::info */
+
 
 
 // print current directory name
@@ -258,15 +253,6 @@ esp_err_t Server::pwd()
 
 
 #define CMD_NM "cd"
-
-//// change a current directory - error handler
-//esp_err_t Server::cd()
-//{
-//    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "invoke command \"%s\" without parameters.\n%s", "cd",
-//	     "This command required directory name to change.");
-//
-//    return ESP_ERR_INVALID_ARG;
-//}; /* Server::cd */
 
 // change a current directory
 esp_err_t Server::cd(const char dirname[])
@@ -296,14 +282,9 @@ esp_err_t Server::cd(const char dirname[])
 
 
 
+
 #undef CMD_NM
 #define CMD_NM "ls"
-
-//// print a list of files in the current directory
-//esp_err_t Server::ls()
-//{
-//    return ls(".");
-//}; /* Server::ls */
 
 //
 // Listing the entries of the opened directory
@@ -445,8 +426,6 @@ int listing_direntries_Cpp(DIR *dir, const char path[])
 #pragma GCC diagnostic pop
 
 
-
-
 void ls_entry_printout_pure_C(const char fullpath[], const char name[])
 {
 	struct stat statbuf;
@@ -486,22 +465,6 @@ void ls_entry_printout_Cpp(const char fullpath[], const char name[])
 #undef CMD_NM
 #define CMD_NM "cp"
 
-//// copy files - error handler
-//esp_err_t Server::cp()
-//{
-//    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "too few arguments: invoke command \"%s\" without parameters.\n%s", CMD_NM,
-//	     "Don't know what to copy?");
-//    return ESP_ERR_INVALID_ARG;
-//}; /* Server::cp */
-
-//// copy files - error handler
-//esp_err_t Server::cp(const char[])
-//{
-//    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "too few arguments: invoke command \"%s\" with one parameters.\n%s", CMD_NM,
-//	     "Don't know where to copy?");
-//    return ESP_ERR_INVALID_ARG;
-//}; /* Server::cp */
-
 // copy files according a pattern
 esp_err_t Server::cp(const char src[], const char dest[])
 {
@@ -534,22 +497,6 @@ esp_err_t Server::cp(const char src[], const char dest[])
 
 #undef CMD_NM
 #define CMD_NM "mv"
-
-//// move files - error handler
-//esp_err_t Server::mv()
-//{
-//    ESP_LOGE("CMD_TAG_PRFX CMD_NM", "too few arguments: invoke command \"%s\" without parameters.\n%s", CMD_NM,
-//	     "Don't know what to move?");
-//    return ESP_ERR_INVALID_ARG;
-//}; /* Server::mv */
-
-//// move files - error handler
-//esp_err_t Server::mv(const char[])
-//{
-//    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "too few arguments: invoke command \"%s\" with one parameters.\n%s", CMD_NM,
-//	     "Don't know where to move?");
-//    return ESP_ERR_INVALID_ARG;
-//}; /* Server::mv */
 
 // move files according a pattern
 esp_err_t Server::mv(const char src[], const char dest[])
@@ -584,14 +531,6 @@ esp_err_t Server::mv(const char src[], const char dest[])
 #undef CMD_NM
 #define CMD_NM "rm"
 
-//// remove files - error handler
-//esp_err_t Server::rm()
-//{
-//    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "invoke command \"%s\" without parameters.\n%s", CMD_NM,
-//	     "Missing filename to remove.");
-//    return ESP_ERR_INVALID_ARG;
-//}; /* Server::rm */
-
 // remove files according a pattern
 esp_err_t Server::rm(const char pattern[])
 {
@@ -617,19 +556,6 @@ esp_err_t Server::rm(const char pattern[])
 
 #undef CMD_NM
 #define CMD_NM "cat"
-
-//// type file contents - error, file name is absent
-//esp_err_t Server::cat()
-//{
-//    cout << endl
-//	 << "*** Printing contents of the file <XXXX fname>. ***" << endl
-//	 << endl;
-//    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "invoke command \"%s\" without parameters.\n%s", CMD_NM,
-//	     "Missing filename for print to output.");
-//
-//    cout << "*** End of printing file XXXX. ** ******************" << endl;
-//    return ESP_ERR_INVALID_ARG;
-//}; /* cat */
 
 // type file contents
 esp_err_t Server::cat(const char fname[])

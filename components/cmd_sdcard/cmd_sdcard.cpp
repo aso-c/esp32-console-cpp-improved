@@ -25,11 +25,11 @@
 #include "esp_vfs_fat.h"
 #include "sdmmc_cmd.h"
 #include "driver/sdmmc_host.h"
+#include <cmd_sdcard>
 
-#include "cmd_sdcard.hpp"
 #include <sdcard_ctrl>
 
-//#include <stdio.h>
+//#include <cstdio>
 
 //using namespace idf;
 using namespace std;
@@ -181,12 +181,10 @@ static int cd_act(int argc, char **argv)
 	break;
 
     case 2:
-	//cout << "...with one parameter - OK, specified the path name to change." << endl;
 	return sd_server.cd(argv[1]);
 	break;
 
     default:
-	//cout << "more than one parameter - unknown set of parameters." << endl;
 	ESP_LOGE("cd command", "too many parameters (%d), where to go?", argc);
     }; /* switch argc */
     cout << endl;
@@ -221,17 +219,14 @@ static int ls_act(int argc, char **argv)
     switch (argc)
     {
     case 1:
-	//cout << "...without parameters - OK, list all files in the current directory." << endl;
 	return sd_server.ls();
 	break;
 
     case 2:
-	//cout << "...with one parameter - OK, print the files in the desired directory and/or according a pattern." << endl;
 	return sd_server.ls(argv[1]);
 	break;
 
     default:
-//	cout << "more than one parameter - too many parameters." << endl;
 	ESP_LOGE("ls command", "too many parameters (%d), which directory is to be printed?", argc);
 
     }; /* switch argc */
@@ -373,7 +368,6 @@ static int rm_act(int argc, char **argv)
 	break;
 
     default:
-//	cout << "more than one parameter - unknown set of parameters." << endl;
 	ESP_LOGE("rm command", "too many parameters (%d), unable select file to remove.", argc);
     }; /* switch argc */
     cout << endl;
@@ -413,12 +407,10 @@ static int cat_act(int argc, char **argv)
 	break;
 
     case 2:
-//	cout << "...with one parameter - OK, specified the filename to cat." << endl;
 	return sd_server.cat(argv[1]);
 	break;
 
     default:
-	// cout << "more than one parameter - unknown set of parameters." << endl;
 	ESP_LOGE("cat command", "too many parameters (%d), unable select file to print.", argc);
     }; /* switch argc */
     cout << endl;
@@ -454,7 +446,6 @@ static int type_act(int argc, char **argv)
     switch (argc)
     {
     case 1:
-	//cout << "...without parameters - type to screen only." << endl;
 	return sd_server.type();
 	break;
 
@@ -628,54 +619,42 @@ esp_err_t SDctrl::exec(int argc, char **argv)
 
     switch (syntax.id())
     {
-//    case SDctrl::Syntax::mount:
     case Syntax::mount:
 	return instance.act_mnt();
 
-//    case SDctrl::Syntax::unmount:
     case Syntax::unmount:
 	return instance.act_umnt();
 
-//    get current directory name
     case Syntax::info:
 	return instance.act_info();
 
-//    get current directory name
     case Syntax::pwd:
 	return instance.act_pwd();
 
-//    get current directory name
     case Syntax::cd:
 	return instance.act_cd();
 
-//    case SDctrl::Syntax::ls:
     case Syntax::ls:
 	return instance.act_ls();
 
     case Syntax::cp:
 	return instance.act_cp();
 
-//    case SDctrl::Syntax::ls:
     case Syntax::mv:
 	return instance.act_mv();
 
-//    case SDctrl::Syntax::ls:
     case Syntax::rm:
 	return instance.act_rm();
 
-//    case SDctrl::Syntax::cat:
     case Syntax::cat:
 	return instance.act_cat();
 
-//    case SDctrl::Syntax::type:
     case Syntax::type:
 	return instance.act_type();
 
-//    case SDctrl::Syntax::helping:
     case Syntax::helping:
 	return syntax.help();
 
-//    case SDctrl::Syntax::unknown:
     case Syntax::unknown:
     default:
 	return instance.err_unknown();
@@ -699,7 +678,6 @@ void SDctrl::store(int argcnt, char *argvalue[])
 esp_err_t SDctrl::err_none()
 {
     ESP_LOGE("sdcard command", "subcommand missing, what to run?");
-//    cout << "Subcommand missing." << endl
     cout << syntax.hint << endl;
     return ESP_OK;
 }; /* SDcmd::err_none */
@@ -721,19 +699,16 @@ esp_err_t SDctrl::act_mnt()
     switch (argc)
     {
     case 2:
-	//cout << "...without parameters - use default values." << endl;
 	res = sd_server.mount();
 	break;
 
     case 3:
 	cout << "...with one parameter - use device or mount point." << endl;
-//	return sd_server.mount(argv[2]);
 	res = sd_server.mount(argv[2]);
 	break;
 
     case 4:
 	cout << "...with two parameters - use device & mount point." << endl;
-//	return sd_server.mount(atoi(argv[2]), argv[3]);
 	res = sd_server.mount(atoi(argv[2]), argv[3]);
 	break;
 
@@ -767,7 +742,6 @@ esp_err_t SDctrl::act_umnt()
 	break;
 
     default:
-//	cout << "more than one parameter - unclear set of parameters." << endl;
 	ESP_LOGE("sdcard umount command", "more than one parameters (%d) - is not allowed", argc - 2);
     }; /* switch argc */
     cout << endl;
