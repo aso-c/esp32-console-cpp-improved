@@ -156,6 +156,7 @@ public:
 
     esp_err_t info();	// print the SD-card info (wrapper for the external caller)
     esp_err_t pwd();	// print current directory name
+    esp_err_t mkdir(const char dirname[] = NULL);   // create a new directory
 //    esp_err_t cd();	// change a current directory - error handler
     esp_err_t cd(const char dirname[] = NULL);	// change a current directory
 //    esp_err_t ls();	// print a list all files from the current directory

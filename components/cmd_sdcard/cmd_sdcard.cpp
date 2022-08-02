@@ -44,6 +44,7 @@ using namespace std;
  *	+ m, mount	- mount sdcard, options: [<card>] [<mountpoint>];
  *	+ u, umount	- unmount sdcard, options: [<card>|<mountpiont>];
  *	+ pwd		- get current directory name, w/o options;
+ *	+ mkdir		- create a new directory
  *	+ ls, dir	- list of files in sdcard, options: [<file pattern>];
  *	+ cd <dir>	- change a current directory;
  *	+ cat <file>	- print file to a console
@@ -141,7 +142,7 @@ SDMMC::Server sd_server;
 
 ///////////////////////////////
 // List of all fs cmd:
-//	pwd, cd, ls, rm
+//	pwd, mkdir, cd, ls, cp, mv, rm
 ///////////////////////////////
 
 
@@ -167,6 +168,49 @@ void register_pwd(void)
     register_cmd(&cmd);
 
 }; /* register_pwd */
+
+
+// mkdir command ----------------------------------------------------------------------------------
+
+static int mkdir_act(int argc, char **argv)
+{
+    cout << "\"mkdir\" command execution" << endl;
+    switch (argc)
+    {
+    case 1:
+	return sd_server.mkdir();
+	break;
+
+    case 2:
+	return sd_server.mkdir(argv[1]);
+	break;
+
+    default:
+	ESP_LOGE("mkdir command", "too many parameters (%d), don't know what directory to create", argc);
+    }; /* switch argc */
+    cout << endl;
+
+    return ESP_ERR_INVALID_ARG;
+}; /* mkdir_act */
+
+void register_mkdir(void)
+{
+    static void* mkdargs[] = {
+	    arg_str1(NULL, NULL, "<dir>", "creating directory name"),
+	    arg_end(1)
+    };
+
+    const esp_console_cmd_t cmd = {
+	    .command = "mkdir",
+	    .help = "Create new directory with <name>",
+	    .hint = NULL,
+	    .func = mkdir_act,
+	    .argtable = mkdargs
+    };
+
+    register_cmd(&cmd);
+
+}; /* register_mkdir */
 
 
 // 'cd' command -----------------------------------------------------------------------------------
@@ -489,10 +533,11 @@ void register_fs_cmd_all(void)
 
     register_pwd();
     register_cd();
-    register_ls();
+    register_mkdir();
     register_ls();
     register_cp();
     register_mv();
+    register_rm();
     register_cat();
     register_type();
 
@@ -518,6 +563,7 @@ public:
     esp_err_t act_umnt();	// action for 'unmount' command
     esp_err_t act_info();	// action for 'info' command
     esp_err_t act_pwd();	// action for 'pwd' command
+    esp_err_t act_mkdir();	// action for mkdir command
     esp_err_t act_cd();		// action for 'cd' command
     esp_err_t act_ls();		// action for list/dir command
     esp_err_t act_cp();		// action for 'copy file' command
@@ -541,7 +587,7 @@ private:
     public:
 
 	// sucommand id
-	enum cmd_id { none, mount, unmount, info, pwd, cd, ls, cp, mv, rm, cat, type, helping, unknown = -1 };
+	enum cmd_id { none, mount, unmount, info, pwd, mkdir, cd, ls, cp, mv, rm, cat, type, helping, unknown = -1 };
 
 	static Syntax& get();
 	cmd_id id();	// Return subcommand id
@@ -630,6 +676,9 @@ esp_err_t SDctrl::exec(int argc, char **argv)
 
     case Syntax::pwd:
 	return instance.act_pwd();
+
+    case Syntax::mkdir:
+	return instance.act_mkdir();
 
     case Syntax::cd:
 	return instance.act_cd();
@@ -765,6 +814,30 @@ esp_err_t SDctrl::act_pwd()
 
     return 0;
 }; /* SDctrl::act_pwd */
+
+
+// action for 'cd' command
+esp_err_t SDctrl::act_mkdir()
+{
+    cout << "\"mkdir\" command execution" << endl;
+    switch (argc)
+    {
+    case 2:
+	return sd_server.mkdir();
+	break;
+
+    case 3:
+	cout << "...with one parameter - specified the name of the new directory." << endl;
+	return sd_server.mkdir(argv[2]);
+	break;
+
+    default:
+	ESP_LOGE("sdcard mkdir command", "more than one parameters (%d) - don't know what directory to create.", argc - 2);
+    }; /* switch argc */
+    cout << endl;
+
+    return ESP_ERR_INVALID_ARG;
+}; /* SDctrl::act_mkdir */
 
 
 // action for 'cd' command
@@ -1044,46 +1117,52 @@ void** SDctrl::Syntax::tables()
 //		arg_str0(NULL, NULL, "<pattern>", "file pattern or path"),
 		arg_end(2),
 	};
-    // syntax5: cd [<path>] "change current directory to <path>"
+    // syntax5: mkdir [<path>] "make new directory with name <path>"
+	static void* arg_mkdir[] = {
+		arg_rex1(NULL, NULL, "mkdir", NULL, 0, "make new directory with name <path>"),
+		arg_str0(NULL, NULL, "<path>", "name of the new directory"),
+		arg_end(2),
+	};
+    // syntax6: cd [<path>] "change current directory to <path>"
 	static void* arg_cd[] = {
 		arg_rex1(NULL, NULL, "cd", NULL, 0, "change current directory to <path>"),
 		arg_str0(NULL, NULL, "<path>", "path to which the current directory is changed"),
 		arg_end(2),
 	};
 //----------------------------------------------------------------------------------------------------------------------
-    // syntax6: cp <src> <dest> "copy file <src> to <dest>"
+    // syntax7: cp <src> <dest> "copy file <src> to <dest>"
 	static void* arg_cp[] = {
 		arg_rex1(NULL, NULL, "cp|copy", NULL, 0, "copy file <src> to <dest>"),
 		arg_str1(NULL, NULL, "<src>", NULL/*"file name to copy"*/),
 		arg_str1(NULL, NULL, "<dest>", NULL/*"where file to copy"*/),
 		arg_end(3),
 	};
-    // syntax7: mv <src> <dest> "rename/move file <src> to <dest>"
+    // syntax8: mv <src> <dest> "rename/move file <src> to <dest>"
 	static void* arg_mv[] = {
 		arg_rex1(NULL, NULL, "mv|ren", NULL, 0, "copy file <src> to <dest>"),
 		arg_str1(NULL, NULL, "<src>", "source file name to copy or rename/move"),
 		arg_str1(NULL, NULL, "<dest>", "where file to copy or rename/move"),
 		arg_end(3),
 		};
-    // syntax8: rm [<pattern>] "delete file <pattern>"
+    // syntax9: rm [<pattern>] "delete file <pattern>"
 	static void* arg_rm[] = {
 		arg_rex1(NULL, NULL, "rm", NULL, 0, "delete file <pattern>"),
 		arg_str1(NULL, NULL, "<pattern>", NULL/*"file name to delete"*/),
 		arg_end(2),
 	};
-    // syntax9: ls | dir [<pattern>] "print directory contents on SD-card"
+    // syntax10: ls | dir [<pattern>] "print directory contents on SD-card"
 	static void* arg_ls[] = {
 		arg_rex1(NULL, NULL, "ls|dir", NULL, 0, "print directory contents on SD-card"),
 		arg_str0(NULL, NULL, "<pattern>", "file pattern or path for lising or felete"),
 		arg_end(2),
 	};
-    // syntax10: cat <filename> "print file to stdout (console output)"
+    // syntax11: cat <filename> "print file to stdout (console output)"
 	static void* arg_cat[] = {
 		arg_rex1(NULL, NULL, "cat", NULL, 0, "print content of the file to screen"),
 		arg_str1(NULL, NULL, "<file>", NULL),
 		arg_end(2),
 	};
-    // syntax11: type [filename] "type from the keyboard to file & screen or screen only; <file name> - name of the file is to be printed; if omitted - print to screen only"
+    // syntax12: type [filename] "type from the keyboard to file & screen or screen only; <file name> - name of the file is to be printed; if omitted - print to screen only"
 	static void* arg_type[] = {
 		arg_rex1(NULL, NULL, "type", NULL, 0, "type from the keyboard to file & screen or screen only; if file omitted - print to screen only"),
 		arg_str0(NULL, NULL, "<file>", "file name to be printed or the name of where the typed text is saved"),
@@ -1095,6 +1174,7 @@ void** SDctrl::Syntax::tables()
 		arg_umnt,
 		arg_info,
 		arg_pwd,
+		arg_mkdir,
 		arg_cd,
 		arg_cp,
 		arg_mv,

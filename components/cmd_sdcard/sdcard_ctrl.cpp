@@ -62,6 +62,7 @@ using namespace std;
  *    -	sd - main command for manipulation with SD-caed
  *	+ m, mount	- mount sdcard, options: [<card>] [<mountpoint>];
  *	+ u, umount	- unmount sdcard, options: [<card>|<mountpiont>];
+ *	+ mkdir		- create new directory
  *	+ ls, dir	- list of files in sdcard, options: [<file pattern>];
  *	+ cd <dir>	- change dir;
  *	+ cat <file>	- print file to console
@@ -237,6 +238,7 @@ esp_err_t Server::pwd()
 {
 #ifdef __PURE_C__
 	char* buf = getcwd(NULL, 0);
+//	size_t buflen = sizeof(buf) + 1;
 
     if (!buf)
 	return errno;
@@ -244,6 +246,18 @@ esp_err_t Server::pwd()
 	<< "PWD is: \"" << buf << '"' << endl
 	<< endl;
     free(buf);
+
+//    buf = (char*)malloc(buflen);
+//    FRESULT res = f_getcwd(buf, buflen);
+//    if (res != FR_OK)
+//    {
+//	cout << "Name of the current working directory was not copied into buffer." << endl
+//		<< "Return code is: " << res << endl;
+//    }; /* if res != FR_OK */
+//
+//    cout << aso::format("Current dir by f_getcwd version is: \"%s\"") % buf << endl;
+//    free(buf);
+
     return ESP_OK;
 #else
     cout << "Command \"pwd\" is not yet implemented now for C++ edition." << endl;
@@ -252,6 +266,39 @@ esp_err_t Server::pwd()
 }; /* Server::pwd */
 
 
+#define CMD_NM "mkdir"
+// create a new directory
+esp_err_t Server::mkdir(const char dirname[])
+{
+    if (dirname == NULL || strcmp(dirname, "") == 0)
+    {
+	    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "invoke command \"%s\" without parameters.\n%s", CMD_NM,
+		     "This command required the creating directory name.");
+	    return ESP_ERR_INVALID_ARG;
+    }; /* if dirname == NULL || strcmp(dirname, "") */
+#ifdef __PURE_C__
+    cout << aso::format("Create directory \"%s\"") % dirname << endl;
+    ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Command \"%s\" is not yet implemented now", CMD_NM);
+
+//    chdir(dirname);
+//    if (errno != 0)
+//    {
+//	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "fail change directory to %s", dirname);
+//	perror(CMD_TAG_PRFX CMD_NM);
+//	return ESP_FAIL;
+//    }; /* if errno != 0 */
+//    return ESP_OK;
+    return ESP_ERR_INVALID_VERSION;
+#else
+    cout << "Change directory to " << '"' << dirname << '"' << endl;
+    cout << "Command \"mkdir\" is not yet implemented now for C++ edition." << endl;
+    return ESP_ERR_INVALID_VERSION;
+#endif
+}; /* Server::mkdir */
+
+
+
+#undef CMD_NM
 #define CMD_NM "cd"
 
 // change a current directory
@@ -259,7 +306,7 @@ esp_err_t Server::cd(const char dirname[])
 {
     if (dirname == NULL || strcmp(dirname, "") == 0)
     {
-	    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "invoke command \"%s\" without parameters.\n%s", "cd",
+	    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "invoke command \"%s\" without parameters.\n%s", CMD_NM,
 		     "This command required directory name to change.");
 	    return ESP_ERR_INVALID_ARG;
     }; /* if dirname == NULL || strcmp(dirname, "") */

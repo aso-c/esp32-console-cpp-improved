@@ -15,7 +15,7 @@
 #define __EXTRSTREAM_ASO__
 
 #include <functional>
-#include "tuplecall"
+#include "tuplecall.hpp"
 
 namespace aso
 {
