@@ -196,13 +196,13 @@ static int mkdir_act(int argc, char **argv)
 void register_mkdir(void)
 {
     static void* mkdargs[] = {
-	    arg_str1(NULL, NULL, "<dir>", "creating directory name"),
+	    arg_str1(NULL, NULL, "<dir>", NULL/*"creating directory name"*/),
 	    arg_end(1)
     };
 
     const esp_console_cmd_t cmd = {
 	    .command = "mkdir",
-	    .help = "Create new directory with"/* <name>"*/,
+	    .help = "Create new directory with name <dir>",
 	    .hint = NULL,
 	    .func = mkdir_act,
 	    .argtable = mkdargs
@@ -229,7 +229,7 @@ static int rmdir_act(int argc, char **argv)
 	break;
 
     default:
-	ESP_LOGE("rmdir command", "too many parameters (%d), don't know what directory to remove, only one dir can be deleted at once.", argc);
+	ESP_LOGE("rmdir command", "too many parameters (%d), deleting multiple directories at once is not allowed", argc);
     }; /* switch argc */
     cout << endl;
 
@@ -239,13 +239,13 @@ static int rmdir_act(int argc, char **argv)
 void register_rmdir(void)
 {
     static void* rmdargs[] = {
-	    arg_str1(NULL, NULL, "<dir>", "name of deleting directory"),
+	    arg_str1(NULL, NULL, "<dir>", NULL/*"name of deleting directory"*/),
 	    arg_end(1)
     };
 
     const esp_console_cmd_t cmd = {
 	    .command = "rmdir",
-	    .help = "Delete empty existing directory",
+	    .help = "Delete empty existing directory <dir>",
 	    .hint = NULL,
 	    .func = rmdir_act,
 	    .argtable = rmdargs
@@ -282,13 +282,13 @@ static int cd_act(int argc, char **argv)
 void register_cd(void)
 {
     static void* cdargs[] = {
-	    arg_str1(NULL, NULL, "<dir>", "directory name to change"),
+	    arg_str1(NULL, NULL, "<dir>", NULL/*"directory name to change"*/),
 	    arg_end(1)
     };
 
     const esp_console_cmd_t cmd = {
 	    .command = "cd",
-	    .help = "Change current directory name",
+	    .help = "Change current directory to <dir>",
 	    .hint = NULL,
 	    .func = cd_act,
 	    .argtable = cdargs
@@ -325,14 +325,14 @@ static int ls_act(int argc, char **argv)
 void register_ls(void)
 {
     static void* lsargs[] = {
-	    arg_str0(NULL, NULL, "<pattern>", "pattern of the file for listing"),
+	    arg_str0(NULL, NULL, "<pattern>", NULL/*"pattern of the file for listing"*/),
 	    arg_end(1)
     };
 
     const esp_console_cmd_t cmd = {
 	    .command = "ls",
-	    .help = "List contents of a directory according pattern, list non-directory files is not available now. ((( Sorry.",
-	    .hint = NULL/*"enter the directory name for change"*/,
+	    .help = "List contents of a directory according <pattern>, list non-directory files  is not available now. ((( Sorry.",
+	    .hint = NULL,
 	    .func = ls_act,
 	    .argtable = lsargs
     };
@@ -372,14 +372,14 @@ static int cp_act(int argc, char **argv)
 void register_cp(void)
 {
     static void* cpargs[] = {
-	    arg_str1(NULL, NULL, "<src>", "source filename to copy"),
-	    arg_str1(NULL, NULL, "<dest>", "where to copy file"),
+	    arg_str1(NULL, NULL, "<src>", NULL/*"source filename to copy"*/),
+	    arg_str1(NULL, NULL, "<dest>", NULL/*"where to copy file"*/),
 	    arg_end(2)
     };
 
     const esp_console_cmd_t cmd = {
 	    .command = "cp",
-	    .help = "Copy a source file to destination.",
+	    .help = "Copy a file \"<src>\" to \"<dest>\".",
 	    .hint = NULL,
 	    .func = cp_act,
 	    .argtable = cpargs
@@ -420,14 +420,14 @@ static int mv_act(int argc, char **argv)
 void register_mv(void)
 {
     static void* cpargs[] = {
-	    arg_str1(NULL, NULL, "<src>", "source filename to rename/move"),
-	    arg_str1(NULL, NULL, "<dest>", "where to copy file"),
+	    arg_str1(NULL, NULL, "<src>", NULL/*"source filename to rename/move"*/),
+	    arg_str1(NULL, NULL, "<dest>", NULL/*"where to copy file"*/),
 	    arg_end(2)
     };
 
     const esp_console_cmd_t cmd = {
 	    .command = "mv",
-	    .help = "Rename/move source file to destination.",
+	    .help = "Rename/move a file \"<src>\" to \"<dest>\".",
 	    .hint = NULL,
 	    .func = mv_act,
 	    .argtable = cpargs
@@ -465,13 +465,13 @@ static int rm_act(int argc, char **argv)
 void register_rm(void)
 {
     static void* rmargs[] = {
-	    arg_str1(NULL, NULL, "<filename>", "filename name for delete"),
+	    arg_str1(NULL, NULL, "<filename>", NULL/*"name of the file to delete"*/),
 	    arg_end(1)
     };
 
     const esp_console_cmd_t cmd = {
 	    .command = "rm",
-	    .help = "Delete a file or set of files matching the pattern <filename>",
+	    .help = "Delete a file or fileset matching the pattern <filename>",
 	    .hint = NULL,
 	    .func = rm_act,
 	    .argtable = rmargs
@@ -508,13 +508,13 @@ static int cat_act(int argc, char **argv)
 void register_cat(void)
 {
     static void* catargs[] = {
-	    arg_str1(NULL, NULL, "<filename>", "name of the files for type to output"),
+	    arg_str1(NULL, NULL, "<filename>", NULL/*"name of the files for type to output"*/),
 	    arg_end(1)
     };
 
     const esp_console_cmd_t cmd = {
 	    .command = "cat",
-	    .help = "Type a file contents to standard output (default - to screen)",
+	    .help = "Type contents of the file <filename> to standard output (default - to screen)",
 	    .hint = NULL,
 	    .func = cat_act,
 	    .argtable = catargs
@@ -553,13 +553,13 @@ static int type_act(int argc, char **argv)
 void register_type(void)
 {
     static void* typeargs[] = {
-	    arg_str0(NULL, NULL, "<filename>", "filename for storage keyboard type output"),
+	    arg_str0(NULL, NULL, "<filename>", NULL/*"filename for storage keyboard type output"*/),
 	    arg_end(1)
     };
 
     const esp_console_cmd_t cmd = {
 	    .command = "type",
-	    .help = "Type from a keyboard to standard output (default - to screen) and to file (if specified)",
+	    .help = "Type from a keyboard to standard output (default - to screen) and storing keyboard typing to the file <filename> (if specified)",
 	    .hint = NULL,
 	    .func = type_act,
 	    .argtable = typeargs
@@ -608,6 +608,7 @@ public:
     esp_err_t act_info();	// action for 'info' command
     esp_err_t act_pwd();	// action for 'pwd' command
     esp_err_t act_mkdir();	// action for mkdir command
+    esp_err_t act_rmdir();	// action for rmdir command
     esp_err_t act_cd();		// action for 'cd' command
     esp_err_t act_ls();		// action for list/dir command
     esp_err_t act_cp();		// action for 'copy file' command
@@ -631,7 +632,7 @@ private:
     public:
 
 	// sucommand id
-	enum cmd_id { none, mount, unmount, info, pwd, mkdir, cd, ls, cp, mv, rm, cat, type, helping, unknown = -1 };
+	enum cmd_id { none, mount, unmount, info, pwd, mkdir, rmdir, cd, ls, cp, mv, rm, cat, type, helping, unknown = -1 };
 
 	static Syntax& get();
 	cmd_id id();	// Return subcommand id
@@ -724,6 +725,9 @@ esp_err_t SDctrl::exec(int argc, char **argv)
     case Syntax::mkdir:
 	return instance.act_mkdir();
 
+    case Syntax::rmdir:
+	return instance.act_rmdir();
+
     case Syntax::cd:
 	return instance.act_cd();
 
@@ -806,7 +810,7 @@ esp_err_t SDctrl::act_mnt()
 	break;
 
     default:
-	ESP_LOGE("sdcard mount command", "more than two parameters (%d) - is not allowed", argc - 2);
+	ESP_LOGE("sdcard mount command", "more than two parameters (%d) is not allowed", argc - 2);
 	res = ESP_FAIL;
     }; /* switch argc */
     cout << endl;
@@ -860,7 +864,7 @@ esp_err_t SDctrl::act_pwd()
 }; /* SDctrl::act_pwd */
 
 
-// action for 'cd' command
+// action for 'mkdir' command
 esp_err_t SDctrl::act_mkdir()
 {
     cout << "\"mkdir\" command execution" << endl;
@@ -877,6 +881,30 @@ esp_err_t SDctrl::act_mkdir()
 
     default:
 	ESP_LOGE("sdcard mkdir command", "more than one parameters (%d) - don't know what directory to create.", argc - 2);
+    }; /* switch argc */
+    cout << endl;
+
+    return ESP_ERR_INVALID_ARG;
+}; /* SDctrl::act_mkdir */
+
+
+// action for 'rmdir' command
+esp_err_t SDctrl::act_rmdir()
+{
+    cout << "\"rmdir\" command execution" << endl;
+    switch (argc)
+    {
+    case 2:
+	return sd_server.rmdir();
+	break;
+
+    case 3:
+	cout << "...with one parameter - specified the name directory to delete." << endl;
+	return sd_server.rmdir(argv[2]);
+	break;
+
+    default:
+	ESP_LOGE("sdcard rmdir command", "more than one parameters (%d) - deleting multiple directories at once is not allowed", argc - 2);
     }; /* switch argc */
     cout << endl;
 
@@ -1163,53 +1191,59 @@ void** SDctrl::Syntax::tables()
 	};
     // syntax5: mkdir [<path>] "make new directory with name <path>"
 	static void* arg_mkdir[] = {
-		arg_rex1(NULL, NULL, "mkdir", NULL, 0, "make new directory with name <path>"),
-		arg_str0(NULL, NULL, "<path>", "name of the new directory"),
+		arg_rex1(NULL, NULL, "mkdir", NULL, 0, "make new directory with name \"<path>\""),
+		arg_str0(NULL, NULL, "<path>", NULL/*"name of the new directory"*/),
 		arg_end(2),
 	};
-    // syntax6: cd [<path>] "change current directory to <path>"
+	// syntax6: rmdir [<path>] "delete existing empty directory with name <path>"
+	static void* arg_rmdir[] = {
+		arg_rex1(NULL, NULL, "rmdir", NULL, 0, "delete existing empty directory with name \"<path>\""),
+		arg_str0(NULL, NULL, "<path>", NULL/*"name of the new directory"*/),
+		arg_end(2),
+		};
+    // syntax7: cd [<path>] "change current directory to <path>"
 	static void* arg_cd[] = {
-		arg_rex1(NULL, NULL, "cd", NULL, 0, "change current directory to <path>"),
-		arg_str0(NULL, NULL, "<path>", "path to which the current directory is changed"),
+		arg_rex1(NULL, NULL, "cd", NULL, 0, "change current directory to a <path>"),
+		arg_str0(NULL, NULL, "<path>", NULL/*"path to which the current directory is changed"*/),
 		arg_end(2),
 	};
 //----------------------------------------------------------------------------------------------------------------------
-    // syntax7: cp <src> <dest> "copy file <src> to <dest>"
+    // syntax8: cp <src> <dest> "copy file <src> to <dest>"
 	static void* arg_cp[] = {
 		arg_rex1(NULL, NULL, "cp|copy", NULL, 0, "copy file <src> to <dest>"),
 		arg_str1(NULL, NULL, "<src>", NULL/*"file name to copy"*/),
 		arg_str1(NULL, NULL, "<dest>", NULL/*"where file to copy"*/),
 		arg_end(3),
 	};
-    // syntax8: mv <src> <dest> "rename/move file <src> to <dest>"
+    // syntax9: mv <src> <dest> "rename/move file <src> to <dest>"
 	static void* arg_mv[] = {
-		arg_rex1(NULL, NULL, "mv|ren", NULL, 0, "copy file <src> to <dest>"),
-		arg_str1(NULL, NULL, "<src>", "source file name to copy or rename/move"),
-		arg_str1(NULL, NULL, "<dest>", "where file to copy or rename/move"),
+		arg_rex1(NULL, NULL, "mv|ren", NULL, 0, "rename/move file <src> to <dest>"),
+		arg_str1(NULL, NULL, "<src>", NULL/*"source file name to copy or rename/move"*/),
+		arg_str1(NULL, NULL, "<dest>", NULL/*"where file to copy or rename/move"*/),
 		arg_end(3),
 		};
-    // syntax9: rm [<pattern>] "delete file <pattern>"
+    // syntax10: rm [<pattern>] "delete file <pattern>"
 	static void* arg_rm[] = {
-		arg_rex1(NULL, NULL, "rm", NULL, 0, "delete file <pattern>"),
+		arg_rex1(NULL, NULL, "rm", NULL, 0, "delete file according <pattern>"),
 		arg_str1(NULL, NULL, "<pattern>", NULL/*"file name to delete"*/),
 		arg_end(2),
 	};
-    // syntax10: ls | dir [<pattern>] "print directory contents on SD-card"
+    // syntax11: ls | dir [<pattern>] "print directory contents on SD-card"
 	static void* arg_ls[] = {
-		arg_rex1(NULL, NULL, "ls|dir", NULL, 0, "print directory contents on SD-card"),
-		arg_str0(NULL, NULL, "<pattern>", "file pattern or path for lising or felete"),
+		arg_rex1(NULL, NULL, "ls|dir", NULL, 0, "print directory contents on SD-card according <pattern>"),
+		arg_str0(NULL, NULL, "<pattern>", NULL/*"file pattern or path for lising"*/),
 		arg_end(2),
 	};
-    // syntax11: cat <filename> "print file to stdout (console output)"
+    // syntax12: cat <filename> "print file to stdout (console output)"
 	static void* arg_cat[] = {
-		arg_rex1(NULL, NULL, "cat", NULL, 0, "print content of the file to screen"),
-		arg_str1(NULL, NULL, "<file>", NULL),
+		arg_rex1(NULL, NULL, "cat", NULL, 0, "print content of the file \"<filename>\" to screen"),
+		arg_str1(NULL, NULL, "<filename>", NULL),
 		arg_end(2),
 	};
-    // syntax12: type [filename] "type from the keyboard to file & screen or screen only; <file name> - name of the file is to be printed; if omitted - print to screen only"
+    // syntax  : type [filename] "type from the keyboard to file & screen or screen only; <file name> - name of the file is to be printed; if omitted - print to screen only"
 	static void* arg_type[] = {
-		arg_rex1(NULL, NULL, "type", NULL, 0, "type from the keyboard to file & screen or screen only; if file omitted - print to screen only"),
-		arg_str0(NULL, NULL, "<file>", "file name to be printed or the name of where the typed text is saved"),
+		arg_rex1(NULL, NULL, "type", NULL, 0, "type from the keyboard to a file & screen or screen only if the file omitted"),
+//		"Type from a keyboard to standard output (default - to screen) and storing keyboard typing to the file <filename> (if specified)"		arg_str0(NULL, NULL, "<file>", "file name to be printed or the name of where the typed text is saved"),
 		arg_end(2),
 	};
 
@@ -1219,6 +1253,7 @@ void** SDctrl::Syntax::tables()
 		arg_info,
 		arg_pwd,
 		arg_mkdir,
+		arg_rmdir,
 		arg_cd,
 		arg_cp,
 		arg_mv,
