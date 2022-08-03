@@ -296,6 +296,38 @@ esp_err_t Server::mkdir(const char dirname[])
 #endif
 }; /* Server::mkdir */
 
+#undef CMD_NM
+#define CMD_NM "rmdir"
+// create a new directory
+esp_err_t Server::rmdir(const char dirname[])
+{
+    if (dirname == NULL || strcmp(dirname, "") == 0)
+    {
+	    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "invoke command \"%s\" without parameters.\n%s", CMD_NM,
+		     "This command required the deleting directory name.");
+	    return ESP_ERR_INVALID_ARG;
+    }; /* if dirname == NULL || strcmp(dirname, "") */
+#ifdef __PURE_C__
+    cout << aso::format("Delete directory <%s>") % dirname << endl;
+    ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Command \"%s\" is not yet implemented now", CMD_NM);
+
+//    chdir(dirname);
+//    if (errno != 0)
+//    {
+//	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "fail change directory to %s", dirname);
+//	perror(CMD_TAG_PRFX CMD_NM);
+//	return ESP_FAIL;
+//    }; /* if errno != 0 */
+//    return ESP_OK;
+    return ESP_ERR_INVALID_VERSION;
+#else
+    cout << "Delete directory " << '<' << dirname << '>' << endl;
+    //cout << aso::format("Command \"%s\" is not yet implemented now for C++ edition.") % CND_NM << endl;
+    ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Command \"%s\" is not yet implemented now", CMD_NM);
+    return ESP_ERR_INVALID_VERSION;
+#endif
+}; /* Server::rmdir */
+
 
 
 #undef CMD_NM
@@ -315,14 +347,14 @@ esp_err_t Server::cd(const char dirname[])
     chdir(dirname);
     if (errno != 0)
     {
-	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "fail change directory to %s", dirname);
-	perror(CMD_TAG_PRFX CMD_NM);
+	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "fail change directory to %s\n%s", dirname, strerror(errno));
+	//perror(CMD_TAG_PRFX CMD_NM);
 	return ESP_FAIL;
     }; /* if errno != 0 */
     return ESP_OK;
 #else
     cout << "Change directory to " << '"' << dirname << '"' << endl;
-    cout << "Command \"cd\" is not yet implemented now for C++ edition." << endl;
+    cout << "Command \"" CMD_NM "\" is not yet implemented now for C++ edition." << endl;
     return ESP_ERR_INVALID_VERSION;
 #endif
 }; /* Server::cd */
@@ -622,8 +654,6 @@ esp_err_t Server::cat(const char fname[])
     cout << endl
 	 << "*** Printing contents of the file <" << fname << ">. ***" << endl
 	 << endl;
-//    ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Command \"%s %s \" is not yet implemented now", CMD_NM, fname);
-//    cout << "Exit..." << endl;
 
 #ifdef __PURE_C__
 
@@ -667,7 +697,6 @@ esp_err_t Server::type()
 {
     cout << endl
 	 << "**** Type the text on keyboard to screen *****" << endl
-//	 << "Press 'q' or <Enter> twice for exit..." << endl
 	 << "Press <Enter> twice for exit..." << endl
 	 << endl;
 

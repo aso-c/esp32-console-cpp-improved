@@ -11,20 +11,12 @@
 //
 
 
-// Исходники:
+// Sources:
 // https://overcoder.net/q/54881/получение-файла-из-std-fstream
 // https://overcoder.net/q/54881/%D0%BF%D0%BE%D0%BB%D1%83%D1%87%D0%B5%D0%BD%D0%B8%D0%B5-%D1%84%D0%B0%D0%B9%D0%BB%D0%B0-%D0%B8%D0%B7-std-fstream
 // https://ask-dev.ru/info/113124/getting-a-file-from-a-stdfstream
 //
-// ОРИГИНАЛ:
-// (Возможно, не перекрестная платформа, но простая)
-//
-// Упрощение взлома http://www.ginac.de/~kreckel/fileno/ (ответ dvorak) и просмотр этого расширения
-// gcc http://gcc.gnu.org/onlinedocs/gcc-4.6.2/libstdc++/api/a00069.html#a59f78806603c619eafcd4537c920f859,
-// У меня есть это решение, которое работает на GCC (не менее 4.8) и clang (по крайней мере, 3.3)
-// [...]
-//
-//Usage:
+// Usage:
 //
 //int main(){
 //    std::ofstream ofs("file.txt");
@@ -88,12 +80,28 @@ FILE* cfile(std::ifstream const& ifs)
 }; /* cfile(std::ifstream) */
 
 
-
 //
 // Text from this source:
 // https://overcoder.net/q/54881/получение-файла-из-std-fstream
 // https://overcoder.net/q/54881/%D0%BF%D0%BE%D0%BB%D1%83%D1%87%D0%B5%D0%BD%D0%B8%D0%B5-%D1%84%D0%B0%D0%B9%D0%BB%D0%B0-%D0%B8%D0%B7-std-fstream
 // https://ask-dev.ru/info/113124/getting-a-file-from-a-stdfstream
+//
+// ОРИГИНАЛ:
+// (Возможно, не перекрестная платформа, но простая)
+//
+// Упрощение взлома http://www.ginac.de/~kreckel/fileno/ (ответ dvorak) и просмотр этого расширения
+// gcc http://gcc.gnu.org/onlinedocs/gcc-4.6.2/libstdc++/api/a00069.html#a59f78806603c619eafcd4537c920f859,
+// У меня есть это решение, которое работает на GCC (не менее 4.8) и clang (по крайней мере, 3.3)
+// [...]
+//
+//Usage:
+//
+//int main(){
+//    std::ofstream ofs("file.txt");
+//    fprintf(cfile(ofs), "sample1");
+//    fflush(cfile(ofs)); // ofs << std::flush; doesn't help
+//    ofs << "sample2\n";
+//}
 //
 // Limitations: (комментарии приветствуются)
 //
@@ -116,10 +124,9 @@ FILE* cfile(std::ostream const& os)
     if(&os == &std::cerr) return stderr;
     if(&os == &std::cout) return stdout;
     if(&os == &std::clog) return stderr;
-//    if(dynamic_cast<std::ostringstream const*>(&os) != 0){
+    if(dynamic_cast<std::ostringstream const*>(&os) != 0){
        throw std::runtime_error("don't know cannot extract FILE pointer from std::ostringstream");
-//    }
-//    return 0; // stream not recognized
+    }
     return nullptr; // stream not recognized
 }; /* cfile(std::ostream) */
 
@@ -130,10 +137,9 @@ FILE* cfile(std::istream const& is)
 {
     if(std::ifstream const* ifsP = dynamic_cast<std::ifstream const*>(&is)) return cfile(*ifsP);
     if(&is == &std::cin) return stdin;
-//    if(dynamic_cast<std::ostringstream const*>(&is) != 0){
+    if(dynamic_cast<std::ostringstream const*>(&is) != 0){
         throw std::runtime_error("don't know how to extract FILE pointer from std::istringstream");
-//    }
-//    return 0; // stream not recognized
+    }
     return nullptr; // stream not recognized
 }; /* cfile(std::istream) */
 
@@ -212,7 +218,6 @@ std::stringstream& output_helper(std::stringstream& strstr, const std::string& f
 
 
 }; /* namespace aso */
-
 
 
 //--[ End of file ]--------------------------------------------------------------------------------

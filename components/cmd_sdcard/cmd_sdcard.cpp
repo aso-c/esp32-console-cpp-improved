@@ -202,10 +202,53 @@ void register_mkdir(void)
 
     const esp_console_cmd_t cmd = {
 	    .command = "mkdir",
-	    .help = "Create new directory with <name>",
+	    .help = "Create new directory with"/* <name>"*/,
 	    .hint = NULL,
 	    .func = mkdir_act,
 	    .argtable = mkdargs
+    };
+
+    register_cmd(&cmd);
+
+}; /* register_mkdir */
+
+
+// rmdir command ----------------------------------------------------------------------------------
+
+static int rmdir_act(int argc, char **argv)
+{
+    cout << "\"rmdir\" command execution" << endl;
+    switch (argc)
+    {
+    case 1:
+	return sd_server.rmdir();
+	break;
+
+    case 2:
+	return sd_server.rmdir(argv[1]);
+	break;
+
+    default:
+	ESP_LOGE("rmdir command", "too many parameters (%d), don't know what directory to remove, only one dir can be deleted at once.", argc);
+    }; /* switch argc */
+    cout << endl;
+
+    return ESP_ERR_INVALID_ARG;
+}; /* rmdir_act */
+
+void register_rmdir(void)
+{
+    static void* rmdargs[] = {
+	    arg_str1(NULL, NULL, "<dir>", "name of deleting directory"),
+	    arg_end(1)
+    };
+
+    const esp_console_cmd_t cmd = {
+	    .command = "rmdir",
+	    .help = "Delete empty existing directory",
+	    .hint = NULL,
+	    .func = rmdir_act,
+	    .argtable = rmdargs
     };
 
     register_cmd(&cmd);
@@ -534,6 +577,7 @@ void register_fs_cmd_all(void)
     register_pwd();
     register_cd();
     register_mkdir();
+    register_rmdir();
     register_ls();
     register_cp();
     register_mv();

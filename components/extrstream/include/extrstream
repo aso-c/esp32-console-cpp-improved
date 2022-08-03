@@ -6,8 +6,8 @@
 // Header file
 //
 // author: Solomatov A.A. (aso)
-// ver.  : v.1.1
-// date  : 05.07.22.
+// ver.  : v.1.2
+// date  : 17.07.22.
 //
 
 
@@ -23,7 +23,7 @@ namespace aso
 
 
     //
-    // Naiv implementation of the boost::format() analogue for the format string output
+    // Naive implementation of the boost::format() using the format string output as in the *printf pure C library
     // Usage:
     //
     //     cout << aso::boost("Hellow, my name is %s" and I am %d years old.", "John, 29) << endl;
@@ -151,7 +151,6 @@ namespace aso
     // Generate call 'format' with parameters from the expression
     template<typename T, typename...PrnTypes>
     inline Formatter<PrnTypes..., T> operator %(const Formatter<PrnTypes...> fmt, T prnitem) {
-//	return Formatter<PrnTypes..., T>(fmt, prnitem);
 	return fmt.generate(std::forward<T>(prnitem));
     };
 
