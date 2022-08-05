@@ -272,17 +272,14 @@ esp_err_t Server::mkdir(const char dirname[])
 {
     if (dirname == NULL || strcmp(dirname, "") == 0)
     {
-	    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "invoke command \"%s\" without parameters.\n%s", CMD_NM,
-		     "This command required the creating directory name.");
-	    return ESP_ERR_INVALID_ARG;
+	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "invoke command \"%s\" without parameters.\n%s", CMD_NM,
+		"This command required the creating directory name.");
+	return ESP_ERR_INVALID_ARG;
     }; /* if dirname == NULL || strcmp(dirname, "") */
 #ifdef __PURE_C__
-    cout << aso::format("Create directory \"%s\"") % dirname << endl;
-    //ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Command \"%s\" is not yet implemented now", CMD_NM);
-//    return ESP_ERR_INVALID_VERSION;
 
 	const char *buf;
-	char /**buf,*/ *extrbuf = NULL;
+	char *extrbuf = NULL;
     if (dirname[strlen(dirname)-1] == '/')
 	buf = dirname;
     else
@@ -293,24 +290,17 @@ esp_err_t Server::mkdir(const char dirname[])
 	extrbuf[strlen(dirname)+1] = '\0';
 	buf = extrbuf;
     }; /* else if (dirname[strlen(dirname)] == '/' */
-    cout << aso::format("Rean name of the creating directory \"%s\"") % buf << endl;
+    cout << aso::format("Create directory \"%s\"") % buf << endl;
     errno = 0;
-    ::mkdir(buf, S_IRWXU | S_IRWXG | S_IRWXO);
+    ::mkdir(buf, 0777);
+    free(extrbuf);
     if (errno)
     {
 	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Error creating directory \"%s\": %s", dirname, strerror(errno));
 	return ESP_FAIL;
     }; /* if (errno) */
-    free(extrbuf);
-
-//    chdir(dirname);
-//    if (errno != 0)
-//    {
-//	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "fail change directory to %s", dirname);
-//	perror(CMD_TAG_PRFX CMD_NM);
-//	return ESP_FAIL;
-//    }; /* if errno != 0 */
     return ESP_OK;
+
 #else
     cout << "Change directory to " << '"' << dirname << '"' << endl;
     cout << "Command \"mkdir\" is not yet implemented now for C++ edition." << endl;
@@ -331,7 +321,7 @@ esp_err_t Server::rmdir(const char dirname[])
     }; /* if dirname == NULL || strcmp(dirname, "") */
 #ifdef __PURE_C__
     cout << aso::format("Delete directory <%s>") % dirname << endl;
-    ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Command \"%s\" is not yet implemented now", CMD_NM);
+//    ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Command \"%s\" is not yet implemented now", CMD_NM);
 
 //    chdir(dirname);
 //    if (errno != 0)
@@ -341,7 +331,74 @@ esp_err_t Server::rmdir(const char dirname[])
 //	return ESP_FAIL;
 //    }; /* if errno != 0 */
 //    return ESP_OK;
-    return ESP_ERR_INVALID_VERSION;
+//    return ESP_ERR_INVALID_VERSION;
+
+    // Check if destination directory or file exists before deleting
+    struct stat st;
+    if (stat(dirname, &st) != 0)
+    {
+        // deleting a non-existent directory is not possible
+	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Directory \"%s\" is not exist - deleting a non-existent catalogue is not possible.\n%s", dirname, esp_err_to_name(ESP_ERR_NOT_FOUND));
+	return ESP_ERR_NOT_FOUND;
+    }; /* if stat(file_foo, &st) != 0 */
+    if (!S_ISDIR(st.st_mode))
+    {
+	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "The %s command delete directories, not the files.\n%s", CMD_NM, esp_err_to_name(ESP_ERR_NOT_SUPPORTED));
+	return ESP_ERR_NOT_SUPPORTED;
+    }; /* if (S_ISDIR(st.st_mode)) */
+
+    //------------------------------------------------------------------------------------------------------------
+//	char pathbuf[PATH_MAX + 1];
+//	char * fnbuf;
+//	int cnt = 0;
+
+	DIR *dir;	// Directory descriptor
+
+    dir = opendir(dirname);
+
+//    if (realpath(path, pathbuf) == NULL)
+//{
+//	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Error canonicalizing path \"<%s>\", %s", path, strerror(errno));
+//	return ESP_FAIL;
+//}; /* if realpath(pattern, pathbuf) == NULL */
+
+errno = 0;	// clear any possible errors
+//fnbuf = pathbuf + strlen(pathbuf);
+//fnbuf[0] = '/';
+//fnbuf++;
+
+struct dirent *entry = readdir(dir);
+//for ( struct dirent *entry = readdir(dir); entry != NULL; entry = readdir(dir))
+//{
+//	cnt++;
+//	strcpy(fnbuf, entry->d_name);
+//
+//	ls_entry_printout_pure_C(pathbuf, entry->d_name);
+//}; /* for entry = readdir(dir); entry != NULL; entry = readdir(dir) */
+// if directory is not empty
+if (entry)
+{
+    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Directory \"%s\" is not empty, deletung non-emty directories is not supported.", dirname);
+    return ESP_ERR_NOT_SUPPORTED;
+}; /* if (entry) */
+closedir(dir);
+if (errno)
+{
+    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Fail when closing directory \"%s\": %s", dirname, strerror(errno));
+    return ESP_FAIL;
+}; /* if errno */
+    //------------------------------------------------------------------------------------------------------------
+
+    errno = 0;
+    cout << "Exec ===>> " << "unlink(pattern)" << "<<===" << endl;
+    if (errno)
+    {
+	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Fail when deleting \"%s\": %s", CMD_NM, strerror(errno));
+	return ESP_FAIL;
+    }; /* if errno */
+
+    return ESP_OK;
+
 #else
     cout << "Delete directory " << '<' << dirname << '>' << endl;
     //cout << aso::format("Command \"%s\" is not yet implemented now for C++ edition.") % CND_NM << endl;
@@ -650,10 +707,8 @@ esp_err_t Server::rm(const char pattern[])
 
     cout << "Delete file " << '"' << pattern << '"' << endl;
 #ifdef __PURE_C__
-//    ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Command \"%s\" is not yet implemented now for C edition.", CMD_NM);
-//    return ESP_ERR_INVALID_VERSION;
 
-    // Check if destination file exists before renaming
+    // Check if destination file exists before deleting
     struct stat st;
     if (stat(pattern, &st) != 0)
     {
