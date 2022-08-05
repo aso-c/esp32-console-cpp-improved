@@ -321,17 +321,6 @@ esp_err_t Server::rmdir(const char dirname[])
     }; /* if dirname == NULL || strcmp(dirname, "") */
 #ifdef __PURE_C__
     cout << aso::format("Delete directory <%s>") % dirname << endl;
-//    ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Command \"%s\" is not yet implemented now", CMD_NM);
-
-//    chdir(dirname);
-//    if (errno != 0)
-//    {
-//	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "fail change directory to %s", dirname);
-//	perror(CMD_TAG_PRFX CMD_NM);
-//	return ESP_FAIL;
-//    }; /* if errno != 0 */
-//    return ESP_OK;
-//    return ESP_ERR_INVALID_VERSION;
 
     // Check if destination directory or file exists before deleting
     struct stat st;
@@ -347,50 +336,26 @@ esp_err_t Server::rmdir(const char dirname[])
 	return ESP_ERR_NOT_SUPPORTED;
     }; /* if (S_ISDIR(st.st_mode)) */
 
-    //------------------------------------------------------------------------------------------------------------
-//	char pathbuf[PATH_MAX + 1];
-//	char * fnbuf;
-//	int cnt = 0;
+	DIR *dir = opendir(dirname);	// Directory descriptor
 
-	DIR *dir;	// Directory descriptor
+    errno = 0;	// clear any possible errors
 
-    dir = opendir(dirname);
+	struct dirent *entry = readdir(dir);
 
-//    if (realpath(path, pathbuf) == NULL)
-//{
-//	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Error canonicalizing path \"<%s>\", %s", path, strerror(errno));
-//	return ESP_FAIL;
-//}; /* if realpath(pattern, pathbuf) == NULL */
-
-errno = 0;	// clear any possible errors
-//fnbuf = pathbuf + strlen(pathbuf);
-//fnbuf[0] = '/';
-//fnbuf++;
-
-struct dirent *entry = readdir(dir);
-//for ( struct dirent *entry = readdir(dir); entry != NULL; entry = readdir(dir))
-//{
-//	cnt++;
-//	strcpy(fnbuf, entry->d_name);
-//
-//	ls_entry_printout_pure_C(pathbuf, entry->d_name);
-//}; /* for entry = readdir(dir); entry != NULL; entry = readdir(dir) */
-// if directory is not empty
-if (entry)
-{
-    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Directory \"%s\" is not empty, deletung non-emty directories is not supported.", dirname);
-    return ESP_ERR_NOT_SUPPORTED;
-}; /* if (entry) */
-closedir(dir);
-if (errno)
-{
-    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Fail when closing directory \"%s\": %s", dirname, strerror(errno));
-    return ESP_FAIL;
-}; /* if errno */
-    //------------------------------------------------------------------------------------------------------------
+    if (entry)
+    {
+	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Directory \"%s\" is not empty, deletung non-emty directories is not supported.", dirname);
+	return ESP_ERR_NOT_SUPPORTED;
+    }; /* if (entry) */
+    closedir(dir);
+    if (errno)
+    {
+	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Fail when closing directory \"%s\": %s", dirname, strerror(errno));
+	return ESP_FAIL;
+    }; /* if errno */
 
     errno = 0;
-    cout << "Exec ===>> " << "unlink(pattern)" << "<<===" << endl;
+    unlink(dirname);
     if (errno)
     {
 	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Fail when deleting \"%s\": %s", CMD_NM, strerror(errno));
