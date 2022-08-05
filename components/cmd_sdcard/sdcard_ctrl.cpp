@@ -278,7 +278,30 @@ esp_err_t Server::mkdir(const char dirname[])
     }; /* if dirname == NULL || strcmp(dirname, "") */
 #ifdef __PURE_C__
     cout << aso::format("Create directory \"%s\"") % dirname << endl;
-    ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Command \"%s\" is not yet implemented now", CMD_NM);
+    //ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Command \"%s\" is not yet implemented now", CMD_NM);
+//    return ESP_ERR_INVALID_VERSION;
+
+	const char *buf;
+	char /**buf,*/ *extrbuf = NULL;
+    if (dirname[strlen(dirname)-1] == '/')
+	buf = dirname;
+    else
+    {
+	extrbuf = (char*)malloc(strlen(dirname) + 2);
+	strcpy(extrbuf, dirname);
+	extrbuf[strlen(dirname)] = '/';
+	extrbuf[strlen(dirname)+1] = '\0';
+	buf = extrbuf;
+    }; /* else if (dirname[strlen(dirname)] == '/' */
+    cout << aso::format("Rean name of the creating directory \"%s\"") % buf << endl;
+    errno = 0;
+    ::mkdir(buf, S_IRWXU | S_IRWXG | S_IRWXO);
+    if (errno)
+    {
+	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Error creating directory \"%s\": %s", dirname, strerror(errno));
+	return ESP_FAIL;
+    }; /* if (errno) */
+    free(extrbuf);
 
 //    chdir(dirname);
 //    if (errno != 0)
@@ -287,8 +310,7 @@ esp_err_t Server::mkdir(const char dirname[])
 //	perror(CMD_TAG_PRFX CMD_NM);
 //	return ESP_FAIL;
 //    }; /* if errno != 0 */
-//    return ESP_OK;
-    return ESP_ERR_INVALID_VERSION;
+    return ESP_OK;
 #else
     cout << "Change directory to " << '"' << dirname << '"' << endl;
     cout << "Command \"mkdir\" is not yet implemented now for C++ edition." << endl;
