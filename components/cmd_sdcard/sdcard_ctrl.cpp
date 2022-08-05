@@ -596,9 +596,15 @@ esp_err_t Server::mv(const char src[], const char dest[])
 
     cout << aso::format("Move file \"%s\" to \"%s.\"", src, dest) << endl;
 #ifdef __PURE_C__
-    ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Command \"%s\" is not yet implemented now for C edition.", CMD_NM);
-    return ESP_ERR_INVALID_VERSION;
-    //return ESP_OK;
+//    ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Command \"%s\" is not yet implemented now for C edition.", CMD_NM);
+//    return ESP_ERR_INVALID_VERSION;
+    // Rename original file
+    ESP_LOGI(TAG, "Renaming file %s to %s", src, dest);
+    if (rename(src, dest) != 0) {
+        ESP_LOGE(TAG, "Rename failed");
+        return ESP_FAIL;
+    }
+    return ESP_OK;
 #else
     ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Command \"%s\" is not yet implemented now for C++ edition.", CMD_NM);
     return ESP_ERR_INVALID_VERSION;
@@ -622,9 +628,32 @@ esp_err_t Server::rm(const char pattern[])
 
     cout << "Delete file " << '"' << pattern << '"' << endl;
 #ifdef __PURE_C__
-    ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Command \"%s\" is not yet implemented now for C edition.", CMD_NM);
-    return ESP_ERR_INVALID_VERSION;
-    //return ESP_OK;
+//    ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Command \"%s\" is not yet implemented now for C edition.", CMD_NM);
+//    return ESP_ERR_INVALID_VERSION;
+
+    // Check if destination file exists before renaming
+    struct stat st;
+    if (stat(pattern, &st) != 0)
+    {
+        // deleting a non-existent file is not possible
+	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "File \"%s\" is not exist - deleting a non-existent file is not possible.\n%s", pattern, esp_err_to_name(ESP_ERR_NOT_FOUND));
+	return ESP_ERR_NOT_FOUND;
+    }; /* if stat(file_foo, &st) != 0 */
+    if (S_ISDIR(st.st_mode))
+    {
+	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Deleting directories by command \"%s\" is impossible.\n%s", CMD_NM, esp_err_to_name(ESP_ERR_NOT_SUPPORTED));
+	return ESP_ERR_NOT_SUPPORTED;
+    }; /* if (S_ISDIR(st.st_mode)) */
+    errno = 0;
+//    cout << "Now exec: ===>> " << "unlink(pattern)" << "<<===" << endl;
+    unlink(pattern);
+    if (errno)
+    {
+	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Faile when deleting \"%s\": %s", CMD_NM, strerror(errno));
+	return ESP_FAIL;
+    }; /* if errno */
+
+    return ESP_OK;
 #else
     ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Command \"%s\" is not yet implemented now for C++ edition.", CMD_NM);
     return ESP_ERR_INVALID_VERSION;
@@ -813,6 +842,10 @@ esp_err_t Server::type(const char fname[])
 
     ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Command \"%s %s \" is not yet implemented now", CMD_NM, fname);
     cout << "Exit..." << endl;
+
+
+
+
 
     cout << aso::format("Close the file %s.") % fname << endl;
     fsync(fileno(storage));
