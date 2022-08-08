@@ -342,19 +342,19 @@ esp_err_t Server::rmdir(const char dirname[])
 
 	struct dirent *entry = readdir(dir);
 
-    if (entry)
-    {
-	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Directory \"%s\" is not empty, deletung non-emty directories is not supported.", dirname);
-	return ESP_ERR_NOT_SUPPORTED;
-    }; /* if (entry) */
     closedir(dir);
     if (errno)
     {
 	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Fail when closing directory \"%s\": %s", dirname, strerror(errno));
 	return ESP_FAIL;
     }; /* if errno */
+    if (entry)
+    {
+	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Directory \"%s\" is not empty, deletung non-emty directories is not supported.", dirname);
+	return ESP_ERR_NOT_SUPPORTED;
+    }; /* if (entry) */
 
-    errno = 0;
+//    errno = 0;
     unlink(dirname);
     if (errno)
     {
@@ -876,20 +876,57 @@ esp_err_t Server::type(const char fname[])
 	return ESP_ERR_NOT_FOUND;
     }; /* if storage == NULL */
 
-    cout << aso::format("**** Type the text on keyboard to screen and file [%s]. ****") % fname  << endl
-    << endl;
+#define TYPEBUFSIZE (8 * 4*BUFSIZ)
+	char typebuf[TYPEBUFSIZE];
+
+    errno = 0;
+    //int setvbuf(FILE *stream, char *buf, int mode , size_t size);
+    setvbuf(storage, typebuf, _IOFBF, TYPEBUFSIZE);
+    if (errno)
+    {
+	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Error when setting buffering mode for file %s: %s.", fname, strerror(errno));
+	fclose(storage);
+	return ESP_FAIL;
+    }; /* if (errno) */
+
+
+
+//    cout << aso::format("**** Type the text on keyboard to screen and file [%s]. ****") % fname  << endl
+//    << endl;
+
+    cout << endl
+//	 << "**** Type the text on keyboard to screen *****" << endl
+	 << aso::format("**** Type the text on keyboard to screen and file [%s]. ****") % fname  << endl
+	 << "Press <Enter> twice for exit..." << endl
+	 << endl;
+
+	char c = '\0', prevc;
+    do {
+	prevc = c;
+	cin >> noskipws >> c;
+	cout << c;
+//	if (c == '\n')
+//	    cout << "<LF>" << endl;
+//	if (c == '\r')
+//	    cout << "<CR>" << endl;
+    } while (c != prevc || c != '\n');
+
+    cout << endl << endl
+	 << "**** End of typing the text on keyboard. *****" << endl
+	 << endl;
 
 
 
 
-    ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Command \"%s %s \" is not yet implemented now", CMD_NM, fname);
-    cout << "Exit..." << endl;
+//    ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Command \"%s %s \" is not yet implemented now", CMD_NM, fname);
+//    cout << "Exit..." << endl;
 
 
 
 
 
     cout << aso::format("Close the file %s.") % fname << endl;
+    fflush(storage);
     fsync(fileno(storage));
     fclose(storage);
     if (errno)
