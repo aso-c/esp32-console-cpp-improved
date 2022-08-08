@@ -292,7 +292,7 @@ esp_err_t Server::mkdir(const char dirname[])
     }; /* else if (dirname[strlen(dirname)] == '/' */
     cout << aso::format("Create directory \"%s\"") % buf << endl;
     errno = 0;
-    ::mkdir(buf, 0777);
+    ::mkdir(buf, /*0777*/ S_IRWXU | S_IRWXG | S_IRWXO);
     free(extrbuf);
     if (errno)
     {
