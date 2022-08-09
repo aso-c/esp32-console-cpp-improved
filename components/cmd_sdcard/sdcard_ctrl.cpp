@@ -876,11 +876,12 @@ esp_err_t Server::type(const char fname[])
 	return ESP_ERR_NOT_FOUND;
     }; /* if storage == NULL */
 
-#define TYPEBUFSIZE (8 * 4*BUFSIZ)
-	char typebuf[TYPEBUFSIZE];
+//#define TYPEBUFSIZE (8 * 4*BUFSIZ)
+//	char typebuf[TYPEBUFSIZE];
+#define TYPEBUFSIZE (4 * card->csd.sector_size)
+	char *typebuf = (char*)malloc(TYPEBUFSIZE);
 
     errno = 0;
-    //int setvbuf(FILE *stream, char *buf, int mode , size_t size);
     setvbuf(storage, typebuf, _IOFBF, TYPEBUFSIZE);
     if (errno)
     {
@@ -890,12 +891,7 @@ esp_err_t Server::type(const char fname[])
     }; /* if (errno) */
 
 
-
-//    cout << aso::format("**** Type the text on keyboard to screen and file [%s]. ****") % fname  << endl
-//    << endl;
-
     cout << endl
-//	 << "**** Type the text on keyboard to screen *****" << endl
 	 << aso::format("**** Type the text on keyboard to screen and file [%s]. ****") % fname  << endl
 	 << "Press <Enter> twice for exit..." << endl
 	 << endl;
@@ -905,10 +901,7 @@ esp_err_t Server::type(const char fname[])
 	prevc = c;
 	cin >> noskipws >> c;
 	cout << c;
-//	if (c == '\n')
-//	    cout << "<LF>" << endl;
-//	if (c == '\r')
-//	    cout << "<CR>" << endl;
+	fputc(c, storage);
     } while (c != prevc || c != '\n');
 
     cout << endl << endl
@@ -916,22 +909,15 @@ esp_err_t Server::type(const char fname[])
 	 << endl;
 
 
-
-
-//    ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Command \"%s %s \" is not yet implemented now", CMD_NM, fname);
-//    cout << "Exit..." << endl;
-
-
-
-
-
-    cout << aso::format("Close the file %s.") % fname << endl;
+    cout << aso::format("Flush&write cache buffer of the file %s.") % fname << endl;
     fflush(storage);
     fsync(fileno(storage));
+    cout << aso::format("Close the file %s.") % fname << endl;
     fclose(storage);
+    free(typebuf);
     if (errno)
     {
-	ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Any error occured when closing the file %s: %s.", fname, strerror(errno));
+	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Any error occured when closing the file %s: %s.", fname, strerror(errno));
 	return ESP_FAIL;
     }; /* if errno */
 
@@ -939,7 +925,8 @@ esp_err_t Server::type(const char fname[])
     cout << endl
 	 << aso::format("**** End of typing the text on keyboard for the screen and the file %s. ****") % fname << endl
 	 << endl;
-    return ESP_ERR_INVALID_VERSION;
+    return ESP_OK;
+//    return ESP_ERR_INVALID_VERSION;
 }; /* type <file> */
 
 
