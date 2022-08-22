@@ -21,6 +21,7 @@ extern "C" {
 #endif
 
 //#ifdef __cplusplus
-#include "../components/cmd_sdcard/cmd_sdcard"
+//#include "../components/cmd_sdcard/cmd_sdcard"
+#include "cmd_sdcard"
 //#endif
 

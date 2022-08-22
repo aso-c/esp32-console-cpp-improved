@@ -47,7 +47,8 @@
 
 //#include <cstdio>
 
-#include "include/extrstream"
+//#include "include/extrstream"
+#include "extrstream"
 
 
 //using namespace idf;
@@ -220,7 +221,7 @@ int Slot::def_num;
 void Server::card_info(FILE* outfile)
 {
     sdmmc_card_print_info(outfile, card);
-    fprintf(outfile, "Sector: %d Bytes\n", card->csd.sector_size);
+    fprintf(outfile, "Sector: %d Bytes\n\n", card->csd.sector_size);
 }; /* Server::card_info */
 
 
@@ -278,6 +279,11 @@ esp_err_t Server::mkdir(const char dirname[])
     }; /* if dirname == NULL || strcmp(dirname, "") */
 #ifdef __PURE_C__
 
+#define __SIMPLE_MK__
+#ifdef __SIMPLE_MK__
+    errno = 0;
+    ::mkdir(dirname, /*0777*/ S_IRWXU | S_IRWXG | S_IRWXO);
+#else
 	const char *buf;
 	char *extrbuf = NULL;
     if (dirname[strlen(dirname)-1] == '/')
@@ -294,6 +300,7 @@ esp_err_t Server::mkdir(const char dirname[])
     errno = 0;
     ::mkdir(buf, /*0777*/ S_IRWXU | S_IRWXG | S_IRWXO);
     free(extrbuf);
+#endif // __SIMPLE_MK__
     if (errno)
     {
 	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Error creating directory \"%s\": %s", dirname, strerror(errno));
@@ -611,7 +618,6 @@ esp_err_t Server::cp(const char src[], const char dest[])
     //return ESP_OK;
 #else
     ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Command \"%s\" is not yet implemented now for C++ edition.", CMD_NM);
-//    cout << "Command \"rm\" is not yet implemented now for C++ edition." << endl;
     return ESP_ERR_INVALID_VERSION;
 #endif
 }; /* Server::cp */

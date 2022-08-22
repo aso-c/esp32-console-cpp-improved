@@ -35,6 +35,9 @@
 #endif
 
 
+// Mw delay for the SD/MMC command execution
+#define SDMMC_COMMAND_TIMEOUT 4000
+
 namespace SDMMC	//-----------------------------------------------------------------------------------------------------
 {
 
@@ -92,6 +95,8 @@ struct Control
 	//slot_default_no = host.slot;
 	slot.default_num(host.slot);
 	ESP_LOGI(TAG, "Using SDMMC peripheral");
+	// Define my delay for SD/MMC command execution
+	host.command_timeout_ms = SDMMC_COMMAND_TIMEOUT;
     }; /* Control */
 
     // Use settings defined above to initialize SD card and mount FAT filesystem.
