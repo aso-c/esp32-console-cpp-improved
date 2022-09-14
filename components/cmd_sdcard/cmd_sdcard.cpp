@@ -816,7 +816,7 @@ esp_err_t SDctrl::act_mnt()
     cout << endl;
 
     if (res == ESP_OK)
-	sd_server.card_info(stdout);
+	sd_server.print_info(stdout);
 
     return res;
 }; /* SDctrl::act_mnt */

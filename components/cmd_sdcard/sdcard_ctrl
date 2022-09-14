@@ -41,12 +41,10 @@
 namespace SDMMC	//-----------------------------------------------------------------------------------------------------
 {
 
-static const char *TAG = "SD/MMC service";
-
 struct Slot
 {
     Slot()
-    {
+/*    {
 	    // To use 1-line SD mode, change this to 1:
 	    cfg.width = SLOT_WIDTH;
 
@@ -66,7 +64,7 @@ struct Slot
 	    // connected on the bus. This is for debug / example purpose only.
 	    cfg.flags |= SDMMC_SLOT_FLAG_INTERNAL_PULLUP;
 
-    }; /* Slot */
+    }*/; /* Slot */
 
     // This initializes the slot without card detect (CD) and write protect (WP) signals.
     // Modify slot_config.gpio_cd and slot_config.gpio_wp if your board has these signals.
@@ -76,7 +74,7 @@ struct Slot
 
 private:
 
-    friend class Control;
+    friend class Host;
     void default_num(int num) {def_num = num;};
 
     // To use 1-line SD mode, change this to 1:
@@ -88,28 +86,30 @@ private:
 
 //
 // SD/MMC Host
-struct Control
+struct Host
 {
-    Control()
+    Host()/*
     {
 	//slot_default_no = host.slot;
 	slot.default_num(host.slot);
-	ESP_LOGI(TAG, "Using SDMMC peripheral");
+	ESP_LOGI(
+		TAG,
+		"Using SDMMC peripheral");
 	// Define my delay for SD/MMC command execution
 	host.command_timeout_ms = SDMMC_COMMAND_TIMEOUT;
-    }; /* Control */
+    }*/; /* Control */
 
     // Use settings defined above to initialize SD card and mount FAT filesystem.
     // Note: esp_vfs_fat_sdmmc/sdspi_mount is all-in-one convenience functions.
     // Please check its source code and implement error recovery when developing
     // production applications.
-    sdmmc_host_t host = SDMMC_HOST_DEFAULT();
+    sdmmc_host_t cfg/*host*/ = SDMMC_HOST_DEFAULT();
 
     Slot slot;
 
 private:
 //    static int slot_default_no;
-}; /* struct Control */
+}; /* struct Host */
 
 
 
@@ -120,7 +120,7 @@ private:
 struct Mounting
 {
 
-    Mounting():
+    Mounting()/*:
 	target(MOUNT_POINT_Default)
     {
 #ifdef CONFIG_EXAMPLE_FORMAT_IF_MOUNT_FAILED
@@ -131,7 +131,7 @@ struct Mounting
 	cfg.max_files = 5;
 	cfg.allocation_unit_size = 16 * 1024;
 	//ESP_LOGI(TAG, "Initializing SD card");
-    }; /* Mount */
+    }*/; /* Mount */
 
     void target_reset() {target = Mounting::MOUNT_POINT_Default;};
 
@@ -140,7 +140,7 @@ struct Mounting
 
     static const char* MOUNT_POINT_Default;
 
-}; /* struct Mountштп */
+}; /* struct Mounting */
 
 // const char *Mounting::MOUNT_POINT = MOUNT_POINT_def;
 
@@ -156,7 +156,7 @@ public:
     esp_err_t unmount(const char mountpath[] = NULL);	// Unmount SD-card, that mounted onto "mountpath", default - call w/o mountpath
 //    esp_err_t unmount(sdmmc_card_t *card);	// Unmount SD-card "card", mounted onto default mountpath
 //    esp_err_t unmount(const char *base_path, sdmmc_card_t *card);	// Unmount mounted SD-card "card", mounted onto mountpath
-    void card_info(FILE* outfile);		// Print the card info
+    void print_info(FILE* outfile);		// Print the card info
 
     esp_err_t info();	// print the SD-card info (wrapper for the external caller)
     esp_err_t pwd();	// print current directory name
@@ -180,7 +180,7 @@ private:
     static const char* TAG;
     sdmmc_card_t *card;
 
-    Control control;
+    Host host;
 //    Slot slot;
     Mounting mounting;
 

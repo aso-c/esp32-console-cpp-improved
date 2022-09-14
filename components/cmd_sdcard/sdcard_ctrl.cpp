@@ -47,7 +47,6 @@
 
 //#include <cstdio>
 
-//#include "include/extrstream"
 #include "extrstream"
 
 
@@ -72,37 +71,111 @@ using namespace std;
  *	+ mv, move	- move or rename file, options: [<src file>|<dest file>];
  */
 
-namespace SDMMC
-{  //------------------------------------------------------------------------------------------------------------------
+namespace SDMMC	//-----------------------------------------------------------------------------------------------------
+{
 
-//--[ strust Host ]-------------------------------------------------------------------------------------------------
+    static const char *TAG = "SD/MMC service";
+
+
+//--[ strust Host ]----------------------------------------------------------------------------------------------------
 
 //int Control::slot_default_no;
 
+Host::Host():
+//	host(SDMMC_HOST_DEFAULT())
+//	host(SDMMC_HOST_DEFAULT)
+//	host((sdmmc_host_t)SDMMC_HOST_DEFAULT())
+//	host(sdmmc_host_t(SDMMC_HOST_DEFAULT()))
+	cfg((sdmmc_host_t)
+    {\
+        .flags = SDMMC_HOST_FLAG_8BIT | \
+                 SDMMC_HOST_FLAG_4BIT | \
+                 SDMMC_HOST_FLAG_1BIT | \
+                 SDMMC_HOST_FLAG_DDR, \
+        .slot = SDMMC_HOST_SLOT_1, \
+        .max_freq_khz = SDMMC_FREQ_DEFAULT, \
+        .io_voltage = 3.3f, \
+        .init = &sdmmc_host_init, \
+        .set_bus_width = &sdmmc_host_set_bus_width, \
+        .get_bus_width = &sdmmc_host_get_slot_width, \
+        .set_bus_ddr_mode = &sdmmc_host_set_bus_ddr_mode, \
+        .set_card_clk = &sdmmc_host_set_card_clk, \
+        .do_transaction = &sdmmc_host_do_transaction, \
+        .deinit = &sdmmc_host_deinit, \
+        .io_int_enable = sdmmc_host_io_int_enable, \
+        .io_int_wait = sdmmc_host_io_int_wait, \
+        .command_timeout_ms = 0, \
+    })
+{
+    //slot_default_no = host.slot;
+    slot.default_num(cfg.slot);
+    ESP_LOGI(TAG, "Using SDMMC peripheral");
+    // Define my delay for SD/MMC command execution
+    cfg.command_timeout_ms = SDMMC_COMMAND_TIMEOUT;
+}; /* Host::Host */
 
-//--[ strust Slot ]-------------------------------------------------------------------------------------------------
+
+//--[ strust Slot ]----------------------------------------------------------------------------------------------------
+
+Slot::Slot()
+{
+    // To use 1-line SD mode, change this to 1:
+    cfg.width = SLOT_WIDTH;
+
+    // On chips where the GPIOs used for SD card can be configured, set them in
+
+    // the slot_config structure:
+#ifdef SOC_SDMMC_USE_GPIO_MATRIX
+    cfg.clk = GPIO_NUM_14;
+    cfg.cmd = GPIO_NUM_15;
+    cfg.d0 = GPIO_NUM_2;
+    cfg.d1 = GPIO_NUM_4;
+    cfg.d2 = GPIO_NUM_12;
+    cfg.d3 = GPIO_NUM_13;
+#endif
+
+    // Enable internal pullups on enabled pins. The internal pullups
+    // are insufficient however, please make sure 10k external pullups are
+    // connected on the bus. This is for debug / example purpose only.
+    cfg.flags |= SDMMC_SLOT_FLAG_INTERNAL_PULLUP;
+
+}; /* Slot::Slot */
+
 
 int Slot::def_num;
 
 
 //--[ struct Mounting ]---------------------------------------------------------------------------------------------
 
-    const char *Mounting::MOUNT_POINT_Default = MOUNT_POINT_def;
+Mounting::Mounting():
+	target(MOUNT_POINT_Default)
+{
+#ifdef CONFIG_EXAMPLE_FORMAT_IF_MOUNT_FAILED
+	cfg.format_if_mount_failed = true;
+#else
+	cfg.format_if_mount_failed = false;
+#endif // EXAMPLE_FORMAT_IF_MOUNT_FAILED
+	cfg.max_files = 5;
+	cfg.allocation_unit_size = 16 * 1024;
+	//ESP_LOGI(TAG, "Initializing SD card");
+}; /* Mounting::Mounting */
+
+const char *Mounting::MOUNT_POINT_Default = MOUNT_POINT_def;
 
 
 //--[ class Server ]------------------------------------------------------------------------------------------------
 
-#define CMD_TAG_PRFX "console::"
+#define CMD_TAG_PRFX "SD/MMC Card::"
 
     // Mount SD-card with default parameters
     esp_err_t Server::mount()
     {
 	cout << "Mount SD-card with default parameters" << endl;
-	cout << "Mount card slot #" << control.host.slot << " to path \"" << mounting.target << "\"." << endl
+	cout << "Mount card slot #" << host.cfg.slot << " to path \"" << mounting.target << "\"." << endl
 		<< endl;
 //	cout << TAG << ": " << "Procedure \"Mount\" is not yet released now" << endl;
 //	cout  << endl;
-	return mount(control.slot.default_num(), mounting.MOUNT_POINT_Default);
+	return mount(host.slot.default_num(), mounting.MOUNT_POINT_Default);
     }; /* Server::mount */
 
     // Mount default SD-card slot onto path "mountpoint"
@@ -112,11 +185,11 @@ int Slot::def_num;
 	    return mount(atoi(mountpoint));
 
 	cout << "Mount default SD-card slot onto specified path" << endl;
-	cout << "Mount card slot #" << control.host.slot << " to path \"" << mounting.target << "\"" << endl
+	cout << "Mount card slot #" << host.cfg.slot << " to path \"" << mounting.target << "\"" << endl
 		<< endl;
 //	cout << TAG << ": " << "Procedure \"Mount(<mountpath>)\" is not yet released now" << endl;
 //	cout << endl;
-	return mount(control.slot.default_num(), mountpoint);
+	return mount(host.slot.default_num(), mountpoint);
     }; /* Server::mount */
 
     // Mount SD-card slot "slot_no" onto default mount path
@@ -134,7 +207,7 @@ int Slot::def_num;
     esp_err_t Server::mount(int slot_no, const char mountpoint[])
     {
 	mounting.target = mountpoint;
-	control.host.slot = slot_no;
+	host.cfg.slot = slot_no;
 
 	// Enable internal pullups on enabled pins. The internal pullups
 	// are insufficient however, please make sure 10k external pullups are
@@ -145,9 +218,9 @@ int Slot::def_num;
 	cout << "Mount SD-card in specified slot onto specified mount path" << endl;
 //	cout << "Mount card slot #" << control.host.slot << " to path \"" << mounting.target << "\"" << endl
 //		<< endl;
-	cout << TAG << ": " "Mounting filesystem in card slot #" << control.host.slot << " to path \"" << mounting.target << "\"" << endl
+	cout << TAG << ": " "Mounting filesystem in card slot #" << host.cfg.slot << " to path \"" << mounting.target << "\"" << endl
 		<< endl;
-	ret = esp_vfs_fat_sdmmc_mount(mounting.target, &control.host, &control.slot.cfg, &mounting.cfg, &card);
+	ret = esp_vfs_fat_sdmmc_mount(mounting.target, &host.cfg, &host.slot.cfg, &mounting.cfg, &card);
 	if (ret != ESP_OK)
 	{
 	    if (ret == ESP_FAIL)
@@ -218,17 +291,17 @@ int Slot::def_num;
 
 
 // Print the card info
-void Server::card_info(FILE* outfile)
+void Server::print_info(FILE* outfile)
 {
     sdmmc_card_print_info(outfile, card);
     fprintf(outfile, "Sector: %d Bytes\n\n", card->csd.sector_size);
-}; /* Server::card_info */
+}; /* Server::print_info */
 
 
 // print the SD-card info (wrapper for the external caller)
 esp_err_t Server::info()
 {
-    card_info(stdout);
+    print_info(stdout);
     return ESP_OK;
 }; /* Server::info */
 
@@ -1015,7 +1088,7 @@ void app_main(void)
     // production applications.
 
     ESP_LOGI(TAG, "Using SDMMC peripheral");
-    sdmmc_host_t host = SDMMC_HOST_DEFAULT();
+    sdmmc_host_t cfg = SDMMC_HOST_DEFAULT();
 
     // This initializes the slot without card detect (CD) and write protect (WP) signals.
     // Modify slot_config.gpio_cd and slot_config.gpio_wp if your board has these signals.
@@ -1041,7 +1114,7 @@ void app_main(void)
     slot_config.flags |= SDMMC_SLOT_FLAG_INTERNAL_PULLUP;
 
     ESP_LOGI(TAG, "Mounting filesystem");
-    ret = esp_vfs_fat_sdmmc_mount(mount_point, &host, &slot_config, &mount_config, &card);
+    ret = esp_vfs_fat_sdmmc_mount(mount_point, &cfg, &slot_config, &mount_config, &card);
 
     if (ret != ESP_OK) {
         if (ret == ESP_FAIL) {

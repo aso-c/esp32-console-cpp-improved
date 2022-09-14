@@ -17,15 +17,15 @@ menu "Application manager"
     help
             Project version
 
-    config APP_PROJECT_DATE
-    string "Current project version date"
-    help
-            Date of the project current version
-
     config APP_PROJECT_FLAVOUR
     string "Flavour of the current project branch"
     help
             Variant of the project application
+
+    config APP_PROJECT_DATE
+    string "Current project version date"
+    help
+            Date of the project current version
 
     config APP_PROJECT_MODIFICATOR
     string "Modificator of the current project version"
