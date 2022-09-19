@@ -81,31 +81,7 @@ namespace SDMMC	//--------------------------------------------------------------
 
 //int Control::slot_default_no;
 
-Host::Host():
-//	host(SDMMC_HOST_DEFAULT())
-//	host(SDMMC_HOST_DEFAULT)
-//	host((sdmmc_host_t)SDMMC_HOST_DEFAULT())
-//	host(sdmmc_host_t(SDMMC_HOST_DEFAULT()))
-	cfg((sdmmc_host_t)
-    {\
-        .flags = SDMMC_HOST_FLAG_8BIT | \
-                 SDMMC_HOST_FLAG_4BIT | \
-                 SDMMC_HOST_FLAG_1BIT | \
-                 SDMMC_HOST_FLAG_DDR, \
-        .slot = SDMMC_HOST_SLOT_1, \
-        .max_freq_khz = SDMMC_FREQ_DEFAULT, \
-        .io_voltage = 3.3f, \
-        .init = &sdmmc_host_init, \
-        .set_bus_width = &sdmmc_host_set_bus_width, \
-        .get_bus_width = &sdmmc_host_get_slot_width, \
-        .set_bus_ddr_mode = &sdmmc_host_set_bus_ddr_mode, \
-        .set_card_clk = &sdmmc_host_set_card_clk, \
-        .do_transaction = &sdmmc_host_do_transaction, \
-        .deinit = &sdmmc_host_deinit, \
-        .io_int_enable = sdmmc_host_io_int_enable, \
-        .io_int_wait = sdmmc_host_io_int_wait, \
-        .command_timeout_ms = 0, \
-    })
+Host::Host()
 {
     //slot_default_no = host.slot;
     slot.default_num(cfg.slot);
@@ -163,9 +139,193 @@ Mounting::Mounting():
 const char *Mounting::MOUNT_POINT_Default = MOUNT_POINT_def;
 
 
-//--[ class Server ]------------------------------------------------------------------------------------------------
+
+//--[ class Card ]------------------------------------------------------------------------------------------------
 
 #define CMD_TAG_PRFX "SD/MMC Card::"
+
+    // Mount SD-card with default parameters
+    esp_err_t Card::mount()
+    {
+	cout << "Mount SD-card with default parameters" << endl;
+	cout << "Mount card slot #" << host.cfg.slot << " to path \"" << mounting.target << "\"." << endl
+		<< endl;
+//	cout << TAG << ": " << "Procedure \"Mount\" is not yet released now" << endl;
+//	cout  << endl;
+	return mount(host.slot.default_num(), mounting.MOUNT_POINT_Default);
+    }; /* Card::mount */
+
+    // Mount default SD-card slot onto path "mountpoint"
+    esp_err_t Card::mount(char mountpoint[])
+    {
+	if (isdigit(mountpoint[0]))
+	    return mount(atoi(mountpoint));
+
+	cout << "Mount default SD-card slot onto specified path" << endl;
+	cout << "Mount card slot #" << host.cfg.slot << " to path \"" << mounting.target << "\"" << endl
+		<< endl;
+//	cout << TAG << ": " << "Procedure \"Mount(<mountpath>)\" is not yet released now" << endl;
+//	cout << endl;
+	return mount(host.slot.default_num(), mountpoint);
+    }; /* Card::mount */
+
+    // Mount SD-card slot "slot_no" onto default mount path
+    esp_err_t Card::mount(int slot_no)
+    {
+//	cout << "Mount SD-card in specified slot onto default mount path" << endl;
+//	cout << "Mount card slot #" << control.host.slot << " to path \"" << mounting.target << "\"" << endl
+//		<< endl;
+	cout << TAG << ": " << "Procedure \"Mount(<slot_number>)\" is not yet released now" << endl;
+	cout /*<< "Exit..."*/ << endl;
+	return mount(slot_no, mounting.MOUNT_POINT_Default);
+    }; /* Card::mount */
+
+    // Mount SD-card slot "slot_no" onto specified mount path
+    esp_err_t Card::mount(int slot_no, const char mountpoint[])
+    {
+	mounting.target = mountpoint;
+	host.cfg.slot = slot_no;
+
+	// Enable internal pullups on enabled pins. The internal pullups
+	// are insufficient however, please make sure 10k external pullups are
+	// connected on the bus. This is for debug / example purpose only.
+	// slot_config.flags |= SDMMC_SLOT_FLAG_INTERNAL_PULLUP;
+	//ESP_LOGI(TAG, "Mounting filesystem");
+
+	cout << "Mount SD-card in specified slot onto specified mount path" << endl;
+//	cout << "Mount card slot #" << control.host.slot << " to path \"" << mounting.target << "\"" << endl
+//		<< endl;
+	cout << TAG << ": " "Mounting filesystem in card slot #" << host.cfg.slot << " to path \"" << mounting.target << "\"" << endl
+		<< endl;
+	ret = esp_vfs_fat_sdmmc_mount(mounting.target, &host.cfg, &host.slot.cfg, &mounting.cfg, &card);
+	if (ret != ESP_OK)
+	{
+	    if (ret == ESP_FAIL)
+		cout << TAG << ": " << "Failed to mount filesystem. "
+			"If you want the card to be formatted, set the EXAMPLE_FORMAT_IF_MOUNT_FAILED menuconfig option.";
+	    else
+		cout << TAG << ": " << "Failed to initialize the card (error " << ret << ", " << esp_err_to_name(ret) << "). "
+			<< "Make sure SD card lines have pull-up resistors in place.";
+	    return ret;
+	}; /* if ret != ESP_OK */
+
+	//ESP_LOGI(TAG, "Filesystem mounted");
+	cout << TAG << ": " "Filesystem mounted";
+
+	return ret;
+    }; /* Card::mount */
+
+
+
+    //------------------------------------------------------------------------------------------
+    //    // All done, unmount partition and disable SDMMC peripheral
+    //    esp_vfs_fat_sdcard_unmount(mount_point, card);
+    //    ESP_LOGI(TAG, "Card unmounted");
+    //------------------------------------------------------------------------------------------
+
+    // Unmount SD-card, that mounted onto "mountpath"
+    esp_err_t Card::unmount(const char mountpath[])
+    {
+	if (mountpath == NULL || strcmp(mountpath, "") == 0)
+	{
+	    cout << TAG << ": " << "Call: unmount(" << mounting.target << ");" << endl;
+	    ret = unmount(mounting.target);
+	    return ret;
+	}; /*  */
+	ret = esp_vfs_fat_sdcard_unmount(mountpath, card);
+	//ESP_LOGI(TAG, "Card unmounted");
+	if (ret == ESP_OK)
+	    cout << TAG << ": " << "Card unmounted" << endl;
+	else
+	    cout << TAG << ": "  << "Error: " << ret
+		<< ", " << esp_err_to_name(ret) << endl;
+	return ret;
+    }; /* Card::unmount */
+
+//------------------------------------------------------------------------------------------
+//    // All done, unmount partition and disable SDMMC peripheral
+//    esp_vfs_fat_sdcard_unmount(mount_point, card);
+//    ESP_LOGI(TAG, "Card unmounted");
+//------------------------------------------------------------------------------------------
+
+//    // Unmount SD-card "card", mounted onto default mountpath
+//    esp_err_t Server::unmount(sdmmc_card_t *card)
+//    {
+//	cout << TAG << ": " << "Procedure \"Unmount(<card>)\" is not yet released now" << endl;
+//	cout << "Exit..." << endl;
+//	return ESP_ERR_INVALID_VERSION;
+//    }; /* Server::unmount */
+//
+//    // Unmount mounted SD-card "card", mounted onto mountpath
+//    esp_err_t Server::unmount(const char *base_path, sdmmc_card_t *card)
+//    {
+//	cout << TAG << ": " << "Procedure \"Unmount(<mountpath, ><card>)\" is not yet released now" << endl;
+//	cout << "Exit..." << endl;
+//	return ESP_ERR_INVALID_VERSION;
+//    }; /* Server::unmount */
+
+
+
+
+// Print the card info
+void Card::print_info(FILE* outfile)
+{
+    sdmmc_card_print_info(outfile, card);
+    fprintf(outfile, "Sector: %d Bytes\n\n", card->csd.sector_size);
+}; /* Card::print_info */
+
+
+// print the SD-card info (wrapper for the external caller)
+esp_err_t Card::info()
+{
+    print_info(stdout);
+    return ESP_OK;
+}; /* Card::info */
+
+const char* Card::TAG = "SD/MMC Card";
+
+
+
+//// print current directory name
+//esp_err_t Server::pwd()
+//{
+//#ifdef __PURE_C__
+//	char* buf = getcwd(NULL, 0);
+////	size_t buflen = sizeof(buf) + 1;
+//
+//    if (!buf)
+//	return errno;
+//    cout << endl
+//	<< "PWD is: \"" << buf << '"' << endl
+//	<< endl;
+//    free(buf);
+//
+////    buf = (char*)malloc(buflen);
+////    FRESULT res = f_getcwd(buf, buflen);
+////    if (res != FR_OK)
+////    {
+////	cout << "Name of the current working directory was not copied into buffer." << endl
+////		<< "Return code is: " << res << endl;
+////    }; /* if res != FR_OK */
+////
+////    cout << aso::format("Current dir by f_getcwd version is: \"%s\"") % buf << endl;
+////    free(buf);
+//
+//    return ESP_OK;
+//#else
+//    cout << "Command \"pwd\" is not yet implemented now for C++ edition." << endl;
+//    return ESP_ERR_INVALID_VERSION;
+//#endif
+//}; /* Server::pwd */
+
+
+
+
+
+//--[ class Server ]------------------------------------------------------------------------------------------------
+
+#undef CMD_TAG_PRFX
+#define CMD_TAG_PRFX "SD/MMC CMD server::"
 
     // Mount SD-card with default parameters
     esp_err_t Server::mount()
@@ -1033,6 +1193,12 @@ esp_err_t err4existent(const char fname[], const struct stat* statbuf)
     const char* Server::TAG = "SD/MMC service";
 
 }; /* namespace SDMMC */  //-------------------------------------------------------------------------------------------
+
+
+namespace Exec	//-----------------------------------------------------------------------------------------------------
+{
+    ;
+}; //--[ namespace Exec ]----------------------------------------------------------------------------------------------
 
 
 
