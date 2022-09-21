@@ -72,55 +72,12 @@ using namespace std;
  *	+ mv, move	- move or rename file, options: [<src file>|<dest file>];
  */
 
-namespace SDMMC	//-----------------------------------------------------------------------------------------------------
+namespace Exec	//-----------------------------------------------------------------------------------------------------
+//namespace SDMMC	//-----------------------------------------------------------------------------------------------------
 {
 
-    static const char *TAG = "SD/MMC service";
+//    static const char *TAG = "SD/MMC service";
 
-#if 0
-//--[ strust Host ]----------------------------------------------------------------------------------------------------
-
-//int Control::slot_default_no;
-
-Host::Host()
-{
-    //slot_default_no = host.slot;
-    slot.default_num(cfg.slot);
-    ESP_LOGI(TAG, "Using SDMMC peripheral");
-    // Define my delay for SD/MMC command execution
-    cfg.command_timeout_ms = SDMMC_COMMAND_TIMEOUT;
-}; /* Host::Host */
-
-
-//--[ strust Slot ]----------------------------------------------------------------------------------------------------
-
-Slot::Slot()
-{
-    // To use 1-line SD mode, change this to 1:
-    cfg.width = SLOT_WIDTH;
-
-    // On chips where the GPIOs used for SD card can be configured, set them in
-
-    // the slot_config structure:
-#ifdef SOC_SDMMC_USE_GPIO_MATRIX
-    cfg.clk = GPIO_NUM_14;
-    cfg.cmd = GPIO_NUM_15;
-    cfg.d0 = GPIO_NUM_2;
-    cfg.d1 = GPIO_NUM_4;
-    cfg.d2 = GPIO_NUM_12;
-    cfg.d3 = GPIO_NUM_13;
-#endif
-
-    // Enable internal pullups on enabled pins. The internal pullups
-    // are insufficient however, please make sure 10k external pullups are
-    // connected on the bus. This is for debug / example purpose only.
-    cfg.flags |= SDMMC_SLOT_FLAG_INTERNAL_PULLUP;
-
-}; /* Slot::Slot */
-
-
-int Slot::def_num;
-#endif
 
 //--[ struct Mounting ]---------------------------------------------------------------------------------------------
 
@@ -138,32 +95,6 @@ Mounting::Mounting():
 }; /* Mounting::Mounting */
 
 const char *Mounting::MOUNT_POINT_Default = MOUNT_POINT_def;
-
-
-#if 0
-//--[ class Card ]------------------------------------------------------------------------------------------------
-
-#define CMD_TAG_PRFX "SD/MMC Card::"
-
-
-
-// Print the card info
-void Card::print_info(FILE* outfile)
-{
-    sdmmc_card_print_info(outfile, data);
-    fprintf(outfile, "Sector: %d Bytes\n\n", data->csd.sector_size);
-}; /* Card::print_info */
-
-
-// print the SD-card info (wrapper for the external caller)
-esp_err_t Card::info()
-{
-    print_info(stdout);
-    return ESP_OK;
-}; /* Card::info */
-
-const char* Card::TAG = "SD/MMC Card";
-#endif
 
 
 
@@ -1105,7 +1036,8 @@ esp_err_t err4existent(const char fname[], const struct stat* statbuf)
 
     const char* Server::TAG = "SD/MMC service";
 
-}; /* namespace SDMMC */  //-------------------------------------------------------------------------------------------
+//}; /* namespace SDMMC */  //-------------------------------------------------------------------------------------------
+}; //--[ namespace Exec ]----------------------------------------------------------------------------------------------
 
 
 namespace Exec	//-----------------------------------------------------------------------------------------------------

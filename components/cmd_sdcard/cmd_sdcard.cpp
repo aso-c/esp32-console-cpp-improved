@@ -137,7 +137,7 @@ bool isempty(const char *str)
 
 
 SDMMC::Card sdmmc_card;
-SDMMC::Server sd_server;
+Exec::Server exec_server;
 
 
 //--[ the filesystem operating commands ]----------------------------------------------------------
@@ -152,7 +152,7 @@ SDMMC::Server sd_server;
 
 static int pwd_act(int argc, char **argv)
 {
-    return sd_server.pwd();
+    return exec_server.pwd();
 }; /* pwd_act */
 
 void register_pwd(void)
@@ -180,11 +180,11 @@ static int mkdir_act(int argc, char **argv)
     switch (argc)
     {
     case 1:
-	return sd_server.mkdir();
+	return exec_server.mkdir();
 	break;
 
     case 2:
-	return sd_server.mkdir(argv[1]);
+	return exec_server.mkdir(argv[1]);
 	break;
 
     default:
@@ -223,11 +223,11 @@ static int rmdir_act(int argc, char **argv)
     switch (argc)
     {
     case 1:
-	return sd_server.rmdir();
+	return exec_server.rmdir();
 	break;
 
     case 2:
-	return sd_server.rmdir(argv[1]);
+	return exec_server.rmdir(argv[1]);
 	break;
 
     default:
@@ -266,11 +266,11 @@ static int cd_act(int argc, char **argv)
     switch (argc)
     {
     case 1:
-	return sd_server.cd();
+	return exec_server.cd();
 	break;
 
     case 2:
-	return sd_server.cd(argv[1]);
+	return exec_server.cd(argv[1]);
 	break;
 
     default:
@@ -308,11 +308,11 @@ static int ls_act(int argc, char **argv)
     switch (argc)
     {
     case 1:
-	return sd_server.ls();
+	return exec_server.ls();
 	break;
 
     case 2:
-	return sd_server.ls(argv[1]);
+	return exec_server.ls(argv[1]);
 	break;
 
     default:
@@ -351,15 +351,15 @@ static int cp_act(int argc, char **argv)
     switch (argc)
     {
     case 1:
-	return sd_server.cp();
+	return exec_server.cp();
 	break;
 
     case 2:
-	return sd_server.cp(argv[1]);
+	return exec_server.cp(argv[1]);
 	break;
 
     case 3:
-	return sd_server.cp(argv[1], argv[2]);
+	return exec_server.cp(argv[1], argv[2]);
 	break;
 
     default:
@@ -399,15 +399,15 @@ static int mv_act(int argc, char **argv)
     switch (argc)
     {
     case 1:
-	return sd_server.mv();
+	return exec_server.mv();
 	break;
 
     case 2:
-	return sd_server.mv(argv[1]);
+	return exec_server.mv(argv[1]);
 	break;
 
     case 3:
-	return sd_server.mv(argv[1], argv[2]);
+	return exec_server.mv(argv[1], argv[2]);
 	break;
 
     default:
@@ -448,12 +448,12 @@ static int rm_act(int argc, char **argv)
     switch (argc)
     {
     case 1:
-	return sd_server.rm();
+	return exec_server.rm();
 	break;
 
     case 2:
 	cout << "...with one parameter - OK, specified the filename to delete." << endl;
-	return sd_server.rm(argv[1]);
+	return exec_server.rm(argv[1]);
 	break;
 
     default:
@@ -492,11 +492,11 @@ static int cat_act(int argc, char **argv)
     switch (argc)
     {
     case 1:
-	return sd_server.cat();
+	return exec_server.cat();
 	break;
 
     case 2:
-	return sd_server.cat(argv[1]);
+	return exec_server.cat(argv[1]);
 	break;
 
     default:
@@ -535,12 +535,12 @@ static int type_act(int argc, char **argv)
     switch (argc)
     {
     case 1:
-	return sd_server.type();
+	return exec_server.type();
 	break;
 
     case 2:
 	cout << "...with one parameter - OK, save type output to file & output to screen." << endl;
-	return sd_server.type(argv[1]);
+	return exec_server.type(argv[1]);
 	break;
 
     default:
@@ -798,17 +798,17 @@ esp_err_t SDctrl::act_mnt()
     switch (argc)
     {
     case 2:
-	res = sd_server.mount(sdmmc_card);
+	res = exec_server.mount(sdmmc_card);
 	break;
 
     case 3:
 	cout << "...with one parameter - use device or mount point." << endl;
-	res = sd_server.mount(sdmmc_card, argv[2]);
+	res = exec_server.mount(sdmmc_card, argv[2]);
 	break;
 
     case 4:
 	cout << "...with two parameters - use device & mount point." << endl;
-	res = sd_server.mount(sdmmc_card, atoi(argv[2]), argv[3]);
+	res = exec_server.mount(sdmmc_card, atoi(argv[2]), argv[3]);
 	break;
 
     default:
@@ -818,7 +818,7 @@ esp_err_t SDctrl::act_mnt()
     cout << endl;
 
     if (res == ESP_OK)
-	sd_server.print_info(stdout);
+	exec_server.print_info(stdout);
 
     return res;
 }; /* SDctrl::act_mnt */
@@ -832,12 +832,12 @@ esp_err_t SDctrl::act_umnt()
     {
     case 2:
 	cout << "...without parameters - use default values." << endl;
-	return sd_server.unmount();
+	return exec_server.unmount();
 	break;
 
     case 3:
 	cout << "...with one parameter - use device or mount point." << endl;
-	return sd_server.unmount(argv[2]);
+	return exec_server.unmount(argv[2]);
 	break;
 
     default:
@@ -852,7 +852,7 @@ esp_err_t SDctrl::act_umnt()
 // print info about the mounted SD-card
 esp_err_t SDctrl::act_info()
 {
-    sd_server.info();
+    exec_server.info();
     return 0;
 }; /* SDctrl::act_info */
 
@@ -860,7 +860,7 @@ esp_err_t SDctrl::act_info()
 // action for pwd command
 esp_err_t SDctrl::act_pwd()
 {
-    sd_server.pwd();
+    exec_server.pwd();
 
     return 0;
 }; /* SDctrl::act_pwd */
@@ -873,12 +873,12 @@ esp_err_t SDctrl::act_mkdir()
     switch (argc)
     {
     case 2:
-	return sd_server.mkdir();
+	return exec_server.mkdir();
 	break;
 
     case 3:
 	cout << "...with one parameter - specified the name of the new directory." << endl;
-	return sd_server.mkdir(argv[2]);
+	return exec_server.mkdir(argv[2]);
 	break;
 
     default:
@@ -897,12 +897,12 @@ esp_err_t SDctrl::act_rmdir()
     switch (argc)
     {
     case 2:
-	return sd_server.rmdir();
+	return exec_server.rmdir();
 	break;
 
     case 3:
 	cout << "...with one parameter - specified the name directory to delete." << endl;
-	return sd_server.rmdir(argv[2]);
+	return exec_server.rmdir(argv[2]);
 	break;
 
     default:
@@ -921,12 +921,12 @@ esp_err_t SDctrl::act_cd()
     switch (argc)
     {
     case 2:
-	return sd_server.cd();
+	return exec_server.cd();
 	break;
 
     case 3:
 	cout << "...with one parameter - specified the path name to change." << endl;
-	return sd_server.cd(argv[2]);
+	return exec_server.cd(argv[2]);
 	break;
 
     default:
@@ -946,12 +946,12 @@ esp_err_t SDctrl::act_ls()
     {
     case 2:
 	cout << "...without parameters - use current dir." << endl;
-	return sd_server.ls();
+	return exec_server.ls();
 	break;
 
     case 3:
 	cout << "...with one parameter - use pattern or directory." << endl;
-	return sd_server.ls(argv[2]);
+	return exec_server.ls(argv[2]);
 	break;
 
     default:
@@ -971,17 +971,17 @@ esp_err_t SDctrl::act_cp()
     {
     case 2:
 	cout << "...without parameters - error." << endl;
-	return sd_server.cp();
+	return exec_server.cp();
 	break;
 
     case 3:
 	cout << "...with one parameter - error." << endl;
-	return sd_server.cp(argv[2]);
+	return exec_server.cp(argv[2]);
 	break;
 
     case 4:
 	cout << "...with two parameter - copy files." << endl;
-	return sd_server.cp(argv[2], argv[3]);
+	return exec_server.cp(argv[2], argv[3]);
 	break;
 
     default:
@@ -1001,17 +1001,17 @@ esp_err_t SDctrl::act_mv()
     {
     case 2:
 	cout << "...without parameters - error." << endl;
-	return sd_server.mv();
+	return exec_server.mv();
 	break;
 
     case 3:
 	cout << "...with one parameter - error." << endl;
-	return sd_server.mv(argv[2]);
+	return exec_server.mv(argv[2]);
 	break;
 
     case 4:
 	cout << "...with two parameter - move/rename files." << endl;
-	return sd_server.mv(argv[2], argv[3]);
+	return exec_server.mv(argv[2], argv[3]);
 	break;
 
     default:
@@ -1031,12 +1031,12 @@ esp_err_t SDctrl::act_rm()
     {
     case 2:
 	cout << "...without parameters - error." << endl;
-	return sd_server.rm();
+	return exec_server.rm();
 	break;
 
     case 3:
 	cout << "...with one parameter - remove file." << endl;
-	return sd_server.rm(argv[2]);
+	return exec_server.rm(argv[2]);
 	break;
 
     default:
@@ -1055,11 +1055,11 @@ esp_err_t SDctrl::act_cat()
     switch (argc)
     {
     case 2:
-	return sd_server.cat();
+	return exec_server.cat();
 	break;
 
     case 3:
-	return sd_server.cat(argv[2]);
+	return exec_server.cat(argv[2]);
 	break;
 
     default:
@@ -1078,12 +1078,12 @@ esp_err_t SDctrl::act_type()
     switch (argc)
     {
     case 2:
-	return sd_server.type();
+	return exec_server.type();
 	break;
 
     case 3:
 	cout << "...with one parameter - save type output to file & screen." << endl;
-	return sd_server.type(argv[2]);
+	return exec_server.type(argv[2]);
 	break;
 
     default:
