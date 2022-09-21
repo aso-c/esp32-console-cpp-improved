@@ -44,9 +44,8 @@
 #include "sdmmc_cmd.h"
 #include "driver/sdmmc_host.h"
 
+//#include <sdcard_ctrl>
 #include <sdcard_io>
-#include <sdcard_ctrl>
-
 
 #include "extrstream"
 
@@ -77,7 +76,7 @@ namespace SDMMC	//--------------------------------------------------------------
 
     static const char *TAG = "SD/MMC service";
 
-#if 0
+
 //--[ strust Host ]----------------------------------------------------------------------------------------------------
 
 //int Control::slot_default_no;
@@ -120,8 +119,8 @@ Slot::Slot()
 
 
 int Slot::def_num;
-#endif
 
+#if 0
 //--[ struct Mounting ]---------------------------------------------------------------------------------------------
 
 Mounting::Mounting():
@@ -138,13 +137,12 @@ Mounting::Mounting():
 }; /* Mounting::Mounting */
 
 const char *Mounting::MOUNT_POINT_Default = MOUNT_POINT_def;
+#endif
 
 
-#if 0
 //--[ class Card ]------------------------------------------------------------------------------------------------
 
 #define CMD_TAG_PRFX "SD/MMC Card::"
-
 
 
 // Print the card info
@@ -163,10 +161,10 @@ esp_err_t Card::info()
 }; /* Card::info */
 
 const char* Card::TAG = "SD/MMC Card";
-#endif
 
 
 
+#if 0
 //--[ class Server ]------------------------------------------------------------------------------------------------
 
 #undef CMD_TAG_PRFX
@@ -343,39 +341,6 @@ esp_err_t Server::info()
     print_info(stdout);
     return ESP_OK;
 }; /* Server::info */
-
-
-//// print current directory name
-//esp_err_t Server::pwd()
-//{
-//#ifdef __PURE_C__
-//	char* buf = getcwd(NULL, 0);
-////	size_t buflen = sizeof(buf) + 1;
-//
-//    if (!buf)
-//	return errno;
-//    cout << endl
-//	<< "PWD is: \"" << buf << '"' << endl
-//	<< endl;
-//    free(buf);
-//
-////    buf = (char*)malloc(buflen);
-////    FRESULT res = f_getcwd(buf, buflen);
-////    if (res != FR_OK)
-////    {
-////	cout << "Name of the current working directory was not copied into buffer." << endl
-////		<< "Return code is: " << res << endl;
-////    }; /* if res != FR_OK */
-////
-////    cout << aso::format("Current dir by f_getcwd version is: \"%s\"") % buf << endl;
-////    free(buf);
-//
-//    return ESP_OK;
-//#else
-//    cout << "Command \"pwd\" is not yet implemented now for C++ edition." << endl;
-//    return ESP_ERR_INVALID_VERSION;
-//#endif
-//}; /* Server::pwd */
 
 
 
@@ -1104,14 +1069,10 @@ esp_err_t err4existent(const char fname[], const struct stat* statbuf)
 
 
     const char* Server::TAG = "SD/MMC service";
+#endif
 
 }; /* namespace SDMMC */  //-------------------------------------------------------------------------------------------
 
-
-namespace Exec	//-----------------------------------------------------------------------------------------------------
-{
-    ;
-}; //--[ namespace Exec ]----------------------------------------------------------------------------------------------
 
 
 

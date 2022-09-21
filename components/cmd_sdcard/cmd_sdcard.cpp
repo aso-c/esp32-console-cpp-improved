@@ -27,6 +27,7 @@
 #include "driver/sdmmc_host.h"
 #include <cmd_sdcard>
 
+#include <sdcard_io>
 #include <sdcard_ctrl>
 
 //#include <cstdio>

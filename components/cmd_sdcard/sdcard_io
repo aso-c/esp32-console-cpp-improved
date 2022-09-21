@@ -4,8 +4,7 @@
  * 	File: sdcard_ctrl.cpp
  *	Author:  aso (Solomatov A.A.)
  *	Created: 28.04.2022
- *	Date:	 20.09.2022
- *	Version: 0.7
+ *	Version: 0.1
  */
 
 
@@ -41,7 +40,7 @@
 
 namespace SDMMC	//-----------------------------------------------------------------------------------------------------
 {
-#if 0
+
 struct Slot
 {
     Slot();
@@ -484,10 +483,9 @@ public:
     sdmmc_card_t* data;
 
 }; /* class Card */
-#endif
 
 
-
+#if 0
 // Options for mounting the filesystem.
 // If format_if_mount_failed is set to true, SD card will be partitioned and
 // formatted in case when mounting fails.
@@ -549,7 +547,7 @@ private:
     Mounting mounting;
 
 }; /* class Server */
-
+#endif
 
 }; /* namespace SDMMC */  //-------------------------------------------------------------------------------------------
 
