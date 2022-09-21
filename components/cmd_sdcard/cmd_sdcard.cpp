@@ -135,6 +135,7 @@ bool isempty(const char *str)
 }; /* isempty */
 
 
+SDMMC::Card sdmmc_card;
 SDMMC::Server sd_server;
 
 
@@ -796,17 +797,17 @@ esp_err_t SDctrl::act_mnt()
     switch (argc)
     {
     case 2:
-	res = sd_server.mount();
+	res = sd_server.mount(sdmmc_card);
 	break;
 
     case 3:
 	cout << "...with one parameter - use device or mount point." << endl;
-	res = sd_server.mount(argv[2]);
+	res = sd_server.mount(sdmmc_card, argv[2]);
 	break;
 
     case 4:
 	cout << "...with two parameters - use device & mount point." << endl;
-	res = sd_server.mount(atoi(argv[2]), argv[3]);
+	res = sd_server.mount(sdmmc_card, atoi(argv[2]), argv[3]);
 	break;
 
     default:
