@@ -215,6 +215,8 @@ public:
 	card(*holder)
     {};
 
+#if 0
+
     // Read one byte from an SDIO card using IO_RW_DIRECT (CMD52)
     // Parameters
     //	    card – pointer to card information structure previously initialized using sdmmc_card_init
@@ -306,6 +308,7 @@ public:
 //    esp_err_t sdmmc_io_write_blocks(sdmmc_card_t *card, uint32_t function, uint32_t addr, const void *src, size_t size);
     esp_err_t write_blocks(uint32_t function, uint32_t addr, const void *src, size_t size)
 		/*{ return sdmmc_io_write_blocks(card.data, function, addr, src, size);}*/;
+#endif
 
     // Enable SDIO interrupt in the SDMMC host
     // Parameters:
@@ -313,9 +316,7 @@ public:
     // Returns:
     //	    ESP_OK on success
     //	    ESP_ERR_NOT_SUPPORTED if the host controller does not support IO interrupts
-//    esp_err_t sdmmc_io_enable_int(sdmmc_card_t *card);
-    esp_err_t enable_int()
-		/*{ return sdmmc_io_enable_int(card.data);}*/;
+    esp_err_t enable_int();
 
     // Block until an SDIO interrupt is received
     // Slave uses D1 line to signal interrupt condition to the host. This function can be used to wait for the interrupt.
@@ -326,8 +327,7 @@ public:
     //	    ESP_OK if the interrupt is received
     //	    ESP_ERR_NOT_SUPPORTED if the host controller does not support IO interrupts
     //	    ESP_ERR_TIMEOUT if the interrupt does not happen in timeout_ticks
-//    esp_err_t sdmmc_io_wait_int(sdmmc_card_t *card, TickType_t timeout_ticks);
-    esp_err_t wait_int(TickType_t timeout_ticks) /*{ return sdmmc_io_wait_int(card.data, timeout_ticks);}*/;
+    esp_err_t wait_int(TickType_t timeout_ticks);
 
     // Get the data of CIS region of an SDIO card.
     // You may provide a buffer not sufficient to store all the CIS data. In this case, this function stores as much data into your buffer as possible. Also, this function will try to get and return the size required for you.
@@ -346,9 +346,7 @@ public:
     //	    ESP_ERR_NOT_FOUND: if the CIS_CODE_END not found. Increase input value of inout_cis_size or set it to 0,
     //				if you still want to search for the end; output value of inout_cis_size is invalid in this case.
     //	    and other error code return from sdmmc_io_read_bytes
-//    esp_err_t sdmmc_io_get_cis_data(sdmmc_card_t *card, uint8_t *out_buffer, size_t buffer_size, size_t *inout_cis_size);
-    esp_err_t get_cis_data(uint8_t *out_buffer, size_t buffer_size, size_t *inout_cis_size)
-		/*{ return sdmmc_io_get_cis_data(card.data, out_buffer, buffer_size, inout_cis_size);}*/;
+    esp_err_t get_cis_data(uint8_t *out_buffer, size_t buffer_size, size_t *inout_cis_size);
 
     // Parse and print the CIS information of an SDIO card.
     // Warning!
@@ -363,9 +361,122 @@ public:
     //	    ESP_OK: on success
     //	    ESP_ERR_NOT_SUPPORTED: if the value from the card is not supported to be parsed.
     //	    ESP_ERR_INVALID_SIZE: if the CIS size fields are not correct.
-//    esp_err_t sdmmc_io_print_cis_info(uint8_t *buffer, size_t buffer_size, FILE *fp);
-    esp_err_t print_cis_info(uint8_t *buffer, size_t buffer_size, FILE *fp)
-		/*{ return sdmmc_io_print_cis_info(buffer, buffer_size, fp);}*/;
+    esp_err_t print_cis_info(uint8_t *buffer, size_t buffer_size, FILE *fp);
+
+
+//------------------------------------------------------------------------------------------------------------
+
+    // I/O Read operation functions
+    class Read
+    {
+    public:
+	Read(IO&);
+
+	// Read one byte from an SDIO card using IO_RW_DIRECT (CMD52)
+	// Parameters
+	//	card – pointer to card information structure previously initialized using sdmmc_card_init
+	//	    function – IO function number
+	//	    reg – byte address within IO function
+	//	    out_byte – [out] output, receives the value read from the card
+	// Returns
+	//	    ESP_OK on success
+	//	    One of the error codes from SDMMC host controller
+	//    esp_err_t sdmmc_io_read_byte(sdmmc_card_t *card, uint32_t function, uint32_t reg, uint8_t *out_byte);
+	esp_err_t read_byte(uint32_t function, uint32_t reg, uint8_t *out_byte)
+	    /*{ return sdmmc_io_read_byte(card.data, function, reg, out_byte);}*/;
+
+	// Read multiple bytes from an SDIO card using IO_RW_EXTENDED (CMD53)
+	// This function performs read operation using CMD53 in byte mode. For block mode, see sdmmc_io_read_blocks.
+	// Parameters
+	//	    card – pointer to card information structure previously initialized using sdmmc_card_init
+	//	    function – IO function number
+	//	    addr – byte address within IO function where reading starts
+	//	    dst – buffer which receives the data read from card
+	//	    size – number of bytes to read
+	// Returns
+	//	    ESP_OK on success
+	//	    ESP_ERR_INVALID_SIZE if size exceeds 512 bytes
+	//	    One of the error codes from SDMMC host controller
+	//    esp_err_t sdmmc_io_read_bytes(sdmmc_card_t *card, uint32_t function, uint32_t addr, void *dst, size_t size);
+	esp_err_t read_bytes(uint32_t function, uint32_t addr, void *dst, size_t size)
+	    /*{ return sdmmc_io_read_bytes(card.data, function, addr, dst, size);}*/;
+
+	// Read blocks of data from an SDIO card using IO_RW_EXTENDED (CMD53)
+	// This function performs read operation using CMD53 in block mode. For byte mode, see sdmmc_io_read_bytes.
+	// Parameters:
+	//	    card – pointer to card information structure previously initialized using sdmmc_card_init
+	//	    function – IO function number
+	//	    addr – byte address within IO function where writing starts
+	//	    dst – buffer which receives the data read from card
+	//	    size – number of bytes to read, must be divisible by the card block size.
+	// Returns:
+	//	     ESP_OK on success
+	//	     ESP_ERR_INVALID_SIZE if size is not divisible by 512 bytes
+	//	     One of the error codes from SDMMC host controller
+	//    esp_err_t sdmmc_io_read_blocks(sdmmc_card_t *card, uint32_t function, uint32_t addr, void *dst, size_t size);
+	esp_err_t read_blocks(uint32_t function, uint32_t addr, void *dst, size_t size)
+	    /*{ return sdmmc_io_read_blocks(card.data, function, addr, dst, size);}*/;
+    }; /* Read */
+
+
+    // I/O Write operation functions
+    class Write
+    {
+    public:
+
+    // Write one byte to an SDIO card using IO_RW_DIRECT (CMD52)
+    // Parameters
+    //	    card – pointer to card information structure previously initialized using sdmmc_card_init
+    //	    function – IO function number
+    //	    reg – byte address within IO function
+    //	    in_byte – value to be written
+    //	    out_byte – [out] if not NULL, receives new byte value read from the card (read-after-write).
+    // Returns
+    //	    ESP_OK on success
+    //	    One of the error codes from SDMMC host controller
+//    esp_err_t sdmmc_io_write_byte(sdmmc_card_t *card, uint32_t function, uint32_t reg, uint8_t in_byte, uint8_t *out_byte);
+    esp_err_t write_byte(uint32_t function, uint32_t reg, uint8_t in_byte, uint8_t *out_byte)
+		/*{ return sdmmc_io_write_byte(card.data, function, reg, in_byte, out_byte);}*/;
+
+    // Write multiple bytes to an SDIO card using IO_RW_EXTENDED (CMD53)
+    // This function performs write operation using CMD53 in byte mode. For block mode, see sdmmc_io_write_blocks.
+    // Parameters
+    //	    card – pointer to card information structure previously initialized using sdmmc_card_init
+    //	    function – IO function number
+    //	    addr – byte address within IO function where writing starts
+    //	    src – data to be written
+    //	    size – number of bytes to write
+    // Returns
+    //	    ESP_OK on success
+    //	    ESP_ERR_INVALID_SIZE if size exceeds 512 bytes
+    //	    One of the error codes from SDMMC host controller
+//    esp_err_t sdmmc_io_write_bytes(sdmmc_card_t *card, uint32_t function, uint32_t addr, const void *src, size_t size);
+    esp_err_t write_bytes(uint32_t function, uint32_t addr, const void *src, size_t size)
+		/*{ return sdmmc_io_write_bytes(card.data, function, addr, src, size);}*/;
+
+
+    // Write blocks of data to an SDIO card using IO_RW_EXTENDED (CMD53)
+    // This function performs write operation using CMD53 in block mode. For byte mode, see sdmmc_io_write_bytes.
+    // Parameters:
+    //	    card – pointer to card information structure previously initialized using sdmmc_card_init
+    //	    function – IO function number
+    //	    addr – byte address within IO function where writing starts
+    //	    src – data to be written
+    //	    size – number of bytes to read, must be divisible by the card block size.
+    // Returns:
+    //	    ESP_OK on success
+    //	    ESP_ERR_INVALID_SIZE if size is not divisible by 512 bytes
+    //	    One of the error codes from SDMMC host controller
+//    esp_err_t sdmmc_io_write_blocks(sdmmc_card_t *card, uint32_t function, uint32_t addr, const void *src, size_t size);
+    esp_err_t write_blocks(uint32_t function, uint32_t addr, const void *src, size_t size)
+		/*{ return sdmmc_io_write_blocks(card.data, function, addr, src, size);}*/;
+
+    }; /* Write */
+
+    //------------------------------------------------------------------------------------------------------------
+
+    Read read;
+    Write write;
 
 private:
 
@@ -506,160 +617,6 @@ public:
 //    esp_err_t sdmmc_full_erase(sdmmc_card_t *card);
     esp_err_t full_erase() { return sdmmc_full_erase(&data);};
 #endif	// ESP_IDF_VERSION_VAL(x,y,p)
-
-#if 0
-    // Read one byte from an SDIO card using IO_RW_DIRECT (CMD52)
-    // Parameters
-    //	    card – pointer to card information structure previously initialized using sdmmc_card_init
-    //	    function – IO function number
-    //	    reg – byte address within IO function
-    //	    out_byte – [out] output, receives the value read from the card
-    // Returns
-    //	    ESP_OK on success
-    //	    One of the error codes from SDMMC host controller
-//    esp_err_t sdmmc_io_read_byte(sdmmc_card_t *card, uint32_t function, uint32_t reg, uint8_t *out_byte);
-    esp_err_t io_read_byte(uint32_t function, uint32_t reg, uint8_t *out_byte)
-		{ return sdmmc_io_read_byte(data, function, reg, out_byte);};
-
-    // Write one byte to an SDIO card using IO_RW_DIRECT (CMD52)
-    // Parameters
-    //	    card – pointer to card information structure previously initialized using sdmmc_card_init
-    //	    function – IO function number
-    //	    reg – byte address within IO function
-    //	    in_byte – value to be written
-    //	    out_byte – [out] if not NULL, receives new byte value read from the card (read-after-write).
-    // Returns
-    //	    ESP_OK on success
-    //	    One of the error codes from SDMMC host controller
-//    esp_err_t sdmmc_io_write_byte(sdmmc_card_t *card, uint32_t function, uint32_t reg, uint8_t in_byte, uint8_t *out_byte);
-    esp_err_t io_write_byte(uint32_t function, uint32_t reg, uint8_t in_byte, uint8_t *out_byte)
-		{ return sdmmc_io_write_byte(data, function, reg, in_byte, out_byte);};
-
-    // Read multiple bytes from an SDIO card using IO_RW_EXTENDED (CMD53)
-    // This function performs read operation using CMD53 in byte mode. For block mode, see sdmmc_io_read_blocks.
-    // Parameters
-    //	    card – pointer to card information structure previously initialized using sdmmc_card_init
-    //	    function – IO function number
-    //	    addr – byte address within IO function where reading starts
-    //	    dst – buffer which receives the data read from card
-    //	    size – number of bytes to read
-    // Returns
-    //	    ESP_OK on success
-    //	    ESP_ERR_INVALID_SIZE if size exceeds 512 bytes
-    //	    One of the error codes from SDMMC host controller
-//    esp_err_t sdmmc_io_read_bytes(sdmmc_card_t *card, uint32_t function, uint32_t addr, void *dst, size_t size);
-    esp_err_t io_read_bytes(uint32_t function, uint32_t addr, void *dst, size_t size)
-		{ return sdmmc_io_read_bytes(data, function, addr, dst, size);};
-
-    // Write multiple bytes to an SDIO card using IO_RW_EXTENDED (CMD53)
-    // This function performs write operation using CMD53 in byte mode. For block mode, see sdmmc_io_write_blocks.
-    // Parameters
-    //	    card – pointer to card information structure previously initialized using sdmmc_card_init
-    //	    function – IO function number
-    //	    addr – byte address within IO function where writing starts
-    //	    src – data to be written
-    //	    size – number of bytes to write
-    // Returns
-    //	    ESP_OK on success
-    //	    ESP_ERR_INVALID_SIZE if size exceeds 512 bytes
-    //	    One of the error codes from SDMMC host controller
-//    esp_err_t sdmmc_io_write_bytes(sdmmc_card_t *card, uint32_t function, uint32_t addr, const void *src, size_t size);
-    esp_err_t io_write_bytes(uint32_t function, uint32_t addr, const void *src, size_t size)
-		{ return sdmmc_io_write_bytes(data, function, addr, src, size);};
-
-
-    // Read blocks of data from an SDIO card using IO_RW_EXTENDED (CMD53)
-    // This function performs read operation using CMD53 in block mode. For byte mode, see sdmmc_io_read_bytes.
-    // Parameters:
-    //	    card – pointer to card information structure previously initialized using sdmmc_card_init
-    //	    function – IO function number
-    //	    addr – byte address within IO function where writing starts
-    //	    dst – buffer which receives the data read from card
-    //	    size – number of bytes to read, must be divisible by the card block size.
-    // Returns:
-    //	     ESP_OK on success
-    //	     ESP_ERR_INVALID_SIZE if size is not divisible by 512 bytes
-    //	     One of the error codes from SDMMC host controller
-//    esp_err_t sdmmc_io_read_blocks(sdmmc_card_t *card, uint32_t function, uint32_t addr, void *dst, size_t size);
-    esp_err_t io_read_blocks(uint32_t function, uint32_t addr, void *dst, size_t size)
-		{ return sdmmc_io_read_blocks(data, function, addr, dst, size);};
-
-    // Write blocks of data to an SDIO card using IO_RW_EXTENDED (CMD53)
-    // This function performs write operation using CMD53 in block mode. For byte mode, see sdmmc_io_write_bytes.
-    // Parameters:
-    //	    card – pointer to card information structure previously initialized using sdmmc_card_init
-    //	    function – IO function number
-    //	    addr – byte address within IO function where writing starts
-    //	    src – data to be written
-    //	    size – number of bytes to read, must be divisible by the card block size.
-    // Returns:
-    //	    ESP_OK on success
-    //	    ESP_ERR_INVALID_SIZE if size is not divisible by 512 bytes
-    //	    One of the error codes from SDMMC host controller
-//    esp_err_t sdmmc_io_write_blocks(sdmmc_card_t *card, uint32_t function, uint32_t addr, const void *src, size_t size);
-    esp_err_t io_write_blocks(uint32_t function, uint32_t addr, const void *src, size_t size)
-		{ return sdmmc_io_write_blocks(data, function, addr, src, size);};
-
-    // Enable SDIO interrupt in the SDMMC host
-    // Parameters:
-    //	    card – pointer to card information structure previously initialized using sdmmc_card_init
-    // Returns:
-    //	    ESP_OK on success
-    //	    ESP_ERR_NOT_SUPPORTED if the host controller does not support IO interrupts
-//    esp_err_t sdmmc_io_enable_int(sdmmc_card_t *card);
-    esp_err_t io_enable_int()
-		{ return sdmmc_io_enable_int(data);};
-
-    // Block until an SDIO interrupt is received
-    // Slave uses D1 line to signal interrupt condition to the host. This function can be used to wait for the interrupt.
-    // Parameters
-    //	    card – pointer to card information structure previously initialized using sdmmc_card_init
-    //	    timeout_ticks – time to wait for the interrupt, in RTOS ticks
-    // Returns
-    //	    ESP_OK if the interrupt is received
-    //	    ESP_ERR_NOT_SUPPORTED if the host controller does not support IO interrupts
-    //	    ESP_ERR_TIMEOUT if the interrupt does not happen in timeout_ticks
-//    esp_err_t sdmmc_io_wait_int(sdmmc_card_t *card, TickType_t timeout_ticks);
-    esp_err_t io_wait_int(TickType_t timeout_ticks) { return sdmmc_io_wait_int(data, timeout_ticks);};
-
-    // Get the data of CIS region of an SDIO card.
-    // You may provide a buffer not sufficient to store all the CIS data. In this case, this function stores as much data into your buffer as possible. Also, this function will try to get and return the size required for you.
-    // Parameters:
-    //	    card – pointer to card information structure previously initialized using sdmmc_card_init
-    //	    out_buffer – Output buffer of the CIS data
-    //	    buffer_size – Size of the buffer.
-    //	    inout_cis_size – Mandatory, pointer to a size, input and output.
-    //	    input: Limitation of maximum searching range, should be 0 or larger than buffer_size. The function searches for CIS_CODE_END until this range. Set to 0 to search infinitely.
-    //	    output: The size required to store all the CIS data, if CIS_CODE_END is found.
-    // Returns:
-    //	    ESP_OK: on success
-    //	    ESP_ERR_INVALID_RESPONSE: if the card does not (correctly) support CIS.
-    //	    ESP_ERR_INVALID_SIZE: CIS_CODE_END found, but buffer_size is less than required size,
-    //				which is stored in the inout_cis_size then.
-    //	    ESP_ERR_NOT_FOUND: if the CIS_CODE_END not found. Increase input value of inout_cis_size or set it to 0,
-    //				if you still want to search for the end; output value of inout_cis_size is invalid in this case.
-    //	    and other error code return from sdmmc_io_read_bytes
-//    esp_err_t sdmmc_io_get_cis_data(sdmmc_card_t *card, uint8_t *out_buffer, size_t buffer_size, size_t *inout_cis_size);
-    esp_err_t io_get_cis_data(uint8_t *out_buffer, size_t buffer_size, size_t *inout_cis_size)
-		{ return sdmmc_io_get_cis_data(data, out_buffer, buffer_size, inout_cis_size);};
-
-    // Parse and print the CIS information of an SDIO card.
-    // Warning!
-    //	    Not all the CIS codes and all kinds of tuples are supported. If you see some unresolved code,
-    //	    you can add the parsing of these code in sdmmc_io.c and contribute to the IDF through the Github repository.
-    //         using sdmmc_card_init
-    // Parameters:
-    //	    buffer – Buffer to parse
-    //	    buffer_size – Size of the buffer.
-    //	    fp – File pointer to print to, set to NULL to print to stdout.
-    // Returns
-    //	    ESP_OK: on success
-    //	    ESP_ERR_NOT_SUPPORTED: if the value from the card is not supported to be parsed.
-    //	    ESP_ERR_INVALID_SIZE: if the CIS size fields are not correct.
-//    esp_err_t sdmmc_io_print_cis_info(uint8_t *buffer, size_t buffer_size, FILE *fp);
-    esp_err_t io_print_cis_info(uint8_t *buffer, size_t buffer_size, FILE *fp)
-		{ return sdmmc_io_print_cis_info(buffer, buffer_size, fp);};
-#endif
 
 private:
     esp_err_t ret;
