@@ -212,6 +212,8 @@ public:
 
     // Constructor
     IO(Card* holder):
+	read(this),
+	write(this),
 	card(*holder)
     {};
 
@@ -370,7 +372,7 @@ public:
     class Read
     {
     public:
-	Read(IO&);
+	Read(IO* io): iohandler(*io) {};
 
 	// Read one byte from an SDIO card using IO_RW_DIRECT (CMD52)
 	// Parameters
@@ -382,7 +384,7 @@ public:
 	//	    ESP_OK on success
 	//	    One of the error codes from SDMMC host controller
 	//    esp_err_t sdmmc_io_read_byte(sdmmc_card_t *card, uint32_t function, uint32_t reg, uint8_t *out_byte);
-	esp_err_t read_byte(uint32_t function, uint32_t reg, uint8_t *out_byte)
+	esp_err_t byte(uint32_t function, uint32_t reg, uint8_t *out_byte)
 	    /*{ return sdmmc_io_read_byte(card.data, function, reg, out_byte);}*/;
 
 	// Read multiple bytes from an SDIO card using IO_RW_EXTENDED (CMD53)
@@ -398,7 +400,7 @@ public:
 	//	    ESP_ERR_INVALID_SIZE if size exceeds 512 bytes
 	//	    One of the error codes from SDMMC host controller
 	//    esp_err_t sdmmc_io_read_bytes(sdmmc_card_t *card, uint32_t function, uint32_t addr, void *dst, size_t size);
-	esp_err_t read_bytes(uint32_t function, uint32_t addr, void *dst, size_t size)
+	esp_err_t bytes(uint32_t function, uint32_t addr, void *dst, size_t size)
 	    /*{ return sdmmc_io_read_bytes(card.data, function, addr, dst, size);}*/;
 
 	// Read blocks of data from an SDIO card using IO_RW_EXTENDED (CMD53)
@@ -414,8 +416,11 @@ public:
 	//	     ESP_ERR_INVALID_SIZE if size is not divisible by 512 bytes
 	//	     One of the error codes from SDMMC host controller
 	//    esp_err_t sdmmc_io_read_blocks(sdmmc_card_t *card, uint32_t function, uint32_t addr, void *dst, size_t size);
-	esp_err_t read_blocks(uint32_t function, uint32_t addr, void *dst, size_t size)
+	esp_err_t blocks(uint32_t function, uint32_t addr, void *dst, size_t size)
 	    /*{ return sdmmc_io_read_blocks(card.data, function, addr, dst, size);}*/;
+    private:
+	IO& iohandler;
+
     }; /* Read */
 
 
@@ -424,52 +429,56 @@ public:
     {
     public:
 
-    // Write one byte to an SDIO card using IO_RW_DIRECT (CMD52)
-    // Parameters
-    //	    card – pointer to card information structure previously initialized using sdmmc_card_init
-    //	    function – IO function number
-    //	    reg – byte address within IO function
-    //	    in_byte – value to be written
-    //	    out_byte – [out] if not NULL, receives new byte value read from the card (read-after-write).
-    // Returns
-    //	    ESP_OK on success
-    //	    One of the error codes from SDMMC host controller
-//    esp_err_t sdmmc_io_write_byte(sdmmc_card_t *card, uint32_t function, uint32_t reg, uint8_t in_byte, uint8_t *out_byte);
-    esp_err_t write_byte(uint32_t function, uint32_t reg, uint8_t in_byte, uint8_t *out_byte)
-		/*{ return sdmmc_io_write_byte(card.data, function, reg, in_byte, out_byte);}*/;
+	Write(IO* io): iohandler(*io) {};
 
-    // Write multiple bytes to an SDIO card using IO_RW_EXTENDED (CMD53)
-    // This function performs write operation using CMD53 in byte mode. For block mode, see sdmmc_io_write_blocks.
-    // Parameters
-    //	    card – pointer to card information structure previously initialized using sdmmc_card_init
-    //	    function – IO function number
-    //	    addr – byte address within IO function where writing starts
-    //	    src – data to be written
-    //	    size – number of bytes to write
-    // Returns
-    //	    ESP_OK on success
-    //	    ESP_ERR_INVALID_SIZE if size exceeds 512 bytes
-    //	    One of the error codes from SDMMC host controller
-//    esp_err_t sdmmc_io_write_bytes(sdmmc_card_t *card, uint32_t function, uint32_t addr, const void *src, size_t size);
-    esp_err_t write_bytes(uint32_t function, uint32_t addr, const void *src, size_t size)
-		/*{ return sdmmc_io_write_bytes(card.data, function, addr, src, size);}*/;
+	// Write one byte to an SDIO card using IO_RW_DIRECT (CMD52)
+	// Parameters
+	//	    card – pointer to card information structure previously initialized using sdmmc_card_init
+	//	    function – IO function number
+	//	    reg – byte address within IO function
+	//	    in_byte – value to be written
+	//	    out_byte – [out] if not NULL, receives new byte value read from the card (read-after-write).
+	// Returns
+	//	    ESP_OK on success
+	//	    One of the error codes from SDMMC host controller
+	//    esp_err_t sdmmc_io_write_byte(sdmmc_card_t *card, uint32_t function, uint32_t reg, uint8_t in_byte, uint8_t *out_byte);
+	esp_err_t byte(uint32_t function, uint32_t reg, uint8_t in_byte, uint8_t *out_byte)
+	    /*{ return sdmmc_io_write_byte(card.data, function, reg, in_byte, out_byte);}*/;
 
+	// Write multiple bytes to an SDIO card using IO_RW_EXTENDED (CMD53)
+	// This function performs write operation using CMD53 in byte mode. For block mode, see sdmmc_io_write_blocks.
+	// Parameters
+	//	    card – pointer to card information structure previously initialized using sdmmc_card_init
+	//	    function – IO function number
+	//	    addr – byte address within IO function where writing starts
+	//	    src – data to be written
+	//	    size – number of bytes to write
+	// Returns
+	//	    ESP_OK on success
+	//	    ESP_ERR_INVALID_SIZE if size exceeds 512 bytes
+	//	    One of the error codes from SDMMC host controller
+	//    esp_err_t sdmmc_io_write_bytes(sdmmc_card_t *card, uint32_t function, uint32_t addr, const void *src, size_t size);
+	esp_err_t bytes(uint32_t function, uint32_t addr, const void *src, size_t size)
+	    /*{ return sdmmc_io_write_bytes(card.data, function, addr, src, size);}*/;
 
-    // Write blocks of data to an SDIO card using IO_RW_EXTENDED (CMD53)
-    // This function performs write operation using CMD53 in block mode. For byte mode, see sdmmc_io_write_bytes.
-    // Parameters:
-    //	    card – pointer to card information structure previously initialized using sdmmc_card_init
-    //	    function – IO function number
-    //	    addr – byte address within IO function where writing starts
-    //	    src – data to be written
-    //	    size – number of bytes to read, must be divisible by the card block size.
-    // Returns:
-    //	    ESP_OK on success
-    //	    ESP_ERR_INVALID_SIZE if size is not divisible by 512 bytes
-    //	    One of the error codes from SDMMC host controller
-//    esp_err_t sdmmc_io_write_blocks(sdmmc_card_t *card, uint32_t function, uint32_t addr, const void *src, size_t size);
-    esp_err_t write_blocks(uint32_t function, uint32_t addr, const void *src, size_t size)
-		/*{ return sdmmc_io_write_blocks(card.data, function, addr, src, size);}*/;
+	// Write blocks of data to an SDIO card using IO_RW_EXTENDED (CMD53)
+	// This function performs write operation using CMD53 in block mode. For byte mode, see sdmmc_io_write_bytes.
+	// Parameters:
+	//	    card – pointer to card information structure previously initialized using sdmmc_card_init
+	//	    function – IO function number
+	//	    addr – byte address within IO function where writing starts
+	//	    src – data to be written
+	//	    size – number of bytes to read, must be divisible by the card block size.
+	// Returns:
+	//	    ESP_OK on success
+	//	    ESP_ERR_INVALID_SIZE if size is not divisible by 512 bytes
+	//	    One of the error codes from SDMMC host controller
+	//    esp_err_t sdmmc_io_write_blocks(sdmmc_card_t *card, uint32_t function, uint32_t addr, const void *src, size_t size);
+	esp_err_t blocks(uint32_t function, uint32_t addr, const void *src, size_t size)
+	    /*{ return sdmmc_io_write_blocks(card.data, function, addr, src, size);}*/;
+
+    private:
+	IO& iohandler;
 
     }; /* Write */
 
@@ -632,43 +641,43 @@ public:
 // Read one byte from an SDIO card using IO_RW_DIRECT (CMD52)
 //    esp_err_t sdmmc_io_read_byte(sdmmc_card_t *card, uint32_t function, uint32_t reg, uint8_t *out_byte);
 esp_err_t inline
-IO::read_byte(uint32_t function, uint32_t reg, uint8_t *out_byte) {
-    return sdmmc_io_read_byte(card.data, function, reg, out_byte);};
+IO::Read::byte(uint32_t function, uint32_t reg, uint8_t *out_byte) {
+    return sdmmc_io_read_byte(iohandler.card.data, function, reg, out_byte);};
 
 // Write one byte to an SDIO card using IO_RW_DIRECT (CMD52)
 //    esp_err_t sdmmc_io_write_byte(sdmmc_card_t *card, uint32_t function, uint32_t reg, uint8_t in_byte, uint8_t *out_byte);
 esp_err_t inline
-IO::write_byte(uint32_t function, uint32_t reg, uint8_t in_byte, uint8_t *out_byte) {
-    return sdmmc_io_write_byte(card.data, function, reg, in_byte, out_byte);};
+IO::Write::byte(uint32_t function, uint32_t reg, uint8_t in_byte, uint8_t *out_byte) {
+    return sdmmc_io_write_byte(iohandler.card.data, function, reg, in_byte, out_byte);};
 
 // Read multiple bytes from an SDIO card using IO_RW_EXTENDED (CMD53)
 // This function performs read operation using CMD53 in byte mode. For block mode, see sdmmc_io_read_blocks.
 //    esp_err_t sdmmc_io_read_bytes(sdmmc_card_t *card, uint32_t function, uint32_t addr, void *dst, size_t size);
 esp_err_t inline
-IO::read_bytes(uint32_t function, uint32_t addr, void *dst, size_t size) {
-    return sdmmc_io_read_bytes(card.data, function, addr, dst, size);};
+IO::Read::bytes(uint32_t function, uint32_t addr, void *dst, size_t size) {
+    return sdmmc_io_read_bytes(iohandler.card.data, function, addr, dst, size);};
 
 // Write multiple bytes to an SDIO card using IO_RW_EXTENDED (CMD53)
 // This function performs write operation using CMD53 in byte mode. For block mode, see sdmmc_io_write_blocks.
 //    esp_err_t sdmmc_io_write_bytes(sdmmc_card_t *card, uint32_t function, uint32_t addr, const void *src, size_t size);
 esp_err_t inline
-IO::write_bytes(uint32_t function, uint32_t addr, const void *src, size_t size)	{
-    return sdmmc_io_write_bytes(card.data, function, addr, src, size);};
+IO::Write::bytes(uint32_t function, uint32_t addr, const void *src, size_t size)	{
+    return sdmmc_io_write_bytes(iohandler.card.data, function, addr, src, size);};
 
 
 // Read blocks of data from an SDIO card using IO_RW_EXTENDED (CMD53)
 // This function performs read operation using CMD53 in block mode. For byte mode, see sdmmc_io_read_bytes.
 //    esp_err_t sdmmc_io_read_blocks(sdmmc_card_t *card, uint32_t function, uint32_t addr, void *dst, size_t size);
 esp_err_t inline
-IO::read_blocks(uint32_t function, uint32_t addr, void *dst, size_t size) {
-    return sdmmc_io_read_blocks(card.data, function, addr, dst, size);};
+IO::Read::blocks(uint32_t function, uint32_t addr, void *dst, size_t size) {
+    return sdmmc_io_read_blocks(iohandler.card.data, function, addr, dst, size);};
 
 // Write blocks of data to an SDIO card using IO_RW_EXTENDED (CMD53)
 // This function performs write operation using CMD53 in block mode. For byte mode, see sdmmc_io_write_bytes.
 //    esp_err_t sdmmc_io_write_blocks(sdmmc_card_t *card, uint32_t function, uint32_t addr, const void *src, size_t size);
 esp_err_t inline
-IO::write_blocks(uint32_t function, uint32_t addr, const void *src, size_t size) {
-    return sdmmc_io_write_blocks(card.data, function, addr, src, size);};
+IO::Write::blocks(uint32_t function, uint32_t addr, const void *src, size_t size) {
+    return sdmmc_io_write_blocks(iohandler.card.data, function, addr, src, size);};
 
 // Enable SDIO interrupt in the SDMMC host
 //    esp_err_t sdmmc_io_enable_int(sdmmc_card_t *card);
