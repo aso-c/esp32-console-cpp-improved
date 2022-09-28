@@ -37,10 +37,9 @@
 
 
 // Mw delay for the SD/MMC command execution
-#define SDMMC_COMMAND_TIMEOUT 4000
+#define SDMMC_COMMAND_TIMEOUT 500
 
 namespace Exec	//-----------------------------------------------------------------------------------------------------
-//namespace SDMMC	//-----------------------------------------------------------------------------------------------------
 {
 
 // Options for mounting the filesystem.
@@ -105,14 +104,12 @@ private:
 
 }; /* class Server */
 
-
-//}; /* namespace SDMMC */  //-------------------------------------------------------------------------------------------
 }; //--[ namespace Exec ]----------------------------------------------------------------------------------------------
 
 
 #if 0
 
-/********** Content of the file sd_card_example.nain.c **********/
+/********** Content of the file sd_card_example.main.c **********/
 
 
 

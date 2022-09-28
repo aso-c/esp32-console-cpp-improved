@@ -73,7 +73,6 @@ using namespace std;
  */
 
 namespace Exec	//-----------------------------------------------------------------------------------------------------
-//namespace SDMMC	//-----------------------------------------------------------------------------------------------------
 {
 
 //    static const char *TAG = "SD/MMC service";
@@ -107,7 +106,7 @@ const char *Mounting::MOUNT_POINT_Default = MOUNT_POINT_def;
     esp_err_t Server::mount(SDMMC::Card& mcard)
     {
 	mounting.target_reset();
-	host.cfg.slot = host.slot.default_num();
+//	host.cfg.slot = host.slot.default_num();
 	cout << "Mount SD-card with default parameters" << endl;
 	cout << "Mount card slot #" << host.cfg.slot << " to path \"" << mounting.target << "\"." << endl
 		<< endl;
@@ -124,7 +123,7 @@ const char *Mounting::MOUNT_POINT_Default = MOUNT_POINT_def;
 	    return mount(mcard, atoi(mountpoint));
 
 	mounting.target = mountpoint;
-	host.cfg.slot = host.slot.default_num();
+//	host.cfg.slot = host.slot.default_num();
 
 	cout << "Mount default SD-card slot onto specified path" << endl;
 	cout << "Mount card slot #" << host.cfg.slot << " to path \"" << mounting.target << "\"" << endl
@@ -169,22 +168,6 @@ const char *Mounting::MOUNT_POINT_Default = MOUNT_POINT_def;
 		<< endl;
 	return _mount_implement(mcard);
 
-//	ret = esp_vfs_fat_sdmmc_mount(mounting.target, &host.cfg, &host.slot.cfg, &mounting.cfg, &card);
-//	if (ret != ESP_OK)
-//	{
-//	    if (ret == ESP_FAIL)
-//		cout << TAG << ": " << "Failed to mount filesystem. "
-//			"If you want the card to be formatted, set the EXAMPLE_FORMAT_IF_MOUNT_FAILED menuconfig option.";
-//	    else
-//		cout << TAG << ": " << "Failed to initialize the card (error " << ret << ", " << esp_err_to_name(ret) << "). "
-//			<< "Make sure SD card lines have pull-up resistors in place.";
-//	    return ret;
-//	}; /* if ret != ESP_OK */
-//
-//	//ESP_LOGI(TAG, "Filesystem mounted");
-//	cout << TAG << ": " "Filesystem mounted";
-//
-//	return ret;
     }; /* Server::mount */
 
     esp_err_t Server::_mount_implement(SDMMC::Card &mcard)
@@ -1036,7 +1019,6 @@ esp_err_t err4existent(const char fname[], const struct stat* statbuf)
 
     const char* Server::TAG = "SD/MMC service";
 
-//}; /* namespace SDMMC */  //-------------------------------------------------------------------------------------------
 }; //--[ namespace Exec ]----------------------------------------------------------------------------------------------
 
 

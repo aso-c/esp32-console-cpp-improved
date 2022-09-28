@@ -83,12 +83,28 @@ namespace SDMMC	//--------------------------------------------------------------
 
 Host::Host()
 {
-    //slot_default_no = host.slot;
-    slot.default_num(cfg.slot);
+    //slot.default_num(cfg.slot);
     ESP_LOGI(TAG, "Using SDMMC peripheral");
     // Define my delay for SD/MMC command execution
     cfg.command_timeout_ms = SDMMC_COMMAND_TIMEOUT;
 }; /* Host::Host */
+
+
+esp_err_t Host::init(int slotno, const sdmmc_slot_config_t *slot_config)
+{
+    cfg.slot = slotno;
+    slot = *slot_config;
+//    return sdmmc_host_init_slot(slot, slot_config);
+    return init();
+}; /* Host::init */
+
+esp_err_t Host::init(int slotno, const sdmmc_slot_config_t& slot_config)
+{
+    cfg.slot = slotno;
+    slot = slot_config;
+//    return sdmmc_host_init_slot(slot, &slot_config);
+    return init();
+}; /* Host::init */
 
 
 //--[ strust Slot ]----------------------------------------------------------------------------------------------------
@@ -118,7 +134,10 @@ Slot::Slot()
 }; /* Slot::Slot */
 
 
-int Slot::def_num;
+//int Slot::def_num;
+
+
+//--[ struct Device ]-----------------------------------------------------------------------------------------------
 
 #if 0
 //--[ struct Mounting ]---------------------------------------------------------------------------------------------
