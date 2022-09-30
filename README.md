@@ -1,3 +1,18 @@
+# ESP32 Console Example C++ Improved
+
+An experimental project for explore porting the "Console" ESP32 example to C++ (where possibility) and adding some features, provided by ESP-IDF, for research them.
+
+### Branch:
+- master : initial state of the project, original source from the ESP-IDF [repository](https://github.com/espressif/esp-idf/tree/master/examples/system/console/advanced), early development of the project.
+- unencrypted : base branch for project developing at this stage; not prepared for flash encryption.
+
+*On branch 'unencrypted'.* 
+ 
+
+
+#### *Contents of the original ESP32 example [console](https://github.com/espressif/esp-idf/tree/master/examples/system/console/advanced) project README.md [file](https://github.com/espressif/esp-idf/tree/master/examples/system/console/advanced/README.md)*:
+
+================================================================================
 # Console Example
 
 (See the README.md file in the upper level 'examples' directory for more information about examples.)
