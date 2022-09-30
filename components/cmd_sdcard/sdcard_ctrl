@@ -37,7 +37,7 @@
 
 
 // Mw delay for the SD/MMC command execution
-#define SDMMC_COMMAND_TIMEOUT 500
+//#define SDMMC_COMMAND_TIMEOUT 500
 
 namespace Exec	//-----------------------------------------------------------------------------------------------------
 {

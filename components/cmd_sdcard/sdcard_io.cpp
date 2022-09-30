@@ -86,8 +86,18 @@ Host::Host()
     //slot.default_num(cfg.slot);
     ESP_LOGI(TAG, "Using SDMMC peripheral");
     // Define my delay for SD/MMC command execution
-    cfg.command_timeout_ms = SDMMC_COMMAND_TIMEOUT;
+   // cfg.command_timeout_ms = SDMMC_COMMAND_TIMEOUT;
 }; /* Host::Host */
+
+Host();	// Default constructor
+Host(Slot::number);	// Constructor with default slot configuration by number of the slot
+// Custom slot configuration in temporary obj for desired slot number
+Host(Slot::number, sdmmc_slot_config_t&& slot_config);	// in temporary object
+Host(Slot::number, const sdmmc_slot_config_t& slot_config);	// in lvalue object
+// Copy constructors
+Host(const Host&);		// for lvalue object (defined variable)
+Host(const sdmmc_host_t&);	// for lvalue object (defined variable)
+Host(sdmmc_host_t&&) noexcept; // for rvalue oblect (e.g. temporary object)
 
 
 esp_err_t Host::init(int slotno, const sdmmc_slot_config_t *slot_config)
@@ -141,22 +151,22 @@ Slot::Slot()
 
 #if 0
 //--[ struct Mounting ]---------------------------------------------------------------------------------------------
+#endif
 
-Mounting::Mounting():
+Device::Device():
 	target(MOUNT_POINT_Default)
 {
 #ifdef CONFIG_EXAMPLE_FORMAT_IF_MOUNT_FAILED
-	cfg.format_if_mount_failed = true;
+	mnt.format_if_mount_failed = true;
 #else
-	cfg.format_if_mount_failed = false;
+	mnt.format_if_mount_failed = false;
 #endif // EXAMPLE_FORMAT_IF_MOUNT_FAILED
-	cfg.max_files = 5;
-	cfg.allocation_unit_size = 16 * 1024;
+	mnt.max_files = 5;
+	mnt.allocation_unit_size = 16 * 1024;
 	//ESP_LOGI(TAG, "Initializing SD card");
-}; /* Mounting::Mounting */
+}; /* Device::Device */
 
-const char *Mounting::MOUNT_POINT_Default = MOUNT_POINT_def;
-#endif
+const char *Device::MOUNT_POINT_Default = MOUNT_POINT_def;
 
 
 //--[ class Card ]------------------------------------------------------------------------------------------------

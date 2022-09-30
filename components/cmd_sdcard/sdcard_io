@@ -36,11 +36,11 @@
 
 
 // Mw delay for the SD/MMC command execution
-#define SDMMC_COMMAND_TIMEOUT 4000
+//#define SDMMC_COMMAND_TIMEOUT 4000
 
-namespace Exec {
-    class Server;
-};
+//namespace Exec {
+//    class Server;
+//};
 
 
 namespace SDMMC	//-----------------------------------------------------------------------------------------------------
@@ -52,7 +52,7 @@ struct Slot
     Slot(const Slot&);		// really copy constructor
     Slot(const sdmmc_slot_config_t&);	// copy constructor
     Slot(sdmmc_slot_config_t&&);	// temporary object copy constructor
-    enum number {_0 = 0, null=_0, _1 = 1, one=_1};
+    enum number {_0 = SDMMC_HOST_SLOT_0, null=_0, _1 = SDMMC_HOST_SLOT_1, one=_1};
     Slot(number);	// initializing Slot cfg by its number
 
     sdmmc_slot_config_t& operator =(const Slot&);
@@ -120,9 +120,11 @@ struct Host
     // Returns
     //      ESP_OK on success
     //      ESP_ERR_INVALID_STATE if host has not been initialized using sdmmc_host_init
-    esp_err_t init(/*int slot, const sdmmc_slot_config_t *slot_config*/) {return sdmmc_host_init_slot(cfg.slot, &slot.cfg); };
-    esp_err_t init(int slot, const sdmmc_slot_config_t *slot_config) /*{return sdmmc_host_init_slot(slot, slot_config); }*/;
-    esp_err_t init(int slot, const sdmmc_slot_config_t& slot_config) /*{return sdmmc_host_init_slot(slot, &slot_config); }*/;
+    esp_err_t init() {return sdmmc_host_init_slot(cfg.slot, &slot.cfg); };
+//    esp_err_t init(int slot, const sdmmc_slot_config_t *slot_config);
+    esp_err_t init(Slot::number, const sdmmc_slot_config_t *slot_config);
+//    esp_err_t init(int slot, const sdmmc_slot_config_t& slot_config);
+    esp_err_t init(Slot::number, const sdmmc_slot_config_t& slot_config);
 
     // Select bus width to be used for data transfer.
     // SD/MMC card must be initialized prior to this command, and a command to set bus width has to be sent to the card (e.g. SD_APP_SET_BUS_WIDTH)
@@ -134,7 +136,6 @@ struct Host
     //Returns
     //	    ESP_OK on success
     //	    ESP_ERR_INVALID_ARG if slot number or width is not valid
-//    esp_err_t set_bus_width(size_t width) { return sdmmc_host_set_bus_width(cfg.slot, width); };
     struct bus{	enum width { width1 = 1, width4 = 4, width8 = 8	}; };
     esp_err_t set_bus_width(bus::width width) { return sdmmc_host_set_bus_width(cfg.slot, width); };
 
@@ -567,32 +568,32 @@ public:
 }; /* class Card */
 
 
-//// Implementation of the mounting actions:
-//// - Options for mounting the filesystem.
-////     (If format_if_mount_failed is set
-////	to true, SD card will be partitioned
-////	and formatted in case when mounting
-////	fails.)
-//// - Implementation the mount & unmount methods.
-////struct Mounting
-//struct Dev
-//{
-//
-//    Mounting();
-//
-//    // mount();
-//
-//    // unmount();
-//
-//    void target_reset() {target = Mounting::MOUNT_POINT_Default;};
-//
-//    esp_vfs_fat_sdmmc_mount_config_t mnt;
-//    const char* target;
-//
-//    static const char* MOUNT_POINT_Default;
-//
-//}; /* struct Dev */
-////}; /* struct Mounting */
+// Implementation of the mounting actions:
+// - Options for mounting the filesystem.
+//     (If format_if_mount_failed is set
+//	to true, SD card will be partitioned
+//	and formatted in case when mounting
+//	fails.)
+// - Implementation the mount & unmount methods.
+//struct Mounting
+struct Device
+{
+
+    Device();
+
+    // mount();
+
+    // unmount();
+
+    void target_reset() {target = Device::MOUNT_POINT_Default;};
+
+    esp_vfs_fat_sdmmc_mount_config_t mnt;
+    const char* target;
+
+    static const char* MOUNT_POINT_Default;
+
+}; /* struct Device */
+//}; /* struct Mounting */
 
 
 //--[ class IO inlines ]-----------------------------------------------------------------------------------------------
