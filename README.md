@@ -3,6 +3,7 @@
 An experimental project for explore porting the "Console" ESP32 example to C++ (where possibility) and adding some features, provided by ESP-IDF, for research them.
 
 ### Branch:
+- main&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: initial branch of the GitHub repository, default by github settings.
 - master&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: initial state of the project, original source from the ESP-IDF [repository](https://github.com/espressif/esp-idf/tree/master/examples/system/console/advanced), early development of the project.
 - unencrypted : base branch for project developing at this stage; not prepared for flash encryption.
 - encrypted&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: branch for testing encryption flash features on ESP32; implied prepare confuguratuion for flash encryption; codebase merged from the branch 'unencrypted'.
