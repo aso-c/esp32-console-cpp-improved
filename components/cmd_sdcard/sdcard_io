@@ -98,6 +98,24 @@ private:
 // SD/MMC Host
 struct Host
 {
+    enum Flags {
+        support_1bit = SDMMC_HOST_FLAG_1BIT,	/*!< host supports 1-line SD and MMC protocol */
+        support_4bit = SDMMC_HOST_FLAG_4BIT,	/*!< host supports 4-line SD and MMC protocol */
+        support_8bit = SDMMC_HOST_FLAG_8BIT,	/*!< host supports 8-line MMC protocol */
+	support_SPI  = SDMMC_HOST_FLAG_SPI,	/*!< host supports SPI protocol */
+	support_DDR  = SDMMC_HOST_FLAG_DDR,	/*!< host supports DDR mode for SD/MMC */
+	support_deinit = SDMMC_HOST_FLAG_DEINIT_ARG	/*!< host `deinit` function called with the slot argument */
+    }; /* Flags */
+
+    enum Freq {
+
+	freq_default = SDMMC_FREQ_DEFAULT,	/*!< SD/MMC Default speed (limited by clock divider) */
+	freq_highspeed = SDMMC_FREQ_HIGHSPEED,	/*!< SD High speed (limited by clock divider) */
+	freq_probing = SDMMC_FREQ_PROBING,	/*!< SD/MMC probing speed */
+	freq_52M     = SDMMC_FREQ_52M,	/*!< MMC 52MHz speed */
+	freq_26M     = SDMMC_FREQ_26M	/*!< MMC 26MHz speed */
+    }; /* Freq */
+
     Host();	// Default constructor
     Host(Slot::number);	// Constructor with default slot configuration by number of the slot
     // Custom slot configuration in temporary obj for desired slot number
@@ -110,9 +128,9 @@ struct Host
     Host(const sdmmc_host_t&);	// for lvalue object (defined variable)
     Host(sdmmc_host_t&&) noexcept; // for rvalue oblect (e.g. temporary object)
 
-    sdmmc_host_t& operator =(const Host&);
-    sdmmc_host_t& operator =(const sdmmc_host_t&);
-    sdmmc_host_t& operator =(sdmmc_host_t&&) noexcept;
+    Host& operator =(const Host&);
+    Host& operator =(const sdmmc_host_t&);
+    Host& operator =(sdmmc_host_t&& host) noexcept { return operator =(host); };
 
     // Initialize SDMMC host peripheral.
     //
