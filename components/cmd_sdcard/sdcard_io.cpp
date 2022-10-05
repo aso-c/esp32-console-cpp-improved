@@ -81,51 +81,217 @@ namespace SDMMC	//--------------------------------------------------------------
 
 //int Control::slot_default_no;
 
+// Default constructor
 Host::Host()
 {
     //slot.default_num(cfg.slot);
-    ESP_LOGI(TAG, "Using SDMMC peripheral");
+    ESP_LOGI(TAG, "Using SDMMC peripheral - default constructor");
     // Define my delay for SD/MMC command execution
    // cfg.command_timeout_ms = SDMMC_COMMAND_TIMEOUT;
 }; /* Host::Host */
 
-Host();	// Default constructor
-Host(Slot::number);	// Constructor with default slot configuration by number of the slot
-// Custom slot configuration in temporary obj for desired slot number
-Host(Slot::number, sdmmc_slot_config_t&& slot_config);	// in temporary object
-Host(Slot::number, const sdmmc_slot_config_t& slot_config);	// in lvalue object
+// Constructor with default slot configuration by number of the slot
+Host::Host(Slot::number number):
+	slot(number) {
+	cfg.slot = number; };
+
+// Custom slot configuration in temporary obj
+// for desired slot number
+// in lvalue object
+//Host::Host(Slot::number number, const sdmmc_slot_config_t& slot_config)
+Host::Host(Slot::number num, const Slot& aslot):
+	slot(aslot)
+{
+    cfg.slot = num;
+}; /* Host::Host(Slot::number, const Slot&) */
+//}; /* Host::Host(Slot::number, const sdmmc_slot_config_t&) */
+
+// in temporary object
+//Host::Host(Slot::number number, sdmmc_slot_config_t&& slot_config)
+Host::Host(Slot::number num, Slot&& aslot):
+	Host(num, aslot)
+{
+    ;
+}; /* Host::Host(Slot::number, Slot::number, Slot&&) */
+//}; /* Host::Host(Slot::number, sdmmc_slot_config_t&&) */
+
 // Copy constructors
-Host(const Host&);		// for lvalue object (defined variable)
-Host(const sdmmc_host_t&);	// for lvalue object (defined variable)
-Host(sdmmc_host_t&&) noexcept; // for rvalue oblect (e.g. temporary object)
+// for lvalue object (defined variable)
+Host::Host(const Host& host):
+	Host(host.cfg)
+{
+////    typedef struct {
+////        uint32_t flags;             /*!< flags defining host properties */
+//    cfg.flags = host.cfg.flags;	/*!< flags defining host properties */
+////    #define SDMMC_HOST_FLAG_1BIT    BIT(0)      /*!< host supports 1-line SD and MMC protocol */
+////    #define SDMMC_HOST_FLAG_4BIT    BIT(1)      /*!< host supports 4-line SD and MMC protocol */
+////    #define SDMMC_HOST_FLAG_8BIT    BIT(2)      /*!< host supports 8-line MMC protocol */
+////    #define SDMMC_HOST_FLAG_SPI     BIT(3)      /*!< host supports SPI protocol */
+////    #define SDMMC_HOST_FLAG_DDR     BIT(4)      /*!< host supports DDR mode for SD/MMC */
+////    #define SDMMC_HOST_FLAG_DEINIT_ARG BIT(5)      /*!< host `deinit` function called with the slot argument */
+////        int slot;                   /*!< slot number, to be passed to host functions */
+//    slot = host.slot;	/*!< slot number, to be passed to host functions */
+////        int max_freq_khz;           /*!< max frequency supported by the host */
+//    max_freq_khz = host.max_freq_khz;	/*!< max frequency supported by the host */
+////    #define SDMMC_FREQ_DEFAULT      20000       /*!< SD/MMC Default speed (limited by clock divider) */
+////    #define SDMMC_FREQ_HIGHSPEED    40000       /*!< SD High speed (limited by clock divider) */
+////    #define SDMMC_FREQ_PROBING      400         /*!< SD/MMC probing speed */
+////    #define SDMMC_FREQ_52M          52000       /*!< MMC 52MHz speed */
+////    #define SDMMC_FREQ_26M          26000       /*!< MMC 26MHz speed */
+////        float io_voltage;           /*!< I/O voltage used by the controller (voltage switching is not supported) */
+//    io_voltage = host.io_voltage;	/*!< I/O voltage used by the controller (voltage switching is not supported) */
+////        esp_err_t (*init)(void);    /*!< Host function to initialize the driver */
+//    init = host.init;	/*!< Host function to initialize the driver */
+////        esp_err_t (*set_bus_width)(int slot, size_t width);    /*!< host function to set bus width */
+//    set_bus_width = host.set_bus_width;	/*!< host function to set bus width */
+////        size_t (*get_bus_width)(int slot); /*!< host function to get bus width */
+//    get_bus_width = host.get_bus_width;	/*!< host function to get bus width */
+////        esp_err_t (*set_bus_ddr_mode)(int slot, bool ddr_enable); /*!< host function to set DDR mode */
+////        esp_err_t (*set_bus_ddr_mode)(int slot, bool ddr_enable); /*!< host function to set DDR mode */
+////        esp_err_t (*set_card_clk)(int slot, uint32_t freq_khz); /*!< host function to set card clock frequency */
+////        esp_err_t (*do_transaction)(int slot, sdmmc_command_t* cmdinfo);    /*!< host function to do a transaction */
+////        union {
+////            esp_err_t (*deinit)(void);  /*!< host function to deinitialize the driver */
+////            esp_err_t (*deinit_p)(int slot);  /*!< host function to deinitialize the driver, called with the `slot` */
+////        };
+////        esp_err_t (*io_int_enable)(int slot); /*!< Host function to enable SDIO interrupt line */
+////        esp_err_t (*io_int_wait)(int slot, TickType_t timeout_ticks); /*!< Host function to wait for SDIO interrupt line to be active */
+////        int command_timeout_ms;     /*!< timeout, in milliseconds, of a single command. Set to 0 to use the default value. */
+////    } sdmmc_host_t;    ;
+    slot = host.slot;
+}; /* Host::Host(const Host&) */
+// for lvalue object (defined variable)
+Host::Host(const sdmmc_host_t& host)
+{
+    //    typedef struct {
+    //        uint32_t flags;             /*!< flags defining host properties */
+    cfg.flags = host.flags;	/*!< flags defining host properties */
+    //    #define SDMMC_HOST_FLAG_1BIT    BIT(0)      /*!< host supports 1-line SD and MMC protocol */
+    //    #define SDMMC_HOST_FLAG_4BIT    BIT(1)      /*!< host supports 4-line SD and MMC protocol */
+    //    #define SDMMC_HOST_FLAG_8BIT    BIT(2)      /*!< host supports 8-line MMC protocol */
+    //    #define SDMMC_HOST_FLAG_SPI     BIT(3)      /*!< host supports SPI protocol */
+    //    #define SDMMC_HOST_FLAG_DDR     BIT(4)      /*!< host supports DDR mode for SD/MMC */
+    //    #define SDMMC_HOST_FLAG_DEINIT_ARG BIT(5)      /*!< host `deinit` function called with the slot argument */
+    //        int slot;                   /*!< slot number, to be passed to host functions */
+    cfg.slot = host.slot;	/*!< slot number, to be passed to host functions */
+    //        int max_freq_khz;           /*!< max frequency supported by the host */
+    cfg.max_freq_khz = host.max_freq_khz;	/*!< max frequency supported by the host */
+    //    #define SDMMC_FREQ_DEFAULT      20000       /*!< SD/MMC Default speed (limited by clock divider) */
+    //    #define SDMMC_FREQ_HIGHSPEED    40000       /*!< SD High speed (limited by clock divider) */
+    //    #define SDMMC_FREQ_PROBING      400         /*!< SD/MMC probing speed */
+    //    #define SDMMC_FREQ_52M          52000       /*!< MMC 52MHz speed */
+    //    #define SDMMC_FREQ_26M          26000       /*!< MMC 26MHz speed */
+    //        float io_voltage;           /*!< I/O voltage used by the controller (voltage switching is not supported) */
+    cfg.io_voltage = host.io_voltage;	/*!< I/O voltage used by the controller (voltage switching is not supported) */
+    //        esp_err_t (*init)(void);    /*!< Host function to initialize the driver */
+    cfg.init = host.init;	/*!< Host function to initialize the driver */
+    //        esp_err_t (*set_bus_width)(int slot, size_t width);    /*!< host function to set bus width */
+    cfg.set_bus_width = host.set_bus_width;	/*!< host function to set bus width */
+    //        size_t (*get_bus_width)(int slot); /*!< host function to get bus width */
+    cfg.get_bus_width = host.get_bus_width;	/*!< host function to get bus width */
+    //        esp_err_t (*set_bus_ddr_mode)(int slot, bool ddr_enable); /*!< host function to set DDR mode */
+    cfg.set_bus_ddr_mode = host.set_bus_ddr_mode;	/*!< host function to set DDR mode */
+    //        esp_err_t (*set_card_clk)(int slot, uint32_t freq_khz); /*!< host function to set card clock frequency */
+    cfg.set_card_clk = host.set_card_clk;	/*!< host function to set card clock frequency */
+    //        esp_err_t (*do_transaction)(int slot, sdmmc_command_t* cmdinfo);    /*!< host function to do a transaction */
+    cfg.do_transaction = host.do_transaction;	/*!< host function to do a transaction */
+    //        union {
+    //            esp_err_t (*deinit)(void);  /*!< host function to deinitialize the driver */
+    //            esp_err_t (*deinit_p)(int slot);  /*!< host function to deinitialize the driver, called with the `slot` */
+    //        };
+    cfg.deinit = host.deinit;	/*!< host function to deinitialize the driver */
+    //        esp_err_t (*io_int_enable)(int slot); /*!< Host function to enable SDIO interrupt line */
+    cfg.io_int_enable = host.io_int_enable;	/*!< Host function to enable SDIO interrupt line */
+    //        esp_err_t (*io_int_wait)(int slot, TickType_t timeout_ticks); /*!< Host function to wait for SDIO interrupt line to be active */
+    cfg.io_int_wait = host.io_int_wait;	/*!< Host function to wait for SDIO interrupt line to be active */
+    //        int command_timeout_ms;     /*!< timeout, in milliseconds, of a single command. Set to 0 to use the default value. */
+    cfg.command_timeout_ms = host.command_timeout_ms;	/*!< timeout, in milliseconds, of a single command. Set to 0 to use the default value. */
+    //    } sdmmc_host_t;    ;
+    if (host.slot == 0)
+	slot = Slot(Slot::_0);
+}; /* Host::Host(const sdmmc_host_t&) */
+
+// for rvalue oblect (e.g. temporary object)
+Host::Host(sdmmc_host_t&& host) noexcept:
+	Host(host)
+{
+    ;
+}; /* Host::Host(sdmmc_host_t&&) noexcept */
 
 
-esp_err_t Host::init(int slotno, const sdmmc_slot_config_t *slot_config)
+//Host();	// Default constructor
+//Host(Slot::number);	// Constructor with default slot configuration by number of the slot
+//// Custom slot configuration in temporary obj for desired slot number
+//Host(Slot::number, Slot&&);	// in temporary object
+//Host(Slot::number, const Slot&);	// in lvalue object
+//// Copy constructors
+//Host(const Host&);		// for lvalue object (defined variable)
+//Host(const sdmmc_host_t&);	// for lvalue object (defined variable)
+//Host(sdmmc_host_t&&) noexcept; // for rvalue oblect (e.g. temporary object)
+
+//sdmmc_host_t& operator =(const Host&);
+//sdmmc_host_t& operator =(const sdmmc_host_t&);
+//sdmmc_host_t& operator =(sdmmc_host_t&&) noexcept;
+
+
+//esp_err_t Host::init(int slotno, const sdmmc_slot_config_t *slot_config)
+esp_err_t Host::init(Slot::number slotno, const Slot& extern_slot)
 {
     cfg.slot = slotno;
-    slot = *slot_config;
+    slot = extern_slot;
 //    return sdmmc_host_init_slot(slot, slot_config);
     return init();
-}; /* Host::init */
+}; /* Host::init(Slot::number, const Slot&) */
 
-esp_err_t Host::init(int slotno, const sdmmc_slot_config_t& slot_config)
+esp_err_t Host::init(Slot::number slotno, Slot&& extern_slot)
 {
-    cfg.slot = slotno;
-    slot = slot_config;
+    //cfg.slot = slotno;
+    //slot = slot_config;
 //    return sdmmc_host_init_slot(slot, &slot_config);
-    return init();
-}; /* Host::init */
+//    return init();
+    return init(slotno, extern_slot);
+}; /* Host::init(Slot::number, Slot&&) */
 
 
 //--[ strust Slot ]----------------------------------------------------------------------------------------------------
 
+
+//=================================================================================================
+//
+// ESP32’s SDMMC host peripheral has two slots. Each slot can be used independently to connect to an SD card, SDIO device or eMMC chip.
+//
+//    Slot 0 (SDMMC_HOST_SLOT_0) is an 8-bit slot. It uses HS1_* signals in the PIN MUX.
+//
+//    Slot 1 (SDMMC_HOST_SLOT_1) is a 4-bit slot. It uses HS2_* signals in the PIN MUX.
+//
+// The slots are connected to ESP32 GPIOs using IO MUX. Pin mappings of these slots are given in the table below.
+//
+// Signal    Slot 0	Slot 1
+//
+// CMD	    GPIO11	GPIO15
+// CLK	    GPIO6	GPIO14
+// D0	    GPIO7	GPIO2
+// D1	    GPIO8	GPIO4
+// D2	    GPIO9	GPIO12
+// D3	    GPIO10	GPIO13
+// D4	    GPIO16
+// D5	    GPIO17
+// D6	    GPIO5
+// D7	    GPIO18
+// CD	    any input via GPIO matrix
+// WP	    any input via GPIO matrix
+//
+//=================================================================================================
+
+
 Slot::Slot()
 {
     // To use 1-line SD mode, change this to 1:
-    cfg.width = SLOT_WIDTH;
+//    cfg.width = SLOT_WIDTH;
 
     // On chips where the GPIOs used for SD card can be configured, set them in
 
+#if 0
     // the slot_config structure:
 #ifdef SOC_SDMMC_USE_GPIO_MATRIX
     cfg.clk = GPIO_NUM_14;
@@ -135,23 +301,190 @@ Slot::Slot()
     cfg.d2 = GPIO_NUM_12;
     cfg.d3 = GPIO_NUM_13;
 #endif
+#endif
 
     // Enable internal pullups on enabled pins. The internal pullups
     // are insufficient however, please make sure 10k external pullups are
     // connected on the bus. This is for debug / example purpose only.
-    cfg.flags |= SDMMC_SLOT_FLAG_INTERNAL_PULLUP;
+//    cfg.flags |= SDMMC_SLOT_FLAG_INTERNAL_PULLUP;
 
 }; /* Slot::Slot */
+
+//Slot();
+// really copy constructor
+Slot::Slot(const Slot& slot):
+    Slot(slot.cfg)
+{};
+
+// from struct sdmmc_slot_config_t copy constructor
+Slot::Slot(const sdmmc_slot_config_t& config)
+{
+
+//    typedef struct {
+#ifdef SOC_SDMMC_USE_GPIO_MATRIX
+//        gpio_num_t clk;         ///< GPIO number of CLK signal.
+    cfg.clk = config.clk;	///< GPIO number of CLK signal.
+//        gpio_num_t cmd;         ///< GPIO number of CMD signal.
+    cfg.cmd = config.cmd;	///< GPIO number of CMD signal.
+//        gpio_num_t d0;          ///< GPIO number of D0 signal.
+    cfg.d0 = config.d0;	///< GPIO number of D0 signal.
+//        gpio_num_t d1;          ///< GPIO number of D1 signal.
+    cfg.d1 = config.d1;	///< GPIO number of D1 signal.
+//        gpio_num_t d2;          ///< GPIO number of D2 signal.
+    cfg.d2 = config.d2;	///< GPIO number of D2 signal.
+//        gpio_num_t d3;          ///< GPIO number of D3 signal.
+    cfg.d3 = config.d3;	///< GPIO number of D3 signal.
+//        gpio_num_t d4;          ///< GPIO number of D4 signal. Ignored in 1- or 4- line mode.
+    cfg.d4 = config.d4;	///< GPIO number of D4 signal. Ignored in 1- or 4- line mode.
+//        gpio_num_t d5;          ///< GPIO number of D5 signal. Ignored in 1- or 4- line mode.
+    cfg.d5 = config.d5;	///< GPIO number of D5 signal. Ignored in 1- or 4- line mode.
+//        gpio_num_t d6;          ///< GPIO number of D6 signal. Ignored in 1- or 4- line mode.
+    cfg.d6 = config.d6;	///< GPIO number of D6 signal. Ignored in 1- or 4- line mode.
+//        gpio_num_t d7;          ///< GPIO number of D7 signal. Ignored in 1- or 4- line mode.
+    cfg.d7 = config.d7;	///< GPIO number of D7 signal. Ignored in 1- or 4- line mode.
+#endif // SOC_SDMMC_USE_GPIO_MATRIX
+//        union {
+//            gpio_num_t gpio_cd;     ///< GPIO number of card detect signal
+//            gpio_num_t cd;          ///< GPIO number of card detect signal; shorter name.
+//        };
+    cfg.cd = config.cd;	///< card detect signal
+//        union {
+//            gpio_num_t gpio_wp;     ///< GPIO number of write protect signal
+//            gpio_num_t wp;          ///< GPIO number of write protect signal; shorter name.
+//        };
+    cfg.wp = config.wp;	///< write protect signal
+//        uint8_t width;          ///< Bus width used by the slot (might be less than the max width supported)
+    cfg.width = config.width;	///< Bus width used by the slot (might be less than the max width supported)
+//        uint32_t flags;         ///< Features used by this slot
+    cfg.flags = config.flags;         ///< Features used by this slot
+//    #define SDMMC_SLOT_FLAG_INTERNAL_PULLUP  BIT(0)
+            /**< Enable internal pullups on enabled pins. The internal pullups
+             are insufficient however, please make sure external pullups are
+             connected on the bus. This is for debug / example purpose only.
+             */
+//    } sdmmc_slot_config_t;
+
+}; /* Slot::Slot(const sdmmc_slot_config_t&) */
+
+// temporary object copy constructor
+Slot::Slot(sdmmc_slot_config_t&& config):
+	Slot(config)
+{
+    /*;*/
+}; /* Slot::Slot(sdmmc_slot_config_t&&) */
+
+// initializing Slot cfg by its number
+//enum number {_0 = SDMMC_HOST_SLOT_0, null=_0, _1 = SDMMC_HOST_SLOT_1, one=_1};
+Slot::Slot(number num)
+{
+    switch (num)
+    {
+	// configurate slot to Slot0
+    case null:
+
+#ifdef SOC_SDMMC_USE_GPIO_MATRIX
+	//Signal Slot0	Slot 1
+	// CMD	GPIO11	GPIO15
+	cfg.cmd = GPIO_NUM_11;
+	// CLK	GPIO6	GPIO14
+	cfg.clk = GPIO_NUM_6;
+	// D0	GPIO7	GPIO2
+	cfg.d0 = GPIO_NUM_7;
+	// D1	GPIO8	GPIO4
+	cfg.d1 = GPIO_NUM_8;
+	// D2	GPIO9	GPIO12
+	cfg.d2 = GPIO_NUM_9;
+	// D3	GPIO10	GPIO13
+	cfg.d3 = GPIO_NUM_10;
+	// D4	GPIO16
+	cfg.d4 = GPIO_NUM_16;
+	// D5	GPIO17
+	cfg.d5 = GPIO_NUM_17;
+	// D6	GPIO5
+	cfg.d6 = GPIO_NUM_5;
+	// D7	GPIO18
+	cfg.d7 = GPIO_NUM_18;
+	// CD	any input via GPIO matrix
+	// WP	any input via GPIO matrix
+#endif
+	// Other params - initialized by default
+//	    cfg.cd = SDMMC_SLOT_NO_CD;
+//	    cfg.wp = SDMMC_SLOT_NO_WP;
+	//    cfg.width   = SDMMC_SLOT_WIDTH_DEFAULT;
+	    //cfg.width   = bus::width_8;
+//	    cfg.flags = 0;
+	break;
+
+	// for Slot 1 - initialized by default values
+    default:
+	;
+    }; /* switch num */
+}; /* Slot::Slot(number) */
+
+// Set or clear SDDMMC internal pullup bit
+void Slot::internal_pullup(bool pullup)
+{
+    if (pullup)
+	cfg.flags |= SDMMC_SLOT_FLAG_INTERNAL_PULLUP;	///> set internal pullap bit
+    else
+	cfg.flags &= ~SDMMC_SLOT_FLAG_INTERNAL_PULLUP;	///> clear internal pullup bit
+}; /* Slot::internal_pullup */
+
+
+
+// Assignment operators
+//    sdmmc_slot_config_t& operator =(const Slot&);
+Slot& Slot::operator =(const Slot& slot)
+{
+    *this = slot.cfg;
+    return *this;
+}; /* Slot::operator =(const Slot&) */
+
+//    sdmmc_slot_config_t& operator =(const sdmmc_slot_config_t&);
+Slot& Slot::operator =(const sdmmc_slot_config_t& config)
+{
+#ifdef SOC_SDMMC_USE_GPIO_MATRIX
+    //        gpio_num_t clk;         ///< GPIO number of CLK signal.
+    cfg.clk = config.clk;	///< GPIO number of CLK signal.
+    //        gpio_num_t cmd;         ///< GPIO number of CMD signal.
+    cfg.cmd = config.cmd;	///< GPIO number of CMD signal.
+    //        gpio_num_t d0;          ///< GPIO number of D0 signal.
+    cfg.d0 = config.d0;	///< GPIO number of D0 signal.
+    //        gpio_num_t d1;          ///< GPIO number of D1 signal.
+    cfg.d1 = config.d1;	///< GPIO number of D1 signal.
+    //        gpio_num_t d2;          ///< GPIO number of D2 signal.
+    cfg.d2 = config.d2;	///< GPIO number of D2 signal.
+    //        gpio_num_t d3;          ///< GPIO number of D3 signal.
+    cfg.d3 = config.d3;	///< GPIO number of D3 signal.
+    //        gpio_num_t d4;          ///< GPIO number of D4 signal. Ignored in 1- or 4- line mode.
+    cfg.d4 = config.d4;	///< GPIO number of D4 signal. Ignored in 1- or 4- line mode.
+    //        gpio_num_t d5;          ///< GPIO number of D5 signal. Ignored in 1- or 4- line mode.
+    cfg.d5 = config.d5;	///< GPIO number of D5 signal. Ignored in 1- or 4- line mode.
+    //        gpio_num_t d6;          ///< GPIO number of D6 signal. Ignored in 1- or 4- line mode.
+    cfg.d6 = config.d6;	///< GPIO number of D6 signal. Ignored in 1- or 4- line mode.
+    //        gpio_num_t d7;          ///< GPIO number of D7 signal. Ignored in 1- or 4- line mode.
+    cfg.d7 = config.d7;	///< GPIO number of D7 signal. Ignored in 1- or 4- line mode.
+#endif // SOC_SDMMC_USE_GPIO_MATRIX
+    cfg.cd = config.cd;	///< card detect signal
+    cfg.wp = config.wp;	///< write protect signal
+    cfg.width = config.width;	///< Bus width used by the slot (might be less than the max width supported)
+    cfg.flags = config.flags;         ///< Features used by this slot
+    return *this;
+}; /* Slot::operator =(const sdmmc_slot_config_t&) */
+
+
+//    sdmmc_slot_config_t& operator =(sdmmc_slot_config_t&&) noexcept;
+Slot& Slot::operator =(sdmmc_slot_config_t&& config) noexcept
+{
+    *this = config;
+    return *this;
+}; /* Slot::operator =(sdmmc_slot_config_t&&) */
 
 
 //int Slot::def_num;
 
 
 //--[ struct Device ]-----------------------------------------------------------------------------------------------
-
-#if 0
-//--[ struct Mounting ]---------------------------------------------------------------------------------------------
-#endif
 
 Device::Device():
 	target(MOUNT_POINT_Default)
