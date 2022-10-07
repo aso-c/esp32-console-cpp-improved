@@ -153,11 +153,7 @@ Exec::Server exec_server;
 
 static int pwd_act(int argc, char **argv)
 {
-#if 0
     return exec_server.pwd();
-#else
-    return 0;
-#endif
 }; /* pwd_act */
 
 void register_pwd(void)
@@ -181,7 +177,6 @@ void register_pwd(void)
 
 static int mkdir_act(int argc, char **argv)
 {
-#if 0
     cout << "\"mkdir\" command execution" << endl;
     switch (argc)
     {
@@ -197,7 +192,6 @@ static int mkdir_act(int argc, char **argv)
 	ESP_LOGE("mkdir command", "too many parameters (%d), don't know what directory to create", argc);
     }; /* switch argc */
     cout << endl;
-#endif
 
     return ESP_ERR_INVALID_ARG;
 }; /* mkdir_act */
@@ -227,7 +221,6 @@ void register_mkdir(void)
 static int rmdir_act(int argc, char **argv)
 {
     cout << "\"rmdir\" command execution" << endl;
-#if 0
     switch (argc)
     {
     case 1:
@@ -242,7 +235,6 @@ static int rmdir_act(int argc, char **argv)
 	ESP_LOGE("rmdir command", "too many parameters (%d), deleting multiple directories at once is not allowed", argc);
     }; /* switch argc */
     cout << endl;
-#endif
 
     return ESP_ERR_INVALID_ARG;
 }; /* rmdir_act */
@@ -272,7 +264,6 @@ void register_rmdir(void)
 static int cd_act(int argc, char **argv)
 {
     cout << "\"cd\" command execution" << endl;
-#if 0
     switch (argc)
     {
     case 1:
@@ -287,7 +278,6 @@ static int cd_act(int argc, char **argv)
 	ESP_LOGE("cd command", "too many parameters (%d), where to go?", argc);
     }; /* switch argc */
     cout << endl;
-#endif
 
     return ESP_ERR_INVALID_ARG;
 }; /* cd_act */
@@ -316,7 +306,6 @@ void register_cd(void)
 static int ls_act(int argc, char **argv)
 {
     cout << "\"ls\" command execution" << endl;
-#if 0
     switch (argc)
     {
     case 1:
@@ -332,7 +321,6 @@ static int ls_act(int argc, char **argv)
 
     }; /* switch argc */
     cout << endl;
-#endif
     return ESP_ERR_INVALID_ARG;
 }; /* ls_act */
 
@@ -360,7 +348,6 @@ void register_ls(void)
 static int cp_act(int argc, char **argv)
 {
     cout << "\"cp\" command execution" << endl;
-#if 0
     switch (argc)
     {
     case 1:
@@ -380,7 +367,6 @@ static int cp_act(int argc, char **argv)
     }; /* switch argc */
 
     cout << endl;
-#endif
     return ESP_ERR_INVALID_ARG;
 }; /* cp_act */
 
@@ -409,7 +395,6 @@ void register_cp(void)
 static int mv_act(int argc, char **argv)
 {
     cout << "\"mv\" command execution" << endl;
-#if 0
     switch (argc)
     {
     case 1:
@@ -429,7 +414,6 @@ static int mv_act(int argc, char **argv)
     }; /* switch argc */
 
     cout << endl;
-#endif
 
     return ESP_ERR_INVALID_ARG;
 }; /* mv_act */
@@ -460,7 +444,6 @@ void register_mv(void)
 static int rm_act(int argc, char **argv)
 {
     cout << "\"rm\" command execution" << endl;
-#if 0
     switch (argc)
     {
     case 1:
@@ -476,7 +459,6 @@ static int rm_act(int argc, char **argv)
 	ESP_LOGE("rm command", "too many parameters (%d), unable select file to remove.", argc);
     }; /* switch argc */
     cout << endl;
-#endif
 
     return ESP_ERR_INVALID_ARG;
 }; /* rm_act */
@@ -506,7 +488,6 @@ void register_rm(void)
 static int cat_act(int argc, char **argv)
 {
     cout << "\"cat\" command execution" << endl;
-#if 0
     switch (argc)
     {
     case 1:
@@ -521,7 +502,6 @@ static int cat_act(int argc, char **argv)
 	ESP_LOGE("cat command", "too many parameters (%d), unable select file to print.", argc);
     }; /* switch argc */
     cout << endl;
-#endif
 
     return ESP_ERR_INVALID_ARG;
 }; /* cat_act */
@@ -551,7 +531,6 @@ void register_cat(void)
 static int type_act(int argc, char **argv)
 {
     cout << "\"type\" command execution" << endl;
-#if 0
     switch (argc)
     {
     case 1:
@@ -568,7 +547,6 @@ static int type_act(int argc, char **argv)
 	ESP_LOGE("type command", "too many parameters (%d), in which file the output to be saved?", argc);
     }; /* switch argc */
     cout << endl;
-#endif
 
     return ESP_ERR_INVALID_ARG;
 }; /* type_act */
@@ -883,9 +861,7 @@ esp_err_t SDctrl::act_info()
 // action for pwd command
 esp_err_t SDctrl::act_pwd()
 {
-#if 0
     exec_server.pwd();
-#endif
 
     return 0;
 }; /* SDctrl::act_pwd */
@@ -895,7 +871,6 @@ esp_err_t SDctrl::act_pwd()
 esp_err_t SDctrl::act_mkdir()
 {
     cout << "\"mkdir\" command execution" << endl;
-#if 0
     switch (argc)
     {
     case 2:
@@ -911,7 +886,6 @@ esp_err_t SDctrl::act_mkdir()
 	ESP_LOGE("sdcard mkdir command", "more than one parameters (%d) - don't know what directory to create.", argc - 2);
     }; /* switch argc */
     cout << endl;
-#endif
 
     return ESP_ERR_INVALID_ARG;
 }; /* SDctrl::act_mkdir */
@@ -921,7 +895,6 @@ esp_err_t SDctrl::act_mkdir()
 esp_err_t SDctrl::act_rmdir()
 {
     cout << "\"rmdir\" command execution" << endl;
-#if 0
     switch (argc)
     {
     case 2:
@@ -937,7 +910,6 @@ esp_err_t SDctrl::act_rmdir()
 	ESP_LOGE("sdcard rmdir command", "more than one parameters (%d) - deleting multiple directories at once is not allowed", argc - 2);
     }; /* switch argc */
     cout << endl;
-#endif
 
     return ESP_ERR_INVALID_ARG;
 }; /* SDctrl::act_mkdir */
@@ -947,7 +919,6 @@ esp_err_t SDctrl::act_rmdir()
 esp_err_t SDctrl::act_cd()
 {
     cout << "\"cd\" command execution" << endl;
-#if 0
     switch (argc)
     {
     case 2:
@@ -963,7 +934,6 @@ esp_err_t SDctrl::act_cd()
 	ESP_LOGE("sdcard cd command", "more than one parameters (%d) - where to go?", argc - 2);
     }; /* switch argc */
     cout << endl;
-#endif
 
     return ESP_ERR_INVALID_ARG;
 }; /* SDctrl::act_cd */
@@ -973,7 +943,6 @@ esp_err_t SDctrl::act_cd()
 esp_err_t SDctrl::act_ls()
 {
     cout << "\"ls\" command execution" << endl;
-#if 0
     switch (argc)
     {
     case 2:
@@ -990,7 +959,6 @@ esp_err_t SDctrl::act_ls()
 	ESP_LOGE("sdcard ls command", "more than one parameters (%d) - what directory to listing?", argc - 2);
     }; /* switch argc */
     cout << endl;
-#endif
 
     return ESP_ERR_INVALID_ARG;
 }; /* SDctrl::act_ls */
@@ -1000,7 +968,6 @@ esp_err_t SDctrl::act_ls()
 esp_err_t SDctrl::act_cp()
 {
     cout << "\"cp\" command execution" << endl;
-#if 0
     switch (argc)
     {
     case 2:
@@ -1022,7 +989,6 @@ esp_err_t SDctrl::act_cp()
 	ESP_LOGE("sdcard ls command", "more than two parameters (%d) - don't know what to copy", argc - 2);
     }; /* switch argc */
     cout << endl;
-#endif
 
     return ESP_ERR_INVALID_ARG;
 }; /* SDctrl::act_cp */
@@ -1032,7 +998,6 @@ esp_err_t SDctrl::act_cp()
 esp_err_t SDctrl::act_mv()
 {
     cout << "\"mv\" command execution" << endl;
-#if 0
     switch (argc)
     {
     case 2:
@@ -1054,7 +1019,6 @@ esp_err_t SDctrl::act_mv()
 	ESP_LOGE("sdcard mv command", "more than two parameters (%d) - don't know what to rename/move", argc - 2);
     }; /* switch argc */
     cout << endl;
-#endif
 
     return ESP_ERR_INVALID_ARG;
 }; /* SDctrl::act_mv */
@@ -1064,7 +1028,6 @@ esp_err_t SDctrl::act_mv()
 esp_err_t SDctrl::act_rm()
 {
     cout << "\"rm\" command execution" << endl;
-#if 0
     switch (argc)
     {
     case 2:
@@ -1081,7 +1044,6 @@ esp_err_t SDctrl::act_rm()
 	ESP_LOGE("sdcard rm command", "more than one parameters (%d) - don't know what to remove", argc - 2);
     }; /* switch argc */
     cout << endl;
-#endif
 
     return ESP_ERR_INVALID_ARG;
 }; /* SDctrl::act_ls */
@@ -1091,7 +1053,6 @@ esp_err_t SDctrl::act_rm()
 esp_err_t SDctrl::act_cat()
 {
     cout << "\"cat\" command execution" << endl;
-#if 0
     switch (argc)
     {
     case 2:
@@ -1106,7 +1067,6 @@ esp_err_t SDctrl::act_cat()
 	ESP_LOGE("sdcard cat command", "more than one parameters (%d) - what file is to be printed?", argc - 2);
     }; /* switch argc */
     cout << endl;
-#endif
 
     return 0;
 }; /* SDctrl::act_cat */
@@ -1116,7 +1076,6 @@ esp_err_t SDctrl::act_cat()
 esp_err_t SDctrl::act_type()
 {
     cout << "\"type\" command execution" << endl;
-#if 0
     switch (argc)
     {
     case 2:
@@ -1125,14 +1084,13 @@ esp_err_t SDctrl::act_type()
 
     case 3:
 	cout << "...with one parameter - save type output to file & screen." << endl;
-	return exec_server.type(argv[2]);
+	return exec_server.type(argv[2], device.card->self->csd.sector_size);
 	break;
 
     default:
 	ESP_LOGE("sdcard type command", "more than one parameters (%d) - what file save the type output?", argc - 2);
     }; /* switch argc */
     cout << endl;
-#endif
 
     return 0;
 }; /* SDctrl::act_type */
