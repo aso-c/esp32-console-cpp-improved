@@ -1,7 +1,7 @@
 /*
  * SD-card control classes
  * Include file
- * 	File: sdcard_ctrl.cpp
+ * 	File: sdcard_ctrl
  *	Author:  aso (Solomatov A.A.)
  *	Created: 28.04.2022
  *	Date:	 20.09.2022
@@ -42,65 +42,69 @@
 namespace Exec	//-----------------------------------------------------------------------------------------------------
 {
 
-// Options for mounting the filesystem.
-// If format_if_mount_failed is set to true, SD card will be partitioned and
-// formatted in case when mounting fails.
-struct Mounting
-{
-
-    Mounting();
-
-    void target_reset() {target = Mounting::MOUNT_POINT_Default;};
-
-    esp_vfs_fat_sdmmc_mount_config_t cfg;
-    const char* target;
-
-    static const char* MOUNT_POINT_Default;
-
-}; /* struct Mounting */
+//// Options for mounting the filesystem.
+//// If format_if_mount_failed is set to true, SD card will be partitioned and
+//// formatted in case when mounting fails.
+//struct Mounting
+//{
+//
+//    Mounting();
+//
+//    void target_reset() {target = Mounting::MOUNT_POINT_Default;};
+//
+//    esp_vfs_fat_sdmmc_mount_config_t cfg;
+//    const char* target;
+//
+//    static const char* MOUNT_POINT_Default;
+//
+//}; /* struct Mounting */
 
 
 
 class Server
 {
 public:
-    esp_err_t mount(SDMMC::Card&);			// Mount SD-card with default parameters
-    esp_err_t mount(SDMMC::Card&, char mountpoint[]);	// Mount default SD-card slot onto path "mountpoint"
-    esp_err_t mount(SDMMC::Card&, int slot_no);		// Mount SD-card slot "slot_no" onto default mount path
-    esp_err_t mount(SDMMC::Card&, int slot_no, const char mountpoint[]);  // Mount SD-card slot "slot_no" onto default mount path
+    esp_err_t mount(SDMMC::Device&, SDMMC::Card&);	// Mount SD-card to Device with default parameters
+    esp_err_t mount(SDMMC::Device&, SDMMC::Card&, const char mountpoint[]);	// Mount default SD-card slot onto path "mountpoint"
+    esp_err_t mount(SDMMC::Device&, SDMMC::Card&, int slot_no);		// Mount SD-card slot "slot_no" onto default mount path
+    esp_err_t mount(SDMMC::Device&, SDMMC::Card&, int slot_no, const char mountpoint[]);  // Mount SD-card slot "slot_no" onto default mount path
 
-    esp_err_t unmount(const char mountpath[] = NULL);	// Unmount SD-card, that mounted onto "mountpath", default - call w/o mountpath
+    esp_err_t unmount(SDMMC::Device&/*, const char mountpath[] = NULL*/);	// Unmount SD-card from Device
 //    esp_err_t unmount(sdmmc_card_t *card);	// Unmount SD-card "card", mounted onto default mountpath
 //    esp_err_t unmount(const char *base_path, sdmmc_card_t *card);	// Unmount mounted SD-card "card", mounted onto mountpath
-    void print_info(FILE* outfile);		// Print the card info
+    //void print_info(FILE* outfile);		// Print the card info
 
-    esp_err_t info();	// print the SD-card info (wrapper for the external caller)
-    esp_err_t pwd();	// print current directory name
-    esp_err_t mkdir(const char dirname[] = NULL);   // create a new directory
-    esp_err_t cd(const char dirname[] = NULL);	// change a current directory
-    esp_err_t ls(const char pattern[] = ".");	// print a list of files in the specified directory
-    esp_err_t cp(const char src[] = NULL, const char dest[] = NULL);	// copy files src to dest
-    esp_err_t mv(const char src[] = NULL, const char dest[] = NULL);	// move files from src to dest
-    esp_err_t rm(const char pattern[] = NULL);	// remove files according a pattern
-    esp_err_t rmdir(const char dirname[] = NULL);   // remove an empty existing directory
+    //esp_err_t info();	// print the SD-card info (wrapper for the external caller)
+    esp_err_t pwd(SDMMC::Device&);	// print current directory name
+    esp_err_t mkdir(SDMMC::Device&, const char dirname[] = NULL);   // create a new directory
+    esp_err_t cd(SDMMC::Device&, const char dirname[] = NULL);	// change a current directory
+    esp_err_t ls(SDMMC::Device&, const char pattern[] = ".");	// print a list of files in the specified directory
+    esp_err_t cp(SDMMC::Device&, const char src[] = NULL, const char dest[] = NULL);	// copy files src to dest
+    esp_err_t mv(SDMMC::Device&, const char src[] = NULL, const char dest[] = NULL);	// move files from src to dest
+    esp_err_t rm(SDMMC::Device&, const char pattern[] = NULL);	// remove files according a pattern
+    esp_err_t rmdir(SDMMC::Device&, const char dirname[] = NULL);   // remove an empty existing directory
 
-    esp_err_t cat(const char fname[] = NULL);	// type file contents
+    esp_err_t cat(SDMMC::Device&, const char fname[] = NULL);	// type file contents
 
-    esp_err_t type();	// type text from keyboard to screen
-    esp_err_t type(const char fname[]);	// type text from keyboard to file and to screen
+    esp_err_t type(SDMMC::Device&);	// type text from keyboard to screen
+    esp_err_t type(SDMMC::Device&, const char fname[]);	// type text from keyboard to file and to screen
 
 
 private:
     esp_err_t ret;
 
-    esp_err_t _mount_implement(SDMMC::Card&);  // Implementation mounting SD-card with class stored parameters
+//    const char* mountpoint = nullptr;
+    static const char* const MOUNT_POINT_Default;
+    //const char* mountpoint = MOUNT_POINT_Default;
+
+//    esp_err_t _mount_implement(SDMMC::Card&);  // Implementation mounting SD-card with class stored parameters
 
     static const char* TAG;
-    SDMMC::Card *card;
-
-    SDMMC::Host host;
-//    Slot slot;
-    Mounting mounting;
+//    SDMMC::Card *card;
+//
+//    SDMMC::Host host;
+//
+//    Mounting mounting;
 
 }; /* class Server */
 

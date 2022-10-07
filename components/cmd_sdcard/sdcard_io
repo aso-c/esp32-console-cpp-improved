@@ -1,10 +1,10 @@
 /*
- * SD-card control classes
+ * SD-card input/output classes
  * Include file
- * 	File: sdcard_ctrl.cpp
+ * 	File: sdcard_io
  *	Author:  aso (Solomatov A.A.)
- *	Created: 28.04.2022
- *	Version: 0.1
+ *	Created: 20.09.2022
+ *	Version: 0.7
  */
 
 
@@ -34,15 +34,6 @@
 #error "The sdcard_ctrl file usable in C++ projects only."
 #endif
 
-
-// Mw delay for the SD/MMC command execution
-//#define SDMMC_COMMAND_TIMEOUT 4000
-
-//namespace Exec {
-//    class Server;
-//};
-
-
 namespace SDMMC	//-----------------------------------------------------------------------------------------------------
 {
 
@@ -61,7 +52,7 @@ struct Slot
     Slot(const Slot&);		// really copy constructor
     Slot(const sdmmc_slot_config_t&);	// copy constructor
     Slot(sdmmc_slot_config_t&&);	// temporary object copy constructor
-    enum number {_0 = SDMMC_HOST_SLOT_0, null=_0, _1 = SDMMC_HOST_SLOT_1, one=_1};
+    enum number {_0 = SDMMC_HOST_SLOT_0, null=_0, _1 = SDMMC_HOST_SLOT_1, one=_1, out_of_range = -1};
     Slot(number);	// initializing Slot cfg by its number
 
     // Set or clear SDDMMC internal pullup bit
@@ -78,7 +69,7 @@ struct Slot
 
     // This initializes the slot without card detect (CD) and write protect (WP) signals.
     // Modify slot_config.gpio_cd and slot_config.gpio_wp if your board has these signals.
-    sdmmc_slot_config_t cfg = SDMMC_SLOT_CONFIG_DEFAULT();
+    sdmmc_slot_config_t cfg = SDMMC_SLOT_CONFIG_DEFAULT(); // @suppress("Invalid arguments")
 
 //    int  default_num() {return def_num;};
 
@@ -131,6 +122,10 @@ struct Host
     Host& operator =(const Host&);
     Host& operator =(const sdmmc_host_t&);
     Host& operator =(sdmmc_host_t&& host) noexcept { return operator =(host); };
+
+    // use сarefully! may be incorrect behavior!
+    int slot_no() {return cfg.slot;}
+    int slot_no(Slot::number num) {int old = cfg.slot; cfg.slot = num; return old;}
 
     // Initialize SDMMC host peripheral.
     //
@@ -255,7 +250,7 @@ struct Host
     // Note: esp_vfs_fat_sdmmc/sdspi_mount is all-in-one convenience functions.
     // Please check its source code and implement error recovery when developing
     // production applications.
-    sdmmc_host_t cfg = SDMMC_HOST_DEFAULT();
+    sdmmc_host_t cfg = SDMMC_HOST_DEFAULT(); // @suppress("Invalid arguments")
 
 //    friend class Exec::Server;
     friend class Card;
@@ -446,8 +441,6 @@ public:
 
     }; /* Write */
 
-
-
     Read read;
     Write write;
 
@@ -464,7 +457,7 @@ class Card
 {
 public:
 
-    Card(): io(this), ret(ESP_OK), data(nullptr) {};
+    Card(): io(this), ret(ESP_OK), self(nullptr) {};
 
     // Probe and initialize SD/MMC card using given host
     // Warning! Only SD cards (SDSC and SDHC/SDXC) are supported now. Support for MMC/eMMC cards will be added later.
@@ -475,9 +468,9 @@ public:
     //	    ESP_OK on success
     //	    One of the error codes from SDMMC host controller
 //    esp_err_t sdmmc_card_init(const sdmmc_host_t *host, sdmmc_card_t *out_card);
-    esp_err_t init(const sdmmc_host_t *host) { return sdmmc_card_init(host, data);};
-    esp_err_t init(const sdmmc_host_t& host) { return sdmmc_card_init(&host, data);};
-    esp_err_t init(const Host& host) { return sdmmc_card_init(&host.cfg, data);};
+    esp_err_t init(const sdmmc_host_t *host) { return sdmmc_card_init(host, self);};
+    esp_err_t init(const sdmmc_host_t& host) { return sdmmc_card_init(&host, self);};
+    esp_err_t init(const Host& host) { return sdmmc_card_init(&host.cfg, self);};
 
     // Print information about the card to a stream.
     // Parameters:
@@ -495,7 +488,7 @@ public:
     //	    ESP_OK on success
     //	    One of the error codes from SDMMC host controller
 //    esp_err_t sdmmc_get_status(sdmmc_card_t *card);
-    esp_err_t get_status() { return sdmmc_get_status(data); };
+    esp_err_t get_status() { return sdmmc_get_status(self); };
 
     // Write given number of sectors to SD/MMC card
     // Parameters
@@ -508,7 +501,7 @@ public:
     //	    One of the error codes from SDMMC host controller
 //    esp_err_t sdmmc_write_sectors(sdmmc_card_t *card, const void *src, size_t start_sector, size_t sector_count);
     esp_err_t write_sectors(const void *src, size_t start_sector, size_t sector_count)
-		{ return sdmmc_write_sectors(data, src, start_sector, sector_count); };
+		{ return sdmmc_write_sectors(self, src, start_sector, sector_count); };
 
     // Read given number of sectors from the SD/MMC card
     // Parameters
@@ -521,7 +514,7 @@ public:
     //	    One of the error codes from SDMMC host controller
 //    esp_err_t sdmmc_read_sectors(sdmmc_card_t *card, void *dst, size_t start_sector, size_t sector_count);
     esp_err_t read_sectors(void *dst, size_t start_sector, size_t sector_count)
-		{ return sdmmc_read_sectors(data, dst, start_sector, sector_count);};
+		{ return sdmmc_read_sectors(self, dst, start_sector, sector_count);};
 
     IO io;
 
@@ -541,7 +534,7 @@ public:
     //	    One of the error codes from SDMMC host controller
 //    esp_err_t sdmmc_erase_sectors(sdmmc_card_t *card, size_t start_sector, size_t sector_count, sdmmc_erase_arg_t arg);
     esp_err_t erase_sectors(size_t start_sector, size_t sector_count, sdmmc_erase_arg_t arg)
-		{ return sdmmc_erase_sectors(&data, start_sector, sector_count, arg);};
+		{ return sdmmc_erase_sectors(&self, start_sector, sector_count, arg);};
 
     // Check if SD/MMC card supports discard
     // Parameters
@@ -550,7 +543,7 @@ public:
     //	    ESP_OK if supported by the card/device
     //	    ESP_FAIL if not supported by the card/device
 //    esp_err_t sdmmc_can_discard(sdmmc_card_t *card);
-    esp_err_t can_discard() { return sdmmc_can_discard(&data);};
+    esp_err_t can_discard() { return sdmmc_can_discard(&self);};
 
     // Check if SD/MMC card supports trim
     // Parameters
@@ -559,7 +552,7 @@ public:
     //	    ESP_OK if supported by the card/device
     //	    ESP_FAIL if not supported by the card/device
 //    esp_err_t sdmmc_can_trim(sdmmc_card_t *card);
-    esp_err_t can_trim() { return sdmmc_can_trim(&data);};
+    esp_err_t can_trim() { return sdmmc_can_trim(&self);};
 
     // Check if SD/MMC card supports sanitize
     // Parameters
@@ -568,7 +561,7 @@ public:
     //	    ESP_OK if supported by the card/device
     //	    ESP_FAIL if not supported by the card/device
 //    esp_err_t sdmmc_mmc_can_sanitize(sdmmc_card_t *card);
-    esp_err_t mmc_can_sanitize() {return sdmmc_mmc_can_sanitize(&data);};
+    esp_err_t mmc_can_sanitize() {return sdmmc_mmc_can_sanitize(&self);};
 
     //Sanitize the data that was unmapped by a Discard command
     // Warning! Discard command has to precede sanitize operation.
@@ -580,7 +573,7 @@ public:
     //	    ESP_OK on success
     //	    One of the error codes from SDMMC host controller
 //    esp_err_t sdmmc_mmc_sanitize(sdmmc_card_t *card, uint32_t timeout_ms);
-    esp_err_t mmc_sanitize(uint32_t timeout_ms) { return sdmmc_mmc_sanitize(&data, timeout_ms); };
+    esp_err_t mmc_sanitize(uint32_t timeout_ms) { return sdmmc_mmc_sanitize(&self, timeout_ms); };
 
     // Erase complete SD/MMC card
     // Parameters
@@ -589,7 +582,7 @@ public:
     //	    ESP_OK on success
     //	    One of the error codes from SDMMC host controller
 //    esp_err_t sdmmc_full_erase(sdmmc_card_t *card);
-    esp_err_t full_erase() { return sdmmc_full_erase(&data);};
+    esp_err_t full_erase() { return sdmmc_full_erase(&self);};
 #endif	// ESP_IDF_VERSION_VAL(x,y,p)
 
 private:
@@ -597,7 +590,7 @@ private:
 
 public:
     static const char* TAG;
-    sdmmc_card_t* data;
+    sdmmc_card_t* self;
 
 }; /* class Card */
 
@@ -609,25 +602,49 @@ public:
 //	and formatted in case when mounting
 //	fails.)
 // - Implementation the mount & unmount methods.
-//struct Mounting
 struct Device
 {
 
-    Device();
+    Device()/*: target(nullptr), pcard(nullptr) {}*/;
 
     // mount();
+//    esp_err_t mount(Card&);			// Mount SD-card with default parameters
+    esp_err_t mount(Card&, const char mountpoint[]);	// Mount default SD-card slot onto path "mountpoint"
+//    esp_err_t mount(Card&, int slot_no);		// Mount SD-card slot "slot_no" onto default mount path
+//    esp_err_t mount(Card&, int slot_no, const char mountpoint[]);  // Mount SD-card slot "slot_no" onto default mount path
 
     // unmount();
+    esp_err_t unmount();	// Unmount SD-card, that mounted onto own mountpath
+    //esp_err_t unmount(const char mountpath[] = NULL);	// Unmount SD-card, that mounted onto "mountpath", default - call w/o mountpath
+    //esp_err_t unmount(sdmmc_card_t *card);	// Unmount SD-card "card", mounted onto default mountpath
+    //esp_err_t unmount(const char *base_path, sdmmc_card_t *card);	// Unmount mounted SD-card "card", mounted onto mountpath
 
-    void target_reset() {target = Device::MOUNT_POINT_Default;};
+//    void print_info(FILE* outfile);		// Print the card info
+//
+//    esp_err_t info();	// print the SD-card info (wrapper for the external caller)
 
+    // get mountpath
+    const char *mountpath() {return target;};
+    // set mountpath, return old mountpath
+    const char *mountpath(const char newpath[]) {const char* oldpath = target; target = newpath; return oldpath;};
+    const char *clean_mountpath() {return mountpath(nullptr);};
+
+    // use сarefully! may be incorrect behavior!
+    int slot_no() {return host.slot_no();}
+    int slot_no(int num) {return host.slot_no((num == 0)? Slot::_0: ((num == 1)? Slot::_1: Slot::out_of_range));}
+
+//
+//    static const char* MOUNT_POINT_Default;
+//
+    Card* card;
+
+private:
+
+    Host host;
+    const char* target = nullptr;
     esp_vfs_fat_sdmmc_mount_config_t mnt;
-    const char* target;
-
-    static const char* MOUNT_POINT_Default;
 
 }; /* struct Device */
-//}; /* struct Mounting */
 
 
 //--[ class IO inlines ]-----------------------------------------------------------------------------------------------
@@ -643,21 +660,21 @@ inline IO::IO(Card* holder):
 //    esp_err_t sdmmc_io_enable_int(sdmmc_card_t *card);
 esp_err_t inline
 IO::enable_int() {
-    return sdmmc_io_enable_int(card.data);};
+    return sdmmc_io_enable_int(card.self);};
 
 // Block until an SDIO interrupt is received
 // Slave uses D1 line to signal interrupt condition to the host. This function can be used to wait for the interrupt.
 //    esp_err_t sdmmc_io_wait_int(sdmmc_card_t *card, TickType_t timeout_ticks);
 esp_err_t inline
 IO::wait_int(TickType_t timeout_ticks) {
-    return sdmmc_io_wait_int(card.data, timeout_ticks);};
+    return sdmmc_io_wait_int(card.self, timeout_ticks);};
 
 // Get the data of CIS region of an SDIO card.
 // You may provide a buffer not sufficient to store all the CIS data. In this case, this function stores as much data into your buffer as possible. Also, this function will try to get and return the size required for you.
 //    esp_err_t sdmmc_io_get_cis_data(sdmmc_card_t *card, uint8_t *out_buffer, size_t buffer_size, size_t *inout_cis_size);
 esp_err_t inline
 IO::get_cis_data(uint8_t *out_buffer, size_t buffer_size, size_t *inout_cis_size) {
-    return sdmmc_io_get_cis_data(card.data, out_buffer, buffer_size, inout_cis_size);};
+    return sdmmc_io_get_cis_data(card.self, out_buffer, buffer_size, inout_cis_size);};
 
 // Parse and print the CIS information of an SDIO card.
 // Warning!
@@ -681,21 +698,21 @@ inline IO::Read::Read(IO* io):
 //    esp_err_t sdmmc_io_read_byte(sdmmc_card_t *card, uint32_t function, uint32_t reg, uint8_t *out_byte);
 esp_err_t inline
 IO::Read::byte(uint32_t function, uint32_t reg, uint8_t *out_byte) {
-    return sdmmc_io_read_byte(iohandler.card.data, function, reg, out_byte);};
+    return sdmmc_io_read_byte(iohandler.card.self, function, reg, out_byte);};
 
 // Read multiple bytes from an SDIO card using IO_RW_EXTENDED (CMD53)
 // This function performs read operation using CMD53 in byte mode. For block mode, see sdmmc_io_read_blocks.
 //    esp_err_t sdmmc_io_read_bytes(sdmmc_card_t *card, uint32_t function, uint32_t addr, void *dst, size_t size);
 esp_err_t inline
 IO::Read::bytes(uint32_t function, uint32_t addr, void *dst, size_t size) {
-    return sdmmc_io_read_bytes(iohandler.card.data, function, addr, dst, size);};
+    return sdmmc_io_read_bytes(iohandler.card.self, function, addr, dst, size);};
 
 // Read blocks of data from an SDIO card using IO_RW_EXTENDED (CMD53)
 // This function performs read operation using CMD53 in block mode. For byte mode, see sdmmc_io_read_bytes.
 //    esp_err_t sdmmc_io_read_blocks(sdmmc_card_t *card, uint32_t function, uint32_t addr, void *dst, size_t size);
 esp_err_t inline
 IO::Read::blocks(uint32_t function, uint32_t addr, void *dst, size_t size) {
-    return sdmmc_io_read_blocks(iohandler.card.data, function, addr, dst, size);};
+    return sdmmc_io_read_blocks(iohandler.card.self, function, addr, dst, size);};
 
 
 //--[ class IO::Write inlines ]----------------------------------------------------------------------------------------
@@ -709,21 +726,21 @@ inline IO::Write::Write(IO* io):
 //    esp_err_t sdmmc_io_write_byte(sdmmc_card_t *card, uint32_t function, uint32_t reg, uint8_t in_byte, uint8_t *out_byte);
 esp_err_t inline
 IO::Write::byte(uint32_t function, uint32_t reg, uint8_t in_byte, uint8_t *out_byte) {
-    return sdmmc_io_write_byte(iohandler.card.data, function, reg, in_byte, out_byte);};
+    return sdmmc_io_write_byte(iohandler.card.self, function, reg, in_byte, out_byte);};
 
 // Write multiple bytes to an SDIO card using IO_RW_EXTENDED (CMD53)
 // This function performs write operation using CMD53 in byte mode. For block mode, see sdmmc_io_write_blocks.
 //    esp_err_t sdmmc_io_write_bytes(sdmmc_card_t *card, uint32_t function, uint32_t addr, const void *src, size_t size);
 esp_err_t inline
 IO::Write::bytes(uint32_t function, uint32_t addr, const void *src, size_t size)	{
-    return sdmmc_io_write_bytes(iohandler.card.data, function, addr, src, size);};
+    return sdmmc_io_write_bytes(iohandler.card.self, function, addr, src, size);};
 
 // Write blocks of data to an SDIO card using IO_RW_EXTENDED (CMD53)
 // This function performs write operation using CMD53 in block mode. For byte mode, see sdmmc_io_write_bytes.
 //    esp_err_t sdmmc_io_write_blocks(sdmmc_card_t *card, uint32_t function, uint32_t addr, const void *src, size_t size);
 esp_err_t inline
 IO::Write::blocks(uint32_t function, uint32_t addr, const void *src, size_t size) {
-    return sdmmc_io_write_blocks(iohandler.card.data, function, addr, src, size);};
+    return sdmmc_io_write_blocks(iohandler.card.self, function, addr, src, size);};
 
 
 
@@ -816,4 +833,4 @@ void app_main(void)
 
 #endif
 
-//--[ sdcard_ctrl.hpp ]------------------------------------------------------------------------------------------------
+//--[ sdcard_io ]------------------------------------------------------------------------------------------------------
