@@ -96,22 +96,16 @@ Host::Host(Slot::number number):
 // Custom slot configuration in temporary obj
 // for desired slot number
 // in lvalue object
-//Host::Host(Slot::number number, const sdmmc_slot_config_t& slot_config)
 Host::Host(Slot::number num, const Slot& aslot):
 	slot(aslot)
 {
     cfg.slot = num;
 }; /* Host::Host(Slot::number, const Slot&) */
-//}; /* Host::Host(Slot::number, const sdmmc_slot_config_t&) */
 
 // in temporary object
-//Host::Host(Slot::number number, sdmmc_slot_config_t&& slot_config)
 Host::Host(Slot::number num, Slot&& aslot):
 	Host(num, aslot)
-{
-    ;
-}; /* Host::Host(Slot::number, Slot::number, Slot&&) */
-//}; /* Host::Host(Slot::number, sdmmc_slot_config_t&&) */
+{ };
 
 // Copy constructors
 // for lvalue object (defined variable)
@@ -179,16 +173,6 @@ Host& Host::operator =(const sdmmc_host_t& host)
 	slot = Slot(Slot::_0);
     return *this;
 }; /* Host::operator =(const sdmmc_host_t&) */
-
-//Host& Host::operator =(sdmmc_host_t&& host) noexcept
-//{
-//    return operator =(host);
-//};
-
-
-//Host& operator =(const Host&);
-//Host& operator =(const sdmmc_host_t&);
-//Host& operator =(sdmmc_host_t&&) noexcept;
 
 
 //esp_err_t Host::init(int slotno, const sdmmc_slot_config_t *slot_config)
@@ -277,7 +261,6 @@ Slot::Slot(const Slot& slot):
 Slot::Slot(const sdmmc_slot_config_t& config)
 {
 
-//    typedef struct {
 #ifdef SOC_SDMMC_USE_GPIO_MATRIX
 //        gpio_num_t clk;         ///< GPIO number of CLK signal.
     cfg.clk = config.clk;	///< GPIO number of CLK signal.
@@ -319,16 +302,13 @@ Slot::Slot(const sdmmc_slot_config_t& config)
              are insufficient however, please make sure external pullups are
              connected on the bus. This is for debug / example purpose only.
              */
-//    } sdmmc_slot_config_t;
 
 }; /* Slot::Slot(const sdmmc_slot_config_t&) */
 
 // temporary object copy constructor
 Slot::Slot(sdmmc_slot_config_t&& config):
 	Slot(config)
-{
-    /*;*/
-}; /* Slot::Slot(sdmmc_slot_config_t&&) */
+{};
 
 // initializing Slot cfg by its number
 //enum number {_0 = SDMMC_HOST_SLOT_0, null=_0, _1 = SDMMC_HOST_SLOT_1, one=_1};
@@ -444,7 +424,7 @@ Slot& Slot::operator =(sdmmc_slot_config_t&& config) noexcept
 //--[ struct Device ]-----------------------------------------------------------------------------------------------
 
 Device::Device():
-	/*target(nullptr),*/ card(nullptr)
+	card(nullptr)
 {
 #ifdef CONFIG_EXAMPLE_FORMAT_IF_MOUNT_FAILED
 	mnt.format_if_mount_failed = true;
@@ -549,6 +529,10 @@ esp_err_t Card::info()
 }; /* Card::info */
 
 const char* Card::TAG = "SD/MMC Card";
+
+
+//--[ class IO ]--------------------------------------------------------------------------------------------------
+
 
 
 }; /* namespace SDMMC */  //-------------------------------------------------------------------------------------------

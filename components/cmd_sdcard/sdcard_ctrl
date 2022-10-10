@@ -42,25 +42,6 @@
 namespace Exec	//-----------------------------------------------------------------------------------------------------
 {
 
-//// Options for mounting the filesystem.
-//// If format_if_mount_failed is set to true, SD card will be partitioned and
-//// formatted in case when mounting fails.
-//struct Mounting
-//{
-//
-//    Mounting();
-//
-//    void target_reset() {target = Mounting::MOUNT_POINT_Default;};
-//
-//    esp_vfs_fat_sdmmc_mount_config_t cfg;
-//    const char* target;
-//
-//    static const char* MOUNT_POINT_Default;
-//
-//}; /* struct Mounting */
-
-
-
 class Server
 {
 public:
@@ -72,9 +53,7 @@ public:
     esp_err_t unmount(SDMMC::Device&/*, const char mountpath[] = NULL*/);	// Unmount SD-card from Device
 //    esp_err_t unmount(sdmmc_card_t *card);	// Unmount SD-card "card", mounted onto default mountpath
 //    esp_err_t unmount(const char *base_path, sdmmc_card_t *card);	// Unmount mounted SD-card "card", mounted onto mountpath
-    //void print_info(FILE* outfile);		// Print the card info
 
-    //esp_err_t info();	// print the SD-card info (wrapper for the external caller)
     esp_err_t pwd();	// print current directory name
     esp_err_t mkdir(const char dirname[] = NULL);   // create a new directory
     esp_err_t cd(const char dirname[] = NULL);	// change a current directory
@@ -93,18 +72,10 @@ public:
 private:
     esp_err_t ret;
 
-//    const char* mountpoint = nullptr;
     static const char* const MOUNT_POINT_Default;
-    //const char* mountpoint = MOUNT_POINT_Default;
 
-//    esp_err_t _mount_implement(SDMMC::Card&);  // Implementation mounting SD-card with class stored parameters
 
     static const char* TAG;
-//    SDMMC::Card *card;
-//
-//    SDMMC::Host host;
-//
-//    Mounting mounting;
 
 }; /* class Server */
 

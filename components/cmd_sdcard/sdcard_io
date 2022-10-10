@@ -71,16 +71,10 @@ struct Slot
     // Modify slot_config.gpio_cd and slot_config.gpio_wp if your board has these signals.
     sdmmc_slot_config_t cfg = SDMMC_SLOT_CONFIG_DEFAULT(); // @suppress("Invalid arguments")
 
-//    int  default_num() {return def_num;};
-
 private:
 
     friend class Host;
-//    void default_num(int num) {def_num = num;};
 
-    // To use 1-line SD mode, change this to 1:
-    // static const int SLOT_WIDTH = 4;
-//    static int def_num;
 
 }; /* struct Slot */
 
@@ -163,7 +157,7 @@ struct Host
     // Parameters
     //	    slot – slot number (SDMMC_HOST_SLOT_0 or SDMMC_HOST_SLOT_1)
     //	    width – bus width (1, 4, or 8 for slot 0; 1 or 4 for slot 1)
-    //Returns
+    // Returns
     //	    ESP_OK on success
     //	    ESP_ERR_INVALID_ARG if slot number or width is not valid
     esp_err_t set_bus_width(bus::width width) { return sdmmc_host_set_bus_width(cfg.slot, width); };
@@ -292,14 +286,17 @@ public:
     esp_err_t wait_int(TickType_t timeout_ticks);
 
     // Get the data of CIS region of an SDIO card.
-    // You may provide a buffer not sufficient to store all the CIS data. In this case, this function stores as much data into your buffer as possible. Also, this function will try to get and return the size required for you.
+    // You may provide a buffer not sufficient to store all the CIS data. In this case, this function
+    // stores as much data into your buffer as possible. Also, this function will try to get and return
+    // the size required for you.
     // Parameters:
     //	    card – pointer to card information structure previously initialized using sdmmc_card_init
     //	    out_buffer – Output buffer of the CIS data
     //	    buffer_size – Size of the buffer.
     //	    inout_cis_size – Mandatory, pointer to a size, input and output.
-    //	    input: Limitation of maximum searching range, should be 0 or larger than buffer_size. The function searches for CIS_CODE_END until this range. Set to 0 to search infinitely.
-    //	    output: The size required to store all the CIS data, if CIS_CODE_END is found.
+    //		input: Limitation of maximum searching range, should be 0 or larger than buffer_size.
+    //			The function searches for CIS_CODE_END until this range. Set to 0 to search infinitely.
+    //		output: The size required to store all the CIS data, if CIS_CODE_END is found.
     // Returns:
     //	    ESP_OK: on success
     //	    ESP_ERR_INVALID_RESPONSE: if the card does not (correctly) support CIS.
@@ -308,6 +305,7 @@ public:
     //	    ESP_ERR_NOT_FOUND: if the CIS_CODE_END not found. Increase input value of inout_cis_size or set it to 0,
     //				if you still want to search for the end; output value of inout_cis_size is invalid in this case.
     //	    and other error code return from sdmmc_io_read_bytes
+    // esp_err_t sdmmc_io_get_cis_data(sdmmc_card_t *card, uint8_t *out_buffer, size_t buffer_size, size_t *inout_cis_size)
     esp_err_t get_cis_data(uint8_t *out_buffer, size_t buffer_size, size_t *inout_cis_size);
 
     // Parse and print the CIS information of an SDIO card.
@@ -605,23 +603,16 @@ public:
 struct Device
 {
 
-    Device()/*: target(nullptr), pcard(nullptr) {}*/;
+    Device();
 
-    // mount();
-//    esp_err_t mount(Card&);			// Mount SD-card with default parameters
     esp_err_t mount(Card&, const char mountpoint[]);	// Mount default SD-card slot onto path "mountpoint"
 //    esp_err_t mount(Card&, int slot_no);		// Mount SD-card slot "slot_no" onto default mount path
 //    esp_err_t mount(Card&, int slot_no, const char mountpoint[]);  // Mount SD-card slot "slot_no" onto default mount path
 
-    // unmount();
     esp_err_t unmount();	// Unmount SD-card, that mounted onto own mountpath
     //esp_err_t unmount(const char mountpath[] = NULL);	// Unmount SD-card, that mounted onto "mountpath", default - call w/o mountpath
     //esp_err_t unmount(sdmmc_card_t *card);	// Unmount SD-card "card", mounted onto default mountpath
     //esp_err_t unmount(const char *base_path, sdmmc_card_t *card);	// Unmount mounted SD-card "card", mounted onto mountpath
-
-//    void print_info(FILE* outfile);		// Print the card info
-//
-//    esp_err_t info();	// print the SD-card info (wrapper for the external caller)
 
     // get mountpath
     const char *mountpath() {return target;};
@@ -633,9 +624,6 @@ struct Device
     int slot_no() {return host.slot_no();}
     int slot_no(int num) {return host.slot_no((num == 0)? Slot::_0: ((num == 1)? Slot::_1: Slot::out_of_range));}
 
-//
-//    static const char* MOUNT_POINT_Default;
-//
     Card* card;
 
 private:
@@ -670,7 +658,9 @@ IO::wait_int(TickType_t timeout_ticks) {
     return sdmmc_io_wait_int(card.self, timeout_ticks);};
 
 // Get the data of CIS region of an SDIO card.
-// You may provide a buffer not sufficient to store all the CIS data. In this case, this function stores as much data into your buffer as possible. Also, this function will try to get and return the size required for you.
+// You may provide a buffer not sufficient to store all the CIS data. In this case,
+// this function stores as much data into your buffer as possible. Also, this function will try
+// to get and return the size required for you.
 //    esp_err_t sdmmc_io_get_cis_data(sdmmc_card_t *card, uint8_t *out_buffer, size_t buffer_size, size_t *inout_cis_size);
 esp_err_t inline
 IO::get_cis_data(uint8_t *out_buffer, size_t buffer_size, size_t *inout_cis_size) {
