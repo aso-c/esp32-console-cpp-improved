@@ -80,59 +80,70 @@ namespace SDMMC	//--------------------------------------------------------------
 
 
 // Default constructor
-Host::Host()
+Host::Host(bus::width width, Pullup pullupst) // @suppress("Member declaration not found") // @suppress("Type cannot be resolved")
 {
     //slot.default_num(cfg.slot);
     ESP_LOGI(TAG, "Using SDMMC peripheral - default constructor");
     // Define my delay for SD/MMC command execution
    // cfg.command_timeout_ms = SDMMC_COMMAND_TIMEOUT;
+    bus_width(width);
+    set_pullup(pullupst);
 }; /* Host::Host */
 
 // Constructor with default slot configuration by number of the slot
-Host::Host(Slot::number number):
-	slot(number) {
-	cfg.slot = number; };
+Host::Host(Slot::number number, bus::width width, Host::Pullup pullupst): // @suppress("Member declaration not found") // @suppress("Type cannot be resolved")
+	_slot(number) // @suppress("Symbol is not resolved")
+{
+    cfg.slot = number; // @suppress("Field cannot be resolved")
+    bus_width(width);
+    set_pullup(pullupst);
+}; /* Host::Host(Slot::number, bus::width, Host::Pullup) */
 
 // Custom slot configuration in temporary obj
 // for desired slot number
 // in lvalue object
-Host::Host(Slot::number num, const Slot& aslot):
-	slot(aslot)
+Host::Host(Slot::number num, const Slot& slot, bus::width width, Pullup pullupst):
+	_slot(slot)
 {
     cfg.slot = num;
+    bus_width(width);
+    set_pullup(pullupst);
 }; /* Host::Host(Slot::number, const Slot&) */
 
 // in temporary object
-Host::Host(Slot::number num, Slot&& aslot):
-	Host(num, aslot)
-{ };
+Host::Host(Slot::number num, Slot&& slot, bus::width width, Pullup pullupst):
+	Host(num, slot, width, pullupst)
+    {};
 
 // Copy constructors
 // for lvalue object (defined variable)
-Host::Host(const Host& host):
-	Host(host.cfg)
+Host::Host(const Host& host, bus::width width, Pullup pullupst):
+	Host(host.cfg, width, pullupst)
 {
-    slot = host.slot;
+    _slot = host._slot;
 }; /* Host::Host(const Host&) */
 
 // for lvalue object (defined variable)
-Host::Host(const sdmmc_host_t& host)
+//Host(const sdmmc_host_t&, bus::width = bus::width_def, Pullup = nopullup);
+Host::Host(const sdmmc_host_t& host, bus::width width, Pullup pullupst)
 {
     cfg = host;
     if (host.slot == 0)
-	slot = Slot(Slot::_0);
+	_slot = Slot(Slot::_0);
+    bus_width(width);
+    set_pullup(pullupst);
 }; /* Host::Host(const sdmmc_host_t&) */
 
 // for rvalue oblect (e.g. temporary object)
-Host::Host(sdmmc_host_t&& host) noexcept:
-	Host(host)
+Host::Host(sdmmc_host_t&& host, bus::width width, Pullup pullupst) noexcept:
+	Host(host, width, pullupst)
 { };
 
 
 Host& Host::operator =(const Host& host)
 {
     *this = host.cfg;
-    slot = host.slot;
+    _slot = host._slot;
     return *this;
 }; /* Host::operator =(const Host& */
 
@@ -170,7 +181,7 @@ Host& Host::operator =(const sdmmc_host_t& host)
     //        int command_timeout_ms;     /*!< timeout, in milliseconds, of a single command. Set to 0 to use the default value. */
     cfg.command_timeout_ms = host.command_timeout_ms;	/*!< timeout, in milliseconds, of a single command. Set to 0 to use the default value. */
     if (host.slot == 0)
-	slot = Slot(Slot::_0);
+	_slot = Slot(Slot::_0);
     return *this;
 }; /* Host::operator =(const sdmmc_host_t&) */
 
@@ -179,7 +190,7 @@ Host& Host::operator =(const sdmmc_host_t& host)
 esp_err_t Host::init(Slot::number slotno, const Slot& extern_slot)
 {
     cfg.slot = slotno;
-    slot = extern_slot;
+    _slot = extern_slot;
 //    return sdmmc_host_init_slot(slot, slot_config);
     return init();
 }; /* Host::init(Slot::number, const Slot&) */
@@ -436,12 +447,6 @@ Device::Device():
 	//ESP_LOGI(TAG, "Initializing SD card");
 }; /* Device::Device */
 
-// mount();
-// Mount SD-card with default parameters
-//esp_err_t Device::mount(Card& card)
-//{
-//    ;
-//}; /* Device::mount(Card&) */
 
 // Mount default SD-card slot onto path "mountpoint"
 esp_err_t Device::mount(Card& excard, const char mountpoint[])
@@ -451,7 +456,7 @@ esp_err_t Device::mount(Card& excard, const char mountpoint[])
     card  = &excard;
     target = mountpoint;
 
-    ret = esp_vfs_fat_sdmmc_mount(mountpoint, &host.cfg, &host.slot.cfg, &mnt, &card->self);
+    ret = esp_vfs_fat_sdmmc_mount(mountpoint, /*&*/host/*.cfg*/, /*&*/host.slot()/*.cfg*/, &mnt, &card->self);
     if (ret != ESP_OK)
     {
 	if (ret == ESP_FAIL)
