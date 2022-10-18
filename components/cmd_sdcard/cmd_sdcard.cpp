@@ -895,7 +895,46 @@ esp_err_t SDctrl::act_info()
         cout << "###############################################" << endl;
 
 #if 1
-    return device.card->cis_info(stdout);
+    //return device.card->cis_info(stdout);
+//        size_t cisize = 0;
+//	size_t bsize = 16;
+//	uint8_t* outbuf = (uint8_t*)malloc(bsize);
+	esp_err_t err;
+//    err = device.card->io.get_cis_data(outbuf, bsize, &cisize); // @suppress("Method cannot be resolved") // @suppress("Field cannot be resolved")
+    err = device.card->cis_info(stdout);
+    ESP_LOGE("sdcard info command", "Error %i in the get or print CIS data: %s", err, esp_err_to_name(err));
+////    if (err != ESP_OK)
+////    {
+//	//ESP_LOGE("sdcard info command", "Error %i in get get CIS data first time: %s", err, esp_err_to_name(err));
+////	free(outbuf);
+//	switch (err)
+//	{
+//	case ESP_ERR_INVALID_RESPONSE:
+//		ESP_LOGE("sdcard info command", "Error %i in the get CIS data: %s", err, esp_err_to_name(err));
+//	    return err;
+//	case ESP_ERR_INVALID_SIZE:	// CIS_CODE_END found, but buffer_size is less than required size, which is stored in the inout_cis_size then.
+//	case ESP_ERR_NOT_FOUND:		// if the CIS_CODE_END not found. Increase input value of inout_cis_size or set it to 0,
+////	    bsize = cisize;
+////	    cout << aso::format("The new size of the CIS data buffer is: %i") % bsize << endl;
+////	    cisize = 0;
+////	    outbuf = (uint8_t*)malloc(bsize);
+////	    err = device.card->io.get_cis_data(outbuf, bsize, &cisize); // @suppress("Field cannot be resolved") // @suppress("Method cannot be resolved")
+//		ESP_LOGE("sdcard info command", "Error %i in the get CIS data: %s", err, esp_err_to_name(err));
+//	    return err;
+//	}; /* switch err */
+////    }; /* if err != ESP_ERR_INVALID_SIZE */
+////    if (err != ESP_OK)
+////    {
+////	//ESP_RETURN_ON_ERROR(err, "sdcard info command", "Error in the get CIS data");
+////	ESP_LOGE("sdcard info command", "Error %i in the get CIS data: %s", err, esp_err_to_name(err));
+////	return err;
+////    }; /* if err != ESP_OK */
+////    err = device.card->io.print_cis_info(outbuf, bsize, stdout); // @suppress("Method cannot be resolved") // @suppress("Field cannot be resolved")
+////    free(outbuf);
+////    if (err != ESP_OK)
+////	ESP_LOGE("sdcard info command", "Error %i in the print of the CIS info: %s", err, esp_err_to_name(err));
+
+    return err;
 #else
         size_t cisize = 0;
 	size_t bsize = 16;
