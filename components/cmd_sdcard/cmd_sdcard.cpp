@@ -144,8 +144,8 @@ bool isempty(const char *str)
 }; /* isempty */
 
 
-SDMMC::Card sdmmc_card;
-SDMMC::Device device;
+SDMMC::Card sdmmc_card; // @suppress("Type cannot be resolved")
+SDMMC::Device device(SDMMC::bus::width_4, SDMMC::Host::pullup); // @suppress("Type cannot be resolved")
 Exec::Server exec_server;
 
 
@@ -594,6 +594,9 @@ void register_fs_cmd_all(void)
     register_cat();
     register_type();
 
+    //device.host().io_int_enable();
+    //sdmmc_card.io.enable_int();
+
 }; /* register_fs_cmd_all */
 
 
@@ -802,20 +805,22 @@ esp_err_t SDctrl::act_mnt()
 {
     esp_err_t res;
 
+    device.host().set_card_clk(40000);	// test for low speed
+
     switch (argc)
     {
     case 2:
-	res = exec_server.mount(device, sdmmc_card);
+	res = exec_server.mount(device, sdmmc_card); // @suppress("Invalid arguments")
 	break;
 
     case 3:
 	cout << "...with one parameter - use device or mount point." << endl;
-	res = exec_server.mount(device, sdmmc_card, argv[2]);
+	res = exec_server.mount(device, sdmmc_card, argv[2]); // @suppress("Invalid arguments")
 	break;
 
     case 4:
 	cout << "...with two parameters - use device & mount point." << endl;
-	res = exec_server.mount(device, sdmmc_card, atoi(argv[2]), argv[3]);
+	res = exec_server.mount(device, sdmmc_card, atoi(argv[2]), argv[3]); // @suppress("Invalid arguments")
 	break;
 
     default:
@@ -825,8 +830,11 @@ esp_err_t SDctrl::act_mnt()
     cout << endl;
 
     if (res == ESP_OK)
-	//exec_server.print_info(stdout);
-	device.card->info();
+    {
+	device.host().io_int_enable();
+	sdmmc_card.io.enable_int();
+	device.card->info(); // @suppress("Field cannot be resolved") // @suppress("Method cannot be resolved")
+    }
 
     return res;
 }; /* SDctrl::act_mnt */
@@ -840,7 +848,7 @@ esp_err_t SDctrl::act_umnt()
     {
     case 2:
 	cout << "...without parameters - use default values." << endl;
-	return exec_server.unmount(device);
+	return exec_server.unmount(device); // @suppress("Invalid arguments")
 	break;
 
 //    case 3:
@@ -862,21 +870,46 @@ esp_err_t SDctrl::act_info()
 {
 //    exec_server.info();
 //    if (device.card == nullptr)
-    if (!device.card)
+    if (!device.card) // @suppress("Field cannot be resolved")
     {
 	ESP_LOGW("sdcard info command", "SD-card now is not mounted!!!");
 	return ESP_ERR_NOT_FOUND;
 //    }; //* if device.card == nullptr */
     }; //* if !device.card */
-    device.card->info();
+    device.card->info(); // @suppress("Field cannot be resolved") // @suppress("Method cannot be resolved")
+    cout << "Pullup is: " << ((device.host().slot().pullup_state())? "Enabled": "Absent") << endl;
     cout << "###############################################" << endl;
 
-	size_t cisize = 0;
+//    sdmmc_host_t host = SDMMC_HOST_DEFAULT();
+//    sdmmc_slot_config_t slot_config = SDMMC_SLOT_CONFIG_DEFAULT();
+//    esp_vfs_fat_sdmmc_mount_config_t mount_config = {
+//	    .format_if_mount_failed = false,
+//	    .max_files = 10,
+//	    .allocation_unit_size = 0 // auto / equals sector size of 512 bytes
+//	    }; /* mount_config */
+//    sdmmc_card_t* card;
+//    ESP_ERROR_CHECK(esp_vfs_fat_sdmmc_mount("/sd", &host, &slot_config, &mount_config, &card));
+
+#define TAG "SD Command Service"
+
+    ESP_LOGI(TAG, "SD card info:");
+        ESP_LOGI(TAG, "\tBus width (log2): %d", sdmmc_card.self->log_bus_width);
+        ESP_LOGI(TAG, "\tFreq (kHz): %'d", sdmmc_card.self->max_freq_khz);
+        ESP_LOGI(TAG, "\tDDR: %d", sdmmc_card.self->is_ddr);
+        ESP_LOGI(TAG, "\tCID: Date %d, MFG_ID %d, Name %s, OEM ID %d, Rev %d, Serial %d", sdmmc_card.self->cid.date, sdmmc_card.self->cid.mfg_id, sdmmc_card.self->cid.name, sdmmc_card.self->cid.oem_id, sdmmc_card.self->cid.revision, sdmmc_card.self->cid.serial);
+        ESP_LOGI(TAG, "\tCSD: Capacity %'d, Card Common Class %d, CSD version %d, MMC version %d, read block len %d, sector size %d, tr speed %'d", sdmmc_card.self->csd.capacity, sdmmc_card.self->csd.card_command_class, sdmmc_card.self->csd.csd_ver, sdmmc_card.self->csd.mmc_ver, sdmmc_card.self->csd.read_block_len, sdmmc_card.self->csd.sector_size, sdmmc_card.self->csd.tr_speed);
+        ESP_LOGI(TAG, "\tCSD: Ease mem state <undef>%d, Power class %d, Revision <undef>%d, Sec feature <undef>%d", /*sdmmc_card.self->ext_csd.erase_mem_state*/-1, sdmmc_card.self->ext_csd.power_class, /*sdmmc_card.self->ext_csd.rev*/-1, /*sdmmc_card.self->ext_csd.sec_feature*/-1);
+        ESP_LOGI(TAG, "\tSCR: bus width %d, erase mem state <undef%d>, reserved <undef%d>, rsvd_mnf <undef%d>, sd_spec %d", sdmmc_card.self->scr.bus_width, /*sdmmc_card.self->scr.erase_mem_state*/-1, /*sdmmc_card.self->scr.reserved*/-1, /*sdmmc_card.self->scr.rsvd_mnf*/-1, sdmmc_card.self->scr.sd_spec);
+        //ESP_LOGI(TAG, "\tSSR: cur_bus_width %d, discard_support %d, fule_support %d, reserved %d", sdmmc_card.self->ssr.cur_bus_width, sdmmc_card.self->ssr.discard_support, sdmmc_card.self->ssr.fule_support, sdmmc_card.self->ssr.reserved);
+
+        cout << "###############################################" << endl;
+
+        size_t cisize = 0;
 	size_t bsize = 16;
 	uint8_t* outbuf = (uint8_t*)malloc(bsize);
 	esp_err_t err;
     // esp_err_t sdmmc_io_get_cis_data(sdmmc_card_t *card, uint8_t *out_buffer, size_t buffer_size, size_t *inout_cis_size)
-    err = device.card->io.get_cis_data(outbuf, bsize, &cisize);
+    err = device.card->io.get_cis_data(outbuf, bsize, &cisize); // @suppress("Method cannot be resolved") // @suppress("Field cannot be resolved")
     if (err != ESP_OK)
     {
 //	    if (err != ESP_ERR_INVALID_SIZE)
@@ -892,7 +925,7 @@ esp_err_t SDctrl::act_info()
 	    cout << aso::format("The new size of the CIS data buffer is: %i") % bsize << endl;
 	    cisize = 0;
 	    outbuf = (uint8_t*)malloc(bsize);
-	    err = device.card->io.get_cis_data(outbuf, bsize, &cisize);
+	    err = device.card->io.get_cis_data(outbuf, bsize, &cisize); // @suppress("Field cannot be resolved") // @suppress("Method cannot be resolved")
 	}; /* switch err */
     }; /* if err != ESP_ERR_INVALID_SIZE */
     if (err != ESP_OK)
@@ -901,7 +934,7 @@ esp_err_t SDctrl::act_info()
 	ESP_LOGE("sdcard info command", "Error %i in the get CIS data: %s", err, esp_err_to_name(err));
 	return err;
     }; /* if err != ESP_OK */
-    err = device.card->io.print_cis_info(outbuf, bsize, stdout);
+    err = device.card->io.print_cis_info(outbuf, bsize, stdout); // @suppress("Method cannot be resolved") // @suppress("Field cannot be resolved")
     free(outbuf);
     if (err != ESP_OK)
 	ESP_LOGE("sdcard info command", "Error %i in the print of the CIS info: %s", err, esp_err_to_name(err));
@@ -1136,7 +1169,7 @@ esp_err_t SDctrl::act_type()
 
     case 3:
 	cout << "...with one parameter - save type output to file & screen." << endl;
-	return exec_server.type(argv[2], device.card->self->csd.sector_size);
+	return exec_server.type(argv[2], device.card->self->csd.sector_size); // @suppress("Invalid arguments") // @suppress("Field cannot be resolved")
 	break;
 
     default:

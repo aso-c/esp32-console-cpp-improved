@@ -90,30 +90,30 @@ const char* const Server::MOUNT_POINT_Default = MOUNT_POINT_def;
 #define CMD_TAG_PRFX "SD/MMC CMD server::"
 
     // Mount SD-card with default parameters
-    esp_err_t Server::mount(SDMMC::Device& device, SDMMC::Card& card) {
-	return device.mount(card, MOUNT_POINT_Default);
+    esp_err_t Server::mount(SDMMC::Device& device, SDMMC::Card& card) { // @suppress("Type cannot be resolved") // @suppress("Member declaration not found")
+	return device.mount(card, MOUNT_POINT_Default); // @suppress("Method cannot be resolved")
     }; /* Server::mount */
 
     // Mount default SD-card slot onto path "mountpoint"
-    esp_err_t Server::mount(SDMMC::Device& device, SDMMC::Card& card, const char mountpoint[])
+    esp_err_t Server::mount(SDMMC::Device& device, SDMMC::Card& card, const char mountpoint[]) // @suppress("Type cannot be resolved") // @suppress("Member declaration not found")
     {
 	if (isdigit(mountpoint[0]))
-	    return mount(device, card, atoi(mountpoint));
-	return device.mount(card, mountpoint);
+	    return mount(device, card, atoi(mountpoint)); // @suppress("Invalid arguments")
+	return device.mount(card, mountpoint); // @suppress("Method cannot be resolved")
     }; /* Server::mount */
 
     // Mount SD-card slot "slot_no" onto default mount path
-    esp_err_t Server::mount(SDMMC::Device& device, SDMMC::Card &card, int slot_no)
+    esp_err_t Server::mount(SDMMC::Device& device, SDMMC::Card &card, int slot_no) // @suppress("Member declaration not found") // @suppress("Type cannot be resolved")
     {
-	device.slot_no(slot_no);
-	return mount(device, card);
+	device.slot_no(slot_no); // @suppress("Method cannot be resolved")
+	return mount(device, card); // @suppress("Invalid arguments")
     }; /* Server::mount */
 
     // Mount SD-card slot "slot_no" onto specified mount path
-    esp_err_t Server::mount(SDMMC::Device& device, SDMMC::Card& card, int slot_no, const char mountpoint[])
+    esp_err_t Server::mount(SDMMC::Device& device, SDMMC::Card& card, int slot_no, const char mountpoint[]) // @suppress("Member declaration not found") // @suppress("Type cannot be resolved")
     {
-	device.slot_no(slot_no);
-	return device.mount(card, mountpoint);
+	device.slot_no(slot_no); // @suppress("Method cannot be resolved")
+	return device.mount(card, mountpoint); // @suppress("Method cannot be resolved")
     }; /* Server::mount */
 
 
@@ -124,9 +124,9 @@ const char* const Server::MOUNT_POINT_Default = MOUNT_POINT_def;
     //------------------------------------------------------------------------------------------
 
     // Unmount SD-card, that mounted onto "mountpath"
-    esp_err_t Server::unmount(SDMMC::Device& device/*const char mountpath[]*/)
+    esp_err_t Server::unmount(SDMMC::Device& device/*const char mountpath[]*/) // @suppress("Type cannot be resolved") // @suppress("Member declaration not found")
     {
-	ret = device.unmount();
+	ret = device.unmount(); // @suppress("Method cannot be resolved")
 	//ESP_LOGI(TAG, "Card unmounted");
 	if (ret == ESP_OK)
 	    cout << TAG << ": " << "Card unmounted" << endl;
@@ -452,7 +452,7 @@ static void ls_entry_printout_Cpp(const char fullpath[], const char name[]);
 //	<0  - error - -1*(ESP_ERR_xxx) or ESP_FAIL (-1) immediately
 int listing_direntries_pureC(DIR *dir, const char path[])
 {
-	char pathbuf[PATH_MAX + 1];
+	char pathbuf[PATH_MAX + 1]; // @suppress("Symbol is not resolved")
 	char * fnbuf;
 	int cnt = 0;
 
@@ -489,7 +489,7 @@ int listing_direntries_pureC(DIR *dir, const char path[])
 //-Wunused-function
 int listing_direntries_Cpp(DIR *dir, const char path[])
 {
-	char pathbuf[PATH_MAX + 1];
+	char pathbuf[PATH_MAX + 1]; // @suppress("Symbol is not resolved")
 	char * fnbuf;
 	int cnt = 0;
 
@@ -772,7 +772,7 @@ esp_err_t Server::type(const char fname[], size_t sector_size)
 	{
 		struct stat statbuf;
 
-	    if (!stat(fname, &statbuf))	// but if the fname still exists here, then it is a directory
+	    if (!stat(fname, &statbuf))	// but if the fname still exists here, then it is a directory // @suppress("Symbol is not resolved")
 		return err4existent(fname, &statbuf);
 	    ESP_LOGI(CMD_TAG_PRFX CMD_NM, "OK, file \"%s\" does not exist, opening this file.", fname);
 	    cout << aso::format("Open file %s for the write") % fname << endl;
@@ -792,7 +792,7 @@ esp_err_t Server::type(const char fname[], size_t sector_size)
 	    char c;
 
 	// fname exists, check that is a regular file
-	if (!stat(fname, &statbuf) && !S_ISREG(statbuf.st_mode))
+	if (!stat(fname, &statbuf) && !S_ISREG(statbuf.st_mode)) // @suppress("Symbol is not resolved")
 	    return err4existent(fname, &statbuf);
 
 	printf("File %s is exist.\nDo you want use this file? [yes(add)/over(write)/No]: ", fname);
@@ -822,7 +822,7 @@ esp_err_t Server::type(const char fname[], size_t sector_size)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wimplicit-fallthrough="
 	case '\n':
-	    cout << "Enter char '\\n'" << endl;
+	    cout << "Enter char '\\n'" << endl; // @suppress("No break at end of case")
 	case 'n':
 	    ESP_LOGW("console::type <filename>", "User cancel opening file %s.", fname);
 	    return ESP_ERR_NOT_FOUND;

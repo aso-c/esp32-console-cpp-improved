@@ -52,6 +52,16 @@ static const char* TAG = "example";
 #define MOUNT_PATH "/data"
 #define HISTORY_PATH MOUNT_PATH "/history.txt"
 
+
+// Hardware configuration detail
+void initialize_hardware(void)
+{
+    // for SD-card connection
+
+    gpio_pullup_en(GPIO_NUM_12);
+}; /* initialize_hardware(void) */
+
+
 static void initialize_filesystem(void)
 {
     static wl_handle_t wl_handle;
@@ -236,6 +246,8 @@ esp_err_t console_example_register_help_command(void)
 
 extern "C" void app_main(void)
 {
+    initialize_hardware();
+
     initialize_nvs();
 
 #if CONFIG_STORE_HISTORY

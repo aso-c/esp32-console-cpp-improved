@@ -95,6 +95,7 @@ Host::Host(Slot::number number, bus::width width, Host::Pullup pullupst): // @su
 	_slot(number) // @suppress("Symbol is not resolved")
 {
     cfg.slot = number; // @suppress("Field cannot be resolved")
+    ((sdmmc_slot_config_t*)_slot)->width = width;
     bus_width(width);
     set_pullup(pullupst);
 }; /* Host::Host(Slot::number, bus::width, Host::Pullup) */
@@ -106,6 +107,7 @@ Host::Host(Slot::number num, const Slot& slot, bus::width width, Pullup pullupst
 	_slot(slot)
 {
     cfg.slot = num;
+    ((sdmmc_slot_config_t*)_slot)->width = width;
     bus_width(width);
     set_pullup(pullupst);
 }; /* Host::Host(Slot::number, const Slot&) */
@@ -434,18 +436,37 @@ Slot& Slot::operator =(sdmmc_slot_config_t&& config) noexcept
 
 //--[ struct Device ]-----------------------------------------------------------------------------------------------
 
-Device::Device():
-	card(nullptr)
+
+Device::Device(bus::width width, Host::Pullup pullst, esp_vfs_fat_sdmmc_mount_config_t&& mnt_cfg):
+	/*card(nullptr),*/
+	_host(width, pullst)
 {
-#ifdef CONFIG_EXAMPLE_FORMAT_IF_MOUNT_FAILED
-	mnt.format_if_mount_failed = true;
-#else
-	mnt.format_if_mount_failed = false;
-#endif // EXAMPLE_FORMAT_IF_MOUNT_FAILED
-	mnt.max_files = 5;
-	mnt.allocation_unit_size = 16 * 1024;
+//#ifdef CONFIG_EXAMPLE_FORMAT_IF_MOUNT_FAILED
+//	mnt.format_if_mount_failed = true;
+//#else
+//	mnt.format_if_mount_failed = false;
+//#endif // EXAMPLE_FORMAT_IF_MOUNT_FAILED
+    mnt.format_if_mount_failed = mnt_cfg.format_if_mount_failed;
+//	mnt.max_files = 5;
+    mnt.max_files = mnt_cfg.max_files;
+//	mnt.allocation_unit_size = 16 * 1024;
+    mnt.allocation_unit_size = mnt_cfg.allocation_unit_size;
 	//ESP_LOGI(TAG, "Initializing SD card");
-}; /* Device::Device */
+}; /* Device::Device(bus::width, Host::Pullup, esp_vfs_fat_sdmmc_mount_config_t&) */
+
+Device::Device(Card::format::mntfail autofmt, int max_files, size_t size,
+	    bus::width width, Host::Pullup pull):
+		_host(width, pull)
+{
+        mnt.format_if_mount_failed = (autofmt == Card::format::yes)? true: false;
+    //	mnt.max_files = 5;
+        mnt.max_files = max_files;
+    //	mnt.allocation_unit_size = 16 * 1024;
+        mnt.allocation_unit_size = size;
+    	//ESP_LOGI(TAG, "Initializing SD card");
+}; /* Device::Device(Card::format::mntfail, int, size_t, bus::width, Host::Pullup) */
+
+
 
 
 // Mount default SD-card slot onto path "mountpoint"
@@ -456,7 +477,7 @@ esp_err_t Device::mount(Card& excard, const char mountpoint[])
     card  = &excard;
     target = mountpoint;
 
-    ret = esp_vfs_fat_sdmmc_mount(mountpoint, /*&*/host/*.cfg*/, /*&*/host.slot()/*.cfg*/, &mnt, &card->self);
+    ret = esp_vfs_fat_sdmmc_mount(mountpoint, /*&*/_host/*.cfg*/, /*&*/_host.slot()/*.cfg*/, &mnt, &card->self);
     if (ret != ESP_OK)
     {
 	if (ret == ESP_FAIL)

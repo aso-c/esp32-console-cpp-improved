@@ -71,6 +71,7 @@ public:
 
 private:
     esp_err_t ret;
+    static const char operative_dirbuff[MAXPATHLEN + 1];
 
     static const char* const MOUNT_POINT_Default;
 
