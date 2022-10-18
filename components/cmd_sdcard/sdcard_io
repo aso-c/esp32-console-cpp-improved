@@ -391,6 +391,7 @@ public:
     //    esp_err_t sdmmc_io_wait_int(sdmmc_card_t *card, TickType_t timeout_ticks)
     esp_err_t wait_int(TickType_t ticks);
 
+
     // Get the data of CIS region of an SDIO card.
     // You may provide a buffer not sufficient to store all the CIS data. In this case, this function
     // stores as much data into your buffer as possible. Also, this function will try to get and return
@@ -428,6 +429,7 @@ public:
     //	    ESP_ERR_NOT_SUPPORTED: if the value from the card is not supported to be parsed.
     //	    ESP_ERR_INVALID_SIZE: if the CIS size fields are not correct.
     esp_err_t print_cis_info(uint8_t *buffer, size_t buffer_size, FILE *fp);
+
 
 
     // I/O Read operation functions
@@ -593,6 +595,10 @@ public:
     void print_info(FILE* outfile);		// Print the card info
     // print the SD-card info to stdout (wrapper for the external caller)
     esp_err_t info();
+    // Print CIS info to outfile - High level procedure
+    esp_err_t cis_info(FILE* outfile);
+
+
 
     // Get status of SD/MMC card
     // Parameters:

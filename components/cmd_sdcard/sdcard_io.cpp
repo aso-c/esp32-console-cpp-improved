@@ -556,6 +556,51 @@ esp_err_t Card::info()
 
 const char* Card::TAG = "SD/MMC Card";
 
+// Print CIS info to outfile -
+// High level procedure
+esp_err_t Card::cis_info(FILE* outfile)
+{
+	size_t cisize = 0;
+	size_t bsize = 16;
+	uint8_t* outbuf = (uint8_t*)malloc(bsize);
+	esp_err_t err;
+
+    // esp_err_t sdmmc_io_get_cis_data(sdmmc_card_t *card, uint8_t *out_buffer, size_t buffer_size, size_t *inout_cis_size)
+    err = io.get_cis_data(outbuf, bsize, &cisize); // @suppress("Method cannot be resolved") // @suppress("Field cannot be resolved")
+    if (err != ESP_OK)
+    {
+	ESP_LOGE("sdcard info command", "Error %i in get get CIS data first time: %s", err, esp_err_to_name(err));
+	free(outbuf);
+	switch (err)
+	{
+	case ESP_ERR_INVALID_RESPONSE:
+	    return err;
+	case ESP_ERR_INVALID_SIZE:	// CIS_CODE_END found, but buffer_size is less than required size, which is stored in the inout_cis_size then.
+	case ESP_ERR_NOT_FOUND:		// if the CIS_CODE_END not found. Increase input value of inout_cis_size or set it to 0,
+	    bsize = cisize;
+	    cout << aso::format("The new size of the CIS data buffer is: %i") % bsize << endl;
+	    cisize = 0;
+	    outbuf = (uint8_t*)malloc(bsize);
+	    err = io.get_cis_data(outbuf, bsize, &cisize); // @suppress("Field cannot be resolved") // @suppress("Method cannot be resolved")
+	}; /* switch err */
+    }; /* if err != ESP_ERR_INVALID_SIZE */
+
+    if (err != ESP_OK)
+    {
+	//ESP_RETURN_ON_ERROR(err, "sdcard info command", "Error in the get CIS data");
+	ESP_LOGE("sdcard info command", "Error %i in the get CIS data: %s", err, esp_err_to_name(err));
+	return err;
+    }; /* if err != ESP_OK */
+
+    err = io.print_cis_info(outbuf, bsize, stdout); // @suppress("Method cannot be resolved") // @suppress("Field cannot be resolved")
+    free(outbuf);
+    if (err != ESP_OK)
+	ESP_LOGE("sdcard info command", "Error %i in the print of the CIS info: %s", err, esp_err_to_name(err));
+
+    return err;
+}; /* Card::cis_info */
+
+
 
 //--[ class IO ]--------------------------------------------------------------------------------------------------
 

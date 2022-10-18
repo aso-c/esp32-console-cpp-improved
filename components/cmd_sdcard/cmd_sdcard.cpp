@@ -880,16 +880,6 @@ esp_err_t SDctrl::act_info()
     cout << "Pullup is: " << ((device.host().slot().pullup_state())? "Enabled": "Absent") << endl;
     cout << "###############################################" << endl;
 
-//    sdmmc_host_t host = SDMMC_HOST_DEFAULT();
-//    sdmmc_slot_config_t slot_config = SDMMC_SLOT_CONFIG_DEFAULT();
-//    esp_vfs_fat_sdmmc_mount_config_t mount_config = {
-//	    .format_if_mount_failed = false,
-//	    .max_files = 10,
-//	    .allocation_unit_size = 0 // auto / equals sector size of 512 bytes
-//	    }; /* mount_config */
-//    sdmmc_card_t* card;
-//    ESP_ERROR_CHECK(esp_vfs_fat_sdmmc_mount("/sd", &host, &slot_config, &mount_config, &card));
-
 #define TAG "SD Command Service"
 
     ESP_LOGI(TAG, "SD card info:");
@@ -904,6 +894,9 @@ esp_err_t SDctrl::act_info()
 
         cout << "###############################################" << endl;
 
+#if 1
+    return device.card->cis_info(stdout);
+#else
         size_t cisize = 0;
 	size_t bsize = 16;
 	uint8_t* outbuf = (uint8_t*)malloc(bsize);
@@ -940,6 +933,7 @@ esp_err_t SDctrl::act_info()
 	ESP_LOGE("sdcard info command", "Error %i in the print of the CIS info: %s", err, esp_err_to_name(err));
 
     return err;
+#endif
 }; /* SDctrl::act_info */
 
 

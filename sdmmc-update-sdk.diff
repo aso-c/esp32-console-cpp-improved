@@ -7,28 +7,8 @@ In line 417, function:
 static esp_err_t process_events(sdmmc_event_t evt, sdmmc_command_t* cmd,
         sdmmc_req_state_t* pstate, sdmmc_event_t* unhandled_events)
 
-line 437 (approx.)
-// Original:
-//---------------------------------
-    while (next_state != state) {
-        state = next_state;
-        switch (state) {
-//---------------------------------
-        
-// Updates (at begin of the while pass):        
-//------------------------------
-    while (next_state != state) {
-        state = next_state;
-// Insert delay at this point
-#if 1 // aso_test
-    ESP_LOGI(TAG, "(aso test): " ">>> %s: in the while, before the state switch: %s, next state: %s", __func__, s_state_names[state], s_state_names[next_state]);
-#endif
-        switch (state) {
-//------------------------------
-
-
 // Or alternavive: updates at the end of the while pass)
-// It's a better!
+// It's a better variant!
 //
 // line 500 (approx.)
 Original:
@@ -58,10 +38,34 @@ Updated:
         }
         ESP_LOGV(TAG, "%s state=%s next_state=%s", __func__, s_state_names[state], s_state_names[next_state]);
 #if 1 // aso_test
-        // insert delay in this point 
-    ESP_LOGI(TAG, "(aso test): " ">>> %s: at end the pass of the while, state switch: %s, next state: %s", __func__, s_state_names[state], s_state_names[next_state]);
+    //  <---------------- insert delay in this point
+        vTaskDelay(1);
+        // Nope! Line behind - nedeed for debug only  
+        // ESP_LOGI(TAG, "(aso test): " ">>> %s: at end the pass of the while, state switch: %s, next state: %s", __func__, s_state_names[state], s_state_names[next_state]);
 #endif
     }
+/* ............................. */
+
+
+line 437 (approx.)
+// Original:
+/* ............................. */
+    while (next_state != state) {
+        state = next_state;
+        switch (state) {
+/* ............................. */
+        
+// Updates (at begin of the while pass):        
+/* ............................. */
+    while (next_state != state) {
+        state = next_state;
+// Insert delay at this point
+#if 1 // aso_test
+        vTaskDelay(1);
+        // Nope! Line behind - nedeed for debug only  
+        // ESP_LOGI(TAG, "(aso test): " ">>> %s: at end the pass of the while, state switch: %s, next state: %s", __func__, s_state_names[state], s_state_names[next_state]);
+#endif
+        switch (state) {
 /* ............................. */
 
 
