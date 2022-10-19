@@ -441,11 +441,11 @@ Slot& Slot::operator =(sdmmc_slot_config_t&& config) noexcept
 const char* CWD_emulating::get(const char path[])
 {
 	const char* src;
-    // if absolutly path - beginning from root
-    if (path[0] == '/')
-	src = path;	// copy to operative_buffer from path
-    else
+    // if empty path or relativly path - use pwd
+    if (path == nullptr || path[0] == '\0' || path[0] != '/')
 	src = pwd;	// else copy to operative buffer from current dir path
+    else
+	src = path;	// copy to operative_buffer from path
     if (strlen(src) + 1 < sizeof(operative_path_buff) / sizeof(char))
 	strcpy(operative_path_buff, pwd);
     else
@@ -453,7 +453,7 @@ const char* CWD_emulating::get(const char path[])
 
 //    // if path is empty - all done
     if (path == nullptr || path[0] == '\0')
-	    return operative_path_buff;
+	return operative_path_buff;
 
     // another absolutly path - finalize processing
     if (path[0] != '/')
