@@ -434,12 +434,92 @@ Slot& Slot::operator =(sdmmc_slot_config_t&& config) noexcept
 //int Slot::def_num;
 
 
+//--[ class CWD_emulating ]-----------------------------------------------------------------------------------------
+
+// get current dir (if path == NULL or "") or generate fullpath for sended path
+// trailing slash in returned string is absent
+const char* CWD_emulating::get(const char path[])
+{
+	const char* src;
+    // if absolutly path - beginning from root
+    if (path[0] == '/')
+	src = path;	// copy to operative_buffer from path
+    else
+	src = pwd;	// else copy to operative buffer from current dir path
+    if (strlen(src) + 1 < sizeof(operative_path_buff) / sizeof(char))
+	strcpy(operative_path_buff, pwd);
+    else
+	return "";	// path don't fit in operative_path_buff
+
+//    // if path is empty - all done
+    if (path == nullptr || path[0] == '\0')
+	    return operative_path_buff;
+
+    // another absolutly path - finalize processing
+    if (path[0] != '/')
+    {
+	// add a trailing slash at end of the relative path base
+	if (operative_path_buff[strlen(operative_path_buff) - 1] != '/')
+	{
+	    // add EOL behind the string data in the operative_path_buff
+	    operative_path_buff[strlen(operative_path_buff) + 1] = '\0';
+	    // add trailing '/' at the operative_path_buff
+	    operative_path_buff[strlen(operative_path_buff)] = '/';
+	}; /* if operative_path_buffer[strlen(operative_path_buff) - 1] != '/' */
+
+	// copy path on top of base bath
+	if (strlen(operative_path_buff) + strlen(path) < sizeof(operative_path_buff) / sizeof(char))
+	    strcat(operative_path_buff, path);
+	else return "";
+	//	// drop unneded exist trailing slash from the final path string
+	//	if (operative_path_buffer[strlen(operative_path_buffer) - 1] == '/')
+	//	    operative_path_buffer[strlen(operative_path_buffer) - 1] = '\0';
+	//	return operative_path_buffer;
+    }; /* if path[0] != '/' */
+
+
+    //	if (strlen(pwd) < sizeof(operative_path_buffer) / sizeof(char))
+//	    strcpy(operative_path_buffer, pwd);
+//	else
+//	    return "";	// pwd don't placed in operative_path_buffer
+
+    // add trailing slash - a nnada?
+#if 0	// block adding trailing slash
+    if (operative_path_buffer[strlen(operative_path_buff) - 1] != '/')
+    {
+	operative_path_buffer[strlen(operative_path_buff) + 1] = '\0';// add EOL behind the string data in the operative_path_buffer
+	operative_path_buffer[strlen(operative_path_buff)] = '/';	// add trailing '/' at the operative_path_buffer
+    }; /* if (operative_path_buffer[strlen(operative_path_buffer) - 1] != '/') */
+#endif
+
+    // drop unneded trailing slash if it exist
+    if (operative_path_buff[strlen(operative_path_buff) - 1] == '/')
+	operative_path_buff[strlen(operative_path_buff) - 1] = '\0';
+
+    return operative_path_buff;
+}; /* CWD_emulating::get */
+
+// change cwd dir
+esp_err_t CWD_emulating::change_dir(const char path[])
+{
+	const char* tmpstr = get(path);
+
+    if (tmpstr == nullptr || tmpstr[0] == '\0')
+	return ESP_FAIL;
+    strcpy(pwd, tmpstr);
+    return ESP_OK;
+}; /* CWD_emulating::change_dir */
+
+// temporary buffer for file fullpath composing
+char CWD_emulating::operative_path_buff[MAXPATHLEN + 1];
+
 //--[ struct Device ]-----------------------------------------------------------------------------------------------
 
 
 Device::Device(bus::width width, Host::Pullup pullst, esp_vfs_fat_sdmmc_mount_config_t&& mnt_cfg):
 	/*card(nullptr),*/
-	_host(width, pullst)
+	_host(width, pullst),
+	fake_cwd(fake_cwd_path, sizeof(fake_cwd_path))
 {
 //#ifdef CONFIG_EXAMPLE_FORMAT_IF_MOUNT_FAILED
 //	mnt.format_if_mount_failed = true;
@@ -456,7 +536,8 @@ Device::Device(bus::width width, Host::Pullup pullst, esp_vfs_fat_sdmmc_mount_co
 
 Device::Device(Card::format::mntfail autofmt, int max_files, size_t size,
 	    bus::width width, Host::Pullup pull):
-		_host(width, pull)
+		_host(width, pull),
+		fake_cwd(fake_cwd_path, sizeof(fake_cwd_path))
 {
         mnt.format_if_mount_failed = (autofmt == Card::format::yes)? true: false;
     //	mnt.max_files = 5;
@@ -565,7 +646,6 @@ esp_err_t Card::cis_info(FILE* outfile)
 	uint8_t* outbuf = (uint8_t*)malloc(bsize);
 	esp_err_t err;
 
-    // esp_err_t sdmmc_io_get_cis_data(sdmmc_card_t *card, uint8_t *out_buffer, size_t buffer_size, size_t *inout_cis_size)
     err = io.get_cis_data(outbuf, bsize, &cisize); // @suppress("Method cannot be resolved") // @suppress("Field cannot be resolved")
     if (err != ESP_OK)
     {

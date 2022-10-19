@@ -161,7 +161,7 @@ Exec::Server exec_server;
 
 static int pwd_act(int argc, char **argv)
 {
-    return exec_server.pwd();
+    return exec_server.pwd(device);
 }; /* pwd_act */
 
 void register_pwd(void)
@@ -275,11 +275,11 @@ static int cd_act(int argc, char **argv)
     switch (argc)
     {
     case 1:
-	return exec_server.cd();
+	return exec_server.cd(device);
 	break;
 
     case 2:
-	return exec_server.cd(argv[1]);
+	return exec_server.cd(device, argv[1]);
 	break;
 
     default:
@@ -868,8 +868,6 @@ esp_err_t SDctrl::act_umnt()
 // print info about the mounted SD-card
 esp_err_t SDctrl::act_info()
 {
-//    exec_server.info();
-//    if (device.card == nullptr)
     if (!device.card) // @suppress("Field cannot be resolved")
     {
 	ESP_LOGW("sdcard info command", "SD-card now is not mounted!!!");
@@ -892,95 +890,19 @@ esp_err_t SDctrl::act_info()
         ESP_LOGI(TAG, "\tSCR: bus width %d, erase mem state <undef%d>, reserved <undef%d>, rsvd_mnf <undef%d>, sd_spec %d", sdmmc_card.self->scr.bus_width, /*sdmmc_card.self->scr.erase_mem_state*/-1, /*sdmmc_card.self->scr.reserved*/-1, /*sdmmc_card.self->scr.rsvd_mnf*/-1, sdmmc_card.self->scr.sd_spec);
         //ESP_LOGI(TAG, "\tSSR: cur_bus_width %d, discard_support %d, fule_support %d, reserved %d", sdmmc_card.self->ssr.cur_bus_width, sdmmc_card.self->ssr.discard_support, sdmmc_card.self->ssr.fule_support, sdmmc_card.self->ssr.reserved);
 
-        cout << "###############################################" << endl;
+    cout << "###############################################" << endl;
 
-#if 1
-    //return device.card->cis_info(stdout);
-//        size_t cisize = 0;
-//	size_t bsize = 16;
-//	uint8_t* outbuf = (uint8_t*)malloc(bsize);
 	esp_err_t err;
-//    err = device.card->io.get_cis_data(outbuf, bsize, &cisize); // @suppress("Method cannot be resolved") // @suppress("Field cannot be resolved")
     err = device.card->cis_info(stdout);
     ESP_LOGE("sdcard info command", "Error %i in the get or print CIS data: %s", err, esp_err_to_name(err));
-////    if (err != ESP_OK)
-////    {
-//	//ESP_LOGE("sdcard info command", "Error %i in get get CIS data first time: %s", err, esp_err_to_name(err));
-////	free(outbuf);
-//	switch (err)
-//	{
-//	case ESP_ERR_INVALID_RESPONSE:
-//		ESP_LOGE("sdcard info command", "Error %i in the get CIS data: %s", err, esp_err_to_name(err));
-//	    return err;
-//	case ESP_ERR_INVALID_SIZE:	// CIS_CODE_END found, but buffer_size is less than required size, which is stored in the inout_cis_size then.
-//	case ESP_ERR_NOT_FOUND:		// if the CIS_CODE_END not found. Increase input value of inout_cis_size or set it to 0,
-////	    bsize = cisize;
-////	    cout << aso::format("The new size of the CIS data buffer is: %i") % bsize << endl;
-////	    cisize = 0;
-////	    outbuf = (uint8_t*)malloc(bsize);
-////	    err = device.card->io.get_cis_data(outbuf, bsize, &cisize); // @suppress("Field cannot be resolved") // @suppress("Method cannot be resolved")
-//		ESP_LOGE("sdcard info command", "Error %i in the get CIS data: %s", err, esp_err_to_name(err));
-//	    return err;
-//	}; /* switch err */
-////    }; /* if err != ESP_ERR_INVALID_SIZE */
-////    if (err != ESP_OK)
-////    {
-////	//ESP_RETURN_ON_ERROR(err, "sdcard info command", "Error in the get CIS data");
-////	ESP_LOGE("sdcard info command", "Error %i in the get CIS data: %s", err, esp_err_to_name(err));
-////	return err;
-////    }; /* if err != ESP_OK */
-////    err = device.card->io.print_cis_info(outbuf, bsize, stdout); // @suppress("Method cannot be resolved") // @suppress("Field cannot be resolved")
-////    free(outbuf);
-////    if (err != ESP_OK)
-////	ESP_LOGE("sdcard info command", "Error %i in the print of the CIS info: %s", err, esp_err_to_name(err));
-
     return err;
-#else
-        size_t cisize = 0;
-	size_t bsize = 16;
-	uint8_t* outbuf = (uint8_t*)malloc(bsize);
-	esp_err_t err;
-    // esp_err_t sdmmc_io_get_cis_data(sdmmc_card_t *card, uint8_t *out_buffer, size_t buffer_size, size_t *inout_cis_size)
-    err = device.card->io.get_cis_data(outbuf, bsize, &cisize); // @suppress("Method cannot be resolved") // @suppress("Field cannot be resolved")
-    if (err != ESP_OK)
-    {
-//	    if (err != ESP_ERR_INVALID_SIZE)
-	ESP_LOGE("sdcard info command", "Error %i in get get CIS data first time: %s", err, esp_err_to_name(err));
-	free(outbuf);
-	switch (err)
-	{
-	case ESP_ERR_INVALID_RESPONSE:
-	    return err;
-	case ESP_ERR_INVALID_SIZE:	// CIS_CODE_END found, but buffer_size is less than required size, which is stored in the inout_cis_size then.
-	case ESP_ERR_NOT_FOUND:		// if the CIS_CODE_END not found. Increase input value of inout_cis_size or set it to 0,
-	    bsize = cisize;
-	    cout << aso::format("The new size of the CIS data buffer is: %i") % bsize << endl;
-	    cisize = 0;
-	    outbuf = (uint8_t*)malloc(bsize);
-	    err = device.card->io.get_cis_data(outbuf, bsize, &cisize); // @suppress("Field cannot be resolved") // @suppress("Method cannot be resolved")
-	}; /* switch err */
-    }; /* if err != ESP_ERR_INVALID_SIZE */
-    if (err != ESP_OK)
-    {
-	//ESP_RETURN_ON_ERROR(err, "sdcard info command", "Error in the get CIS data");
-	ESP_LOGE("sdcard info command", "Error %i in the get CIS data: %s", err, esp_err_to_name(err));
-	return err;
-    }; /* if err != ESP_OK */
-    err = device.card->io.print_cis_info(outbuf, bsize, stdout); // @suppress("Method cannot be resolved") // @suppress("Field cannot be resolved")
-    free(outbuf);
-    if (err != ESP_OK)
-	ESP_LOGE("sdcard info command", "Error %i in the print of the CIS info: %s", err, esp_err_to_name(err));
-
-    return err;
-#endif
 }; /* SDctrl::act_info */
 
 
 // action for pwd command
 esp_err_t SDctrl::act_pwd()
 {
-    exec_server.pwd();
-
+    exec_server.pwd(device);
     return 0;
 }; /* SDctrl::act_pwd */
 
@@ -1040,12 +962,12 @@ esp_err_t SDctrl::act_cd()
     switch (argc)
     {
     case 2:
-	return exec_server.cd();
+	return exec_server.cd(device);
 	break;
 
     case 3:
 	cout << "...with one parameter - specified the path name to change." << endl;
-	return exec_server.cd(argv[2]);
+	return exec_server.cd(device, argv[2]);
 	break;
 
     default:

@@ -194,18 +194,20 @@ const char* const Server::MOUNT_POINT_Default = MOUNT_POINT_def;
 
 
 // print current directory name
-esp_err_t Server::pwd()
+esp_err_t Server::pwd(SDMMC::Device& device)
 {
 #ifdef __PURE_C__
-	char* buf = getcwd(NULL, 0);
-//	size_t buflen = sizeof(buf) + 1;
+//	char* buf = getcwd(NULL, 0);
+////	size_t buflen = sizeof(buf) + 1;
+
+	const char* buf = device.get_cwd();
 
     if (!buf)
 	return errno;
     cout << endl
 	<< "PWD is: \"" << buf << '"' << endl
 	<< endl;
-    free(buf);
+//    free(buf);
 
 //    buf = (char*)malloc(buflen);
 //    FRESULT res = f_getcwd(buf, buflen);
@@ -344,8 +346,10 @@ esp_err_t Server::rmdir(const char dirname[])
 #define CMD_NM "cd"
 
 // change a current directory
-esp_err_t Server::cd(const char dirname[])
+esp_err_t Server::cd(SDMMC::Device& device, const char dirname[])
 {
+	esp_err_t err;
+
     if (dirname == NULL || strcmp(dirname, "") == 0)
     {
 	    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "invoke command \"%s\" without parameters.\n%s", CMD_NM,
@@ -353,15 +357,20 @@ esp_err_t Server::cd(const char dirname[])
 	    return ESP_ERR_INVALID_ARG;
     }; /* if dirname == NULL || strcmp(dirname, "") */
 #ifdef __PURE_C__
-    cout << "Change current dir to " << dirname << endl;
+    //cout << "Change current dir to " << dirname << endl;
+    ESP_LOGI(CMD_TAG_PRFX CMD_NM, "Change current dir to %s", dirname);
     chdir(dirname);
-    if (errno != 0)
+    // change cwd dir
+    err = device.change_currdir(dirname);
+//    if (errno != 0)
+    if (err != 0)
     {
-	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "fail change directory to %s\n%s", dirname, strerror(errno));
+	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "fail change directory to %s\n%s", dirname, /*strerror(errno)*/ esp_err_to_name(err));
 	//perror(CMD_TAG_PRFX CMD_NM);
-	return ESP_FAIL;
+//	return ESP_FAIL;
     }; /* if errno != 0 */
-    return ESP_OK;
+    return err;
+//    return ESP_OK;
 #else
     cout << "Change directory to " << '"' << dirname << '"' << endl;
     cout << "Command \"" CMD_NM "\" is not yet implemented now for C++ edition." << endl;

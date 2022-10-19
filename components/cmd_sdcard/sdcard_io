@@ -714,6 +714,28 @@ public:
 }; /* class Card */
 
 
+
+class CWD_emulating
+{
+public:
+    CWD_emulating(char cwdbuff[], size_t cwdbufflen):
+	pwd(cwdbuff), pwd_bufflen(cwdbufflen-1) {};
+
+    // get current dir (if path == NULL or "") or generate fullpath for sended path
+    // absent trailing slash in returned string is guaranteed
+    const char* get(const char path[] = nullptr);
+    // change cwd dir
+    esp_err_t change_dir(const char path[]);
+
+private:
+
+    char* const pwd;	// pointer to cwd buffer
+    const size_t pwd_bufflen;
+    static char operative_path_buff[MAXPATHLEN + 1];	// temporary buffer for file fullpath composing
+
+}; /* CWD_emulating */
+
+
 // Implementation of the mounting actions:
 // - Options for mounting the filesystem.
 //     (If format_if_mount_failed is set
@@ -741,6 +763,12 @@ struct Device
     //esp_err_t unmount(sdmmc_card_t *card);	// Unmount SD-card "card", mounted onto default mountpath
     //esp_err_t unmount(const char *base_path, sdmmc_card_t *card);	// Unmount mounted SD-card "card", mounted onto mountpath
 
+    // get current dir (if path == NULL or "") or generate fullpath for sended path
+    // absent trailing slash in returned string is guaranteed
+    const char* get_cwd(const char path[] = nullptr) {return fake_cwd.get(path);};
+    // change cwd dir
+    esp_err_t change_currdir(const char path[]) {return fake_cwd.change_dir(path);};
+
     // get mountpath
     const char *mountpath() {return target;};
     // set mountpath, return old mountpath
@@ -758,6 +786,8 @@ private:
     Host _host;
     const char* target = nullptr;
     esp_vfs_fat_sdmmc_mount_config_t mnt;
+    char fake_cwd_path[MAXPATHLEN + 1] = "/";	// simulation current dir at this device
+    CWD_emulating fake_cwd;
 
 }; /* struct Device */
 
