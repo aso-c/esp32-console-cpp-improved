@@ -284,7 +284,7 @@ esp_err_t Server::rmdir(const char dirname[])
     if (dirname == NULL || strcmp(dirname, "") == 0)
     {
 	    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "invoke command \"%s\" without parameters.\n%s", CMD_NM,
-		     "This command required the deleting directory name.");
+		     "This command required the name of the deleting directory.");
 	    return ESP_ERR_INVALID_ARG;
     }; /* if dirname == NULL || strcmp(dirname, "") */
 #ifdef __PURE_C__
