@@ -53,7 +53,7 @@
 using namespace std;
 
 
-#define MOUNT_POINT_def "/sdcard"
+#define SD_MOUNT_POINT "/sdcard"
 
 
 /*
@@ -447,70 +447,46 @@ const char* CWD_emulating::get(const char path[])
     else
 	src = path;	// copy to operative_buffer from path
 
-    ESP_LOGI("CWD_emulating:", "%s: The \"src\" variable is %s",  __func__, src);
-    ESP_LOGI("CWD_emulating:",  "%s: (strlen(src) + 1) is %d\n\t\t\t(sizeof(operative_path_buff) / sizeof(char)) is %d",  __func__, strlen(src) + 1, sizeof(operative_path_buff) / sizeof(char));
+    ESP_LOGD("CWD_emulating:", "%s: The \"src\" variable is %s",  __func__, src);
     if (strlen(src) + 1 < sizeof(operative_path_buff) / sizeof(char))
-    {
-	ESP_LOGI("CWD_emulating:", "%s: the (strlen(src) + 1) is less (sizeof(operative_path_buff) / sizeof(char)", __func__);
-//	strcpy(operative_path_buff, pwd);
 	strcpy(operative_path_buff, src);
-    }
     else
-    {
-	ESP_LOGI("CWD_emulating:", "%s: the (strlen(src) + 1) is more then (sizeof(operative_path_buff) / sizeof(char)", __func__);
 	return "";	// path don't fit in operative_path_buff
-    }
-    ESP_LOGI("CWD_emulating:", "%s: operative_path_buff is \"%s\"", __func__, operative_path_buff);
+     ESP_LOGD("CWD_emulating:", "%s: operative_path_buff is \"%s\"", __func__, operative_path_buff);
 
-//    // if path is empty - all done
+    // if path is empty - all done
     if (path == nullptr || path[0] == '\0')
 	return operative_path_buff;
 
     // another relatively path - finalize processing
     if (path[0] != '/')
     {
-	ESP_LOGI("CWD_emulating:", "%s: processing relative path: updating path on top of the current pwd", __func__);
+ 	ESP_LOGD("CWD_emulating:", "%s: processing relative path: updating path on top of the current pwd", __func__);
 	// add a trailing slash at end of the relative path base
 	if (operative_path_buff[strlen(operative_path_buff) - 1] != '/')
 	{
-	    ESP_LOGI("CWD_emulating:", "%s: operative_path_buff before adding trailing slash is: \"%s\"", __func__, operative_path_buff);
+ 	    ESP_LOGD("CWD_emulating:", "%s: operative_path_buff before adding trailing slash is: \"%s\"", __func__, operative_path_buff);
 	    // add EOL behind the string data in the operative_path_buff
 	    operative_path_buff[strlen(operative_path_buff) + 1] = '\0';
 	    // add trailing '/' at the operative_path_buff
 	    operative_path_buff[strlen(operative_path_buff)] = '/';
-	    ESP_LOGI("CWD_emulating:", "%s: operative_path_buff after adding trailing slash is: \"%s\"", __func__, operative_path_buff);
 	}; /* if operative_path_buffer[strlen(operative_path_buff) - 1] != '/' */
 
 	// copy path on top of base bath
 	if (strlen(operative_path_buff) + strlen(path) < sizeof(operative_path_buff) / sizeof(char))
 	    strcat(operative_path_buff, path);
 	else return "";
-	//	// drop unneded exist trailing slash from the final path string
-	//	if (operative_path_buffer[strlen(operative_path_buffer) - 1] == '/')
-	//	    operative_path_buffer[strlen(operative_path_buffer) - 1] = '\0';
-	//	return operative_path_buffer;
-	ESP_LOGI("CWD_emulating:", "%s: concatenated operative_path_buff is: \"%s\"", __func__, operative_path_buff);
     }; /* if path[0] != '/' */
 
-
-    //	if (strlen(pwd) < sizeof(operative_path_buffer) / sizeof(char))
-//	    strcpy(operative_path_buffer, pwd);
-//	else
-//	    return "";	// pwd don't placed in operative_path_buffer
-
-    // add trailing slash - a nnada?
-#if 0	// block adding trailing slash
-    if (operative_path_buffer[strlen(operative_path_buff) - 1] != '/')
-    {
-	operative_path_buffer[strlen(operative_path_buff) + 1] = '\0';// add EOL behind the string data in the operative_path_buffer
-	operative_path_buffer[strlen(operative_path_buff)] = '/';	// add trailing '/' at the operative_path_buffer
-    }; /* if (operative_path_buffer[strlen(operative_path_buffer) - 1] != '/') */
-#endif
 
     // drop unneded trailing slash if it exist
     if (strlen(operative_path_buff) > 1 && operative_path_buff[strlen(operative_path_buff) - 1] == '/')
 	operative_path_buff[strlen(operative_path_buff) - 1] = '\0';
-    ESP_LOGI("CWD_emulating:", "%s: final operative_path_buff after drop it's trailing slash is: \"%s\"", __func__, operative_path_buff);
+     ESP_LOGD("CWD_emulating:", "%s: final operative_path_buff after drop it's trailing slash: \"%s\"", __func__, operative_path_buff);
+
+    src = realpath(operative_path_buff, NULL);	// resolve dirty path
+    strcpy(operative_path_buff, src);
+    free((char*)src);
 
     return operative_path_buff;
 }; /* CWD_emulating::get */
@@ -525,10 +501,9 @@ esp_err_t CWD_emulating::change_dir(const char path[])
 
     if (tmpstr == nullptr || tmpstr[0] == '\0')
     {
-	ESP_LOGI("CWD_emulating::change_dir", "Change dir is failed");
+	ESP_LOGE("CWD_emulating::change_dir", "Change dir is failed");
 	return ESP_FAIL;
     };
-//    strcpy(pwd, tmpstr);
     realpath(tmpstr, pwd);
     return ESP_OK;
 }; /* CWD_emulating::change_dir */

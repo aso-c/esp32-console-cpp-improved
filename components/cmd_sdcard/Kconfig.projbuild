@@ -6,4 +6,17 @@ menu "SD card operation config menu"
         help
             If this config item is set, format_if_mount_failed will be set to true and the card will be formatted if
             the mount has failed.
+
+    config AUTO_CHDIR_AFTER_MOUNTING
+        bool "Auto change dir after mount SD-card"
+        default n
+        help
+            Change default directory (pwd) after mounting the SD-card.
+
+    config AUTO_CHDIR_AFTER_MOUNTING_VALUE
+        string "Directory for auto-change after SD-card mounting"
+        depends on AUTO_CHDIR_AFTER_MOUNTING
+        default SD_MOUNT_POINT
+        help
+            Directory to jump after mounting.
 endmenu

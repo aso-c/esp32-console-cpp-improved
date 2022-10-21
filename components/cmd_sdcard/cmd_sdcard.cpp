@@ -44,7 +44,8 @@
 using namespace std;
 
 
-#define MOUNT_POINT_def "/sdcard"
+//#define MOUNT_POINT_def "/sdcard"
+#define SD_MOUNT_POINT "/sdcard"
 
 
 /*
@@ -1209,13 +1210,13 @@ void** SDctrl::Syntax::tables()
 	static void* arg_mnt[] = {
 		arg_rex1(NULL, NULL, "m|mount", NULL, 0, "mount SD-card [<device>] to [<mountpoint>], parameters are optional"),
 		arg_str0(NULL, NULL, "<slot>", "SD card slot (device) number, used slot #"  qte(SDMMC_HOST_SLOT_1)  " default value if omitted"),
-		arg_str0(NULL, NULL, "<mountpoint>", "path to mountpoint SD card, used path \"" MOUNT_POINT_def "\" if omitted"),
+		arg_str0(NULL, NULL, "<mountpoint>", "path to mountpoint SD card, used path \"" SD_MOUNT_POINT "\" if omitted"),
 		arg_end(2),
 	};
     // syntax2: u | umount [ <device> | <mountpoint> ] "unmount SD-card <device> or that was mounted to <path>; if all parameters omitted - use default values - ..."
     // syntax2 corrected: u | umount [<mountpoint>] "unmount SD-card <device> or that was mounted to <path>; if all parameters omitted - use default values - ..."
 	static void* arg_umnt[] = {
-		arg_rex1(NULL, NULL, "u|umount", NULL, 0, "unmount SD-card [<path>] where the SD card is mounted; if parameters omitted - use \"" MOUNT_POINT_def "\"" ),
+		arg_rex1(NULL, NULL, "u|umount", NULL, 0, "unmount SD-card [<path>] where the SD card is mounted; if parameters omitted - use \"" SD_MOUNT_POINT "\"" ),
 		arg_str0(NULL, NULL, "<mountpoint>", NULL),
 		arg_end(2),
 	};

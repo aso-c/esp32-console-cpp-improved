@@ -14,21 +14,25 @@ menu "Application manager"
 
     config APP_PROJECT_VER
     string "Project version"
+    depends on APP_PROJECT_VER_FROM_CONFIG
     help
             Project version
 
     config APP_PROJECT_FLAVOUR
     string "Flavour of the current project branch"
+    depends on APP_PROJECT_VER_FROM_CONFIG
     help
             Variant of the project application
 
     config APP_PROJECT_DATE
     string "Current project version date"
+    depends on APP_PROJECT_VER_FROM_CONFIG
     help
             Date of the project current version
 
     config APP_PROJECT_MODIFICATOR
     string "Modificator of the current project version"
+    depends on APP_PROJECT_VER_FROM_CONFIG
     help
             The person, who made the current version of the changes
             in the source code of the project
