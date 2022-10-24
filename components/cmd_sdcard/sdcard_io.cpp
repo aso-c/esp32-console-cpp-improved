@@ -496,6 +496,12 @@ esp_err_t CWD_emulating::change_dir(const char path[])
 {
 	const char* tmpstr = get(path);
 
+//---------------------------------------------------------------------------
+	struct stat statbuf;
+
+
+//---------------------------------------------------------------------------
+
     ESP_LOGI("CWD_emulating::change_dir", "The \"path\" parameter is: \"%s\"", path);
     ESP_LOGI("CWD_emulating::change_dir", "The \"tmpstr\" variable is: \"%s\"", tmpstr);
 
@@ -503,8 +509,30 @@ esp_err_t CWD_emulating::change_dir(const char path[])
     {
 	ESP_LOGE("CWD_emulating::change_dir", "Change dir is failed");
 	return ESP_FAIL;
-    };
-    realpath(tmpstr, pwd);
+    }; /* if tmpstr == nullptr || tmpstr[0] == '\0' */
+    if (stat(tmpstr, &statbuf) == -1)
+    {
+	ESP_LOGE("CWD_emulating::change_dir", "Change dir is failed - requested path to change \"%s\" is not exist;\n"
+		"\t\t\t\tcurrent directory was not changing", tmpstr);
+	return ESP_ERR_NOT_FOUND;
+    }; /* if stat(tmpstr, &statbuf) == -1 */
+    ESP_LOGI("CWD_emulating::change_dir", "%s is %s\n", tmpstr,
+	    (S_ISLNK(statbuf.st_mode))? "[symlink]":
+	    (S_ISREG(statbuf.st_mode))? "(file)":
+	    (S_ISDIR(statbuf.st_mode))? "<DIR>":
+	    (S_ISCHR(statbuf.st_mode))? "[char dev]":
+	    (S_ISBLK(statbuf.st_mode))? "[blk dev]":
+	    (S_ISFIFO(statbuf.st_mode))? "[FIFO]":
+	    (S_ISSOCK(statbuf.st_mode))? "[socket]":
+	    "[unknown type]");
+    if (!S_ISDIR(statbuf.st_mode))
+    {
+	ESP_LOGE("CWD_emulating::change_dir", "Change dir is failed - requested path to change \"%s\" is not directory;\n"
+		"\t\t\t\tleave current directory without changing", tmpstr);
+	return ESP_ERR_NOT_SUPPORTED;
+    }; /* if stat(tmpstr, &statbuf) == -1 */
+//    realpath(tmpstr, pwd);
+    strcpy(pwd, tmpstr);
     return ESP_OK;
 }; /* CWD_emulating::change_dir */
 

@@ -13,7 +13,7 @@ menu "SD card operation config menu"
         help
             Change default directory (pwd) after mounting the SD-card.
 
-    config AUTO_CHDIR_AFTER_MOUNTING_VALUE
+    config DIRECTORY_TO_CHDIR_AFTER_MOUNTING
         string "Directory for auto-change after SD-card mounting"
         depends on AUTO_CHDIR_AFTER_MOUNTING
         default SD_MOUNT_POINT
