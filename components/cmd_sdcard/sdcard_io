@@ -767,12 +767,13 @@ struct Device
     // absent trailing slash in returned string is guaranteed
     const char* get_cwd(const char path[] = nullptr) {return fake_cwd.get(path);};
     // change cwd dir
-    esp_err_t change_currdir(const char path[]) {return fake_cwd.change_dir(path);};
+    esp_err_t change_currdir(const char path[])
+    { return fake_cwd.change_dir( (path == nullptr || path[0] == '\0')? mountpath(): path); }
 
     // get mountpath
     const char *mountpath() {return target;};
     // set mountpath, return old mountpath
-    const char *mountpath(const char newpath[]) {const char* oldpath = target; target = newpath; return oldpath;};
+    const char *mountpath(const char newpath[]) {const char* oldpath = target; target = (card)? newpath: target; return oldpath;};
     const char *clean_mountpath() {return mountpath(nullptr);};
 
     // use сarefully! may be incorrect behavior!
@@ -786,7 +787,7 @@ private:
     Host _host;
     const char* target = nullptr;
     esp_vfs_fat_sdmmc_mount_config_t mnt;
-    char fake_cwd_path[MAXPATHLEN + 1] = "/";	// simulation current dir at this device
+    char fake_cwd_path[MAXPATHLEN + 1] = "";	// simulation current dir at this device
     CWD_emulating fake_cwd;
 
 }; /* struct Device */

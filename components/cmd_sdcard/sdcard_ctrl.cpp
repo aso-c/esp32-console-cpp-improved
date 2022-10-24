@@ -351,22 +351,21 @@ esp_err_t Server::cd(SDMMC::Device& device, const char dirname[])
 	esp_err_t err;
 
 #ifdef __PURE_C__
-    if (dirname == NULL || strcmp(dirname, "") == 0)
-    {
-//	    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "invoke command \"%s\" without parameters.\n%s", CMD_NM,
-//		     "This command required directory name to change.");
-//	    return ESP_ERR_INVALID_ARG;
+    if (dirname == NULL || /*strcmp(dirname, "") == 0*/ dirname[0] == '\0')
+//    {
 	    ESP_LOGI(CMD_TAG_PRFX CMD_NM, "Not specified directory for jump to, change current dir to %s, [mountpoint].", device.mountpath());
-	    err = device.change_currdir(device.mountpath());
-    } /* if dirname == NULL || strcmp(dirname, "") */
+//	    err = device.change_currdir(device.mountpath());
+//    } /* if dirname == NULL || strcmp(dirname, "") */
     else
-    {
-	//cout << "Change current dir to " << dirname << endl;
+//    {
 	ESP_LOGI(CMD_TAG_PRFX CMD_NM, "Change current dir to %s", dirname);
-	//chdir(dirname);
-	// change cwd dir
-	err = device.change_currdir(dirname);
-    }; /* else if dirname == NULL || strcmp(dirname, "") */
+//	//chdir(dirname);
+//	// change cwd dir
+//	err = device.change_currdir(dirname);
+//    }; /* else if dirname == NULL || strcmp(dirname, "") */
+    //chdir(dirname);
+    // change cwd dir
+    err = device.change_currdir(dirname);
 //    if (errno != 0)
     if (err != 0)
     {

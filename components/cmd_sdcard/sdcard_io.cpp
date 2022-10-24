@@ -502,8 +502,8 @@ esp_err_t CWD_emulating::change_dir(const char path[])
 
 //---------------------------------------------------------------------------
 
-    ESP_LOGI("CWD_emulating::change_dir", "The \"path\" parameter is: \"%s\"", path);
-    ESP_LOGI("CWD_emulating::change_dir", "The \"tmpstr\" variable is: \"%s\"", tmpstr);
+    ESP_LOGD("CWD_emulating::change_dir", "The \"path\" parameter is: \"%s\"", path);
+    ESP_LOGD("CWD_emulating::change_dir", "The \"tmpstr\" variable is: \"%s\"", tmpstr);
 
     if (tmpstr == nullptr || tmpstr[0] == '\0')
     {
@@ -516,7 +516,7 @@ esp_err_t CWD_emulating::change_dir(const char path[])
 		"\t\t\t\tcurrent directory was not changing", tmpstr);
 	return ESP_ERR_NOT_FOUND;
     }; /* if stat(tmpstr, &statbuf) == -1 */
-    ESP_LOGI("CWD_emulating::change_dir", "%s is %s\n", tmpstr,
+    ESP_LOGI("CWD_emulating::change_dir", "to %s which is a %s\n", tmpstr,
 	    (S_ISLNK(statbuf.st_mode))? "[symlink]":
 	    (S_ISREG(statbuf.st_mode))? "(file)":
 	    (S_ISDIR(statbuf.st_mode))? "<DIR>":
@@ -584,20 +584,36 @@ esp_err_t Device::mount(Card& excard, const char mountpoint[])
     card  = &excard;
     target = mountpoint;
 
-    ret = esp_vfs_fat_sdmmc_mount(mountpoint, /*&*/_host/*.cfg*/, /*&*/_host.slot()/*.cfg*/, &mnt, &card->self);
+    ret = esp_vfs_fat_sdmmc_mount(mountpoint, _host, _host.slot(), &mnt, &card->self);
     if (ret != ESP_OK)
     {
 	if (ret == ESP_FAIL)
-	    cout << TAG << ": " << "Failed to mount filesystem. "
-		<< "If you want the card to be formatted, set the EXAMPLE_FORMAT_IF_MOUNT_FAILED menuconfig option.";
+//	    cout << TAG << ": " << "Failed to mount filesystem. "
+//		<< "If you want the card to be formatted, set the EXAMPLE_FORMAT_IF_MOUNT_FAILED menuconfig option.";
+	    ESP_LOGI(TAG, "Failed to mount filesystem. %s",
+		"If you want the card to be formatted, set the EXAMPLE_FORMAT_IF_MOUNT_FAILED menuconfig option.");
 	else
-	    cout << TAG << ": " << "Failed to initialize the card (error " << ret << ", " << esp_err_to_name(ret) << "). "
-		<< "Make sure SD card lines have pull-up resistors in place.";
+//	    cout << TAG << ": " << "Failed to initialize the card (error " << ret << ", " << esp_err_to_name(ret) << "). "
+//		<< "Make sure SD card lines have pull-up resistors in place.";
+	    ESP_LOGI(TAG, "Failed to initialize the card (error %d, %s). %s", ret,  esp_err_to_name(ret),
+		"Make sure SD card lines have pull-up resistors in place.");
 	return ret;
     }; /* if ret != ESP_OK */
 
-    //ESP_LOGI(TAG, "Filesystem mounted");
-    cout << TAG << ": " "Filesystem mounted sucessfully";
+    ESP_LOGI(TAG, "Filesystem mounted at the %s", mountpath());
+
+#ifdef CONFIG_AUTO_CHDIR_BEHIND_MOUNTING
+//    change_currdir(DIRECTORY_FOR_AUTOCHANGE);
+    change_currdir(mountpath());
+    ESP_LOGI(TAG, "Current directory autochanged to: %s", fake_cwd_path);
+#else
+//    change_currdir("/");
+    getcwd(fake_cwd_path, sizeof(fake_cwd_path));	// set fake_cwd according system pwd (through get_cwd())
+    ESP_LOGI(TAG, "Current directory set to: %s,  according system pwd", fake_cwd_path);
+#endif
+
+//    cout << TAG << ": " "Filesystem mounted sucessfully";
+
     return ret;
 }; /* Device::mount(Card&, char[]) */
 
@@ -627,15 +643,32 @@ esp_err_t Device::unmount()
 //    }; /* if mountpath == NULL || strcmp(mountpath, "") == 0 */
     ret = esp_vfs_fat_sdcard_unmount(target, card->self);
     //ESP_LOGI(TAG, "Card unmounted");
-    if (ret == ESP_OK)
-	cout << TAG << ": " << "Card unmounted" << endl;
-    else
-	cout << TAG << ": "  << "Error: " << ret
-	    << ", " << esp_err_to_name(ret) << endl;
+    if (ret != ESP_OK)
+    {
+//	cout << TAG << ": "  << "Error: " << ret
+//	    << ", " << esp_err_to_name(ret) << endl;
+	ESP_LOGE(TAG, "Error: %d, %s", ret, esp_err_to_name(ret));
+	return ret;
+    }; /* if ret != ESP_OK */
+
+//    cout << TAG << ": " << "Card unmounted" << endl;
+    ESP_LOGI(TAG, "Card at %s unmounted", mountpath());
+    card = nullptr;	// card is unmounted - clear this field as unmounted sign
+    clean_mountpath();
+    fake_cwd_path[0] = '\0';	// set fake cwd path to: ""
     return ret;
 }; /* Device::unmount */
 //    esp_err_t unmount(sdmmc_card_t *card);	// Unmount SD-card "card", mounted onto default mountpath
 //    esp_err_t unmount(const char *base_path, sdmmc_card_t *card);	// Unmount mounted SD-card "card", mounted onto mountpath
+
+
+//// change cwd dir
+//esp_err_t Device::change_currdir(const char path[])
+//{
+//    if (path == nullptr || path[0] == '\0')
+//	return fake_cwd.change_dir(mountpath());
+//    return fake_cwd.change_dir(path);
+//}; /* Device::change_currdir */
 
 
 //const char *Device::MOUNT_POINT_Default = MOUNT_POINT_def;
