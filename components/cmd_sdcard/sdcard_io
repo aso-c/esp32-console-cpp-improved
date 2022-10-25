@@ -723,7 +723,7 @@ public:
 
     // get current dir (if path == NULL or "") or generate fullpath for sended path
     // absent trailing slash in returned string is guaranteed
-    const char* get(const char path[] = nullptr);
+    char* get(const char path[] = nullptr);
     // change cwd dir
     esp_err_t change_dir(const char path[]);
 
@@ -765,7 +765,7 @@ struct Device
 
     // get current dir (if path == NULL or "") or generate fullpath for sended path
     // absent trailing slash in returned string is guaranteed
-    const char* get_cwd(const char path[] = nullptr) {return fake_cwd.get(path);};
+    char* get_cwd(const char path[] = nullptr) {return fake_cwd.get(path);};
     // change cwd dir
     esp_err_t change_currdir(const char path[])
     { return fake_cwd.change_dir( (path == nullptr || path[0] == '\0')? mountpath(): path); }

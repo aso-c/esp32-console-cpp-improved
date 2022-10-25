@@ -438,7 +438,7 @@ Slot& Slot::operator =(sdmmc_slot_config_t&& config) noexcept
 
 // get current dir (if path == NULL or "") or generate fullpath for sended path
 // trailing slash in returned string is absent
-const char* CWD_emulating::get(const char path[])
+char* CWD_emulating::get(const char path[])
 {
 	const char* src;
     // if empty path or relativly path - use pwd
@@ -448,10 +448,11 @@ const char* CWD_emulating::get(const char path[])
 	src = path;	// copy to operative_buffer from path
 
     ESP_LOGD("CWD_emulating:", "%s: The \"src\" variable is %s",  __func__, src);
+    operative_path_buff[0] = '\0';	// assign "" to operative_path_buff
     if (strlen(src) + 1 < sizeof(operative_path_buff) / sizeof(char))
 	strcpy(operative_path_buff, src);
     else
-	return "";	// path don't fit in operative_path_buff
+	return operative_path_buff;	// path don't fit in operative_path_buff
      ESP_LOGD("CWD_emulating:", "%s: operative_path_buff is \"%s\"", __func__, operative_path_buff);
 
     // if path is empty - all done
@@ -475,7 +476,11 @@ const char* CWD_emulating::get(const char path[])
 	// copy path on top of base bath
 	if (strlen(operative_path_buff) + strlen(path) < sizeof(operative_path_buff) / sizeof(char))
 	    strcat(operative_path_buff, path);
-	else return "";
+	else
+	{
+	    operative_path_buff[0] = '\0';	// assign "" to a operative_path_buff
+	    return operative_path_buff;
+	}; /* else if strlen(operative_path_buff) + strlen(path) < sizeof(operative_path_buff) / sizeof(char) */
     }; /* if path[0] != '/' */
 
 
@@ -581,6 +586,14 @@ esp_err_t Device::mount(Card& excard, const char mountpoint[])
 {
 	esp_err_t ret;
 
+    // if card already mounted - exit with error
+    if (card)
+    {
+	ESP_LOGE(TAG, "%s: card already mounted at the %s, refuse to mount again", __func__, mountpath());
+//	return ESP_ERR_INVALID_STATE;
+	return ESP_ERR_NOT_SUPPORTED;
+    }; /* if card */
+
     card  = &excard;
     target = mountpoint;
 
@@ -634,7 +647,15 @@ esp_err_t Device::mount(Card& excard, const char mountpoint[])
 esp_err_t Device::unmount()
 {
 
-    esp_err_t ret;
+	esp_err_t ret;
+
+    // if card already mounted - exit with error
+    if (!card)
+    {
+	ESP_LOGE(TAG, "%s: mounted card is absent, nothing to unmount", __func__);
+	return ESP_ERR_NOT_FOUND;
+    }; /* if card */
+
 //    if (mountpath == NULL || strcmp(mountpath, "") == 0)
 //    {
 //	cout << TAG << ": " << "Call: unmount(" << mounting.target << ");" << endl;

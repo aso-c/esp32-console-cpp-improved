@@ -806,7 +806,7 @@ esp_err_t SDctrl::act_mnt()
 {
     esp_err_t res;
 
-    device.host().set_card_clk(40000);	// test for low speed
+    //device.host().set_card_clk(40000);	// test for low speed
 
     switch (argc)
     {

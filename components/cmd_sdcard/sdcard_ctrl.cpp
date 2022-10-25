@@ -352,17 +352,9 @@ esp_err_t Server::cd(SDMMC::Device& device, const char dirname[])
 
 #ifdef __PURE_C__
     if (dirname == NULL || /*strcmp(dirname, "") == 0*/ dirname[0] == '\0')
-//    {
 	    ESP_LOGI(CMD_TAG_PRFX CMD_NM, "Not specified directory for jump to, change current dir to %s, [mountpoint].", device.mountpath());
-//	    err = device.change_currdir(device.mountpath());
-//    } /* if dirname == NULL || strcmp(dirname, "") */
     else
-//    {
 	ESP_LOGI(CMD_TAG_PRFX CMD_NM, "Change current dir to %s", dirname);
-//	//chdir(dirname);
-//	// change cwd dir
-//	err = device.change_currdir(dirname);
-//    }; /* else if dirname == NULL || strcmp(dirname, "") */
     //chdir(dirname);
     // change cwd dir
     err = device.change_currdir(dirname);
@@ -410,12 +402,13 @@ esp_err_t Server::ls(SDMMC::Device& device, const char pattern[])
     	int entry_cnt = 0;
 	DIR *dir;	// Directory descriptor
 	struct stat statbuf;	// buffer for stat
-	char* in_pattern = (char*)malloc(strlen(pattern) + 1);
+	char* in_pattern = /*(char*)malloc(strlen(pattern) + 1)*/device.get_cwd(pattern);
 
-    strcpy(in_pattern, pattern);
-    ESP_LOGI(CMD_TAG_PRFX CMD_NM, "+++ inner pattern before trailing slash processing: \"%s\"", in_pattern);
-    if (in_pattern[strlen(in_pattern) - 1] == '/' && strlen(in_pattern) > 1)
-	in_pattern[strlen(in_pattern) - 1] = '\0';	// drop trailing slash
+//    strcpy(in_pattern, pattern);
+    ESP_LOGI(CMD_TAG_PRFX CMD_NM, "+++ pattern is                                   : \"%s\"", pattern);
+//    ESP_LOGI(CMD_TAG_PRFX CMD_NM, "+++ inner pattern before trailing slash processing: \"%s\"", in_pattern);
+//    if (in_pattern[strlen(in_pattern) - 1] == '/' && strlen(in_pattern) > 1)
+//	in_pattern[strlen(in_pattern) - 1] = '\0';	// drop trailing slash
     ESP_LOGI(CMD_TAG_PRFX CMD_NM, "--- inner pattern after trailing slash processing: \"%s\"", in_pattern);
 
     if (stat(in_pattern, &statbuf) == -1)
@@ -425,9 +418,10 @@ esp_err_t Server::ls(SDMMC::Device& device, const char pattern[])
     }; /* if stat(tmpstr, &statbuf) == -1 */
     if (!S_ISDIR(statbuf.st_mode))
     {
-	if (pattern[strlen(pattern) - 1] == '/')
+	if (pattern[strlen(pattern) - 1] == '/' || pattern[strlen(pattern) - 1] == '.')
 	{
-	    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Name of the file or other similar entity that is not a directory - cannot end with a slash; pattern \"%s\" is invalid", pattern);
+	    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Name of the file or other similar entity that is not a directory -\n"
+		    "\t\t\t\tcannot end with a slash or a dot; pattern \"%s\" is invalid", pattern);
 	    return ESP_ERR_INVALID_ARG;
 	}; /* if pattern[strlen(pattern) - 1] == '/' */
 
@@ -475,7 +469,7 @@ esp_err_t Server::ls(SDMMC::Device& device, const char pattern[])
     }; /* if errno != 0 */
     closedir(dir);
     cout << endl;
-    free(in_pattern);
+  //  free(in_pattern);
 //#else
 //#endif
     return ret;
