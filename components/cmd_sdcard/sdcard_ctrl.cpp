@@ -403,14 +403,48 @@ static int listing_direntries_Cpp(DIR *dir, const char path[]);
 
 
 // print a list of files in the specified directory
-esp_err_t Server::ls(const char pattern[])
+esp_err_t Server::ls(SDMMC::Device& device, const char pattern[])
 {
 //#if defined(__PURE_C__) || __cplusplus < 201703L
 //#ifdef __PURE_C__
     	int entry_cnt = 0;
 	DIR *dir;	// Directory descriptor
+	struct stat statbuf;	// buffer for stat
+	char* in_pattern = (char*)malloc(strlen(pattern) + 1);
 
-    dir = opendir(pattern);
+    strcpy(in_pattern, pattern);
+    ESP_LOGI(CMD_TAG_PRFX CMD_NM, "+++ inner pattern before trailing slash processing: \"%s\"", in_pattern);
+    if (in_pattern[strlen(in_pattern) - 1] == '/' && strlen(in_pattern) > 1)
+	in_pattern[strlen(in_pattern) - 1] = '\0';	// drop trailing slash
+    ESP_LOGI(CMD_TAG_PRFX CMD_NM, "--- inner pattern after trailing slash processing: \"%s\"", in_pattern);
+
+    if (stat(in_pattern, &statbuf) == -1)
+    {
+	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Listing dir is failed - pattern \"%s\" is not exist", pattern);
+	return ESP_ERR_NOT_FOUND;
+    }; /* if stat(tmpstr, &statbuf) == -1 */
+    if (!S_ISDIR(statbuf.st_mode))
+    {
+	if (pattern[strlen(pattern) - 1] == '/')
+	{
+	    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Name of the file or other similar entity that is not a directory - cannot end with a slash; pattern \"%s\" is invalid", pattern);
+	    return ESP_ERR_INVALID_ARG;
+	}; /* if pattern[strlen(pattern) - 1] == '/' */
+
+	ESP_LOGI(CMD_NM, "\n%s is a %s\n", pattern,
+		    (S_ISLNK(statbuf.st_mode))? "[symlink]":
+		    (S_ISREG(statbuf.st_mode))? "(file)":
+		    (S_ISDIR(statbuf.st_mode))? "<DIR>":
+		    (S_ISCHR(statbuf.st_mode))? "[char dev]":
+		    (S_ISBLK(statbuf.st_mode))? "[blk dev]":
+		    (S_ISFIFO(statbuf.st_mode))? "[FIFO]":
+		    (S_ISSOCK(statbuf.st_mode))? "[socket]":
+		    "[unknown type]");
+	return ESP_OK;
+    }; /* if (!S_ISDIR(statbuf.st_mode)) */
+
+
+    dir = opendir(in_pattern);
     if (!dir) {
 	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Error opening directory <%s>, %s", pattern, strerror(errno));
 	return ESP_FAIL;
@@ -422,9 +456,9 @@ esp_err_t Server::ls(const char pattern[])
     printf("----------------\n");
 
 #ifdef __PURE_C__
-    entry_cnt = listing_direntries_pureC(dir, pattern);
+    entry_cnt = listing_direntries_pureC(dir, in_pattern);
 #else
-    entry_cnt = listing_direntries_Cpp(dir, pattern);
+    entry_cnt = listing_direntries_Cpp(dir, in_pattern);
 #endif
     if (entry_cnt)
     {
@@ -441,6 +475,7 @@ esp_err_t Server::ls(const char pattern[])
     }; /* if errno != 0 */
     closedir(dir);
     cout << endl;
+    free(in_pattern);
 //#else
 //#endif
     return ret;

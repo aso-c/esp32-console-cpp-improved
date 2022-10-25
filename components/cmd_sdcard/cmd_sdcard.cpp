@@ -318,11 +318,11 @@ static int ls_act(int argc, char **argv)
     switch (argc)
     {
     case 1:
-	return exec_server.ls();
+	return exec_server.ls(device);
 	break;
 
     case 2:
-	return exec_server.ls(argv[1]);
+	return exec_server.ls(device, argv[1]);
 	break;
 
     default:
@@ -988,12 +988,12 @@ esp_err_t SDctrl::act_ls()
     {
     case 2:
 	cout << "...without parameters - use current dir." << endl;
-	return exec_server.ls();
+	return exec_server.ls(device);
 	break;
 
     case 3:
 	cout << "...with one parameter - use pattern or directory." << endl;
-	return exec_server.ls(argv[2]);
+	return exec_server.ls(device, argv[2]);
 	break;
 
     default:

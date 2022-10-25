@@ -731,7 +731,7 @@ private:
 
     char* const pwd;	// pointer to cwd buffer
     const size_t pwd_bufflen;
-    static char operative_path_buff[/*MAXPATHLEN*/PATH_MAX];	// temporary buffer for file fullpath composing
+    static char operative_path_buff[PATH_MAX];	// temporary buffer for file fullpath composing
 
 }; /* CWD_emulating */
 
