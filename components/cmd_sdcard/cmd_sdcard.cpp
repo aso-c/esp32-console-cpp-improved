@@ -13,12 +13,12 @@
 #include <stdarg.h>
 
 #include <string.h>
-#include <sys/unistd.h>
+//#include <sys/unistd.h>
 #include "esp_log.h"
 #include "esp_console.h"
 #include "esp_system.h"
 #include <argtable3/argtable3.h>
-#include <sys/unistd.h>
+#include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <regex>
@@ -190,11 +190,11 @@ static int mkdir_act(int argc, char **argv)
     switch (argc)
     {
     case 1:
-	return exec_server.mkdir();
+	return exec_server.mkdir(device);
 	break;
 
     case 2:
-	return exec_server.mkdir(argv[1]);
+	return exec_server.mkdir(device, argv[1]);
 	break;
 
     default:
@@ -233,11 +233,11 @@ static int rmdir_act(int argc, char **argv)
     switch (argc)
     {
     case 1:
-	return exec_server.rmdir();
+	return exec_server.rmdir(device);
 	break;
 
     case 2:
-	return exec_server.rmdir(argv[1]);
+	return exec_server.rmdir(device, argv[1]);
 	break;
 
     default:
@@ -915,12 +915,12 @@ esp_err_t SDctrl::act_mkdir()
     switch (argc)
     {
     case 2:
-	return exec_server.mkdir();
+	return exec_server.mkdir(device);
 	break;
 
     case 3:
 	cout << "...with one parameter - specified the name of the new directory." << endl;
-	return exec_server.mkdir(argv[2]);
+	return exec_server.mkdir(device, argv[2]);
 	break;
 
     default:
@@ -939,12 +939,12 @@ esp_err_t SDctrl::act_rmdir()
     switch (argc)
     {
     case 2:
-	return exec_server.rmdir();
+	return exec_server.rmdir(device);
 	break;
 
     case 3:
 	cout << "...with one parameter - specified the name directory to delete." << endl;
-	return exec_server.rmdir(argv[2]);
+	return exec_server.rmdir(device, argv[2]);
 	break;
 
     default:
