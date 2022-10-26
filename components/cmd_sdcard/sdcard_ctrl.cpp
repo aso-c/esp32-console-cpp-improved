@@ -225,43 +225,26 @@ esp_err_t Server::mkdir(SDMMC::Device& device, const char dirname[])
 
     if (dirname == NULL || strcmp(dirname, "") == 0)
     {
-	ESP_LOGE(CMD_TAG_PRFX /*CMD_NM*/, "%s: invoke command \"%s\" without parameters.\n%s", __func__, CMD_NM,
+	ESP_LOGE(CMD_TAG_PRFX, "%s: invoke command \"%s\" without parameters.\n%s", __func__, CMD_NM,
 		"This command required the creating directory name.");
 	return ESP_ERR_INVALID_ARG;
     }; /* if dirname == NULL || strcmp(dirname, "") */
 #ifdef __PURE_C__
 
-#define __SIMPLE_MK__
-#ifdef __SIMPLE_MK__
+    ESP_LOGI(CMD_TAG_PRFX, "%s: Create directory <%s>, real path is %s", __func__, dirname, path);
+
     if (stat(path, &statbuf) == 0)
         {
     	ESP_LOGE(CMD_TAG_PRFX, "%s: Invalid directory name - requested path \"%s\" is exist;\n", __func__, path);
     	return ESP_ERR_INVALID_ARG;
         }; /* if stat(tmpstr, &statbuf) == -1 */
     errno = 0;
-    ESP_LOGI(CMD_TAG_PRFX, "%s: Create directory with name \"%s\"", __func__, path /*device.get_cwd(dirname)*/);
+    //ESP_LOGI(CMD_TAG_PRFX, "%s: Create directory with name \"%s\"", __func__, path /*device.get_cwd(dirname)*/);
+    ::mkdir(path, /*0777*/ S_IRWXU | S_IRWXG | S_IRWXO);
     //::mkdir(device.get_pwd(dirname), /*0777*/ S_IRWXU | S_IRWXG | S_IRWXO);
-#else
-	const char *buf;
-	char *extrbuf = NULL;
-    if (dirname[strlen(dirname)-1] == '/')
-	buf = dirname;
-    else
-    {
-	extrbuf = (char*)malloc(strlen(dirname) + 2);
-	strcpy(extrbuf, dirname);
-	extrbuf[strlen(dirname)+1] = '\0';
-	extrbuf[strlen(dirname)] = '/';
-	buf = extrbuf;
-    }; /* else if (dirname[strlen(dirname)] == '/' */
-    cout << aso::format("Create directory \"%s\"") % buf << endl;
-    errno = 0;
-    ::mkdir(buf, /*0777*/ S_IRWXU | S_IRWXG | S_IRWXO);
-    free(extrbuf);
-#endif // __SIMPLE_MK__
     if (errno)
     {
-	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Error creating directory \"%s\": %s", dirname, strerror(errno));
+	ESP_LOGE(CMD_TAG_PRFX, "%s: Error creating directory \"%s\": %s", __func__, dirname, strerror(errno));
 	return ESP_FAIL;
     }; /* if (errno) */
     return ESP_OK;
@@ -283,25 +266,24 @@ esp_err_t Server::rmdir(SDMMC::Device& device, const char dirname[])
 
     if (dirname == NULL || strcmp(dirname, "") == 0)
     {
-	    ESP_LOGE(CMD_TAG_PRFX /*CMD_NM*/, "%s: invoke command \"%s\" without parameters.\n%s", __func__, CMD_NM,
+	    ESP_LOGE(CMD_TAG_PRFX, "%s: invoke command \"%s\" without parameters.\n%s", __func__, CMD_NM,
 		     "This command required the name of the deleting directory.");
 	    return ESP_ERR_INVALID_ARG;
     }; /* if dirname == NULL || strcmp(dirname, "") */
 #ifdef __PURE_C__
-    // cout << aso::format("Delete directory <%s>") % dirname << endl;
     ESP_LOGI(CMD_TAG_PRFX, "%s: Delete directory <%s>, real path is %s", __func__, dirname, path);
 
     // Check if destination directory or file exists before deleting
-    if (stat(/*dirname*/path, &st) != 0)
+    if (stat(path, &st) != 0)
     {
-        // deleting a non-existent directory is not possible
-	ESP_LOGE(CMD_TAG_PRFX /*CMD_NM*/, "%s: Directory \"%s\" is not exist - deleting a non-existent catalogue is not possible.\n%s", __func__, dirname, esp_err_to_name(ESP_ERR_NOT_FOUND));
+        // deleting a non-exist directory is not possible
+	ESP_LOGE(CMD_TAG_PRFX, "%s: Directory \"%s\" is not exist - deleting a non-existent catalogue is not possible.\n%s", __func__, dirname, esp_err_to_name(ESP_ERR_NOT_FOUND));
 	return ESP_ERR_NOT_FOUND;
     }; /* if stat(file_foo, &st) != 0 */
     if (!S_ISDIR(st.st_mode))
     {
-	ESP_LOGE(CMD_TAG_PRFX /*CMD_NM*/, "%s: The %s command delete directories, not the files.\n%s", __func__, CMD_NM, esp_err_to_name(ESP_ERR_NOT_SUPPORTED));
-	return ESP_ERR_NOT_SUPPORTED;
+	ESP_LOGE(CMD_TAG_PRFX, "%s: The %s command delete directories, not the files.\n%s", __func__, CMD_NM, esp_err_to_name(ESP_ERR_NOT_SUPPORTED));
+	return ESP_ERR_INVALID_ARG;
     }; /* if (S_ISDIR(st.st_mode)) */
 
 	DIR *dir = opendir(/*dirname*/path);	// Directory descriptor
@@ -313,23 +295,23 @@ esp_err_t Server::rmdir(SDMMC::Device& device, const char dirname[])
     closedir(dir);
     if (errno)
     {
-	ESP_LOGE(CMD_TAG_PRFX /*CMD_NM*/, "%s: Fail when closing directory \"%s\": %s", __func__, dirname, strerror(errno));
+	ESP_LOGE(CMD_TAG_PRFX, "%s: Fail when closing directory \"%s\": %s", __func__, dirname, strerror(errno));
 	return ESP_FAIL;
     }; /* if errno */
     if (entry)
     {
-	ESP_LOGE(CMD_TAG_PRFX /*CMD_NM*/, "%s: Directory \"%s\" is not empty, deletung non-emty directories "
+	ESP_LOGE(CMD_TAG_PRFX, "%s: Directory \"%s\" is not empty, deletung non-emty directories "
 		"is not supported.", __func__, dirname);
 	return ESP_ERR_NOT_SUPPORTED;
     }; /* if (entry) */
 
     errno = 0;
-    cout << aso::format("[[[ unlink the path [%s] ]]]") % path << endl;
+    //cout << aso::format("[[[ unlink the path [%s] ]]]") % path << endl;
+    unlink(path);
 //    unlink(dirname);
-    //unlink(path);
     if (errno)
     {
-	ESP_LOGE(CMD_TAG_PRFX /*CMD_NM*/, "%s: Fail when deleting \"%s\": %s", __func__, dirname, strerror(errno));
+	ESP_LOGE(CMD_TAG_PRFX, "%s: Fail when deleting \"%s\": %s", __func__, dirname, strerror(errno));
 	return ESP_FAIL;
     }; /* if errno */
 
@@ -354,10 +336,6 @@ esp_err_t Server::cd(SDMMC::Device& device, const char dirname[])
 	esp_err_t err;
 
 #ifdef __PURE_C__
-//    if (dirname == NULL || /*strcmp(dirname, "") == 0*/ dirname[0] == '\0')
-//	    ESP_LOGI(CMD_TAG_PRFX CMD_NM, "Not specified directory for jump to, change current dir to %s, [mountpoint].", device.mountpath());
-//    else
-//	ESP_LOGI(CMD_TAG_PRFX CMD_NM, "Change current dir to %s", dirname);
     if (dirname != nullptr && dirname[0] != '\0')
 	ESP_LOGI(CMD_TAG_PRFX, "%s: Change current dir to %s", __func__, dirname);
     else if (device.card != nullptr)
@@ -373,7 +351,7 @@ esp_err_t Server::cd(SDMMC::Device& device, const char dirname[])
 //    if (errno != 0)
     if (err != 0)
     //{
-	ESP_LOGE(CMD_TAG_PRFX /*CMD_NM*/, "%s: fail change directory to %s\n%s", __func__, dirname, /*strerror(errno)*/ esp_err_to_name(err));
+	ESP_LOGE(CMD_TAG_PRFX, "%s: fail change directory to %s\n%s", __func__, dirname, /*strerror(errno)*/ esp_err_to_name(err));
 	//perror(CMD_TAG_PRFX CMD_NM);
 //	return ESP_FAIL;
     //}; /* if errno != 0 */
