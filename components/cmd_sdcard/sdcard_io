@@ -719,13 +719,14 @@ class CWD_emulating
 {
 public:
     CWD_emulating(char cwdbuff[], size_t cwdbufflen):
-	pwd(cwdbuff), pwd_bufflen(cwdbufflen-1) {};
+	pwd(cwdbuff), pwd_bufflen(cwdbufflen) {};
 
     // get current dir (if path == NULL or "") or generate fullpath for sended path
     // absent trailing slash in returned string is guaranteed
     char* get(const char path[] = nullptr);
     // change cwd dir
     esp_err_t change_dir(const char path[]);
+    char* clearbuff() {operative_path_buff[0] = '\0'; return operative_path_buff;};	// clear operative path buffer - set it's value to ""
 
 private:
 
@@ -787,7 +788,7 @@ private:
     Host _host;
     const char* target = nullptr;
     esp_vfs_fat_sdmmc_mount_config_t mnt;
-    char fake_cwd_path[MAXPATHLEN + 1] = "";	// simulation current dir at this device
+    char fake_cwd_path[PATH_MAX] = "";	// simulation current dir at this device
     CWD_emulating fake_cwd;
 
 }; /* struct Device */

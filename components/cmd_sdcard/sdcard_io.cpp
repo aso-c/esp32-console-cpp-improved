@@ -448,20 +448,22 @@ char* CWD_emulating::get(const char path[])
 	src = path;	// copy to operative_buffer from path
 
     ESP_LOGD("CWD_emulating:", "%s: The \"src\" variable is %s",  __func__, src);
-    operative_path_buff[0] = '\0';	// assign "" to operative_path_buff
-    if (strlen(src) + 1 < sizeof(operative_path_buff) / sizeof(char))
+//    operative_path_buff[0] = '\0';	// assign "" to operative_path_buff
+    if (strlen(src) < sizeof(operative_path_buff) / sizeof(char))
 	strcpy(operative_path_buff, src);
     else
-	return operative_path_buff;	// path don't fit in operative_path_buff
+//	return operative_path_buff;	// path don't fit in operative_path_buff
+	return clearbuff();	// path don't fit in operative_path_buff - error, return empty str
      ESP_LOGD("CWD_emulating:", "%s: operative_path_buff is \"%s\"", __func__, operative_path_buff);
 
     // if path is empty - all done
     if (path == nullptr || path[0] == '\0')
 	return operative_path_buff;
 
-    // another relatively path - finalize processing
+    // another relative path - finalize processing
     if (path[0] != '/')
     {
+	if (strlen(operative_path_buff))
  	ESP_LOGD("CWD_emulating:", "%s: processing relative path: updating path on top of the current pwd", __func__);
 	// add a trailing slash at end of the relative path base
 	if (operative_path_buff[strlen(operative_path_buff) - 1] != '/')

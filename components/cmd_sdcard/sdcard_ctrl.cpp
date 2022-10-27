@@ -231,7 +231,7 @@ esp_err_t Server::mkdir(SDMMC::Device& device, const char dirname[])
     }; /* if dirname == NULL || strcmp(dirname, "") */
 #ifdef __PURE_C__
 
-    ESP_LOGI(CMD_TAG_PRFX, "%s: Create directory <%s>, real path is %s", __func__, dirname, path);
+    ESP_LOGI(CMD_TAG_PRFX, "%s: Create directory with name \"%s\", real path is %s", __func__, dirname, path);
 
     if (stat(path, &statbuf) == 0)
         {
@@ -239,9 +239,7 @@ esp_err_t Server::mkdir(SDMMC::Device& device, const char dirname[])
     	return ESP_ERR_INVALID_ARG;
         }; /* if stat(tmpstr, &statbuf) == -1 */
     errno = 0;
-    //ESP_LOGI(CMD_TAG_PRFX, "%s: Create directory with name \"%s\"", __func__, path /*device.get_cwd(dirname)*/);
     ::mkdir(path, /*0777*/ S_IRWXU | S_IRWXG | S_IRWXO);
-    //::mkdir(device.get_pwd(dirname), /*0777*/ S_IRWXU | S_IRWXG | S_IRWXO);
     if (errno)
     {
 	ESP_LOGE(CMD_TAG_PRFX, "%s: Error creating directory \"%s\": %s", __func__, dirname, strerror(errno));
@@ -394,24 +392,27 @@ esp_err_t Server::ls(SDMMC::Device& device, const char pattern[])
 	struct stat statbuf;	// buffer for stat
 	char* in_pattern = device.get_cwd(pattern);
 
-    ESP_LOGD(CMD_TAG_PRFX CMD_NM, "pattern is             : \"%s\"", pattern);
-    ESP_LOGD(CMD_TAG_PRFX CMD_NM, "processed inner pattern: \"%s\"", in_pattern);
+    ESP_LOGD(CMD_TAG_PRFX, "%s: pattern is             : \"%s\"", __func__, pattern);
+    ESP_LOGD(CMD_TAG_PRFX, "%s: processed inner pattern: \"%s\"", __func__, in_pattern);
 
     if (stat(in_pattern, &statbuf) == -1)
     {
-	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Listing dir is failed - pattern \"%s\" is not exist", pattern);
+	ESP_LOGE(CMD_TAG_PRFX, "%s: Listing dir is failed - pattern \"%s\" is not exist", __func__, pattern);
 	return ESP_ERR_NOT_FOUND;
     }; /* if stat(tmpstr, &statbuf) == -1 */
     if (!S_ISDIR(statbuf.st_mode))
     {
 	if (pattern[strlen(pattern) - 1] == '/' || pattern[strlen(pattern) - 1] == '.')
 	{
-	    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Name of the file or other similar entity that is not a directory -\n"
-		    "\t\t\t\tcannot end with a slash or a dot; pattern \"%s\" is invalid", pattern);
+//	    ESP_LOGE(CMD_TAG_PRFX, "%s: Name of the file or other similar entity that is not a directory -\n"
+//		    "\t\t\t\tcannot end with a slash or a dot; pattern \"%s\" is invalid", __func__, pattern);
+	    ESP_LOGE(CMD_TAG_PRFX, "%s: %s -\n\t\t\t\t%s; pattern \"%s\" is invalid", __func__,
+		    "Name of the file or other similar entity that is not a directory",
+		    "cannot end with a slash or a dot", pattern);
 	    return ESP_ERR_INVALID_ARG;
 	}; /* if pattern[strlen(pattern) - 1] == '/' */
 
-	ESP_LOGI(CMD_NM, "\n%s %s, %ld blocks, block size %ld, file size %ld bytes\n", pattern,
+	ESP_LOGI(/*CMD_NM*/__func__, "\n%s %s, %ld blocks, block size %ld, file size %ld bytes\n", pattern,
 		    (S_ISLNK(statbuf.st_mode))? "[symlink]":
 		    (S_ISREG(statbuf.st_mode))? "(file)":
 		    (S_ISDIR(statbuf.st_mode))? "<DIR>":
@@ -427,7 +428,7 @@ esp_err_t Server::ls(SDMMC::Device& device, const char pattern[])
 
     dir = opendir(in_pattern);
     if (!dir) {
-	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Error opening directory <%s>, %s", pattern, strerror(errno));
+	ESP_LOGE(CMD_TAG_PRFX, "%s: Error opening directory <%s>, %s", __func__, pattern, strerror(errno));
 	return ESP_FAIL;
     }; /* if !dir */
 
@@ -451,7 +452,7 @@ esp_err_t Server::ls(SDMMC::Device& device, const char pattern[])
 
     if (errno != 0)
     {
-	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Error occured during reading of the directory <%s>, %s", pattern, strerror(errno));
+	ESP_LOGE(CMD_TAG_PRFX, "%s: Error occured during reading of the directory <%s>, %s", __func__, pattern, strerror(errno));
 	ret = ESP_FAIL;
     }; /* if errno != 0 */
     closedir(dir);
@@ -587,13 +588,13 @@ esp_err_t Server::cp(const char src[], const char dest[])
 {
     if (dest == NULL || strcmp(dest, "") == 0)
     {
-	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "too few arguments: invoke command \"%s\" with one parameters.\n%s", CMD_NM,
+	ESP_LOGE(CMD_TAG_PRFX, "%s: too few arguments: invoke command \"%s\" with one parameters.\n%s", __func__, __func__,
 		"Don't know where to copy?");
 	return ESP_ERR_INVALID_ARG;
     }; /* if dest == NULL || strcmp(dest, "") */
     if (src == NULL || strcmp(src, "") == 0)
     {
-	    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "too few arguments: invoke command \"%s\" without parameters.\n%s", CMD_NM,
+	    ESP_LOGE(CMD_TAG_PRFX, "%s: too few arguments: invoke command \"%s\" without parameters.\n%s", __func__, __func__,
 		     "Don't know what to copy?");
 	    return ESP_ERR_INVALID_ARG;
     }; /* if src == NULL || strcmp(src, "") */
@@ -654,43 +655,53 @@ esp_err_t Server::mv(const char src[], const char dest[])
 #define CMD_NM "rm"
 
 // remove files according a pattern
-esp_err_t Server::rm(const char pattern[])
+esp_err_t Server::rm(SDMMC::Device& device, const char pattern[])
 {
+
+	struct stat st;
+	char *path = device.get_cwd(pattern);
+
     if (pattern == NULL || strcmp(pattern, "") == 0)
     {
-	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "invoke command \"%s\" without parameters.\n%s", CMD_NM,
+	ESP_LOGE(CMD_TAG_PRFX, "%s: invoke command \"%s\" without parameters.\n%s", __func__, __func__,
 		"Missing filename to remove.");
 	return ESP_ERR_INVALID_ARG;
     }; /* if pattern == NULL || strcmp(pattern, "") */
 
-    cout << "Delete file " << '"' << pattern << '"' << endl;
+//    cout << "Delete file " << '"' << pattern << '"' << endl;
+    ESP_LOGI(CMD_TAG_PRFX, "%s: Delete file \"%s\", real file name \"%s\"", __func__,  pattern, path);
 #ifdef __PURE_C__
 
+#if 0
     // Check if destination file exists before deleting
-    struct stat st;
-    if (stat(pattern, &st) != 0)
+    if (stat(/*pattern*/path, &st) != 0)
     {
         // deleting a non-existent file is not possible
-	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "File \"%s\" is not exist - deleting a non-existent file is not possible.\n%s", pattern, esp_err_to_name(ESP_ERR_NOT_FOUND));
+	ESP_LOGE(CMD_TAG_PRFX, "%s: File \"%s\" is not exist - deleting a non-existent file is not possible.\n%s",
+		__func__, pattern, esp_err_to_name(ESP_ERR_NOT_FOUND));
 	return ESP_ERR_NOT_FOUND;
     }; /* if stat(file_foo, &st) != 0 */
     if (S_ISDIR(st.st_mode))
     {
-	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Deleting directories by command \"%s\" is impossible.\n%s", CMD_NM, esp_err_to_name(ESP_ERR_NOT_SUPPORTED));
+	ESP_LOGE(CMD_TAG_PRFX, "%s: Deleting directories unsupported.\n%s",
+		__func__, esp_err_to_name(ESP_ERR_NOT_SUPPORTED));
 	return ESP_ERR_NOT_SUPPORTED;
     }; /* if (S_ISDIR(st.st_mode)) */
     errno = 0;
-//    cout << "Now exec: ===>> " << "unlink(pattern)" << "<<===" << endl;
-    unlink(pattern);
+//    cout << "Now exec: ===>> " << aso::format("unlink(%s)") % /*pattern*/path << "<<===" << endl;
+    cout << "Now exec: ===>>" << " unlink(" << path << ") " << "<<===" << endl;
+    //unlink(path);
+//    unlink(pattern);
     if (errno)
     {
-	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Faile when deleting \"%s\": %s", CMD_NM, strerror(errno));
+	ESP_LOGE(CMD_TAG_PRFX, "%s: Fail when deleting \"%s\": %s", __func__, pattern, strerror(errno));
 	return ESP_FAIL;
     }; /* if errno */
+#endif
 
     return ESP_OK;
 #else
-    ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Command \"%s\" is not yet implemented now for C++ edition.", CMD_NM);
+    ESP_LOGW(CMD_TAG_PRFX, "%s: Command \"%s\" is not yet implemented now for C++ edition.", __func__, CMD_NM);
     return ESP_ERR_INVALID_VERSION;
 #endif
 }; /* Server::rm */

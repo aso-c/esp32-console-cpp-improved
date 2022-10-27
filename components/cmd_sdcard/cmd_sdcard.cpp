@@ -456,12 +456,12 @@ static int rm_act(int argc, char **argv)
     switch (argc)
     {
     case 1:
-	return exec_server.rm();
+	return exec_server.rm(device);
 	break;
 
     case 2:
 	cout << "...with one parameter - OK, specified the filename to delete." << endl;
-	return exec_server.rm(argv[1]);
+	return exec_server.rm(device, argv[1]);
 	break;
 
     default:
@@ -1073,12 +1073,12 @@ esp_err_t SDctrl::act_rm()
     {
     case 2:
 	cout << "...without parameters - error." << endl;
-	return exec_server.rm();
+	return exec_server.rm(device);
 	break;
 
     case 3:
 	cout << "...with one parameter - remove file." << endl;
-	return exec_server.rm(argv[2]);
+	return exec_server.rm(device, argv[2]);
 	break;
 
     default:
