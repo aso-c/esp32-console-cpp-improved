@@ -421,7 +421,7 @@ esp_err_t Server::ls(SDMMC::Device& device, const char pattern[])
 		    (S_ISFIFO(statbuf.st_mode))? "[FIFO]":
 		    (S_ISSOCK(statbuf.st_mode))? "[socket]":
 		    "[unknown type]", statbuf.st_blocks, statbuf.st_blksize,
-		    statbuf.st_blocks * statbuf.st_blksize);
+		    /*statbuf.st_blocks * statbuf.st_blksize,*/ statbuf.st_size);
 	return ESP_OK;
     }; /* if (!S_ISDIR(statbuf.st_mode)) */
 
