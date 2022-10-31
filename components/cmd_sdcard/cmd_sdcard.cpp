@@ -500,11 +500,11 @@ static int cat_act(int argc, char **argv)
     switch (argc)
     {
     case 1:
-	return exec_server.cat();
+	return exec_server.cat(device);
 	break;
 
     case 2:
-	return exec_server.cat(argv[1]);
+	return exec_server.cat(device, argv[1]);
 	break;
 
     default:
@@ -1097,11 +1097,11 @@ esp_err_t SDctrl::act_cat()
     switch (argc)
     {
     case 2:
-	return exec_server.cat();
+	return exec_server.cat(device);
 	break;
 
     case 3:
-	return exec_server.cat(argv[2]);
+	return exec_server.cat(device, argv[2]);
 	break;
 
     default:

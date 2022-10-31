@@ -63,7 +63,7 @@ public:
     esp_err_t rm(SDMMC::Device&, const char pattern[] = NULL);	// remove files according a pattern
     esp_err_t rmdir(SDMMC::Device&, const char dirname[] = NULL);   // remove an empty existing directory
 
-    esp_err_t cat(const char fname[] = NULL);	// type file contents
+    esp_err_t cat(SDMMC::Device&, const char fname[] = NULL);	// type file contents
 
     esp_err_t type();	// type text from keyboard to screen
     esp_err_t type(const char fname[], size_t = 512);	// type text from keyboard to file and to screen

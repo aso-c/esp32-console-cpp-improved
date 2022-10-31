@@ -412,7 +412,7 @@ esp_err_t Server::ls(SDMMC::Device& device, const char pattern[])
 	    return ESP_ERR_INVALID_ARG;
 	}; /* if pattern[strlen(pattern) - 1] == '/' */
 
-	ESP_LOGI(/*CMD_NM*/__func__, "\n%s %s, %ld blocks, block size %ld, file size %ld bytes\n", pattern,
+	ESP_LOGI(__func__, "\n%s %s, file size %ld bytes\n", pattern,
 		    (S_ISLNK(statbuf.st_mode))? "[symlink]":
 		    (S_ISREG(statbuf.st_mode))? "(file)":
 		    (S_ISDIR(statbuf.st_mode))? "<DIR>":
@@ -420,8 +420,7 @@ esp_err_t Server::ls(SDMMC::Device& device, const char pattern[])
 		    (S_ISBLK(statbuf.st_mode))? "[blk dev]":
 		    (S_ISFIFO(statbuf.st_mode))? "[FIFO]":
 		    (S_ISSOCK(statbuf.st_mode))? "[socket]":
-		    "[unknown type]", statbuf.st_blocks, statbuf.st_blksize,
-		    /*statbuf.st_blocks * statbuf.st_blksize,*/ statbuf.st_size);
+		    "[unknown type]", statbuf.st_size);
 	return ESP_OK;
     }; /* if (!S_ISDIR(statbuf.st_mode)) */
 
@@ -434,7 +433,8 @@ esp_err_t Server::ls(SDMMC::Device& device, const char pattern[])
 
 	esp_err_t ret = ESP_OK;
 
-    printf("Files in the directory <%s>\n",  pattern);
+//    printf("Files in the directory <%s>\n",  pattern);
+    ESP_LOGI(__func__, "Files in the directory <%s>",  pattern);
     printf("----------------\n");
 
 #ifdef __PURE_C__
@@ -446,9 +446,13 @@ esp_err_t Server::ls(SDMMC::Device& device, const char pattern[])
     {
 	cout << "----------------" << endl;
 	cout << aso::format("Total found %d files", entry_cnt) << endl;
-    }
+    } /* if entry_cnt */
     else
-	cout << "Files or directory not found, directory is empty." << endl;
+    {
+//	cout << "Files or directory not found, directory is empty." << endl;
+	ESP_LOGW(__func__, "Files or directory not found, directory is empty.");
+	cout << "----------------" << endl;
+    }; /* else if entry_cnt */
 
     if (errno != 0)
     {
@@ -549,7 +553,7 @@ void ls_entry_printout_pure_C(const char fullpath[], const char name[])
 	struct stat statbuf;
 
     stat(fullpath, &statbuf);
-    printf("%s\n\t%s %s\n", fullpath, name,
+    printf("%s\tsize %ld bytes\n\t%s %s\n", fullpath, statbuf.st_size, name,
 	    (S_ISLNK(statbuf.st_mode))? "[symlink]":
 	    (S_ISREG(statbuf.st_mode))? "(file)":
 	    (S_ISDIR(statbuf.st_mode))? "<DIR>":
@@ -558,6 +562,18 @@ void ls_entry_printout_pure_C(const char fullpath[], const char name[])
 	    (S_ISFIFO(statbuf.st_mode))? "[FIFO]":
 	    (S_ISSOCK(statbuf.st_mode))? "[socket]":
 	    "[unknown type]");
+
+//	ESP_LOGI(__func__, "\n%s %s, file size %ld bytes\n", pattern,
+//		    (S_ISLNK(statbuf.st_mode))? "[symlink]":
+//		    (S_ISREG(statbuf.st_mode))? "(file)":
+//		    (S_ISDIR(statbuf.st_mode))? "<DIR>":
+//		    (S_ISCHR(statbuf.st_mode))? "[char dev]":
+//		    (S_ISBLK(statbuf.st_mode))? "[blk dev]":
+//		    (S_ISFIFO(statbuf.st_mode))? "[FIFO]":
+//		    (S_ISSOCK(statbuf.st_mode))? "[socket]":
+//		    "[unknown type]", statbuf.st_size);
+
+
 }; /* ls_entry_printout_pure_C */
 
 // Printout one entry of the dir, C++ edition
@@ -672,7 +688,6 @@ esp_err_t Server::rm(SDMMC::Device& device, const char pattern[])
     ESP_LOGI(CMD_TAG_PRFX, "%s: Delete file \"%s\", real file name \"%s\"", __func__,  pattern, path);
 #ifdef __PURE_C__
 
-#if 0
     // Check if destination file exists before deleting
     if (stat(/*pattern*/path, &st) != 0)
     {
@@ -688,8 +703,8 @@ esp_err_t Server::rm(SDMMC::Device& device, const char pattern[])
 	return ESP_ERR_NOT_SUPPORTED;
     }; /* if (S_ISDIR(st.st_mode)) */
     errno = 0;
-//    cout << "Now exec: ===>> " << aso::format("unlink(%s)") % /*pattern*/path << "<<===" << endl;
-    cout << "Now exec: ===>>" << " unlink(" << path << ") " << "<<===" << endl;
+    cout << "Now exec: ===>> " << aso::format("unlink(%s)") % /*pattern*/path << "<<===" << endl;
+//    cout << "Now exec: ===>>" << " unlink(" << path << ") " << "<<===" << endl;
     //unlink(path);
 //    unlink(pattern);
     if (errno)
@@ -697,7 +712,6 @@ esp_err_t Server::rm(SDMMC::Device& device, const char pattern[])
 	ESP_LOGE(CMD_TAG_PRFX, "%s: Fail when deleting \"%s\": %s", __func__, pattern, strerror(errno));
 	return ESP_FAIL;
     }; /* if errno */
-#endif
 
     return ESP_OK;
 #else
@@ -712,9 +726,13 @@ esp_err_t Server::rm(SDMMC::Device& device, const char pattern[])
 #define CMD_NM "cat"
 
 // type file contents
-esp_err_t Server::cat(const char fname[])
+esp_err_t Server::cat(SDMMC::Device& device, const char fname[])
 {
-    if (fname == NULL || strcmp(fname, "") == 0)
+	struct stat st;
+	char *fullname = device.get_cwd(fname);
+	FILE *text /*= fopen(fname, "r")*/; // open the file for type to screen
+
+    if (fname == NULL || strcmp(fullname, "") == 0)
     {
 	cout << endl
 	     << "*** Printing contents of the file <XXXX fname>. ***" << endl
@@ -727,18 +745,78 @@ esp_err_t Server::cat(const char fname[])
     }; /* if fname == NULL || strcmp(fname, "") */
 
     cout << endl
-	 << "*** Printing contents of the file <" << fname << ">. ***" << endl
+	 << aso::format("*** Printing contents of the file <%s> (realname '%s'). ***") % fname % fullname  << endl
 	 << endl;
 
 #ifdef __PURE_C__
 
-	FILE *text = fopen(fname, "r"); // open the file for type to screen
+    // Check if destination file exists before deleting
+    if (stat(fullname, &st) != 0)
+    {
+        // typing a non-exist file is not possible
+    	ESP_LOGE(CMD_TAG_PRFX, "%s: \"%s\" file does not exist - printing of the missing file is not possible.\n%s",
+    		__func__, fname, esp_err_to_name(ESP_ERR_NOT_FOUND));
+    	return ESP_ERR_NOT_FOUND;
+    }; /* if stat(path, &st) != 0 */
+
+    if (S_ISDIR(st.st_mode))
+    {
+    	ESP_LOGE(CMD_TAG_PRFX, "%s: Typing directories unsupported, use the 'ls' command instead.\n%s",
+    		__func__, esp_err_to_name(ESP_ERR_NOT_SUPPORTED));
+    	return ESP_ERR_NOT_SUPPORTED;
+    }; /* if (S_ISDIR(st.st_mode)) */
+
+    #if 0 // rm_content_inserted
+	struct stat st;
+	char *path = device.get_cwd(pattern);
+
+//if (pattern == NULL || strcmp(pattern, "") == 0)
+//{
+//	ESP_LOGE(CMD_TAG_PRFX, "%s: invoke command \"%s\" without parameters.\n%s", __func__, __func__,
+//		"Missing filename to remove.");
+//	return ESP_ERR_INVALID_ARG;
+//}; /* if pattern == NULL || strcmp(pattern, "") */
+
+//    cout << "Delete file " << '"' << pattern << '"' << endl;
+ESP_LOGI(CMD_TAG_PRFX, "%s: Delete file \"%s\", real file name \"%s\"", __func__,  pattern, path);
+#ifdef __PURE_C__
+
+// Check if destination file exists before deleting
+if (stat(/*pattern*/path, &st) != 0)
+{
+    // deleting a non-existent file is not possible
+	ESP_LOGE(CMD_TAG_PRFX, "%s: File \"%s\" is not exist - deleting a non-existent file is not possible.\n%s",
+		__func__, pattern, esp_err_to_name(ESP_ERR_NOT_FOUND));
+	return ESP_ERR_NOT_FOUND;
+}; /* if stat(file_foo, &st) != 0 */
+if (S_ISDIR(st.st_mode))
+{
+	ESP_LOGE(CMD_TAG_PRFX, "%s: Deleting directories unsupported.\n%s",
+		__func__, esp_err_to_name(ESP_ERR_NOT_SUPPORTED));
+	return ESP_ERR_NOT_SUPPORTED;
+}; /* if (S_ISDIR(st.st_mode)) */
+errno = 0;
+cout << "Now exec: ===>> " << aso::format("unlink(%s)") % /*pattern*/path << "<<===" << endl;
+//    cout << "Now exec: ===>>" << " unlink(" << path << ") " << "<<===" << endl;
+//unlink(path);
+//    unlink(pattern);
+if (errno)
+{
+	ESP_LOGE(CMD_TAG_PRFX, "%s: Fail when deleting \"%s\": %s", __func__, pattern, strerror(errno));
+	return ESP_FAIL;
+}; /* if errno */
+
+return ESP_OK;
+#endif // __PURE_C__
+#endif // rm_content_inserted
+
+//	FILE *text = fopen(fname, "r"); // open the file for type to screen
 
     errno = 0;	// clear possible errors
-    text = fopen(fname, "r"); // open the file for type to screen
+    text = fopen(fullname, "r"); // open the file for type to screen
     if (!text)
     {
-	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Error opening file <%s>, %s", fname, strerror(errno));
+	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Error opening file <%s> (%s), %s", fname, fullname, strerror(errno));
 	return ESP_FAIL;
     }; /* if !FILE */
 
@@ -748,7 +826,7 @@ esp_err_t Server::cat(const char fname[])
 //    putchar('\n');
     if (errno)
     {
-	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Error during type the file %s to output, %s", fname, strerror(errno));
+	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Error during type the file %s (%s) to output, %s", fname, fullname, strerror(errno));
 	return ESP_FAIL;
     }; /* if errno */
 
@@ -758,7 +836,6 @@ esp_err_t Server::cat(const char fname[])
     cout << endl
 	 << "*** End of printing file " << fname << ". **************" << endl
 	 << endl;
-//    return ESP_ERR_INVALID_VERSION;
     return ESP_OK;
 }; /* cat */
 

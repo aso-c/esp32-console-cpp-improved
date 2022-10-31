@@ -440,43 +440,36 @@ Slot& Slot::operator =(sdmmc_slot_config_t&& config) noexcept
 // trailing slash in returned string is absent
 char* CWD_emulating::get(const char path[])
 {
-	//const char* src;
-    // if empty path or relativly path - use pwd
-//    if (path == nullptr || path[0] == '\0' || path[0] != '/')
-    // argument - NULL or empty string
-    if (path == nullptr || path[0] == '\0')
-	return get(pwd);
-//	src = pwd;	// else copy to operative buffer from current dir path
-//    else
-//	src = path;	// copy to operative_buffer from path
-    ESP_LOGI("CWD_emulating:", "%s: \"path\" argument is %s",  __func__, path);
-//    operative_path_buff[0] = '\0';	// assign "" to operative_path_buff
+    ESP_LOGD("CWD_emulating:", "%s: \"path\" argument is %s",  __func__, path);
     // argument - absolute path
     if (path[0] == '/')
     {
-//    if (strlen(src) < sizeof(operative_path_buff) / sizeof(char))
-
 	if (strlen(path) < sizeof(operative_path_buff) / sizeof(char))
-//	    strcpy(operative_path_buff, src);
-//	    strcpy(operative_path_buff, path);
 	    /*return*/ realpath(path, operative_path_buff);
 	else
-//	    return operative_path_buff;	// path don't fit in operative_path_buff
 	    /*return*/ clearbuff();	// path don't fit in operative_path_buff - error, return empty str
-	ESP_LOGI("CWD_emulating:", "%s: operative_path_buff is \"%s\"", __func__, operative_path_buff);
+	ESP_LOGD("CWD_emulating:", "%s: operative_path_buff is \"%s\"", __func__, operative_path_buff);
 	return operative_path_buff;
 //	if (operative_path_buff[strlen(path)] == '/')
     }; /* if path[0] != '/' */
 
+    // operative_path_buff == "" --> catch it
+//    if (operative_path_buff[0] == '\0')
+    if (pwd[0] == '\0')
+	return operative_path_buff;
+
+    get(pwd);
+    // argument - NULL or empty string
+    if (path == nullptr || path[0] == '\0')
+//	return get(pwd);
 //    // if path is empty - all done
 //    if (path == nullptr || path[0] == '\0')
-//	return operative_path_buff;
+	return operative_path_buff;
 
-    // another relative path - finalize processing
-    if (path[0] != '/')
-    {
-	get(pwd);
-	//if (strlen(operative_path_buff))
+    // relative path - finalize processing
+//    if (path[0] != '/')
+//    {
+//	get(pwd);
  	ESP_LOGD("CWD_emulating:", "%s: processing relative path: updating path on top of the current pwd", __func__);
 	// add a trailing slash at end of the relative path base
 	if (operative_path_buff[strlen(operative_path_buff) - 1] != '/')
@@ -493,11 +486,7 @@ char* CWD_emulating::get(const char path[])
 	    strcat(operative_path_buff, path);
 	else
 	    return clearbuff();
-//	{
-//	    operative_path_buff[0] = '\0';	// assign "" to a operative_path_buff
-//	    return operative_path_buff;
-//	}; /* else if strlen(operative_path_buff) + strlen(path) < sizeof(operative_path_buff) / sizeof(char) */
-    }; /* if path[0] != '/' */
+//    }; /* if path[0] != '/' */
 
 
     // drop unneded trailing slash if it exist
