@@ -66,7 +66,7 @@ public:
     esp_err_t cat(SDMMC::Device&, const char fname[] = NULL);	// type file contents
 
     esp_err_t type();	// type text from keyboard to screen
-    esp_err_t type(const char fname[], size_t = 512);	// type text from keyboard to file and to screen
+    esp_err_t type(SDMMC::Device&, const char fname[], size_t = 512);	// type text from keyboard to file and to screen
 
 private:
     esp_err_t ret;

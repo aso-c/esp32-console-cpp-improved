@@ -200,7 +200,11 @@ esp_err_t Server::pwd(SDMMC::Device& device)
 //	char* buf = getcwd(NULL, 0);
 ////	size_t buflen = sizeof(buf) + 1;
 
+    ESP_LOGI("Server::pwd", "Entering to the 'pwd' command");
+
 	const char* buf = device.get_cwd();
+
+    ESP_LOGI("Server::pwd", "The 'buf' value is: '%s'", buf);
 
     if (!buf)
 	return errno;
@@ -449,7 +453,6 @@ esp_err_t Server::ls(SDMMC::Device& device, const char pattern[])
     } /* if entry_cnt */
     else
     {
-//	cout << "Files or directory not found, directory is empty." << endl;
 	ESP_LOGW(__func__, "Files or directory not found, directory is empty.");
 	cout << "----------------" << endl;
     }; /* else if entry_cnt */
@@ -461,8 +464,6 @@ esp_err_t Server::ls(SDMMC::Device& device, const char pattern[])
     }; /* if errno != 0 */
     closedir(dir);
     cout << endl;
-//#else
-//#endif
     return ret;
 }; /* Server::ls */
 
@@ -562,17 +563,6 @@ void ls_entry_printout_pure_C(const char fullpath[], const char name[])
 	    (S_ISFIFO(statbuf.st_mode))? "[FIFO]":
 	    (S_ISSOCK(statbuf.st_mode))? "[socket]":
 	    "[unknown type]");
-
-//	ESP_LOGI(__func__, "\n%s %s, file size %ld bytes\n", pattern,
-//		    (S_ISLNK(statbuf.st_mode))? "[symlink]":
-//		    (S_ISREG(statbuf.st_mode))? "(file)":
-//		    (S_ISDIR(statbuf.st_mode))? "<DIR>":
-//		    (S_ISCHR(statbuf.st_mode))? "[char dev]":
-//		    (S_ISBLK(statbuf.st_mode))? "[blk dev]":
-//		    (S_ISFIFO(statbuf.st_mode))? "[FIFO]":
-//		    (S_ISSOCK(statbuf.st_mode))? "[socket]":
-//		    "[unknown type]", statbuf.st_size);
-
 
 }; /* ls_entry_printout_pure_C */
 
@@ -730,7 +720,7 @@ esp_err_t Server::cat(SDMMC::Device& device, const char fname[])
 {
 	struct stat st;
 	char *fullname = device.get_cwd(fname);
-	FILE *text /*= fopen(fname, "r")*/; // open the file for type to screen
+	FILE *text = nullptr; // open the file for type to screen
 
     if (fname == NULL || strcmp(fullname, "") == 0)
     {
@@ -765,52 +755,6 @@ esp_err_t Server::cat(SDMMC::Device& device, const char fname[])
     		__func__, esp_err_to_name(ESP_ERR_NOT_SUPPORTED));
     	return ESP_ERR_NOT_SUPPORTED;
     }; /* if (S_ISDIR(st.st_mode)) */
-
-    #if 0 // rm_content_inserted
-	struct stat st;
-	char *path = device.get_cwd(pattern);
-
-//if (pattern == NULL || strcmp(pattern, "") == 0)
-//{
-//	ESP_LOGE(CMD_TAG_PRFX, "%s: invoke command \"%s\" without parameters.\n%s", __func__, __func__,
-//		"Missing filename to remove.");
-//	return ESP_ERR_INVALID_ARG;
-//}; /* if pattern == NULL || strcmp(pattern, "") */
-
-//    cout << "Delete file " << '"' << pattern << '"' << endl;
-ESP_LOGI(CMD_TAG_PRFX, "%s: Delete file \"%s\", real file name \"%s\"", __func__,  pattern, path);
-#ifdef __PURE_C__
-
-// Check if destination file exists before deleting
-if (stat(/*pattern*/path, &st) != 0)
-{
-    // deleting a non-existent file is not possible
-	ESP_LOGE(CMD_TAG_PRFX, "%s: File \"%s\" is not exist - deleting a non-existent file is not possible.\n%s",
-		__func__, pattern, esp_err_to_name(ESP_ERR_NOT_FOUND));
-	return ESP_ERR_NOT_FOUND;
-}; /* if stat(file_foo, &st) != 0 */
-if (S_ISDIR(st.st_mode))
-{
-	ESP_LOGE(CMD_TAG_PRFX, "%s: Deleting directories unsupported.\n%s",
-		__func__, esp_err_to_name(ESP_ERR_NOT_SUPPORTED));
-	return ESP_ERR_NOT_SUPPORTED;
-}; /* if (S_ISDIR(st.st_mode)) */
-errno = 0;
-cout << "Now exec: ===>> " << aso::format("unlink(%s)") % /*pattern*/path << "<<===" << endl;
-//    cout << "Now exec: ===>>" << " unlink(" << path << ") " << "<<===" << endl;
-//unlink(path);
-//    unlink(pattern);
-if (errno)
-{
-	ESP_LOGE(CMD_TAG_PRFX, "%s: Fail when deleting \"%s\": %s", __func__, pattern, strerror(errno));
-	return ESP_FAIL;
-}; /* if errno */
-
-return ESP_OK;
-#endif // __PURE_C__
-#endif // rm_content_inserted
-
-//	FILE *text = fopen(fname, "r"); // open the file for type to screen
 
     errno = 0;	// clear possible errors
     text = fopen(fullname, "r"); // open the file for type to screen
@@ -876,9 +820,33 @@ static esp_err_t err4existent(const char fname[], const struct stat* statbuf);
 
 
 // type text from keyboard to file and to screen
-esp_err_t Server::type(const char fname[], size_t sector_size)
+esp_err_t Server::type(SDMMC::Device& device, const char fname[], size_t sector_size)
 {
+	struct stat st;
+	char *fullname = device.get_cwd(fname);
 	FILE *storage = NULL;
+
+#if 0
+	    // Check if destination file exists before deleting
+	    if (stat(fullname, &st) != 0)
+	    {
+	        // typing a non-exist file is not possible
+	    	ESP_LOGE(CMD_TAG_PRFX, "%s: \"%s\" file does not exist - printing of the missing file is not possible.\n%s",
+	    		__func__, fname, esp_err_to_name(ESP_ERR_NOT_FOUND));
+	    	return ESP_ERR_NOT_FOUND;
+	    }; /* if stat(path, &st) != 0 */
+
+	    if (S_ISDIR(st.st_mode))
+	    {
+	    	ESP_LOGE(CMD_TAG_PRFX, "%s: Typing directories unsupported, use the 'ls' command instead.\n%s",
+	    		__func__, esp_err_to_name(ESP_ERR_NOT_SUPPORTED));
+	    	return ESP_ERR_NOT_SUPPORTED;
+	    }; /* if (S_ISDIR(st.st_mode)) */
+
+	    errno = 0;	// clear possible errors
+	    text = fopen(fullname, "r"); // open the file for type to screen
+#endif
+
 
     // Test file 'fname' for existing
     errno = 0;	// clear all error state

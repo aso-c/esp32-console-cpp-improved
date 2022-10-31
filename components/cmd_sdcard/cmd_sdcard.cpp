@@ -548,7 +548,7 @@ static int type_act(int argc, char **argv)
 
     case 2:
 	cout << "...with one parameter - OK, save type output to file & output to screen." << endl;
-	return exec_server.type(argv[1]);
+	return exec_server.type(device, argv[1]);
 	break;
 
     default:
@@ -1125,7 +1125,7 @@ esp_err_t SDctrl::act_type()
 
     case 3:
 	cout << "...with one parameter - save type output to file & screen." << endl;
-	return exec_server.type(argv[2], device.card->self->csd.sector_size); // @suppress("Invalid arguments") // @suppress("Field cannot be resolved")
+	return exec_server.type(device, argv[2], device.card->self->csd.sector_size); // @suppress("Invalid arguments") // @suppress("Field cannot be resolved")
 	break;
 
     default:

@@ -442,56 +442,44 @@ char* CWD_emulating::get(const char path[])
 {
     ESP_LOGD("CWD_emulating:", "%s: \"path\" argument is %s",  __func__, path);
     // argument - absolute path
-    if (path[0] == '/')
+    if (path != nullptr && path[0] != '\0' && path[0] == '/')
     {
 	if (strlen(path) < sizeof(operative_path_buff) / sizeof(char))
 	    /*return*/ realpath(path, operative_path_buff);
 	else
 	    /*return*/ clearbuff();	// path don't fit in operative_path_buff - error, return empty str
-	ESP_LOGD("CWD_emulating:", "%s: operative_path_buff is \"%s\"", __func__, operative_path_buff);
+	ESP_LOGI("CWD_emulating:", "%s: operative_path_buff is \"%s\"", __func__, operative_path_buff);
 	return operative_path_buff;
-//	if (operative_path_buff[strlen(path)] == '/')
     }; /* if path[0] != '/' */
 
-    // operative_path_buff == "" --> catch it
-//    if (operative_path_buff[0] == '\0')
+    // pwd == "" --> catch it
     if (pwd[0] == '\0')
-	return operative_path_buff;
+	return operative_path_buff[0] = '\0', operative_path_buff;
 
     get(pwd);
     // argument - NULL or empty string
     if (path == nullptr || path[0] == '\0')
-//	return get(pwd);
-//    // if path is empty - all done
-//    if (path == nullptr || path[0] == '\0')
 	return operative_path_buff;
 
     // relative path - finalize processing
-//    if (path[0] != '/')
-//    {
-//	get(pwd);
- 	ESP_LOGD("CWD_emulating:", "%s: processing relative path: updating path on top of the current pwd", __func__);
-	// add a trailing slash at end of the relative path base
-	if (operative_path_buff[strlen(operative_path_buff) - 1] != '/')
-	{
- 	    ESP_LOGD("CWD_emulating:", "%s: operative_path_buff before adding trailing slash is: \"%s\"", __func__, operative_path_buff);
-	    // add EOL behind the string data in the operative_path_buff
-	    // add trailing '/' at the operative_path_buff
-	    operative_path_buff[strlen(operative_path_buff) + 1] = '\0';
-	    operative_path_buff[strlen(operative_path_buff)] = '/';
-	}; /* if operative_path_buffer[strlen(operative_path_buff) - 1] != '/' */
+    ESP_LOGD("CWD_emulating:", "%s: processing relative path: updating path on top of the current pwd", __func__);
+    // add a trailing slash at end of the relative path base
+    if (operative_path_buff[strlen(operative_path_buff) - 1] != '/')
+    {
+	ESP_LOGD("CWD_emulating:", "%s: operative_path_buff before adding trailing slash is: \"%s\"", __func__, operative_path_buff);
+	// add EOL behind the string data in the operative_path_buff
+	// add trailing '/' at the operative_path_buff
+	operative_path_buff[strlen(operative_path_buff) + 1] = '\0';
+	operative_path_buff[strlen(operative_path_buff)] = '/';
+    }; /* if operative_path_buffer[strlen(operative_path_buff) - 1] != '/' */
 
-	// copy path on top of base bath
-	if (strlen(operative_path_buff) + strlen(path) < sizeof(operative_path_buff) / sizeof(char))
-	    strcat(operative_path_buff, path);
-	else
-	    return clearbuff();
-//    }; /* if path[0] != '/' */
+    // copy path on top of base bath
+    if (strlen(operative_path_buff) + strlen(path) < sizeof(operative_path_buff) / sizeof(char))
+	strcat(operative_path_buff, path);
+    else
+	return clearbuff();
 
 
-    // drop unneded trailing slash if it exist
-//    if (strlen(operative_path_buff) > 1 && operative_path_buff[strlen(operative_path_buff) - 1] == '/')
-//	operative_path_buff[strlen(operative_path_buff) - 1] = '\0';
      ESP_LOGD("CWD_emulating:", "%s: final operative_path_buff after drop it's trailing slash: \"%s\"", __func__, operative_path_buff);
 
 	 char* src = realpath(operative_path_buff, NULL);	// resolve dirty path
@@ -505,12 +493,7 @@ char* CWD_emulating::get(const char path[])
 esp_err_t CWD_emulating::change_dir(const char path[])
 {
 	const char* tmpstr = get(path);
-
-//---------------------------------------------------------------------------
 	struct stat statbuf;
-
-
-//---------------------------------------------------------------------------
 
     ESP_LOGD("CWD_emulating::change_dir", "The \"path\" parameter is: \"%s\"", path);
     ESP_LOGD("CWD_emulating::change_dir", "The \"tmpstr\" variable is: \"%s\"", tmpstr);
@@ -629,8 +612,6 @@ esp_err_t Device::mount(Card& excard, const char mountpoint[])
     getcwd(fake_cwd_path, sizeof(fake_cwd_path));	// set fake_cwd according system pwd (through get_cwd())
     ESP_LOGI(TAG, "Current directory set to: %s,  according system pwd", fake_cwd_path);
 #endif
-
-//    cout << TAG << ": " "Filesystem mounted sucessfully";
 
     return ret;
 }; /* Device::mount(Card&, char[]) */
