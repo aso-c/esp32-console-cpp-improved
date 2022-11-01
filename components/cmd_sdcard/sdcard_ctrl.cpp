@@ -197,14 +197,9 @@ const char* const Server::MOUNT_POINT_Default = SD_MOUNT_POINT;
 esp_err_t Server::pwd(SDMMC::Device& device)
 {
 #ifdef __PURE_C__
-//	char* buf = getcwd(NULL, 0);
-////	size_t buflen = sizeof(buf) + 1;
 
-    ESP_LOGI("Server::pwd", "Entering to the 'pwd' command");
 
 	const char* buf = device.get_cwd();
-
-    ESP_LOGI("Server::pwd", "The 'buf' value is: '%s'", buf);
 
     if (!buf)
 	return errno;
@@ -310,7 +305,6 @@ esp_err_t Server::rmdir(SDMMC::Device& device, const char dirname[])
     errno = 0;
     //cout << aso::format("[[[ unlink the path [%s] ]]]") % path << endl;
     unlink(path);
-//    unlink(dirname);
     if (errno)
     {
 	ESP_LOGE(CMD_TAG_PRFX, "%s: Fail when deleting \"%s\": %s", __func__, dirname, strerror(errno));
@@ -693,10 +687,8 @@ esp_err_t Server::rm(SDMMC::Device& device, const char pattern[])
 	return ESP_ERR_NOT_SUPPORTED;
     }; /* if (S_ISDIR(st.st_mode)) */
     errno = 0;
-    cout << "Now exec: ===>> " << aso::format("unlink(%s)") % /*pattern*/path << "<<===" << endl;
-//    cout << "Now exec: ===>>" << " unlink(" << path << ") " << "<<===" << endl;
-    //unlink(path);
-//    unlink(pattern);
+    //cout << "Now exec: ===>> " << aso::format("unlink(%s)") % path << "<<===" << endl;
+    unlink(path);
     if (errno)
     {
 	ESP_LOGE(CMD_TAG_PRFX, "%s: Fail when deleting \"%s\": %s", __func__, pattern, strerror(errno));
@@ -850,34 +842,38 @@ esp_err_t Server::type(SDMMC::Device& device, const char fname[], size_t sector_
 
     // Test file 'fname' for existing
     errno = 0;	// clear all error state
-    if (access(fname, F_OK) == -1)
+//    if (access(fname, F_OK) == -1)
+    if (access(fullname, F_OK) == -1)
     {
 	if (errno == ENOENT)	// error "file does not exist"
 	{
-		struct stat statbuf;
+//		struct stat statbuf;
 
-	    if (!stat(fname, &statbuf))	// but if the fname still exists here, then it is a directory // @suppress("Symbol is not resolved")
-		return err4existent(fname, &statbuf);
+//	    if (!stat(fname, &statbuf))	// but if the fname still exists here, then it is a directory // @suppress("Symbol is not resolved")
+	    if (!stat(fullname, &st))	// but if the fname still exists here, then it is a directory // @suppress("Symbol is not resolved")
+//		return err4existent(fname, &statbuf);
+		return err4existent(fname, &st);
 	    ESP_LOGI(CMD_TAG_PRFX CMD_NM, "OK, file \"%s\" does not exist, opening this file.", fname);
-	    cout << aso::format("Open file %s for the write") % fname << endl;
+	    cout << aso::format("Open file %s for the write") % fullname << endl;
 	    errno = 0;	// clear error state
-	    storage = fopen(fname, "w");
+	    storage = fopen(fullname, "w");
 	}
 	else	// error other than "file does not exist"
 	{
-	    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Error test existing file %s: %s", fname , strerror(errno));
+	    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Error test existing file %s: %s", fullname , strerror(errno));
 	    return ESP_FAIL;
 	}
     } /* if stat(fname, &statbuf) == -1 */
     else
     {	// Error - file fname is exist
 
-	    struct stat statbuf;
+//	    struct stat statbuf;
 	    char c;
 
 	// fname exists, check that is a regular file
-	if (!stat(fname, &statbuf) && !S_ISREG(statbuf.st_mode)) // @suppress("Symbol is not resolved")
-	    return err4existent(fname, &statbuf);
+//	if (!stat(fullname, &statbuf) && !S_ISREG(statbuf.st_mode)) // @suppress("Symbol is not resolved")
+	if (!stat(fullname, &st) && !S_ISREG(st.st_mode)) // @suppress("Symbol is not resolved")
+	    return err4existent(fname, &st);
 
 	printf("File %s is exist.\nDo you want use this file? [yes(add)/over(write)/No]: ", fname);
 	cin >> noskipws >> c;
@@ -893,14 +889,14 @@ esp_err_t Server::type(SDMMC::Device& device, const char fname[], size_t sector_
 	case 'y':
 	    ESP_LOGI(CMD_TAG_PRFX CMD_NM, "OK, open the file %s to add.", fname);
 	    cout << aso::format("File %s is opened for add+write.") % fname << endl;
-	    storage = fopen(fname, "a");
+	    storage = fopen(fullname, "a");
 	    break;
 
 	case 'o':
 	case 'w':
 	    ESP_LOGW(CMD_TAG_PRFX CMD_NM, "OK, open the file %s to owerwrite.", fname);
 	    cout << aso::format("File %s is opened to truncate+write (overwrite).") % fname << endl;
-	    storage = fopen(fname, "w");
+	    storage = fopen(fullname, "w");
 	    break;
 
 #pragma GCC diagnostic push
@@ -908,7 +904,7 @@ esp_err_t Server::type(SDMMC::Device& device, const char fname[], size_t sector_
 	case '\n':
 	    cout << "Enter char '\\n'" << endl; // @suppress("No break at end of case")
 	case 'n':
-	    ESP_LOGW("console::type <filename>", "User cancel opening file %s.", fname);
+	    ESP_LOGW(CMD_TAG_PRFX ":" CMD_NM " <filename>", "User cancel opening file %s.", fname);
 	    return ESP_ERR_NOT_FOUND;
 	    break;
 #pragma GCC diagnostic pop
