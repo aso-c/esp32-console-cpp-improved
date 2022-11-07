@@ -445,11 +445,13 @@ char* CWD_emulating::get(const char path[])
     if (path != nullptr && path[0] != '\0' && path[0] == '/')
     {
 	if (strlen(path) < sizeof(operative_path_buff) / sizeof(char))
-	    /*return*/ realpath(path, operative_path_buff);
+	    return realpath(path, operative_path_buff);
 	else
-	    /*return*/ clearbuff();	// path don't fit in operative_path_buff - error, return empty str
-	ESP_LOGI("CWD_emulating:", "%s: operative_path_buff is \"%s\"", __func__, operative_path_buff);
+	    return clearbuff();	// path don't fit in operative_path_buff - error, return empty str
+#if 0	// exclude_common_return
+	ESP_LOGD("CWD_emulating:", "%s: operative_path_buff is \"%s\"", __func__, operative_path_buff);
 	return operative_path_buff;
+#endif	// exclude_common_return
     }; /* if path[0] != '/' */
 
     // pwd == "" --> catch it

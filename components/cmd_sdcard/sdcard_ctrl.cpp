@@ -17,6 +17,7 @@
 #include <iomanip>
 #include <cstdarg>
 
+//#define _GNU_SOURCE
 #include <cstring>
 #include <cctype>
 #include <sys/unistd.h>
@@ -395,15 +396,13 @@ esp_err_t Server::ls(SDMMC::Device& device, const char pattern[])
 
     if (stat(in_pattern, &statbuf) == -1)
     {
-	ESP_LOGE(CMD_TAG_PRFX, "%s: Listing dir is failed - pattern \"%s\" is not exist", __func__, pattern);
+	ESP_LOGE(CMD_TAG_PRFX, "%s: Listing dir is failed - pattern \"%s\" (%s) is not exist", __func__, pattern, in_pattern);
 	return ESP_ERR_NOT_FOUND;
     }; /* if stat(tmpstr, &statbuf) == -1 */
     if (!S_ISDIR(statbuf.st_mode))
     {
 	if (pattern[strlen(pattern) - 1] == '/' || pattern[strlen(pattern) - 1] == '.')
 	{
-//	    ESP_LOGE(CMD_TAG_PRFX, "%s: Name of the file or other similar entity that is not a directory -\n"
-//		    "\t\t\t\tcannot end with a slash or a dot; pattern \"%s\" is invalid", __func__, pattern);
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: %s -\n\t\t\t\t%s; pattern \"%s\" is invalid", __func__,
 		    "Name of the file or other similar entity that is not a directory",
 		    "cannot end with a slash or a dot", pattern);
@@ -432,7 +431,7 @@ esp_err_t Server::ls(SDMMC::Device& device, const char pattern[])
 	esp_err_t ret = ESP_OK;
 
 //    printf("Files in the directory <%s>\n",  pattern);
-    ESP_LOGI(__func__, "Files in the directory <%s>",  pattern);
+    ESP_LOGI(__func__, "Files in the directory <%s> (%s)",  pattern, in_pattern);
     printf("----------------\n");
 
 #ifdef __PURE_C__
@@ -584,24 +583,146 @@ void ls_entry_printout_Cpp(const char fullpath[], const char name[])
 #define CMD_NM "cp"
 
 // copy files according a pattern
-esp_err_t Server::cp(const char src[], const char dest[])
+esp_err_t Server::cp(SDMMC::Device& device, const char src_raw[], const char dest_raw[])
 {
-    if (dest == NULL || strcmp(dest, "") == 0)
-    {
-	ESP_LOGE(CMD_TAG_PRFX, "%s: too few arguments: invoke command \"%s\" with one parameters.\n%s", __func__, __func__,
-		"Don't know where to copy?");
+
+#if 0	// Zero
+
+if (pattern == NULL || strcmp(pattern, "") == 0)
+{
+	ESP_LOGE(CMD_TAG_PRFX, "%s: invoke command \"%s\" without parameters.\n%s", __func__, __func__,
+		"Missing filename to remove.");
 	return ESP_ERR_INVALID_ARG;
-    }; /* if dest == NULL || strcmp(dest, "") */
-    if (src == NULL || strcmp(src, "") == 0)
+}; /* if pattern == NULL || strcmp(pattern, "") */
+
+//    cout << "Delete file " << '"' << pattern << '"' << endl;
+ESP_LOGI(CMD_TAG_PRFX, "%s: delete file \"%s\" (%s)", __func__,  pattern, path);
+
+#endif	// Zero
+//    if (src_raw == NULL || strcmp(src_raw, "") == 0)
+    if (empty(src_raw))
     {
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: too few arguments: invoke command \"%s\" without parameters.\n%s", __func__, __func__,
-		     "Don't know what to copy?");
+		     "Don't know what to copy.");
 	    return ESP_ERR_INVALID_ARG;
-    }; /* if src == NULL || strcmp(src, "") */
+//    }; /* if src == NULL || strcmp(src, "") */
+    }; /* if is_empty(src_raw) */
+//    if (dest_raw == NULL || strcmp(dest_raw, "") == 0)
+    if (empty(dest_raw))
+    {
+	ESP_LOGE(CMD_TAG_PRFX, "%s: too few arguments: invoke command \"%s\" with one parameters.\n%s", __func__, __func__,
+		"Don't know where to copy.");
+	return ESP_ERR_INVALID_ARG;
+//    }; /* if dest == NULL || strcmp(dest, "") */
+    }; /* if is_empty(dest_raw) */
 
-    cout << aso::format("Copy file \"%s\" to \"%s.\"", src, dest) << endl;
+
+//	//char *path = device.get_cwd(pattern);
+//	char *src = device.get_cwd(src_raw);
+
+    cout << aso::format("Copy file \"%s\" to \"%s\" (%s to %s)")
+	    % src_raw % dest_raw % device.get_cwd(src_raw) % "destination"/*device.get_cwd(dest_raw)*/ << endl;
+
+	char *src = device.get_cwd(src_raw);
+
 #ifdef __PURE_C__
+
+	struct stat st;
+
+#if 0	// ZeroII
+//#ifdef __PURE_C__
+
+// Check if destination file exists before deleting
+if (stat(path, &st) != 0)
+{
+    // deleting a non-existent file is not possible
+	ESP_LOGE(CMD_TAG_PRFX, "%s: file \"%s\" is not exist - deleting a non-existent file is not possible.\n%s",
+		__func__, pattern, esp_err_to_name(ESP_ERR_NOT_FOUND));
+	return ESP_ERR_NOT_FOUND;
+}; /* if stat(file_foo, &st) != 0 */
+if (S_ISDIR(st.st_mode))
+{
+	ESP_LOGE(CMD_TAG_PRFX, "%s: deleting directories unsupported.\n%s",
+		__func__, esp_err_to_name(ESP_ERR_NOT_SUPPORTED));
+	return ESP_ERR_NOT_SUPPORTED;
+}; /* if (S_ISDIR(st.st_mode)) */
+errno = 0;
+#endif	// ZeroII
+
+    // Check if source file is not exist
+    if (stat(src, &st) != 0)
+    {
+	// Source file must be exist
+	ESP_LOGE(CMD_TAG_PRFX, "%s: file \"%s\" (%s) is not exist - copyng a non-existent file is not possible.\n%s",
+		__func__, src_raw, src, esp_err_to_name(ESP_ERR_NOT_FOUND));
+	return ESP_ERR_NOT_FOUND;
+    }; /* if stat(src, &st) != 0 */
+    if (S_ISDIR(st.st_mode))
+    {
+	ESP_LOGE(CMD_TAG_PRFX, "%s: copyng directories is unsupported.\n%s",
+		__func__, esp_err_to_name(ESP_ERR_NOT_SUPPORTED));
+	return ESP_ERR_NOT_SUPPORTED;
+    }; /* if (S_ISDIR(st.st_mode)) */
+    if (src_raw[strlen(src_raw) - 1] == '/' || (src_raw[strlen(src_raw) - 1] == '.' && src_raw[strlen(src_raw) - 2] == '/'))
+    {
+	ESP_LOGE(CMD_TAG_PRFX, "%s: %s -\n\t\t\t\t%s; source file name \"%s\" is invalid", __func__,
+		"The source file name must not be a directory",
+		"and cannot end with a slash or a slash dot.", src_raw);
+//	    if (S_ISDIR(st.st_mode))
+//	    {
+//		ESP_LOGE(CMD_TAG_PRFX, "%s: copyng directories is unsupported.\n%s",
+//			__func__, esp_err_to_name(ESP_ERR_NOT_SUPPORTED));
+//		return ESP_ERR_NOT_SUPPORTED;
+//	    }; /* if (S_ISDIR(st.st_mode)) */
+	return ESP_ERR_INVALID_ARG;
+    }; /* if pattern[strlen(pattern) - 1] == '/' */
+
+//----------------------------------------------------------------
+    /* or open source file at this point? */
+    src = (char*)malloc(strlen(device.curr_cwd()) + 1);
+    if (src == nullptr)
+    {
+	ESP_LOGE(CMD_TAG_PRFX, "%s: not enought memory for store source file name \"%s\"", __func__, device.curr_cwd());
+	return ESP_ERR_NO_MEM;
+    }; /* if (src == nullptr) */
+    strcpy(src, device.curr_cwd());
+
+	char* srcbase = basename(src);
+//-----------------------------------------------------------------
+
+	char *dest = /*(char*)malloc(strlen(device.get_cwd(dest_raw)) + 1);*/
+	/*	dest =*/ (char*) malloc(strlen(device.get_cwd(dest_raw)) + strlen(srcbase) + 2);
+    strcpy(dest, device.curr_cwd());
+
+    // Check if destination file is exist
+    if (stat(dest, &st) == 0)
+    {
+	// Destination file is exist
+	ESP_LOGW(CMD_TAG_PRFX, "%s: path \"%s\" (%s) is exist - copy destination write to an existent file or directory.",
+		__func__, dest_raw, dest);
+	// if destination - exist path, not a directory
+	if (!S_ISDIR(st.st_mode))
+	{
+	    ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite the existent file \"%s\" is prohibited; aborting.",
+		    __func__, dest);
+	    return ESP_ERR_NOT_SUPPORTED;
+	}; /* if (S_ISDIR(st.st_mode)) */
+
+//	dest = (char*) malloc(strlen(device.curr_cwd()) + strlen(srcbase) + 1);
+//	strcpy(dest, device.curr_cwd());
+	strcat(dest, "/");
+	strcat(dest, srcbase);
+//	return ESP_ERR_NOT_FOUND;
+    }; /* if stat(file_foo, &st) != 0 */
+
+    // destination file not exist or is overwrited
+    ESP_LOGW(CMD_TAG_PRFX CMD_NM, "copy file %s to %s", src, dest);
+
+    free(src);
+    free(dest);
+
     ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Command \"%s\" is not yet implemented now for C edition.", CMD_NM);
+
     return ESP_ERR_INVALID_VERSION;
     //return ESP_OK;
 #else
@@ -669,20 +790,20 @@ esp_err_t Server::rm(SDMMC::Device& device, const char pattern[])
     }; /* if pattern == NULL || strcmp(pattern, "") */
 
 //    cout << "Delete file " << '"' << pattern << '"' << endl;
-    ESP_LOGI(CMD_TAG_PRFX, "%s: Delete file \"%s\", real file name \"%s\"", __func__,  pattern, path);
+    ESP_LOGI(CMD_TAG_PRFX, "%s: delete file \"%s\" (%s)", __func__,  pattern, path);
 #ifdef __PURE_C__
 
     // Check if destination file exists before deleting
-    if (stat(/*pattern*/path, &st) != 0)
+    if (stat(path, &st) != 0)
     {
         // deleting a non-existent file is not possible
-	ESP_LOGE(CMD_TAG_PRFX, "%s: File \"%s\" is not exist - deleting a non-existent file is not possible.\n%s",
+	ESP_LOGE(CMD_TAG_PRFX, "%s: file \"%s\" is not exist - deleting a non-existent file is not possible.\n%s",
 		__func__, pattern, esp_err_to_name(ESP_ERR_NOT_FOUND));
 	return ESP_ERR_NOT_FOUND;
     }; /* if stat(file_foo, &st) != 0 */
     if (S_ISDIR(st.st_mode))
     {
-	ESP_LOGE(CMD_TAG_PRFX, "%s: Deleting directories unsupported.\n%s",
+	ESP_LOGE(CMD_TAG_PRFX, "%s: deleting directories unsupported.\n%s",
 		__func__, esp_err_to_name(ESP_ERR_NOT_SUPPORTED));
 	return ESP_ERR_NOT_SUPPORTED;
     }; /* if (S_ISDIR(st.st_mode)) */
