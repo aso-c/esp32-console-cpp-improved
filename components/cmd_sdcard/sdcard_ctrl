@@ -16,7 +16,7 @@
 #pragma once
 
 // is string 'str' is empty or NULL?
-inline bool empty(const char str[]) {
+inline bool empty(const char* const str) {
     return str == NULL || str[0] == '\0'; }
 
 

@@ -17,7 +17,6 @@
 #include <iomanip>
 #include <cstdarg>
 
-//#define _GNU_SOURCE
 #include <cstring>
 #include <cctype>
 #include <sys/unistd.h>
@@ -668,15 +667,11 @@ errno = 0;
 	ESP_LOGE(CMD_TAG_PRFX, "%s: %s -\n\t\t\t\t%s; source file name \"%s\" is invalid", __func__,
 		"The source file name must not be a directory",
 		"and cannot end with a slash or a slash dot.", src_raw);
-//	    if (S_ISDIR(st.st_mode))
-//	    {
-//		ESP_LOGE(CMD_TAG_PRFX, "%s: copyng directories is unsupported.\n%s",
-//			__func__, esp_err_to_name(ESP_ERR_NOT_SUPPORTED));
-//		return ESP_ERR_NOT_SUPPORTED;
-//	    }; /* if (S_ISDIR(st.st_mode)) */
 	return ESP_ERR_INVALID_ARG;
-    }; /* if pattern[strlen(pattern) - 1] == '/' */
+    }; /* if src_raw[strlen(src_raw) - 1] == '/' || (src_raw[strlen(src_raw) - 1] == '.' && src_raw[strlen(src_raw) - 2] == '/') */
 
+    cout << "	FILE* srcfile = fopen(device.curr_cwd(), \"rb\");" << endl;
+    	FILE* srcfile = fopen(device.curr_cwd(), "rb");
 //----------------------------------------------------------------
     /* or open source file at this point? */
     src = (char*)malloc(strlen(device.curr_cwd()) + 1);
@@ -690,9 +685,7 @@ errno = 0;
 	char* srcbase = basename(src);
 //-----------------------------------------------------------------
 
-	char *dest = /*(char*)malloc(strlen(device.get_cwd(dest_raw)) + 1);*/
-	/*	dest =*/ (char*) malloc(strlen(device.get_cwd(dest_raw)) + strlen(srcbase) + 2);
-    strcpy(dest, device.curr_cwd());
+	char *dest = device.get_cwd(dest_raw);
 
     // Check if destination file is exist
     if (stat(dest, &st) == 0)
@@ -708,18 +701,36 @@ errno = 0;
 	    return ESP_ERR_NOT_SUPPORTED;
 	}; /* if (S_ISDIR(st.st_mode)) */
 
-//	dest = (char*) malloc(strlen(device.curr_cwd()) + strlen(srcbase) + 1);
-//	strcpy(dest, device.curr_cwd());
 	strcat(dest, "/");
 	strcat(dest, srcbase);
-//	return ESP_ERR_NOT_FOUND;
-    }; /* if stat(file_foo, &st) != 0 */
+    }; /* if stat(dest, &st) == 0 */
 
     // destination file not exist or is overwrited
     ESP_LOGW(CMD_TAG_PRFX CMD_NM, "copy file %s to %s", src, dest);
 
+    cout << "	FILE* destfile = fopen(device.curr_cwd(), \"wb\");" << endl;
+
+#define CP_BUFSIZE 512
+	char buf[CP_BUFSIZE];
+	size_t readcnt;
+
+    cout << "for test - copy file " << src << " to stdout" << endl;
+    cout << "------------------------------------------------" << endl;
+    while (!feof(srcfile))
+    {
+//	readcnt = read(srcfile, buf, CP_BUFSIZE);
+	readcnt = fread(buf, 1, CP_BUFSIZE, srcfile);
+	if (readcnt == 0)
+	    break;
+	fwrite(buf, 1, readcnt, stdout);
+	//fwrite(buf, 1, readcnt, desfile);
+    }; /* while !feof(srcfile) */
+    cout << "------------------------------------------------" << endl;
+
+    cout << "fclose(destfile);" << endl;
+    cout << "fclose(srcfile);" << endl;
+    fclose(srcfile);
     free(src);
-    free(dest);
 
     ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Command \"%s\" is not yet implemented now for C edition.", CMD_NM);
 
