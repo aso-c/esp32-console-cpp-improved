@@ -580,6 +580,7 @@ void ls_entry_printout_Cpp(const char fullpath[], const char name[])
 
 #undef CMD_NM
 #define CMD_NM "cp"
+#define __CP_OVER_EXIST_FILE__
 
 // copy files according a pattern
 esp_err_t Server::cp(SDMMC::Device& device, const char src_raw[], const char dest_raw[])
@@ -670,8 +671,9 @@ errno = 0;
 	return ESP_ERR_INVALID_ARG;
     }; /* if src_raw[strlen(src_raw) - 1] == '/' || (src_raw[strlen(src_raw) - 1] == '.' && src_raw[strlen(src_raw) - 2] == '/') */
 
+	FILE* srcfile = fopen(device.curr_cwd(), "rb");
     cout << "	FILE* srcfile = fopen(device.curr_cwd(), \"rb\");" << endl;
-    	FILE* srcfile = fopen(device.curr_cwd(), "rb");
+
 //----------------------------------------------------------------
     /* or open source file at this point? */
     src = (char*)malloc(strlen(device.curr_cwd()) + 1);
@@ -682,10 +684,17 @@ errno = 0;
     }; /* if (src == nullptr) */
     strcpy(src, device.curr_cwd());
 
-	char* srcbase = basename(src);
+	char* srcbase = basename(device.curr_cwd());
 //-----------------------------------------------------------------
 
 	char *dest = device.get_cwd(dest_raw);
+
+    if (strcmp(src, dest) == 0)
+    {
+	ESP_LOGE(CMD_TAG_PRFX, "%s: source & destination file name are same: \"%s\";\n\t\t\t copying file to iself is unsupported",
+		__func__, dest);
+	return ESP_ERR_NOT_SUPPORTED;
+    }; /* if strcmp(src, dest) == 0 */
 
     // Check if destination file is exist
     if (stat(dest, &st) == 0)
@@ -694,20 +703,35 @@ errno = 0;
 	ESP_LOGW(CMD_TAG_PRFX, "%s: path \"%s\" (%s) is exist - copy destination write to an existent file or directory.",
 		__func__, dest_raw, dest);
 	// if destination - exist path, not a directory
-	if (!S_ISDIR(st.st_mode))
+	if (S_ISDIR(st.st_mode))
 	{
+		strcat(dest, "/");
+		strcat(dest, srcbase);
+	} /* if S_ISDIR(st.st_mode) */
+	else
+	{
+#ifdef __CP_OVER_EXIST_FILE__
+	    ESP_LOGW(CMD_TAG_PRFX, "%s: overwriting an existing file \"%s\".", __func__, dest);
+#else
+
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite the existent file \"%s\" is prohibited; aborting.",
 		    __func__, dest);
 	    return ESP_ERR_NOT_SUPPORTED;
-	}; /* if (S_ISDIR(st.st_mode)) */
+#endif	// __CP_OVER_EXIST_FILE__
+	}; /* else if (S_ISDIR(st.st_mode)) */
 
-	strcat(dest, "/");
-	strcat(dest, srcbase);
     }; /* if stat(dest, &st) == 0 */
 
     // destination file not exist or is overwrited
     ESP_LOGW(CMD_TAG_PRFX CMD_NM, "copy file %s to %s", src, dest);
 
+	FILE* destfile = fopen(device.curr_cwd(), "wb");
+    if (!destfile)
+    {
+	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "failed creating file %s, aborting ", device.curr_cwd());
+	fclose(srcfile);
+	return ESP_ERR_NOT_FOUND;
+    }; /* if !destfile */
     cout << "	FILE* destfile = fopen(device.curr_cwd(), \"wb\");" << endl;
 
 #define CP_BUFSIZE 512
@@ -723,18 +747,21 @@ errno = 0;
 	if (readcnt == 0)
 	    break;
 	fwrite(buf, 1, readcnt, stdout);
-	//fwrite(buf, 1, readcnt, desfile);
+	fwrite(buf, 1, readcnt, destfile);
     }; /* while !feof(srcfile) */
     cout << "------------------------------------------------" << endl;
 
     cout << "fclose(destfile);" << endl;
+    fflush(destfile);
+    fsync(fileno(destfile));
+    fclose(destfile);
     cout << "fclose(srcfile);" << endl;
     fclose(srcfile);
     free(src);
 
-    ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Command \"%s\" is not yet implemented now for C edition.", CMD_NM);
+    ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Command \"%s\" is not yet full implemented now for C edition.", CMD_NM);
 
-    return ESP_ERR_INVALID_VERSION;
+    return ESP_OK;
     //return ESP_OK;
 #else
     ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Command \"%s\" is not yet implemented now for C++ edition.", CMD_NM);
@@ -844,7 +871,7 @@ esp_err_t Server::cat(SDMMC::Device& device, const char fname[])
 {
 	struct stat st;
 	char *fullname = device.get_cwd(fname);
-	FILE *text = nullptr; // open the file for type to screen
+	FILE *text = nullptr; // file for type to screen
 
     if (fname == NULL || strcmp(fullname, "") == 0)
     {
@@ -895,8 +922,10 @@ esp_err_t Server::cat(SDMMC::Device& device, const char fname[])
     if (errno)
     {
 	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Error during type the file %s (%s) to output, %s", fname, fullname, strerror(errno));
+	fclose(text);
 	return ESP_FAIL;
     }; /* if errno */
+
 
 #else
 #endif
@@ -904,6 +933,15 @@ esp_err_t Server::cat(SDMMC::Device& device, const char fname[])
     cout << endl
 	 << "*** End of printing file " << fname << ". **************" << endl
 	 << endl;
+
+    fclose(text);
+    if (errno)
+    {
+	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Error during closing the file %s (%s) to output, %s", fname, fullname, strerror(errno));
+	fclose(text);
+	return ESP_ERR_INVALID_STATE;
+    }; /* if errno */
+
     return ESP_OK;
 }; /* cat */
 
