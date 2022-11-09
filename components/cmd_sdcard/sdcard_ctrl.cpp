@@ -620,34 +620,14 @@ ESP_LOGI(CMD_TAG_PRFX, "%s: delete file \"%s\" (%s)", __func__,  pattern, path);
 //	//char *path = device.get_cwd(pattern);
 //	char *src = device.get_cwd(src_raw);
 
-    cout << aso::format("Copy file \"%s\" to \"%s\" (%s to %s)")
-	    % src_raw % dest_raw % device.get_cwd(src_raw) % "destination"/*device.get_cwd(dest_raw)*/ << endl;
+//    cout << aso::format("Copy file \"%s\" to \"%s\" (%s to %s)")
+//	    % src_raw % dest_raw % device.get_cwd(src_raw) % "destination"/*device.get_cwd(dest_raw)*/ << endl;
 
 	char *src = device.get_cwd(src_raw);
 
 #ifdef __PURE_C__
 
 	struct stat st;
-
-#if 0	// ZeroII
-//#ifdef __PURE_C__
-
-// Check if destination file exists before deleting
-if (stat(path, &st) != 0)
-{
-    // deleting a non-existent file is not possible
-	ESP_LOGE(CMD_TAG_PRFX, "%s: file \"%s\" is not exist - deleting a non-existent file is not possible.\n%s",
-		__func__, pattern, esp_err_to_name(ESP_ERR_NOT_FOUND));
-	return ESP_ERR_NOT_FOUND;
-}; /* if stat(file_foo, &st) != 0 */
-if (S_ISDIR(st.st_mode))
-{
-	ESP_LOGE(CMD_TAG_PRFX, "%s: deleting directories unsupported.\n%s",
-		__func__, esp_err_to_name(ESP_ERR_NOT_SUPPORTED));
-	return ESP_ERR_NOT_SUPPORTED;
-}; /* if (S_ISDIR(st.st_mode)) */
-errno = 0;
-#endif	// ZeroII
 
     // Check if source file is not exist
     if (stat(src, &st) != 0)
@@ -672,7 +652,7 @@ errno = 0;
     }; /* if src_raw[strlen(src_raw) - 1] == '/' || (src_raw[strlen(src_raw) - 1] == '.' && src_raw[strlen(src_raw) - 2] == '/') */
 
 	FILE* srcfile = fopen(device.curr_cwd(), "rb");
-    cout << "	FILE* srcfile = fopen(device.curr_cwd(), \"rb\");" << endl;
+//    cout << "	FILE* srcfile = fopen(device.curr_cwd(), \"rb\");" << endl;
 
 //----------------------------------------------------------------
     /* or open source file at this point? */
@@ -684,7 +664,7 @@ errno = 0;
     }; /* if (src == nullptr) */
     strcpy(src, device.curr_cwd());
 
-	char* srcbase = basename(device.curr_cwd());
+	char* srcbase = basename(src);
 //-----------------------------------------------------------------
 
 	char *dest = device.get_cwd(dest_raw);
@@ -693,6 +673,7 @@ errno = 0;
     {
 	ESP_LOGE(CMD_TAG_PRFX, "%s: source & destination file name are same: \"%s\";\n\t\t\t copying file to iself is unsupported",
 		__func__, dest);
+	free(src);
 	return ESP_ERR_NOT_SUPPORTED;
     }; /* if strcmp(src, dest) == 0 */
 
@@ -700,18 +681,25 @@ errno = 0;
     if (stat(dest, &st) == 0)
     {
 	// Destination file is exist
-	ESP_LOGW(CMD_TAG_PRFX, "%s: path \"%s\" (%s) is exist - copy destination write to an existent file or directory.",
+	ESP_LOGI(CMD_TAG_PRFX, "%s: path \"%s\" (%s) is exist - copy is write to an existent file or directory.",
 		__func__, dest_raw, dest);
 	// if destination - exist path, not a directory
 	if (S_ISDIR(st.st_mode))
 	{
+//		ESP_LOGI(CMD_TAG_PRFX, "%s: path \"%s\" is directory - add base filename \"%s\" to a dirpath",
+			__func__, dest, srcbase);
 		strcat(dest, "/");
+//		ESP_LOGI(CMD_TAG_PRFX, "%s: added slash to the end of path: \"%s\"",
+			__func__, dest);
 		strcat(dest, srcbase);
+//		ESP_LOGI(CMD_TAG_PRFX, "%s: added basename to the end of path: \"%s\"",
+			__func__, dest);
 	} /* if S_ISDIR(st.st_mode) */
+#if 0	// existing file handling - moved to out from this block
 	else
 	{
 #ifdef __CP_OVER_EXIST_FILE__
-	    ESP_LOGW(CMD_TAG_PRFX, "%s: overwriting an existing file \"%s\".", __func__, dest);
+	    ESP_LOGW(CMD_TAG_PRFX, "%s: overwrite an existing file \"%s\".", __func__, dest);
 #else
 
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite the existent file \"%s\" is prohibited; aborting.",
@@ -719,11 +707,25 @@ errno = 0;
 	    return ESP_ERR_NOT_SUPPORTED;
 #endif	// __CP_OVER_EXIST_FILE__
 	}; /* else if (S_ISDIR(st.st_mode)) */
-
+#endif	// existing file handling - moved to out from this block
     }; /* if stat(dest, &st) == 0 */
 
+    // Retry Check if destination file exist,
+    // destination - not a directory
+    if (stat(dest, &st) == 0)
+    {
+#ifdef __CP_OVER_EXIST_FILE__
+	ESP_LOGW(CMD_TAG_PRFX, "%s: overwrite an existing file \"%s\".", __func__, dest);
+#else
+	ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite the existent file \"%s\" is prohibited; aborting.",
+		__func__, dest);
+	return ESP_ERR_NOT_SUPPORTED;
+#endif	// __CP_OVER_EXIST_FILE__
+    }; /* else if (S_ISDIR(st.st_mode)) */
+
     // destination file not exist or is overwrited
-    ESP_LOGW(CMD_TAG_PRFX CMD_NM, "copy file %s to %s", src, dest);
+    ESP_LOGI(CMD_TAG_PRFX CMD_NM, "copy file %s to %s", src, dest);
+    free(src);
 
 	FILE* destfile = fopen(device.curr_cwd(), "wb");
     if (!destfile)
@@ -732,37 +734,40 @@ errno = 0;
 	fclose(srcfile);
 	return ESP_ERR_NOT_FOUND;
     }; /* if !destfile */
-    cout << "	FILE* destfile = fopen(device.curr_cwd(), \"wb\");" << endl;
+//    cout << "	FILE* destfile = fopen(device.curr_cwd(), \"wb\");" << endl;
 
 #define CP_BUFSIZE 512
 	char buf[CP_BUFSIZE];
 	size_t readcnt;
 
+#if 0	// test0
     cout << "for test - copy file " << src << " to stdout" << endl;
     cout << "------------------------------------------------" << endl;
+#endif	// test0
     while (!feof(srcfile))
     {
-//	readcnt = read(srcfile, buf, CP_BUFSIZE);
 	readcnt = fread(buf, 1, CP_BUFSIZE, srcfile);
 	if (readcnt == 0)
 	    break;
+#if 0	// test1
 	fwrite(buf, 1, readcnt, stdout);
+#endif	// test1
 	fwrite(buf, 1, readcnt, destfile);
     }; /* while !feof(srcfile) */
+#if 0	// test2
     cout << "------------------------------------------------" << endl;
+#endif	// test2
 
-    cout << "fclose(destfile);" << endl;
+//    cout << "fclose(destfile);" << endl;
     fflush(destfile);
     fsync(fileno(destfile));
     fclose(destfile);
-    cout << "fclose(srcfile);" << endl;
+//    cout << "fclose(srcfile);" << endl;
     fclose(srcfile);
-    free(src);
 
-    ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Command \"%s\" is not yet full implemented now for C edition.", CMD_NM);
+//    ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Command \"%s\" is not yet full implemented now for C edition.", CMD_NM);
 
     return ESP_OK;
-    //return ESP_OK;
 #else
     ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Command \"%s\" is not yet implemented now for C++ edition.", CMD_NM);
     return ESP_ERR_INVALID_VERSION;
