@@ -687,13 +687,13 @@ ESP_LOGI(CMD_TAG_PRFX, "%s: delete file \"%s\" (%s)", __func__,  pattern, path);
 	if (S_ISDIR(st.st_mode))
 	{
 //		ESP_LOGI(CMD_TAG_PRFX, "%s: path \"%s\" is directory - add base filename \"%s\" to a dirpath",
-			__func__, dest, srcbase);
+//			__func__, dest, srcbase);
 		strcat(dest, "/");
 //		ESP_LOGI(CMD_TAG_PRFX, "%s: added slash to the end of path: \"%s\"",
-			__func__, dest);
+//			__func__, dest);
 		strcat(dest, srcbase);
 //		ESP_LOGI(CMD_TAG_PRFX, "%s: added basename to the end of path: \"%s\"",
-			__func__, dest);
+//			__func__, dest);
 	} /* if S_ISDIR(st.st_mode) */
 #if 0	// existing file handling - moved to out from this block
 	else
