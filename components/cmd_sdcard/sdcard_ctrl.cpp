@@ -717,34 +717,36 @@ esp_err_t Server::cp(SDMMC::Device& device, const char src_raw[], const char des
 #define CMD_NM "mv"
 
 // move files according a pattern
-esp_err_t Server::mv(const char src[], const char dest[])
+esp_err_t Server::mv(SDMMC::Device& device, const char src_raw[], const char dest_raw[])
 {
-//    if (dest == NULL || strcmp(dest, "") == 0)
-    if (empty(dest))
-    {
-	ESP_LOGE("CMD_TAG_PRFX CMD_NM", "too few arguments: invoke command \"%s\" without parameters.\n%s", CMD_NM,
-		"Don't know what to move?");
-	return ESP_ERR_INVALID_ARG;
-    }; /* if empty(dest) */ /* if dest == NULL || strcmp(dest, "") */
-
-//    if (src == NULL || strcmp(src, "") == 0)
-    if (empty(src))
+    if (empty(src_raw))
     {
 	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "too few arguments: invoke command \"%s\" with one parameters.\n%s", CMD_NM,
 		"Don't know where to move?");
 	return ESP_ERR_INVALID_ARG;
-    }; /* if empty(src) */ /* if src == NULL || strcmp(src, "") */
+    }; /* if empty(src) */
 
-    cout << aso::format("Move file \"%s\" to \"%s.\"", src, dest) << endl;
+    if (empty(dest_raw))
+    {
+	ESP_LOGE("CMD_TAG_PRFX CMD_NM", "too few arguments: invoke command \"%s\" without parameters.\n%s", CMD_NM,
+		"Don't know what to move?");
+	return ESP_ERR_INVALID_ARG;
+    }; /* if empty(dest) */
+
+    cout << aso::format("Move file \"%s\" (%s) to \"%s.\" (%s)", src_raw, device.get_cwd(src_raw),
+			dest_raw, device.get_cwd(dest_raw)) << endl;
 #ifdef __PURE_C__
 //    ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Command \"%s\" is not yet implemented now for C edition.", CMD_NM);
 //    return ESP_ERR_INVALID_VERSION;
     // Rename original file
-    ESP_LOGI(TAG, "Renaming file %s to %s", src, dest);
-    if (rename(src, dest) != 0) {
-        ESP_LOGE(TAG, "Rename failed");
-        return ESP_FAIL;
-    }
+    ESP_LOGI(TAG, "Renaming file %s (%s) to %s (%s)", src_raw, device.get_cwd(src_raw), dest_raw,
+		    device.get_cwd(dest_raw));
+    //if (rename(src, dest) != 0)
+    //{
+    //    ESP_LOGE(TAG, "Rename failed");
+    //    return ESP_FAIL;
+    //}; /* if rename(src, dest) != 0 */
+    //return ESP_OK;
     return ESP_OK;
 #else
     ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Command \"%s\" is not yet implemented now for C++ edition.", CMD_NM);

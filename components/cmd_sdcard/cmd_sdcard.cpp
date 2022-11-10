@@ -407,15 +407,15 @@ static int mv_act(int argc, char **argv)
     switch (argc)
     {
     case 1:
-	return exec_server.mv();
+	return exec_server.mv(device);
 	break;
 
     case 2:
-	return exec_server.mv(argv[1]);
+	return exec_server.mv(device, argv[1]);
 	break;
 
     case 3:
-	return exec_server.mv(argv[1], argv[2]);
+	return exec_server.mv(device, argv[1], argv[2]);
 	break;
 
     default:
@@ -1043,17 +1043,17 @@ esp_err_t SDctrl::act_mv()
     {
     case 2:
 	cout << "...without parameters - error." << endl;
-	return exec_server.mv();
+	return exec_server.mv(device);
 	break;
 
     case 3:
 	cout << "...with one parameter - error." << endl;
-	return exec_server.mv(argv[2]);
+	return exec_server.mv(device, argv[2]);
 	break;
 
     case 4:
 	cout << "...with two parameter - move/rename files." << endl;
-	return exec_server.mv(argv[2], argv[3]);
+	return exec_server.mv(device, argv[2], argv[3]);
 	break;
 
     default:
