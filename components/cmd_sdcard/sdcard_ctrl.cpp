@@ -585,43 +585,18 @@ void ls_entry_printout_Cpp(const char fullpath[], const char name[])
 // copy files according a pattern
 esp_err_t Server::cp(SDMMC::Device& device, const char src_raw[], const char dest_raw[])
 {
-
-#if 0	// Zero
-
-if (pattern == NULL || strcmp(pattern, "") == 0)
-{
-	ESP_LOGE(CMD_TAG_PRFX, "%s: invoke command \"%s\" without parameters.\n%s", __func__, __func__,
-		"Missing filename to remove.");
-	return ESP_ERR_INVALID_ARG;
-}; /* if pattern == NULL || strcmp(pattern, "") */
-
-//    cout << "Delete file " << '"' << pattern << '"' << endl;
-ESP_LOGI(CMD_TAG_PRFX, "%s: delete file \"%s\" (%s)", __func__,  pattern, path);
-
-#endif	// Zero
-//    if (src_raw == NULL || strcmp(src_raw, "") == 0)
     if (empty(src_raw))
     {
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: too few arguments: invoke command \"%s\" without parameters.\n%s", __func__, __func__,
 		     "Don't know what to copy.");
 	    return ESP_ERR_INVALID_ARG;
-//    }; /* if src == NULL || strcmp(src, "") */
     }; /* if is_empty(src_raw) */
-//    if (dest_raw == NULL || strcmp(dest_raw, "") == 0)
     if (empty(dest_raw))
     {
 	ESP_LOGE(CMD_TAG_PRFX, "%s: too few arguments: invoke command \"%s\" with one parameters.\n%s", __func__, __func__,
 		"Don't know where to copy.");
 	return ESP_ERR_INVALID_ARG;
-//    }; /* if dest == NULL || strcmp(dest, "") */
     }; /* if is_empty(dest_raw) */
-
-
-//	//char *path = device.get_cwd(pattern);
-//	char *src = device.get_cwd(src_raw);
-
-//    cout << aso::format("Copy file \"%s\" to \"%s\" (%s to %s)")
-//	    % src_raw % dest_raw % device.get_cwd(src_raw) % "destination"/*device.get_cwd(dest_raw)*/ << endl;
 
 	char *src = device.get_cwd(src_raw);
 
@@ -652,9 +627,7 @@ ESP_LOGI(CMD_TAG_PRFX, "%s: delete file \"%s\" (%s)", __func__,  pattern, path);
     }; /* if src_raw[strlen(src_raw) - 1] == '/' || (src_raw[strlen(src_raw) - 1] == '.' && src_raw[strlen(src_raw) - 2] == '/') */
 
 	FILE* srcfile = fopen(device.curr_cwd(), "rb");
-//    cout << "	FILE* srcfile = fopen(device.curr_cwd(), \"rb\");" << endl;
 
-//----------------------------------------------------------------
     /* or open source file at this point? */
     src = (char*)malloc(strlen(device.curr_cwd()) + 1);
     if (src == nullptr)
@@ -665,7 +638,6 @@ ESP_LOGI(CMD_TAG_PRFX, "%s: delete file \"%s\" (%s)", __func__,  pattern, path);
     strcpy(src, device.curr_cwd());
 
 	char* srcbase = basename(src);
-//-----------------------------------------------------------------
 
 	char *dest = device.get_cwd(dest_raw);
 
@@ -686,28 +658,9 @@ ESP_LOGI(CMD_TAG_PRFX, "%s: delete file \"%s\" (%s)", __func__,  pattern, path);
 	// if destination - exist path, not a directory
 	if (S_ISDIR(st.st_mode))
 	{
-//		ESP_LOGI(CMD_TAG_PRFX, "%s: path \"%s\" is directory - add base filename \"%s\" to a dirpath",
-//			__func__, dest, srcbase);
 		strcat(dest, "/");
-//		ESP_LOGI(CMD_TAG_PRFX, "%s: added slash to the end of path: \"%s\"",
-//			__func__, dest);
 		strcat(dest, srcbase);
-//		ESP_LOGI(CMD_TAG_PRFX, "%s: added basename to the end of path: \"%s\"",
-//			__func__, dest);
 	} /* if S_ISDIR(st.st_mode) */
-#if 0	// existing file handling - moved to out from this block
-	else
-	{
-#ifdef __CP_OVER_EXIST_FILE__
-	    ESP_LOGW(CMD_TAG_PRFX, "%s: overwrite an existing file \"%s\".", __func__, dest);
-#else
-
-	    ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite the existent file \"%s\" is prohibited; aborting.",
-		    __func__, dest);
-	    return ESP_ERR_NOT_SUPPORTED;
-#endif	// __CP_OVER_EXIST_FILE__
-	}; /* else if (S_ISDIR(st.st_mode)) */
-#endif	// existing file handling - moved to out from this block
     }; /* if stat(dest, &st) == 0 */
 
     // Retry Check if destination file exist,
@@ -734,38 +687,23 @@ ESP_LOGI(CMD_TAG_PRFX, "%s: delete file \"%s\" (%s)", __func__,  pattern, path);
 	fclose(srcfile);
 	return ESP_ERR_NOT_FOUND;
     }; /* if !destfile */
-//    cout << "	FILE* destfile = fopen(device.curr_cwd(), \"wb\");" << endl;
 
 #define CP_BUFSIZE 512
 	char buf[CP_BUFSIZE];
 	size_t readcnt;
 
-#if 0	// test0
-    cout << "for test - copy file " << src << " to stdout" << endl;
-    cout << "------------------------------------------------" << endl;
-#endif	// test0
     while (!feof(srcfile))
     {
 	readcnt = fread(buf, 1, CP_BUFSIZE, srcfile);
 	if (readcnt == 0)
 	    break;
-#if 0	// test1
-	fwrite(buf, 1, readcnt, stdout);
-#endif	// test1
 	fwrite(buf, 1, readcnt, destfile);
     }; /* while !feof(srcfile) */
-#if 0	// test2
-    cout << "------------------------------------------------" << endl;
-#endif	// test2
 
-//    cout << "fclose(destfile);" << endl;
     fflush(destfile);
     fsync(fileno(destfile));
     fclose(destfile);
-//    cout << "fclose(srcfile);" << endl;
     fclose(srcfile);
-
-//    ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Command \"%s\" is not yet full implemented now for C edition.", CMD_NM);
 
     return ESP_OK;
 #else
