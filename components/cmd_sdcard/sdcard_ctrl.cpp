@@ -722,22 +722,33 @@ esp_err_t Server::mv(SDMMC::Device& device, const char src_raw[], const char des
     if (empty(src_raw))
     {
 	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "too few arguments: invoke command \"%s\" with one parameters.\n%s", CMD_NM,
-		"Don't know where to move?");
+		"Don't know what to move?");
 	return ESP_ERR_INVALID_ARG;
     }; /* if empty(src) */
 
     if (empty(dest_raw))
     {
-	ESP_LOGE("CMD_TAG_PRFX CMD_NM", "too few arguments: invoke command \"%s\" without parameters.\n%s", CMD_NM,
-		"Don't know what to move?");
+	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "too few arguments: invoke command \"%s\" without parameters.\n%s", CMD_NM,
+		"Don't know where to move?");
 	return ESP_ERR_INVALID_ARG;
     }; /* if empty(dest) */
 
-    cout << aso::format("Move file \"%s\" (%s) to \"%s.\" (%s)", src_raw, device.get_cwd(src_raw),
-			dest_raw, device.get_cwd(dest_raw)) << endl;
 #ifdef __PURE_C__
-//    ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Command \"%s\" is not yet implemented now for C edition.", CMD_NM);
-//    return ESP_ERR_INVALID_VERSION;
+
+	char *src = device.get_cwd(src_raw);
+	struct stat st;
+
+    // Check if source file is not exist
+    if (stat(src, &st) != 0)
+    {
+	// Source file must be exist
+	ESP_LOGE(CMD_TAG_PRFX, "%s: file \"%s\" (%s) is not exist - renaming a non-existent file is not possible.\n%s",
+		__func__, src_raw, src, esp_err_to_name(ESP_ERR_NOT_FOUND));
+	return ESP_ERR_NOT_FOUND;
+    }; /* if stat(src, &st) != 0 */
+
+    cout << aso::format("Move file \"%s\" (%s) to \"%s\" (%s)", src_raw, device.get_cwd(src_raw),
+			dest_raw, device.get_cwd(dest_raw)) << endl;
     // Rename original file
     ESP_LOGI(TAG, "Renaming file %s (%s) to %s (%s)", src_raw, device.get_cwd(src_raw), dest_raw,
 		    device.get_cwd(dest_raw));
@@ -747,7 +758,8 @@ esp_err_t Server::mv(SDMMC::Device& device, const char src_raw[], const char des
     //    return ESP_FAIL;
     //}; /* if rename(src, dest) != 0 */
     //return ESP_OK;
-    return ESP_OK;
+    ESP_LOGW(CMD_TAG_PRFX CMD_NM, "the command '%s' is not implemented now for C edition", "mv");
+    return ESP_ERR_INVALID_VERSION;
 #else
     ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Command \"%s\" is not yet implemented now for C++ edition.", CMD_NM);
     return ESP_ERR_INVALID_VERSION;
