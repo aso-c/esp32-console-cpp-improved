@@ -332,7 +332,8 @@ esp_err_t Server::cd(SDMMC::Device& device, const char dirname[])
 	esp_err_t err;
 
 #ifdef __PURE_C__
-    if (dirname != nullptr && dirname[0] != '\0')
+//    if (dirname != nullptr && dirname[0] != '\0')
+    if (!empty(dirname))
 	ESP_LOGI(CMD_TAG_PRFX, "%s: Change current dir to %s", __func__, dirname);
     else if (device.card != nullptr)
 	    ESP_LOGI(CMD_TAG_PRFX, "%s: Not specified directory for jump to, change current dir to %s, [mountpoint].", __func__, device.mountpath());
@@ -344,7 +345,6 @@ esp_err_t Server::cd(SDMMC::Device& device, const char dirname[])
     // change cwd dir
     //chdir(dirname);
     err = device.change_currdir(dirname);
-//    if (errno != 0)
     if (err != 0)
     //{
 	ESP_LOGE(CMD_TAG_PRFX, "%s: fail change directory to %s\n%s", __func__, dirname, /*strerror(errno)*/ esp_err_to_name(err));
@@ -359,7 +359,6 @@ esp_err_t Server::cd(SDMMC::Device& device, const char dirname[])
     return ESP_ERR_INVALID_VERSION;
 #endif
 }; /* Server::cd */
-
 
 
 
@@ -720,19 +719,21 @@ esp_err_t Server::cp(SDMMC::Device& device, const char src_raw[], const char des
 // move files according a pattern
 esp_err_t Server::mv(const char src[], const char dest[])
 {
-    if (dest == NULL || strcmp(dest, "") == 0)
+//    if (dest == NULL || strcmp(dest, "") == 0)
+    if (empty(dest))
     {
 	ESP_LOGE("CMD_TAG_PRFX CMD_NM", "too few arguments: invoke command \"%s\" without parameters.\n%s", CMD_NM,
 		"Don't know what to move?");
 	return ESP_ERR_INVALID_ARG;
-    }; /* if dest == NULL || strcmp(dest, "") */
+    }; /* if empty(dest) */ /* if dest == NULL || strcmp(dest, "") */
 
-    if (src == NULL || strcmp(src, "") == 0)
+//    if (src == NULL || strcmp(src, "") == 0)
+    if (empty(src))
     {
 	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "too few arguments: invoke command \"%s\" with one parameters.\n%s", CMD_NM,
 		"Don't know where to move?");
 	return ESP_ERR_INVALID_ARG;
-    }; /* if src == NULL || strcmp(src, "") */
+    }; /* if empty(src) */ /* if src == NULL || strcmp(src, "") */
 
     cout << aso::format("Move file \"%s\" to \"%s.\"", src, dest) << endl;
 #ifdef __PURE_C__
@@ -763,12 +764,13 @@ esp_err_t Server::rm(SDMMC::Device& device, const char pattern[])
 	struct stat st;
 	char *path = device.get_cwd(pattern);
 
-    if (pattern == NULL || strcmp(pattern, "") == 0)
+//    if (pattern == NULL || strcmp(pattern, "") == 0)
+    if (empty(pattern))
     {
 	ESP_LOGE(CMD_TAG_PRFX, "%s: invoke command \"%s\" without parameters.\n%s", __func__, __func__,
 		"Missing filename to remove.");
 	return ESP_ERR_INVALID_ARG;
-    }; /* if pattern == NULL || strcmp(pattern, "") */
+    }; /* if empty(pattern) */ /* if pattern == NULL || strcmp(pattern, "") */
 
 //    cout << "Delete file " << '"' << pattern << '"' << endl;
     ESP_LOGI(CMD_TAG_PRFX, "%s: delete file \"%s\" (%s)", __func__,  pattern, path);
@@ -816,7 +818,8 @@ esp_err_t Server::cat(SDMMC::Device& device, const char fname[])
 	char *fullname = device.get_cwd(fname);
 	FILE *text = nullptr; // file for type to screen
 
-    if (fname == NULL || strcmp(fullname, "") == 0)
+//    if (fname == NULL || strcmp(fullname, "") == 0)
+    if (empty(fname))
     {
 	cout << endl
 	     << "*** Printing contents of the file <XXXX fname>. ***" << endl
@@ -826,7 +829,7 @@ esp_err_t Server::cat(SDMMC::Device& device, const char fname[])
 
 	cout << "*** End of printing file XXXX. ** ******************" << endl;
 	return ESP_ERR_INVALID_ARG;
-    }; /* if fname == NULL || strcmp(fname, "") */
+    }; /* if empty(fname) */ /* if fname == NULL || strcmp(fname, "") */
 
     cout << endl
 	 << aso::format("*** Printing contents of the file <%s> (realname '%s'). ***") % fname % fullname  << endl
@@ -984,7 +987,6 @@ esp_err_t Server::type(SDMMC::Device& device, const char fname[], size_t sector_
 	    char c;
 
 	// fname exists, check that is a regular file
-//	if (!stat(fullname, &statbuf) && !S_ISREG(statbuf.st_mode)) // @suppress("Symbol is not resolved")
 	if (!stat(fullname, &st) && !S_ISREG(st.st_mode)) // @suppress("Symbol is not resolved")
 	    return err4existent(fname, &st);
 
