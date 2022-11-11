@@ -738,25 +738,31 @@ esp_err_t Server::mv(SDMMC::Device& device, const char src_raw[], const char des
 	char *src = device.get_cwd(src_raw);
 	struct stat st;
 
-    // Check if source file is not exist
-    if (stat(src, &st) != 0)
-    {
-	// Source file must be exist
-	ESP_LOGE(CMD_TAG_PRFX, "%s: file \"%s\" (%s) is not exist - renaming a non-existent file is not possible.\n%s",
-		__func__, src_raw, src, esp_err_to_name(ESP_ERR_NOT_FOUND));
-	return ESP_ERR_NOT_FOUND;
-    }; /* if stat(src, &st) != 0 */
-
-    cout << aso::format("Move file \"%s\" (%s) to \"%s\" (%s)", src_raw, device.get_cwd(src_raw),
-			dest_raw, device.get_cwd(dest_raw)) << endl;
-    // Rename original file
-    ESP_LOGI(TAG, "Renaming file %s (%s) to %s (%s)", src_raw, device.get_cwd(src_raw), dest_raw,
-		    device.get_cwd(dest_raw));
-    //if (rename(src, dest) != 0)
+    //// Check if source file is not exist
+    //if (stat(src, &st) != 0)
     //{
-    //    ESP_LOGE(TAG, "Rename failed");
-    //    return ESP_FAIL;
-    //}; /* if rename(src, dest) != 0 */
+	// Source file must be exist
+	//ESP_LOGE(CMD_TAG_PRFX, "%s: file \"%s\" (%s) is not exist - renaming a non-existent file is not possible.\n%s",
+	//	__func__, src_raw, src, esp_err_to_name(ESP_ERR_NOT_FOUND));
+	//return ESP_ERR_NOT_FOUND;
+    //}; /* if stat(src, &st) != 0 */
+
+    src = (char*)malloc(strlen(src));
+    strcpy(src, device.curr_cwd());
+//    src = strcpy((char*)malloc(strlen(src)), src);
+
+    cout << aso::format("Move file \"%s\" (%s) to \"%s\" (%s)") %src_raw %src
+			%dest_raw %device.get_cwd(dest_raw) << endl;
+    // Rename original file
+    ESP_LOGI(TAG, "Renaming file %s (%s) to %s (%s)", src_raw, src, dest_raw,
+		    device.get_cwd(dest_raw));
+    if (rename(src, /*dest*/device.curr_cwd()) != 0)
+    {
+    	ESP_LOGE(TAG, "Rename failed");
+    	free(src);
+    	return ESP_FAIL;
+    }; /* if rename(src, dest) != 0 */
+    free(src);
     //return ESP_OK;
     ESP_LOGW(CMD_TAG_PRFX CMD_NM, "the command '%s' is not implemented now for C edition", "mv");
     return ESP_ERR_INVALID_VERSION;
