@@ -542,10 +542,11 @@ void ls_entry_printout_Cpp(const char fullpath[], const char name[])
 }; /* ls_entry_printout_Cpp */
 
 
+//#define __NOT_OVERWRITE__	// Deny overwrite cp & move destination files
 
 #undef CMD_NM
 #define CMD_NM "cp"
-#define __CP_OVER_EXIST_FILE__
+#define __CP_OVERWRITE_FILE__
 
 // copy files according a pattern
 esp_err_t Server::cp(SDMMC::Device& device, const char src_raw[], const char dest_raw[])
@@ -629,10 +630,10 @@ esp_err_t Server::cp(SDMMC::Device& device, const char src_raw[], const char des
     // destination - not a directory
     if (stat(dest, &st) == 0)
     {
-#ifdef __CP_OVER_EXIST_FILE__
+#if !defined(__NOT_OVERWRITE__) && defined(__CP_OVERWRITE_FILE__)
 	ESP_LOGW(CMD_TAG_PRFX, "%s: overwrite an existing file \"%s\".", __func__, dest);
 #else
-	ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite the existent file \"%s\" is prohibited; aborting.",
+	ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite the existent file \"%s\" is denied; aborting.",
 		__func__, dest);
 	free(src);
 	return ESP_ERR_NOT_SUPPORTED;
@@ -680,6 +681,8 @@ esp_err_t Server::cp(SDMMC::Device& device, const char src_raw[], const char des
 
 
 
+#define __MV_OVERWRITE_FILE__
+
 #undef CMD_NM
 #define CMD_NM "mv"
 
@@ -726,9 +729,31 @@ esp_err_t Server::mv(SDMMC::Device& device, const char src_raw[], const char des
     if (stat(dest, &st) == 0)
     {
 	// Destination file exist
-	ESP_LOGW(CMD_TAG_PRFX, "%s: destination file \"%s\" (%s) exist - rename denied,%s",
-		__func__, dest_raw, dest, "\n\t\t\t\tnow is not any actions implemented");
-	return ESP_ERR_INVALID_VERSION;
+//	ESP_LOGW(CMD_TAG_PRFX, "%s: destination file \"%s\" (%s) exist - rename denied,%s",
+//		__func__, dest_raw, dest, "\n\t\t\t\tnow is not any actions implemented");
+	ESP_LOGW(CMD_TAG_PRFX, "%s: destination file \"%s\" (%s) exist",
+		__func__, dest_raw, dest);
+	// if destination is existing directory
+	if (S_ISDIR(st.st_mode))
+	{
+		char *basenm = basename(src);
+
+	    ESP_LOGW(CMD_TAG_PRFX, "%s: destination file is exist directory,\n\t\t\tbasename of src is: %s ", __func__,
+		    basenm);
+	    strcat(dest, "/");
+	    ESP_LOGW(CMD_TAG_PRFX, "%s: adding trailing slash to a destination file: %s", __func__, dest);
+	    strcat(dest, basenm);
+	    ESP_LOGW(CMD_TAG_PRFX, "%s: adding src basename to a destination file: %s", __func__, dest);
+	} /* if S_ISDIR(st.st_mode) */
+	else
+	{
+#if !defined(__NOT_OVERWRITE__) && defined(__MV_OVERWRITE_FILE__)
+	    ESP_LOGW(CMD_TAG_PRFX, "%s: overwrite this file", __func__);
+#else
+	    ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite this file is denied,%s", __func__);
+	    return ESP_ERR_INVALID_VERSION;
+#endif	// !defined(__NOT_OVERWRITE__) && defined(__CP_OVERWRITE_FILE__)
+	}; /* else if S_ISDIR(st.st_mode) */
     } /* if stat(dest, &st) != 0 */
     else
     {
