@@ -159,40 +159,6 @@ const char* const Server::MOUNT_POINT_Default = SD_MOUNT_POINT;
 //    }; /* Server::unmount */
 
 
-//// print current directory name
-//esp_err_t Server::pwd()
-//{
-//#ifdef __PURE_C__
-//	char* buf = getcwd(NULL, 0);
-////	size_t buflen = sizeof(buf) + 1;
-//
-//    if (!buf)
-//	return errno;
-//    cout << endl
-//	<< "PWD is: \"" << buf << '"' << endl
-//	<< endl;
-//    free(buf);
-//
-////    buf = (char*)malloc(buflen);
-////    FRESULT res = f_getcwd(buf, buflen);
-////    if (res != FR_OK)
-////    {
-////	cout << "Name of the current working directory was not copied into buffer." << endl
-////		<< "Return code is: " << res << endl;
-////    }; /* if res != FR_OK */
-////
-////    cout << aso::format("Current dir by f_getcwd version is: \"%s\"") % buf << endl;
-////    free(buf);
-//
-//    return ESP_OK;
-//#else
-//    cout << "Command \"pwd\" is not yet implemented now for C++ edition." << endl;
-//    return ESP_ERR_INVALID_VERSION;
-//#endif
-//}; /* Server::pwd */
-
-
-
 // print current directory name
 esp_err_t Server::pwd(SDMMC::Device& device)
 {
@@ -283,7 +249,7 @@ esp_err_t Server::rmdir(SDMMC::Device& device, const char dirname[])
 	return ESP_ERR_INVALID_ARG;
     }; /* if (S_ISDIR(st.st_mode)) */
 
-	DIR *dir = opendir(/*dirname*/path);	// Directory descriptor
+	DIR *dir = opendir(path);	// Directory descriptor
 
     errno = 0;	// clear any possible errors
 
@@ -625,8 +591,6 @@ esp_err_t Server::cp(SDMMC::Device& device, const char src_raw[], const char des
 	return ESP_ERR_INVALID_ARG;
     }; /* if src_raw[strlen(src_raw) - 1] == '/' || (src_raw[strlen(src_raw) - 1] == '.' && src_raw[strlen(src_raw) - 2] == '/') */
 
-	FILE* srcfile = fopen(device.curr_cwd(), "rb");
-
     /* or open source file at this point? */
     src = (char*)malloc(strlen(device.curr_cwd()) + 1);
     if (src == nullptr)
@@ -637,7 +601,6 @@ esp_err_t Server::cp(SDMMC::Device& device, const char src_raw[], const char des
     strcpy(src, device.curr_cwd());
 
 	char* srcbase = basename(src);
-
 	char *dest = device.get_cwd(dest_raw);
 
     if (strcmp(src, dest) == 0)
@@ -671,15 +634,19 @@ esp_err_t Server::cp(SDMMC::Device& device, const char src_raw[], const char des
 #else
 	ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite the existent file \"%s\" is prohibited; aborting.",
 		__func__, dest);
+	free(src);
 	return ESP_ERR_NOT_SUPPORTED;
 #endif	// __CP_OVER_EXIST_FILE__
     }; /* else if (S_ISDIR(st.st_mode)) */
 
     // destination file not exist or is overwrited
     ESP_LOGI(CMD_TAG_PRFX CMD_NM, "copy file %s to %s", src, dest);
+
+	FILE* srcfile = fopen(src, "rb");
+	FILE* destfile = fopen(dest, "wb");
+
     free(src);
 
-	FILE* destfile = fopen(device.curr_cwd(), "wb");
     if (!destfile)
     {
 	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "failed creating file %s, aborting ", device.curr_cwd());
@@ -736,36 +703,64 @@ esp_err_t Server::mv(SDMMC::Device& device, const char src_raw[], const char des
 #ifdef __PURE_C__
 
 	char *src = device.get_cwd(src_raw);
+	char *dest = NULL;
 	struct stat st;
 
-    //// Check if source file is not exist
-    //if (stat(src, &st) != 0)
-    //{
+    // Check if source file is not exist
+    if (stat(src, &st) != 0)
+    {
 	// Source file must be exist
-	//ESP_LOGE(CMD_TAG_PRFX, "%s: file \"%s\" (%s) is not exist - renaming a non-existent file is not possible.\n%s",
-	//	__func__, src_raw, src, esp_err_to_name(ESP_ERR_NOT_FOUND));
-	//return ESP_ERR_NOT_FOUND;
-    //}; /* if stat(src, &st) != 0 */
+	ESP_LOGE(CMD_TAG_PRFX, "%s: file \"%s\" (%s) is not exist - renaming a non-existent file is not possible.\n%s",
+		__func__, src_raw, src, esp_err_to_name(ESP_ERR_NOT_FOUND));
+	return ESP_ERR_NOT_FOUND;
+    }; /* if stat(src, &st) != 0 */
 
-    src = (char*)malloc(strlen(src));
-    strcpy(src, device.curr_cwd());
-//    src = strcpy((char*)malloc(strlen(src)), src);
+//    src = (char*)malloc(strlen(src));
+//    strcpy(src, device.curr_cwd());
+    src = strcpy((char*)malloc(strlen(src)), src);
+    dest = device.get_cwd(dest_raw);
 
     cout << aso::format("Move file \"%s\" (%s) to \"%s\" (%s)") %src_raw %src
-			%dest_raw %device.get_cwd(dest_raw) << endl;
+			%dest_raw %dest << endl;
+
+    if (stat(dest, &st) == 0)
+    {
+	// Destination file exist
+	ESP_LOGW(CMD_TAG_PRFX, "%s: destination file \"%s\" (%s) exist - rename denied,%s",
+		__func__, dest_raw, dest, "\n\t\t\t\tnow is not any actions implemented");
+	return ESP_ERR_INVALID_VERSION;
+    } /* if stat(dest, &st) != 0 */
+    else
+    {
+	// Destination file is not exist,
+	// check existing dirname
+//	if (stat(::dirname(dest), &st) != 0)
+	    char *base = basename(dest);
+//	dest[strlen(dest) - strlen(base) - 1] = '\0';
+	*(base - 1) = '\0';
+	ESP_LOGI("mv", "destination dirname is: %s, basename of dest is: %s", dest, base);
+	if (stat(dest, &st) != 0)
+	{
+	    ESP_LOGE(CMD_TAG_PRFX, "%s: dirname of the file \"%s\" (%s) is not exist - renaming is not possible",
+		    __func__, dest_raw, dest);
+	    return ESP_ERR_NOT_FOUND;
+	}; /* if stat(dirname(dest), &st != 0) */
+	*(base - 1) = '/';	// restore last slash in destination file name
+	ESP_LOGI("mv", "destination base is: %s", base);
+    }; /* if stat(dest, &st) != 0 */
+
     // Rename original file
     ESP_LOGI(TAG, "Renaming file %s (%s) to %s (%s)", src_raw, src, dest_raw,
-		    device.get_cwd(dest_raw));
-    if (rename(src, /*dest*/device.curr_cwd()) != 0)
-    {
-    	ESP_LOGE(TAG, "Rename failed");
-    	free(src);
-    	return ESP_FAIL;
-    }; /* if rename(src, dest) != 0 */
+		    dest/*device.get_cwd(dest_raw)*/);
+//    if (rename(src, dest/*device.curr_cwd()*/) != 0)
+//    {
+//    	ESP_LOGE(TAG, "Rename failed");
+//    	free(src);
+//    	return ESP_FAIL;
+//    }; /* if rename(src, dest) != 0 */
     free(src);
-    //return ESP_OK;
-    ESP_LOGW(CMD_TAG_PRFX CMD_NM, "the command '%s' is not implemented now for C edition", "mv");
-    return ESP_ERR_INVALID_VERSION;
+    ESP_LOGW(CMD_TAG_PRFX CMD_NM, "the command '%s' now is partyally implemented for C edition", __func__);
+    return ESP_OK;
 #else
     ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Command \"%s\" is not yet implemented now for C++ edition.", CMD_NM);
     return ESP_ERR_INVALID_VERSION;
