@@ -974,40 +974,14 @@ esp_err_t Server::type(SDMMC::Device& device, const char fname[], size_t sector_
 	char *fullname = device.get_cwd(fname);
 	FILE *storage = NULL;
 
-#if 0
-	    // Check if destination file exists before deleting
-	    if (stat(fullname, &st) != 0)
-	    {
-	        // typing a non-exist file is not possible
-	    	ESP_LOGE(CMD_TAG_PRFX, "%s: \"%s\" file does not exist - printing of the missing file is not possible.\n%s",
-	    		__func__, fname, esp_err_to_name(ESP_ERR_NOT_FOUND));
-	    	return ESP_ERR_NOT_FOUND;
-	    }; /* if stat(path, &st) != 0 */
-
-	    if (S_ISDIR(st.st_mode))
-	    {
-	    	ESP_LOGE(CMD_TAG_PRFX, "%s: Typing directories unsupported, use the 'ls' command instead.\n%s",
-	    		__func__, esp_err_to_name(ESP_ERR_NOT_SUPPORTED));
-	    	return ESP_ERR_NOT_SUPPORTED;
-	    }; /* if (S_ISDIR(st.st_mode)) */
-
-	    errno = 0;	// clear possible errors
-	    text = fopen(fullname, "r"); // open the file for type to screen
-#endif
-
-
     // Test file 'fname' for existing
     errno = 0;	// clear all error state
-//    if (access(fname, F_OK) == -1)
     if (access(fullname, F_OK) == -1)
     {
 	if (errno == ENOENT)	// error "file does not exist"
 	{
-//		struct stat statbuf;
 
-//	    if (!stat(fname, &statbuf))	// but if the fname still exists here, then it is a directory // @suppress("Symbol is not resolved")
 	    if (!stat(fullname, &st))	// but if the fname still exists here, then it is a directory // @suppress("Symbol is not resolved")
-//		return err4existent(fname, &statbuf);
 		return err4existent(fname, &st);
 	    ESP_LOGI(CMD_TAG_PRFX CMD_NM, "OK, file \"%s\" does not exist, opening this file.", fname);
 	    cout << aso::format("Open file %s for the write") % fullname << endl;
@@ -1023,7 +997,6 @@ esp_err_t Server::type(SDMMC::Device& device, const char fname[], size_t sector_
     else
     {	// Error - file fname is exist
 
-//	    struct stat statbuf;
 	    char c;
 
 	// fname exists, check that is a regular file
@@ -1132,6 +1105,41 @@ esp_err_t Server::type(SDMMC::Device& device, const char fname[], size_t sector_
 }; /* Server::type <file> */
 
 
+// is the filename ending
+// really like as a directory name end?
+bool Server::dir_tail(const char fname[])
+{
+	size_t len = strlen(fname);
+    if (len == 0)
+	return false;
+    // path == "blablabla/"
+    if (fname[len-1] == '/')
+	return true;
+    // path == "."
+    if (len == 1)
+    {
+	if (fname[0] == '.')
+	    return true;
+	else return false;
+    }; /* if len == 1 */
+    // path == "blablabla/."
+    if (fname[len-2] == '/' && fname[len-1] == '.')
+	return true;
+    if (len == 2)
+    {
+	// path == ".."
+	if (fname[len-2] == '.' && fname[len-1] == '.')
+	    return true;
+	// path != ".."
+	else return false;
+    }; /* if len == 2 */
+    // path == "blablabla/.."
+    if (fname[len-3] == '/' && fname[len-2] == '.' && fname[len-1] == '.')
+	return true;
+    return false;
+}; /* Server::dir_tail */
+
+
 // Generates an error message if the struct stat
 // refers to an object, other than a file.
 // fname - the name of the object referenced by the struct stat.
@@ -1149,6 +1157,7 @@ esp_err_t err4existent(const char fname[], const struct stat* statbuf)
     return ESP_ERR_NOT_SUPPORTED;
 #undef EXIST_FN_TAG
 }; /* err4existent */
+
 
 #undef CMD_TAG_PRFX
 

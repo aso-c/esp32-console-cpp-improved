@@ -63,7 +63,7 @@ public:
     esp_err_t mkdir(SDMMC::Device&, const char dirname[] = NULL);   // create a new directory
     esp_err_t cd(SDMMC::Device&, const char dirname[] = NULL);	// change a current directory
     esp_err_t ls(SDMMC::Device&, const char pattern[] = ".");	// print a list of files in the specified directory
-    esp_err_t cp(SDMMC::Device&, const char /*src*/[] = NULL, const char /*dest*/[] = NULL);	// copy files src to dest
+    esp_err_t cp(SDMMC::Device&, const char[] = NULL, const char[] = NULL);	// copy files src to dest
     esp_err_t mv(SDMMC::Device&, const char src[] = NULL, const char dest[] = NULL);	// move files from src to dest
     esp_err_t rm(SDMMC::Device&, const char pattern[] = NULL);	// remove files according a pattern
     esp_err_t rmdir(SDMMC::Device&, const char dirname[] = NULL);   // remove an empty existing directory
@@ -75,6 +75,8 @@ public:
 
 private:
     esp_err_t ret;
+
+    bool dir_tail(const char[]);	// is the filename ending really like as a directory name end?
 
     static const char* const MOUNT_POINT_Default;
 
