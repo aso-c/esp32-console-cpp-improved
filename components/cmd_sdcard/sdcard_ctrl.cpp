@@ -689,6 +689,8 @@ esp_err_t Server::cp(SDMMC::Device& device, const char src_raw[], const char des
 // move files according a pattern
 esp_err_t Server::mv(SDMMC::Device& device, const char src_raw[], const char dest_raw[])
 {
+
+ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position 1 ########");
     if (empty(src_raw))
     {
 	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "too few arguments: invoke command \"%s\" with one parameters.\n%s", CMD_NM,
@@ -696,6 +698,7 @@ esp_err_t Server::mv(SDMMC::Device& device, const char src_raw[], const char des
 	return ESP_ERR_INVALID_ARG;
     }; /* if empty(src) */
 
+ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position 2 ########");
     if (empty(dest_raw))
     {
 	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "too few arguments: invoke command \"%s\" without parameters.\n%s", CMD_NM,
@@ -705,27 +708,40 @@ esp_err_t Server::mv(SDMMC::Device& device, const char src_raw[], const char des
 
 #ifdef __PURE_C__
 
-	char *src = device.get_cwd(src_raw);
-	char *dest = NULL;
+ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position 3 ########");
+	char *src_stat = device.get_cwd(src_raw);
 	struct stat st;
 
+ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position 4 ########");
     // Check if source file is not exist
-    if (stat(src, &st) != 0)
+    if (stat(src_stat, &st) != 0)
     {
 	// Source file must be exist
 	ESP_LOGE(CMD_TAG_PRFX, "%s: file \"%s\" (%s) is not exist - renaming a non-existent file is not possible.\n%s",
-		__func__, src_raw, src, esp_err_to_name(ESP_ERR_NOT_FOUND));
+		__func__, src_raw, src_stat, esp_err_to_name(ESP_ERR_NOT_FOUND));
 	return ESP_ERR_NOT_FOUND;
-    }; /* if stat(src, &st) != 0 */
+    }; /* if stat(src_stat, &st) != 0 */
 
+ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position 5 ########");
+	char *src = NULL;
+	char *dest = NULL;
+
+ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position 6 ########");
 //    src = (char*)malloc(strlen(src));
 //    strcpy(src, device.curr_cwd());
-    src = strcpy((char*)malloc(strlen(src)), src);
+    src = strcpy((char*)malloc(strlen(src_stat) * sizeof(char)), src_stat);
     dest = device.get_cwd(dest_raw);
 
+ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position 7 ########");
+    if (!src)
+    {
+	ESP_LOGE(CMD_TAG_PRFX, "%s: Not enought memory for store souce file name", __func__);
+	return ESP_ERR_NO_MEM;
+    }; /* if src == NULL*/
     cout << aso::format("Move file \"%s\" (%s) to \"%s\" (%s)") %src_raw %src
 			%dest_raw %dest << endl;
 
+ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position 8 ########");
     if (stat(dest, &st) == 0)
     {
 	// Destination file exist
@@ -747,10 +763,17 @@ esp_err_t Server::mv(SDMMC::Device& device, const char src_raw[], const char des
 	} /* if S_ISDIR(st.st_mode) */
 	else
 	{
+	    if (dir_tail(dest_raw))
+	    {
+		ESP_LOGE(CMD_TAG_PRFX, "%s: destination file name defined as a directory name: %s, but tranlated to a exist file name: %s", __func__, dest_raw, dest);
+		free(src);
+		return ESP_ERR_INVALID_ARG;
+	    }; /* if (dir_tail(dest_raw)) */
 #if !defined(__NOT_OVERWRITE__) && defined(__MV_OVERWRITE_FILE__)
 	    ESP_LOGW(CMD_TAG_PRFX, "%s: overwrite this file", __func__);
 #else
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite this file is denied,%s", __func__);
+	    free(src);
 	    return ESP_ERR_INVALID_VERSION;
 #endif	// !defined(__NOT_OVERWRITE__) && defined(__CP_OVERWRITE_FILE__)
 	}; /* else if S_ISDIR(st.st_mode) */
@@ -766,11 +789,19 @@ esp_err_t Server::mv(SDMMC::Device& device, const char src_raw[], const char des
 	ESP_LOGI("mv", "destination dirname is: %s, basename of dest is: %s", dest, base);
 	if (stat(dest, &st) != 0)
 	{
-	    ESP_LOGE(CMD_TAG_PRFX, "%s: dirname of the file \"%s\" (%s) is not exist - renaming is not possible",
+	    ESP_LOGE(CMD_TAG_PRFX, "%s: dirname of the file \"%s\" (%s) is not exist - renaming is impossible",
 		    __func__, dest_raw, dest);
+	    free(src);
 	    return ESP_ERR_NOT_FOUND;
 	}; /* if stat(dirname(dest), &st != 0) */
-	*(base - 1) = '/';	// restore last slash in destination file name
+	*(base - 1) = '/';	// restore last slash in prefix of destination file name
+	// If destination path look like a directorty name
+	if (dir_tail(dest_raw))
+	{
+	    ESP_LOGE(CMD_TAG_PRFX, "%s: destination file name defined as a directory name: %s, but tranlated to a non-exist file name: %s", __func__, dest_raw, dest);
+	    free(src);
+	    return ESP_ERR_INVALID_ARG;
+	}; /* if (dir_tail(dest_raw)) */
 	ESP_LOGI("mv", "destination base is: %s", base);
     }; /* if stat(dest, &st) != 0 */
 
