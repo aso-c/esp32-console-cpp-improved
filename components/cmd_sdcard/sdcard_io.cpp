@@ -797,9 +797,9 @@ bool Device::valid_path(/*const*/ char path[])
 	return true;
     }; /* if strlen(path) == 1 */
     // if dirname - empty
-    if ((base - path) == 0)
+    if ((base - path) < 2)
     {
-	ESP_LOGW("Device::valid_path", "dirname of the path is empty, always valid");
+	ESP_LOGW("Device::valid_path", "dirname of the path is empty, base - path is %d, always valid", base - path);
 	return true;
     }; /* if (base - path) == 0 */
     // if base is empty
@@ -809,8 +809,8 @@ bool Device::valid_path(/*const*/ char path[])
 	return false;	// need special analyze for empty(base) case
     }; /* if (empty(base)) */
 
-    if (base[-1] == '/')
-	return false;	// double slash - is invalid
+//    if (base[-1] == '/')
+//	return false;	// double slash - is invalid
     //*(base - 1) = '\0';	// break the path at the dirname
     //if (stat(path, &st) == 0)
     //{
@@ -818,33 +818,105 @@ bool Device::valid_path(/*const*/ char path[])
     //	    return true;	// the path is inconsist
     //}; /* if stat(real_path, &st) == 0 */
     //*(base - 1) = '/';	// restore full path name
-	unsigned int point_cnt = 0;
-	unsigned int slash_cnt  = 0;
+	unsigned int ctrl_cnt  = 0;
+#define sign_place 0x2	// with of the place for the sign
+#define point_sign 0x1	// mark a point symbol in a string
+#define alpha_sign 0x2	// mark a non-point or a non-slash symbol in a string
+#define alpha_present_mask (alpha_sign | (alpha_sign << 1*sign_place) | (alpha_sign << 2*sign_place) | (alpha_sign << 3*sign_place))
+#define three_point_mask (point_sign | (point_sign << 1*sign_place) | (point_sign << 2*sign_place))
     // scan the dirname of the path for found '/.' or '/..' sequence
-    for ( char* scan = base; scan >= path; scan--)
+    for ( char* scan = base - 2; scan >= path; scan--)
     {
 	ESP_LOGW("Device::valid_path", "path current char is: %c", *scan);
+	if (scan[0] == '/')	// solution point
+	{
+	    ESP_LOGW("Device::valid_path", "###### Solution point: current char is '%c', ctrl_cnt is %d ######", scan[0], ctrl_cnt);
+	    // double slash - prev symbol is slash
+	    if (ctrl_cnt == 0)
+	    {
+		ESP_LOGW("Device::valid_path", "**** current char is %c, ctrl_cnt is %d: double slash and more - is not valid sequence in the path ****", scan[0], ctrl_cnt);
+		return false;
+	    }; /* if ctrl_cnt == 0 */
+	    // if non point sign is present in tested substring
+	    if (ctrl_cnt & alpha_present_mask)
+	    {
+		ESP_LOGW("Device::valid_path", "alpha or other then point or slash symbol is present in current substring, current char is %c, ctrl_cnt is %d - nothing to do, scan[0], continue", scan[0], ctrl_cnt);
+		ctrl_cnt = 0;
+		continue;
+	    }; /* if ctrl_cnt & alpha_present_mask */
+	    // if more then 3 point sequence in substring
+	    if (ctrl_cnt == three_point_mask)
+	    {
+		ESP_LOGW("Device::valid_path", "more then 3 point sequence is present in current substring, current char is %c, ctrl_cnt is %d - nothing to do, continue", scan[0], ctrl_cnt);
+		ctrl_cnt = 0;
+		continue;
+	    }; /* if ctrl_cnt & alpha_present_mask */
+
+	    ESP_LOGW("Device::valid_path", "====== Test substring for existing at this point, current char is %c, ctrl_cnt is %d, clear it ======", scan[0], ctrl_cnt);
+	    ctrl_cnt = 0;
+
+	}; /* if scan[0] == '/' */
+
+	// point symbol handling
 	if (scan[0] == '.')
 	{
-	    ++point_cnt;
-	    ESP_LOGW("Device::valid_path", "====== current char of the path is point!!! ======");
+	    // ctrl_cnt is zero, start of the substr handling
+	    if (ctrl_cnt < point_sign)
+	    {
+		ESP_LOGW("Device::valid_path", "ctrl_cnt is %d, current char is %c, 1'st sumbol of the processing substring", ctrl_cnt, scan[0]);
+		ctrl_cnt = point_sign;
+		continue;
+	    }; /* if ctrl_cnt < point_sign */
+	    // point in a 2'nd position in sequence
+	    if (ctrl_cnt < (point_sign << sign_place))
+	    {
+		ESP_LOGW("Device::valid_path", "ctrl_cnt is %d, current char is %c, 2'nd symbol of the processing substring", ctrl_cnt, scan[0]);
+		ctrl_cnt |= (point_sign << sign_place);
+		continue;
+	    }; /* if ctrl_cnt < point_sign */
+	    // point in a 3'd position in sequence
+	    if (ctrl_cnt < (point_sign << 2*sign_place))
+	    {
+		ESP_LOGW("Device::valid_path", "ctrl_cnt is %d, current char is %c, 3'd symbol of the processing substring", ctrl_cnt, scan[0]);
+		ctrl_cnt |= (point_sign << 2*sign_place);
+		continue;
+	    }; /* if ctrl_cnt < point_sign */
+
+	    ESP_LOGW("Device::valid_path", "ctrl_cnt is %d, current char is %c, more then 3'd symbol of the processing substring, nothing to do", ctrl_cnt, scan[0]);
+
+//	    ++point_cnt;
+//	    ESP_LOGW("Device::valid_path", "====== current char of the path is point!!! ======");
 	    continue;
 	}; /* if scan[0] == '.' */
-	if (scan[0] == '/')
+
+	// first symbol in the processing sequence
+	if (ctrl_cnt == 0)
 	{
-	    if (slash_cnt > 1)
-	    {
-		ESP_LOGE("Device::valid_path", "double slash and more - is not valid sequence in the path");
-		return false;
-	    }; /* if slash_cnt > 1 */
-	    ++slash_cnt;
-//	    if (point_cnt == 1 || point_cnt == 2)
+	    ESP_LOGW("Device::valid_path", "ctrl_cnt is %d, current char is %c, 1'st sumbol of processing substring", ctrl_cnt, scan[0]);
+	    ctrl_cnt = alpha_sign;
 	    continue;
-	};
+	}; /* if (ctrl_cnt == 0) */
+	// 2'nd symbol in the processing sequence
+	if (ctrl_cnt < (point_sign << sign_place))
+	{
+	    ESP_LOGW("Device::valid_path", "ctrl_cnt is %d, current char is %c, 2'nd sumbol of processing substring", ctrl_cnt, scan[0]);
+	    ctrl_cnt |= (alpha_sign << sign_place);
+	    continue;
+	}; /* if (ctrl_cnt == 0) */
+	// 3'd symbol in the processing sequence
+	if (ctrl_cnt < (point_sign << 2*sign_place))
+	{
+	    ESP_LOGW("Device::valid_path", "ctrl_cnt is %d, current char is %c, 3'd sumbol of processing substring", ctrl_cnt, scan[0]);
+	    ctrl_cnt |= (alpha_sign << 2*sign_place);
+	    continue;
+	}; /* if (ctrl_cnt == 0) */
+	ESP_LOGW("Device::valid_path", "ctrl_cnt is %d, current char is %c, more then 3'd symbol of the processing substring, nothing to do", ctrl_cnt, scan[0]);
+
 //	if (*scan == '.')
 //	{
 //	    ESP_LOGW("Device::valid_path", "====== current char of the path is point!!! ======");
 //	}; /* if (*scan == '.') */
+#if 0	// for_delete
 	if (point_cnt == 1 || point_cnt == 2)
 	{
 	    if (scan[1] == '/')
@@ -863,6 +935,7 @@ bool Device::valid_path(/*const*/ char path[])
 	// clear the counters
 	point_cnt = 0;
 	slash_cnt = 0;
+#endif	// for_deleting
     }; /* for char* scan = base - 1; scan > path; scan-- */
 
 #if 0	// dev_continue
