@@ -50,7 +50,7 @@
 
 
 #include "extrstream"
-
+#include "astring.h"
 
 //using namespace idf;
 using namespace std;
@@ -354,9 +354,16 @@ esp_err_t Server::ls(SDMMC::Device& device, const char pattern[])
 	DIR *dir;	// Directory descriptor
 	struct stat statbuf;	// buffer for stat
 	char* in_pattern = device.get_cwd(pattern);
+//	char* in_pattern = device.raw_cwd(pattern);
 
     ESP_LOGD(CMD_TAG_PRFX, "%s: pattern is             : \"%s\"", __func__, pattern);
     ESP_LOGD(CMD_TAG_PRFX, "%s: processed inner pattern: \"%s\"", __func__, in_pattern);
+
+    if (!device.valid_path((char*)pattern))
+    {
+	ESP_LOGE(CMD_TAG_PRFX, "%s: pattern \"%s\" is invalid", __func__, pattern);
+	return ESP_ERR_NOT_FOUND;
+    }; /* !device.valid_path(pattern) */
 
     if (stat(in_pattern, &statbuf) == -1)
     {
@@ -727,21 +734,24 @@ ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position 5 ########");
 	char *dest = NULL;
 
 ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position 6 ########");
-//    src = (char*)malloc(strlen(src));
-//    strcpy(src, device.curr_cwd());
-    src = strcpy((char*)malloc(strlen(src_stat) * sizeof(char)), src_stat);
-    dest = device.get_cwd(dest_raw);
-
+    src = (char*)malloc(strlen(src_stat) * sizeof(char) + 1);
 ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position 7 ########");
     if (!src)
     {
 	ESP_LOGE(CMD_TAG_PRFX, "%s: Not enought memory for store souce file name", __func__);
 	return ESP_ERR_NO_MEM;
     }; /* if src == NULL*/
+ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position 8 ########");
+//    strcpy(src, device.curr_cwd());
+    strcpy(src, src_stat);
+//    src = strcpy((char*)malloc(strlen(src_stat) * sizeof(char)) + 1, src_stat);
+    dest = device.get_cwd(dest_raw);
+
+ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position 9 ########");
     cout << aso::format("Move file \"%s\" (%s) to \"%s\" (%s)") %src_raw %src
 			%dest_raw %dest << endl;
 
-ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position 8 ########");
+ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position 10 ########");
     if (stat(dest, &st) == 0)
     {
 	// Destination file exist
@@ -803,7 +813,7 @@ ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position 8 ########");
 	    return ESP_ERR_INVALID_ARG;
 	}; /* if (dir_tail(dest_raw)) */
 	ESP_LOGI("mv", "destination base is: %s", base);
-    }; /* if stat(dest, &st) != 0 */
+    }; /* else if stat(dest, &st) == 0 */
 
     // Rename original file
     ESP_LOGI(TAG, "Renaming file %s (%s) to %s (%s)", src_raw, src, dest_raw,
@@ -1136,39 +1146,142 @@ esp_err_t Server::type(SDMMC::Device& device, const char fname[], size_t sector_
 }; /* Server::type <file> */
 
 
-// is the filename ending
-// really like as a directory name end?
-bool Server::dir_tail(const char fname[])
-{
-	size_t len = strlen(fname);
-    if (len == 0)
-	return false;
-    // path == "blablabla/"
-    if (fname[len-1] == '/')
-	return true;
-    // path == "."
-    if (len == 1)
-    {
-	if (fname[0] == '.')
-	    return true;
-	else return false;
-    }; /* if len == 1 */
-    // path == "blablabla/."
-    if (fname[len-2] == '/' && fname[len-1] == '.')
-	return true;
-    if (len == 2)
-    {
-	// path == ".."
-	if (fname[len-2] == '.' && fname[len-1] == '.')
-	    return true;
-	// path != ".."
-	else return false;
-    }; /* if len == 2 */
-    // path == "blablabla/.."
-    if (fname[len-3] == '/' && fname[len-2] == '.' && fname[len-1] == '.')
-	return true;
-    return false;
-}; /* Server::dir_tail */
+//// if the basename (the last part of the path) - has the characteristics
+//// of a directory name, and a dirname (the path prefix) -
+//// is an existing file, not a directory, or any other impossible variants
+//// of the full file/path name
+//bool Server::inconsistent_path(char path[])
+//{
+//#if 0	// test
+//    dest = device.get_cwd(dest_raw);
+//
+//ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position 10 ########");
+//    if (stat(dest, &st) == 0)
+//    {
+//	// Destination file exist
+////	ESP_LOGW(CMD_TAG_PRFX, "%s: destination file \"%s\" (%s) exist - rename denied,%s",
+////		__func__, dest_raw, dest, "\n\t\t\t\tnow is not any actions implemented");
+//	ESP_LOGW(CMD_TAG_PRFX, "%s: destination file \"%s\" (%s) exist",
+//		__func__, dest_raw, dest);
+//	// if destination is existing directory
+//	if (S_ISDIR(st.st_mode))
+//	{
+//		char *basenm = basename(src);
+//
+//	    ESP_LOGW(CMD_TAG_PRFX, "%s: destination file is exist directory,\n\t\t\tbasename of src is: %s ", __func__,
+//		    basenm);
+//	    strcat(dest, "/");
+//	    ESP_LOGW(CMD_TAG_PRFX, "%s: adding trailing slash to a destination file: %s", __func__, dest);
+//	    strcat(dest, basenm);
+//	    ESP_LOGW(CMD_TAG_PRFX, "%s: adding src basename to a destination file: %s", __func__, dest);
+//	} /* if S_ISDIR(st.st_mode) */
+//	else
+//	{
+//	    if (dir_tail(dest_raw))
+//	    {
+//		ESP_LOGE(CMD_TAG_PRFX, "%s: destination file name defined as a directory name: %s, but tranlated to a exist file name: %s", __func__, dest_raw, dest);
+//		free(src);
+//		return ESP_ERR_INVALID_ARG;
+//	    }; /* if (dir_tail(dest_raw)) */
+//#if !defined(__NOT_OVERWRITE__) && defined(__MV_OVERWRITE_FILE__)
+//	    ESP_LOGW(CMD_TAG_PRFX, "%s: overwrite this file", __func__);
+//#else
+//	    ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite this file is denied,%s", __func__);
+//	    free(src);
+//	    return ESP_ERR_INVALID_VERSION;
+//#endif	// !defined(__NOT_OVERWRITE__) && defined(__CP_OVERWRITE_FILE__)
+//	}; /* else if S_ISDIR(st.st_mode) */
+//    } /* if stat(dest, &st) != 0 */
+//    else
+//    {
+//	// Destination file is not exist,
+//	// check existing dirname
+////	if (stat(::dirname(dest), &st) != 0)
+//	    char *base = basename(dest);
+////	dest[strlen(dest) - strlen(base) - 1] = '\0';
+//	*(base - 1) = '\0';
+//	ESP_LOGI("mv", "destination dirname is: %s, basename of dest is: %s", dest, base);
+//	if (stat(dest, &st) != 0)
+//	{
+//	    ESP_LOGE(CMD_TAG_PRFX, "%s: dirname of the file \"%s\" (%s) is not exist - renaming is impossible",
+//		    __func__, dest_raw, dest);
+//	    free(src);
+//	    return ESP_ERR_NOT_FOUND;
+//	}; /* if stat(dirname(dest), &st != 0) */
+//	*(base - 1) = '/';	// restore last slash in prefix of destination file name
+//	// If destination path look like a directorty name
+//	if (dir_tail(dest_raw))
+//	{
+//	    ESP_LOGE(CMD_TAG_PRFX, "%s: destination file name defined as a directory name: %s, but tranlated to a non-exist file name: %s", __func__, dest_raw, dest);
+//	    free(src);
+//	    return ESP_ERR_INVALID_ARG;
+//	}; /* if (dir_tail(dest_raw)) */
+//	ESP_LOGI("mv", "destination base is: %s", base);
+//    }; /* if stat(dest, &st) != 0 */
+//#endif
+//
+//	char *base = basename(path);	// get a prefix of a path
+//	struct stat st;
+//	char* real_path = device.get_cwd(base);
+//
+//    *(base - 1) = '\0';	// break the path at the dirname
+//    if (stat(real_path, &st) == 0)
+//    {
+//	if (!S_ISDIR(st.st_mode))
+//	    return true;	// the path is inconsist
+//    }; /* if stat(real_path, &st) == 0 */
+//    *(base - 1) = '/';	// restore full path name
+//
+////    // if path exist
+////    if (stat(real_path, &st) == 0)
+////	dest[strlen(dest) - strlen(base) - 1] = '\0';
+//	ESP_LOGI("mv", "destination dirname is: %s, basename of dest is: %s", dest, base);
+//	if (stat(dest, &st) != 0)
+//	{
+//	    ESP_LOGE(CMD_TAG_PRFX, "%s: dirname of the file \"%s\" (%s) is not exist - renaming is impossible",
+//		    __func__, dest_raw, dest);
+//	    free(src);
+//	    return ESP_ERR_NOT_FOUND;
+//	}; /* if stat(dirname(dest), &st != 0) */
+//	*(base - 1) = '/';	// restore last slash in prefix of destination file name
+//
+//    return false;
+//}; /* Server::inconsistent_path */
+//
+//
+//// is the filename ending
+//// really like as a directory name end?
+//bool Server::dir_tail(const char fname[])
+//{
+//	size_t len = strlen(fname);
+//    if (len == 0)
+//	return false;
+//    // path == "blablabla/"
+//    if (fname[len-1] == '/')
+//	return true;
+//    // path == "."
+//    if (len == 1)
+//    {
+//	if (fname[0] == '.')
+//	    return true;
+//	else return false;
+//    }; /* if len == 1 */
+//    // path == "blablabla/."
+//    if (fname[len-2] == '/' && fname[len-1] == '.')
+//	return true;
+//    if (len == 2)
+//    {
+//	// path == ".."
+//	if (fname[len-2] == '.' && fname[len-1] == '.')
+//	    return true;
+//	// path != ".."
+//	else return false;
+//    }; /* if len == 2 */
+//    // path == "blablabla/.."
+//    if (fname[len-3] == '/' && fname[len-2] == '.' && fname[len-1] == '.')
+//	return true;
+//    return false;
+//}; /* Server::dir_tail */
 
 
 // Generates an error message if the struct stat

@@ -15,9 +15,9 @@
 
 #pragma once
 
-// is string 'str' is empty or NULL?
-inline bool empty(const char* const str) {
-    return str == NULL || str[0] == '\0'; }
+//// is string 'str' is empty or NULL?
+//inline bool empty(const char* const str) {
+//    return str == NULL || str[0] == '\0'; }
 
 
 /*
@@ -76,7 +76,12 @@ public:
 private:
     esp_err_t ret;
 
-    bool dir_tail(const char[]);	// is the filename ending really like as a directory name end?
+//    // if the basename (the last part of the path) - has the characteristics
+//    // of a directory name, and a dirname (the path prefix) -
+//    // is an existing file, not a directory, or any other impossible variants
+//    // of the full file/path name
+//    bool inconsistent_path(char[]);
+//    bool dir_tail(const char[]);	// is the filename ending really like as a directory name end?
 
     static const char* const MOUNT_POINT_Default;
 

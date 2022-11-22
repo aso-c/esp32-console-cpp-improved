@@ -47,7 +47,7 @@
 #include "sdcard_io"
 
 #include "extrstream"
-
+#include "astring.h"
 
 //using namespace idf;
 using namespace std;
@@ -442,7 +442,8 @@ char* CWD_emulating::get(const char path[])
 {
     ESP_LOGD("CWD_emulating:", "%s: \"path\" argument is %s",  __func__, path);
     // argument - absolute path
-    if (path != nullptr && path[0] != '\0' && path[0] == '/')
+//    if (path != nullptr && path[0] != '\0' && path[0] == '/')
+    if (!empty(path) && absolute_path(path))
     {
 	if (strlen(path) < sizeof(operative_path_buff) / sizeof(char))
 	    return realpath(path, operative_path_buff);
@@ -460,7 +461,8 @@ char* CWD_emulating::get(const char path[])
 
     get(pwd);
     // argument - NULL or empty string
-    if (path == nullptr || path[0] == '\0')
+//    if (path == nullptr || path[0] == '\0')
+    if (empty(path))
 	return operative_path_buff;
 
     // relative path - finalize processing
@@ -490,6 +492,23 @@ char* CWD_emulating::get(const char path[])
 
     return operative_path_buff;
 }; /* CWD_emulating::get */
+
+// raw_get path with current dir:
+// only concatenate path with current dir,
+// not processing output with realpath().
+char* CWD_emulating::raw_get(const char path[])
+{
+    if (empty(path))
+	return strcpy(operative_path_buff, pwd);
+    if(absolute_path(path))
+	return strcpy(operative_path_buff, path);
+    raw_get();
+    strcat(operative_path_buff, "/");	// add directory separator at end of the default path
+//    strcat(operative_path_buff, path);	// add the path above to default path
+//    return operative_path_buff;
+    return strcat(operative_path_buff, path);	// add the path above to default path
+}; /* CWD_emulating::raw_get */
+
 
 // change cwd dir
 esp_err_t CWD_emulating::change_dir(const char path[])
@@ -678,6 +697,229 @@ esp_err_t Device::unmount()
 //	return fake_cwd.change_dir(mountpath());
 //    return fake_cwd.change_dir(path);
 //}; /* Device::change_currdir */
+
+
+// if the basename (the last part of the path) - has the characteristics
+// of a directory name, and a dirname (the path prefix) -
+// is an existing file, not a directory, or any other impossible variants
+// of the full file/path name
+bool Device::valid_path(/*const*/ char path[])
+{
+#if 0	// test
+    dest = device.get_cwd(dest_raw);
+
+    if (stat(dest, &st) == 0)
+    {
+	// Destination file exist
+//	ESP_LOGW(CMD_TAG_PRFX, "%s: destination file \"%s\" (%s) exist - rename denied,%s",
+//		__func__, dest_raw, dest, "\n\t\t\t\tnow is not any actions implemented");
+	ESP_LOGW(CMD_TAG_PRFX, "%s: destination file \"%s\" (%s) exist",
+		__func__, dest_raw, dest);
+	// if destination is existing directory
+	if (S_ISDIR(st.st_mode))
+	{
+		char *basenm = basename(src);
+
+	    ESP_LOGW(CMD_TAG_PRFX, "%s: destination file is exist directory,\n\t\t\tbasename of src is: %s ", __func__,
+		    basenm);
+	    strcat(dest, "/");
+	    ESP_LOGW(CMD_TAG_PRFX, "%s: adding trailing slash to a destination file: %s", __func__, dest);
+	    strcat(dest, basenm);
+	    ESP_LOGW(CMD_TAG_PRFX, "%s: adding src basename to a destination file: %s", __func__, dest);
+	} /* if S_ISDIR(st.st_mode) */
+	else
+	{
+	    if (dir_tail(dest_raw))
+	    {
+		ESP_LOGE(CMD_TAG_PRFX, "%s: destination file name defined as a directory name: %s, but tranlated to a exist file name: %s", __func__, dest_raw, dest);
+		free(src);
+		return ESP_ERR_INVALID_ARG;
+	    }; /* if (dir_tail(dest_raw)) */
+#if !defined(__NOT_OVERWRITE__) && defined(__MV_OVERWRITE_FILE__)
+	    ESP_LOGW(CMD_TAG_PRFX, "%s: overwrite this file", __func__);
+#else
+	    ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite this file is denied,%s", __func__);
+	    free(src);
+	    return ESP_ERR_INVALID_VERSION;
+#endif	// !defined(__NOT_OVERWRITE__) && defined(__CP_OVERWRITE_FILE__)
+	}; /* else if S_ISDIR(st.st_mode) */
+    } /* if stat(dest, &st) != 0 */
+    else
+    {
+	// Destination file is not exist,
+	// check existing dirname
+//	if (stat(::dirname(dest), &st) != 0)
+	    char *base = basename(dest);
+//	dest[strlen(dest) - strlen(base) - 1] = '\0';
+	*(base - 1) = '\0';
+	ESP_LOGI("mv", "destination dirname is: %s, basename of dest is: %s", dest, base);
+	if (stat(dest, &st) != 0)
+	{
+	    ESP_LOGE(CMD_TAG_PRFX, "%s: dirname of the file \"%s\" (%s) is not exist - renaming is impossible",
+		    __func__, dest_raw, dest);
+	    free(src);
+	    return ESP_ERR_NOT_FOUND;
+	}; /* if stat(dirname(dest), &st != 0) */
+	*(base - 1) = '/';	// restore last slash in prefix of destination file name
+	// If destination path look like a directorty name
+	if (dir_tail(dest_raw))
+	{
+	    ESP_LOGE(CMD_TAG_PRFX, "%s: destination file name defined as a directory name: %s, but tranlated to a non-exist file name: %s", __func__, dest_raw, dest);
+	    free(src);
+	    return ESP_ERR_INVALID_ARG;
+	}; /* if (dir_tail(dest_raw)) */
+	ESP_LOGI("mv", "destination base is: %s", base);
+    }; /* if stat(dest, &st) != 0 */
+#endif
+
+	struct stat st;
+//	char* real_path = fake_cwd.get(base);
+//	char* given_path = strcpy(malloc(strlen(fake_cwd.raw_get(path)) +1 ),
+//					fake_cwd.curr_get());
+//	char *base = basename(givan_path);	// get a filename of a path
+	char *base = basename(path);	// get a filename of a path
+
+    ESP_LOGW("Device::valid_path", "basename of the path is: \"%s\"", base);
+    ESP_LOGW("Device::valid_path", "full path is: \"%s\"", path);
+    ESP_LOGW("Device::valid_path", "dirname path len is: %d", base - path);
+
+//    strcpy(given_path, fake_cwd.curr_get());
+    // if path is empty
+    if (empty(path))
+    {
+	ESP_LOGW("Device::valid_path", "path is empty, always valid");
+	return true;
+    }; /* if empty(path) */
+    // if path - only base, not a dir
+    if (strlen(path) == 1)
+    {
+	ESP_LOGW("Device::valid_path", "len of the path - is 1, always valid");
+	return true;
+    }; /* if strlen(path) == 1 */
+    // if dirname - empty
+    if ((base - path) == 0)
+    {
+	ESP_LOGW("Device::valid_path", "dirname of the path is empty, always valid");
+	return true;
+    }; /* if (base - path) == 0 */
+    // if base is empty
+    if (empty(base))
+    {
+	ESP_LOGW("Device::valid_path", "the path basename - is empty");
+	return false;	// need special analyze for empty(base) case
+    }; /* if (empty(base)) */
+
+    if (base[-1] == '/')
+	return false;	// double slash - is invalid
+    //*(base - 1) = '\0';	// break the path at the dirname
+    //if (stat(path, &st) == 0)
+    //{
+    //	if (!S_ISDIR(st.st_mode))
+    //	    return true;	// the path is inconsist
+    //}; /* if stat(real_path, &st) == 0 */
+    //*(base - 1) = '/';	// restore full path name
+	unsigned int point_cnt = 0;
+	unsigned int slash_cnt  = 0;
+    // scan the dirname of the path for found '/.' or '/..' sequence
+    for ( char* scan = base; scan >= path; scan--)
+    {
+	ESP_LOGW("Device::valid_path", "path current char is: %c", *scan);
+	if (scan[0] == '.')
+	{
+	    ++point_cnt;
+	    ESP_LOGW("Device::valid_path", "====== current char of the path is point!!! ======");
+	    continue;
+	}; /* if scan[0] == '.' */
+	if (scan[0] == '/')
+	{
+	    if (slash_cnt > 1)
+	    {
+		ESP_LOGE("Device::valid_path", "double slash and more - is not valid sequence in the path");
+		return false;
+	    }; /* if slash_cnt > 1 */
+	    ++slash_cnt;
+//	    if (point_cnt == 1 || point_cnt == 2)
+	    continue;
+	};
+//	if (*scan == '.')
+//	{
+//	    ESP_LOGW("Device::valid_path", "====== current char of the path is point!!! ======");
+//	}; /* if (*scan == '.') */
+	if (point_cnt == 1 || point_cnt == 2)
+	{
+	    if (scan[1] == '/')
+	    {
+		scan[1] = '\0';	// break the path string
+		fake_cwd.get(path);
+		scan[1] = '/';	// restore the path string
+		//int statres = stat(path, &st);
+		if (stat(fake_cwd.get_current(), &st) != 0)
+		    return false;
+//		if (statres == 0 && !S_ISDIR(st.st_mode))
+		else if (!S_ISDIR(st.st_mode))
+		    return false;	// the path is invalid
+	    }; /* if scan[1] == '/' */
+	}; /* if (point_cnt == 1 || point_cnt == 2) */
+	// clear the counters
+	point_cnt = 0;
+	slash_cnt = 0;
+    }; /* for char* scan = base - 1; scan > path; scan-- */
+
+#if 0	// dev_continue
+//    // if path exist
+//    if (stat(real_path, &st) == 0)
+//	dest[strlen(dest) - strlen(base) - 1] = '\0';
+	ESP_LOGI("mv", "destination dirname is: %s, basename of dest is: %s", dest, base);
+	if (stat(dest, &st) != 0)
+	{
+	    ESP_LOGE(CMD_TAG_PRFX, "%s: dirname of the file \"%s\" (%s) is not exist - renaming is impossible",
+		    __func__, dest_raw, dest);
+	    free(src);
+	    return ESP_ERR_NOT_FOUND;
+	}; /* if stat(dirname(dest), &st != 0) */
+	*(base - 1) = '/';	// restore last slash in prefix of destination file name
+#endif	// dev_continue
+
+    return true;
+}; /* Device::inconsist_path */
+
+
+// is the filename ending
+// really like as a directory name end?
+extern "C"
+bool dir_tail(const char fname[])
+{
+	size_t len = strlen(fname);
+    if (len == 0)
+	return false;
+    // path == "blablabla/"
+    if (fname[len-1] == '/')
+	return true;
+    // path == "."
+    if (len == 1)
+    {
+	if (fname[0] == '.')
+	    return true;
+	else return false;
+    }; /* if len == 1 */
+    // path == "blablabla/."
+    if (fname[len-2] == '/' && fname[len-1] == '.')
+	return true;
+    if (len == 2)
+    {
+	// path == ".."
+	if (fname[len-2] == '.' && fname[len-1] == '.')
+	    return true;
+	// path != ".."
+	else return false;
+    }; /* if len == 2 */
+    // path == "blablabla/.."
+    if (fname[len-3] == '/' && fname[len-2] == '.' && fname[len-1] == '.')
+	return true;
+    return false;
+}; /* dir_tail */
+
+
 
 
 //const char *Device::MOUNT_POINT_Default = MOUNT_POINT_def;

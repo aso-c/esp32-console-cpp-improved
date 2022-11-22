@@ -34,6 +34,25 @@
 #error "The sdcard_ctrl file usable in C++ projects only."
 #endif
 
+
+// is the filename ending
+// really like as a directory name end?
+extern "C"
+bool dir_tail(const char[]);
+
+
+// if the basename (the last part of the path) - has the characteristics
+// of a directory name, and a dirname (the path prefix) -
+// is an existing file, not a directory, or any other impossible variants
+// of the full file/path name
+extern "C"
+bool inconsist_path(char[]);
+
+// if path - is absolute path
+inline
+bool absolute_path(const char path[]) { return (path[0] == '/'); };
+
+
 namespace SDMMC	//-----------------------------------------------------------------------------------------------------
 {
 
@@ -723,7 +742,11 @@ public:
 
     // get current dir (if path == NULL or "") or generate fullpath for sended path
     // absent trailing slash in returned string is guaranteed
-    char* get(const char path[] /*= nullptr*/);
+    char* get(const char path[]);
+    // raw get path with current dir:
+    // only concatenate path with current dir,
+    // not processing output with realpath().
+    char* raw_get(const char path[] = nullptr);
     // get current operative path buffer - previous stored path on it
     char* get_current() {return operative_path_buff;};
     // change cwd dir
@@ -766,9 +789,15 @@ struct Device
     //esp_err_t unmount(sdmmc_card_t *card);	// Unmount SD-card "card", mounted onto default mountpath
     //esp_err_t unmount(const char *base_path, sdmmc_card_t *card);	// Unmount mounted SD-card "card", mounted onto mountpath
 
+    // Path valididy - whatever the path exist or not -
+    // any subpath is a valid existing path
+    // method can modify fake_cwd::operative_path_buf
+    bool valid_path(/*const*/ char[]);
+
     // get current dir (if path == NULL or "") or generate fullpath for sended path
     // absent trailing slash in returned string is guaranteed
     char* get_cwd(const char path[] = nullptr) {return fake_cwd.get(path);};
+    char* raw_cwd(const char path[] = nullptr) {return fake_cwd.raw_get(path);};
     char* curr_cwd() {return fake_cwd.get_current();};
     // change cwd dir
     esp_err_t change_currdir(const char path[])
