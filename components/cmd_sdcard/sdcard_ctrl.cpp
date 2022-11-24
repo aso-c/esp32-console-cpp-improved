@@ -365,6 +365,7 @@ esp_err_t Server::ls(SDMMC::Device& device, const char pattern[])
 	return ESP_ERR_NOT_FOUND;
     }; /* !device.valid_path(pattern) */
 
+    in_pattern = device.get_cwd(pattern);
     if (stat(in_pattern, &statbuf) == -1)
     {
 	ESP_LOGE(CMD_TAG_PRFX, "%s: Listing dir is failed - pattern \"%s\" (%s) is not exist", __func__, pattern, in_pattern);

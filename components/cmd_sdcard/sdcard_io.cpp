@@ -438,21 +438,36 @@ Slot& Slot::operator =(sdmmc_slot_config_t&& config) noexcept
 
 // get current dir (if path == NULL or "") or generate fullpath for sended path
 // trailing slash in returned string is absent
-char* CWD_emulating::get(const char path[], size_t n)
+char* CWD_emulating::get(const char path[], size_t len)
 {
-    ESP_LOGD("CWD_emulating:", "%s: \"path\" argument is %s",  __func__, path);
+    ESP_LOGW("CWD_emulating:", "%s: \"path\" argument is %s",  __func__, path);
+    ESP_LOGW("CWD_emulating:", "%s: \"len\" argument is %d",  __func__, len);
+    // if len not defined
+    if (len == 0)
+    {
+	ESP_LOGW("CWD_emulating:", "%s: the \"len\" argument is zero or greater than strlen(path), use a strlen of the path",  __func__);
+	len = strlen(path);
+	ESP_LOGW("CWD_emulating:", "%s: \"n\" strlen of the path is %d",  __func__, len);
+    }; /* if n == 0 */
     // argument - absolute path
 //    if (path != nullptr && path[0] != '\0' && path[0] == '/')
     if (!empty(path) && absolute_path(path))
     {
-	if (strlen(path) < sizeof(operative_path_buff) / sizeof(char))
-	    return realpath(path, operative_path_buff);
+//	if (strlen(path) < sizeof(operative_path_buff) / sizeof(char))
+//	    return realpath(path, operative_path_buff);
+//	else
+//	    clearbuff();	// path don't fit in operative_path_buff - error, return empty str
+	if (len > sizeof(operative_path_buff) / sizeof(char) - 1)
+	    clearbuff();	// path don't fit in operative_path_buff - error, return empty str
 	else
-	    return clearbuff();	// path don't fit in operative_path_buff - error, return empty str
-#if 0	// exclude_common_return
+	{
+		char* tmpstr = (char*)malloc(len + 1);
+	    strncpy(tmpstr, path, len + 1);
+	    realpath(tmpstr, operative_path_buff);
+	    free(tmpstr);
+	}; /* if len > (sizeof(operative_path_buff) / sizeof(char) - 1) */
 	ESP_LOGD("CWD_emulating:", "%s: operative_path_buff is \"%s\"", __func__, operative_path_buff);
 	return operative_path_buff;
-#endif	// exclude_common_return
     }; /* if path[0] != '/' */
 
     // pwd == "" --> catch it
@@ -461,30 +476,30 @@ char* CWD_emulating::get(const char path[], size_t n)
 
     get(pwd);
     // argument - NULL or empty string
-//    if (path == nullptr || path[0] == '\0')
     if (empty(path))
 	return operative_path_buff;
 
     // relative path - finalize processing
-    ESP_LOGD("CWD_emulating:", "%s: processing relative path: updating path on top of the current pwd", __func__);
+    ESP_LOGW("CWD_emulating:", "%s: processing relative path: updating path on top of the current pwd", __func__);
     // add a trailing slash at end of the relative path base
     if (operative_path_buff[strlen(operative_path_buff) - 1] != '/')
     {
-	ESP_LOGD("CWD_emulating:", "%s: operative_path_buff before adding trailing slash is: \"%s\"", __func__, operative_path_buff);
+	ESP_LOGW("CWD_emulating:", "%s: operative_path_buff before adding trailing slash is: \"%s\"", __func__, operative_path_buff);
 	// add EOL behind the string data in the operative_path_buff
 	// add trailing '/' at the operative_path_buff
 	operative_path_buff[strlen(operative_path_buff) + 1] = '\0';
 	operative_path_buff[strlen(operative_path_buff)] = '/';
+	ESP_LOGW("CWD_emulating:", "%s: operative_path_buff after adding trailing slash is: \"%s\"", __func__, operative_path_buff);
     }; /* if operative_path_buffer[strlen(operative_path_buff) - 1] != '/' */
 
     // copy path on top of base bath
-    if (strlen(operative_path_buff) + strlen(path) < sizeof(operative_path_buff) / sizeof(char))
-	strncat(operative_path_buff, path, (n == 0)? strlen(path): n);
+    if (strlen(operative_path_buff) + len /*strlen(path)*/ < sizeof(operative_path_buff) / sizeof(char))
+	strncat(operative_path_buff, path, /*(len == 0)? strlen(path):*/ len);
     else
 	return clearbuff();
 
 
-     ESP_LOGD("CWD_emulating:", "%s: final operative_path_buff after drop it's trailing slash: \"%s\"", __func__, operative_path_buff);
+     ESP_LOGW("CWD_emulating:", "%s: final operative_path_buff after drop it's trailing slash: \"%s\"", __func__, operative_path_buff);
 
 	 char* src = realpath(operative_path_buff, NULL);	// resolve dirty path
     strcpy(operative_path_buff, src);
@@ -516,8 +531,8 @@ esp_err_t CWD_emulating::change_dir(const char path[])
 	const char* tmpstr = get(path);
 	struct stat statbuf;
 
-    ESP_LOGW("CWD_emulating::change_dir", "The \"path\" parameter is: \"%s\"", path);
-    ESP_LOGW("CWD_emulating::change_dir", "The \"tmpstr\" variable is: \"%s\"", tmpstr);
+    ESP_LOGD("CWD_emulating::change_dir", "The \"path\" parameter is: \"%s\"", path);
+    ESP_LOGD("CWD_emulating::change_dir", "The \"tmpstr\" variable is: \"%s\"", tmpstr);
 
     if (tmpstr == nullptr || tmpstr[0] == '\0')
     {
@@ -897,6 +912,18 @@ bool Device::valid_path(/*const*/ char path[])
 	    }; /* if prev_ctrl & alpha_present_mask */
 
 	    ESP_LOGW("Device::valid_path", "====== One or two point sequence in the current meaning substring, ctrl_cnt is %2X, test current subpath for exist ======", prev_ctrl);
+	    //*(base - 1) = '\0';	// break the path at the dirname
+	    //if (stat(path, &st) == 0)
+	    if (stat(fake_cwd.get(path, scan - path - 1), &st) == 0)
+	    {
+	    	if (!S_ISDIR(st.st_mode))
+	    	{
+		    ESP_LOGE("Device::valid_path", "!!! Subpath is non exist, it's invalid!!!");
+		    return false;	// the path is invalid (inconsist)
+	    //	    return true;	// the path is inconsist
+	    	}; /* subpath is exist */
+	    }; /* if stat(real_path, &st) == 0 */
+	    //*(base - 1) = '/';	// restore full path name
 
 	    break;
 
