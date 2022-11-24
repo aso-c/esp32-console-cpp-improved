@@ -742,7 +742,7 @@ public:
 
     // get current dir (if path == NULL or "") or generate fullpath for sended path
     // absent trailing slash in returned string is guaranteed
-    char* get(const char path[]);
+    char* get(const char path[], size_t = 0);
     // raw get path with current dir:
     // only concatenate path with current dir,
     // not processing output with realpath().
@@ -790,6 +790,7 @@ struct Device
     //esp_err_t unmount(const char mountpath[] = NULL);	// Unmount SD-card, that mounted onto "mountpath", default - call w/o mountpath
     //esp_err_t unmount(sdmmc_card_t *card);	// Unmount SD-card "card", mounted onto default mountpath
     //esp_err_t unmount(const char *base_path, sdmmc_card_t *card);	// Unmount mounted SD-card "card", mounted onto mountpath
+    bool mounted() {return card != nullptr;};	// is devise mounted?
 
     // Path valididy - whatever the path exist or not -
     // any subpath is a valid existing path
@@ -803,7 +804,7 @@ struct Device
     char* curr_cwd() {return fake_cwd.get_current();};
     // change cwd dir
     esp_err_t change_currdir(const char path[])
-    { return fake_cwd.change_dir( (path == nullptr || path[0] == '\0')? mountpath(): path); }
+    { return mounted()? fake_cwd.change_dir( (path == nullptr || path[0] == '\0')? mountpath(): path): ESP_FAIL; }
 
     // get mountpath
     const char *mountpath() {return target;};

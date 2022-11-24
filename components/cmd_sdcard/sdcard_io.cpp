@@ -438,7 +438,7 @@ Slot& Slot::operator =(sdmmc_slot_config_t&& config) noexcept
 
 // get current dir (if path == NULL or "") or generate fullpath for sended path
 // trailing slash in returned string is absent
-char* CWD_emulating::get(const char path[])
+char* CWD_emulating::get(const char path[], size_t n)
 {
     ESP_LOGD("CWD_emulating:", "%s: \"path\" argument is %s",  __func__, path);
     // argument - absolute path
@@ -479,7 +479,7 @@ char* CWD_emulating::get(const char path[])
 
     // copy path on top of base bath
     if (strlen(operative_path_buff) + strlen(path) < sizeof(operative_path_buff) / sizeof(char))
-	strcat(operative_path_buff, path);
+	strncat(operative_path_buff, path, (n == 0)? strlen(path): n);
     else
 	return clearbuff();
 
@@ -516,14 +516,17 @@ esp_err_t CWD_emulating::change_dir(const char path[])
 	const char* tmpstr = get(path);
 	struct stat statbuf;
 
-    ESP_LOGD("CWD_emulating::change_dir", "The \"path\" parameter is: \"%s\"", path);
-    ESP_LOGD("CWD_emulating::change_dir", "The \"tmpstr\" variable is: \"%s\"", tmpstr);
+    ESP_LOGW("CWD_emulating::change_dir", "The \"path\" parameter is: \"%s\"", path);
+    ESP_LOGW("CWD_emulating::change_dir", "The \"tmpstr\" variable is: \"%s\"", tmpstr);
 
     if (tmpstr == nullptr || tmpstr[0] == '\0')
     {
 	ESP_LOGE("CWD_emulating::change_dir", "Change dir is failed");
 	return ESP_FAIL;
     }; /* if tmpstr == nullptr || tmpstr[0] == '\0' */
+    // if dir changed to root - exclusively change dir
+    if (strcmp(tmpstr,"/") == 0)
+	goto final_copy;
     if (stat(tmpstr, &statbuf) == -1)
     {
 	ESP_LOGE("CWD_emulating::change_dir", "Change dir is failed - requested path to change \"%s\" is not exist;\n"
@@ -545,7 +548,9 @@ esp_err_t CWD_emulating::change_dir(const char path[])
 		"\t\t\t\tleave current directory without changing", tmpstr);
 	return ESP_ERR_NOT_SUPPORTED;
     }; /* if stat(tmpstr, &statbuf) == -1 */
-//    realpath(tmpstr, pwd);
+
+final_copy:
+    // copy tmpstr to pwd at the final
     strcpy(pwd, tmpstr);
     return ESP_OK;
 }; /* CWD_emulating::change_dir */
