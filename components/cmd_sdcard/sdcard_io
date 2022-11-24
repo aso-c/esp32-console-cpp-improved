@@ -749,6 +749,8 @@ public:
     char* raw_get(const char path[] = nullptr);
     // get current operative path buffer - previous stored path on it
     char* get_current() {return operative_path_buff;};
+    // the pwd dir is root?
+    bool pwd_is_root() { return (strcmp(pwd, "/") == 0)? true: false;};
     // change cwd dir
     esp_err_t change_dir(const char path[]);
     char* clearbuff() {operative_path_buff[0] = '\0'; return operative_path_buff;};	// clear operative path buffer - set it's value to ""

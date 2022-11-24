@@ -799,14 +799,44 @@ bool Device::valid_path(/*const*/ char path[])
     // if dirname - empty
     if ((base - path) < 2)
     {
-	ESP_LOGW("Device::valid_path", "dirname of the path is empty, base - path is %d, always valid", base - path);
+#if 0	// over_implement
+	if (strcmp(base, "..") == 0)
+	{
+
+	    ESP_LOGW("Device::valid_path", "basename is %s, base - path is %d, continue check", base, base - path);
+	    if (base > path)
+	    {
+		ESP_LOGE("Device::valid_path", "path is parent of the root: %s, base - path is %d, path invalid", path, base - path);
+		return false;
+	    } /* if base > path */
+	    else
+	    {
+		ESP_LOGW("Device::valid_path", "path is the relative parent path: %s, base - path is %d, continue check", path, base - path);
+		if (fake_cwd.pwd_is_root())
+		{
+		    ESP_LOGE("Device::valid_path", "path is the relative parent path: %s, pwd is %s, base - path is %d, invalid path", path, fake_cwd_path, base - path);
+		    return false;
+		}; /* if fake_cwd.pwd_is_root() */
+	    } /* else if base > path */
+	}; /* if strcmp(base, "..") */
+	ESP_LOGW("Device::valid_path", "dirname of the path is empty, base - path is %d, valid (conditionally\??\?)", base - path);
+#endif	// over_implement
 	return true;
     }; /* if (base - path) == 0 */
     // if base is empty
     if (empty(base))
     {
-	ESP_LOGW("Device::valid_path", "the path basename - is empty");
-	return false;	// need special analyze for empty(base) case
+	ESP_LOGW("Device::valid_path", "###!!! the path basename - is empty, seek to begin of last dir manually !!!###");
+	while (base > path)
+	{
+	    base--;
+	    if (base[0] == '/')
+	    {
+		base++;
+		break;
+	    }; /* if base[0] == '/' */
+	}; /* while base > path */
+	//return false;	// need special analyze for empty(base) case
     }; /* if (empty(base)) */
 
 #define sign_place 0x2	// with of the place for the sign
@@ -823,72 +853,51 @@ bool Device::valid_path(/*const*/ char path[])
     //	    return true;	// the path is inconsist
     //}; /* if stat(real_path, &st) == 0 */
     //*(base - 1) = '/';	// restore full path name
-	unsigned int ctrl_cnt  = 0;
+	unsigned int ctrl_cnt = 0;
+	unsigned int idx_ctrl = 0;
     // scan the dirname of the path for found '/.' or '/..' sequence
     for ( char* scan = base - 2; scan >= path; scan--)
     {
 	ESP_LOGI("Device::valid_path", "current char from the path is: '%c', ctrl_cnt is %2X", *scan, ctrl_cnt);
-//	// begin of the testing sequence
-//	if (ctrl_cnt == 0)
-//	{
-//	    switch (scan[0])
-//	    {
-//	    case '/':
-//		break;
-//
-//	    case '.':
-//		break;
-//
-//	    default:
-//		;
-//	    }; /* switch scan[0] */
-//
-//	}; /* if (ctrl_cnt == 0) */
 
 	    unsigned int prev_ctrl = ctrl_cnt;
 
-//	if (scan[0] == '/')	// solution point
 	switch (scan[0])
 	{
 	// solution point
 	case '/':
-//		unsigned int prev_ctrl = ctrl_cnt;
 
 	    ctrl_cnt = 0;
+	    idx_ctrl = 0;	// reset the idx_ctrl
 	    ESP_LOGW("Device::valid_path", "###### Solution point: current path char ######");
 	    // double slash - prev symbol is slash
-	    if (/*ctrl_cnt*/ prev_ctrl == 0)
+	    if (prev_ctrl == 0)
 	    {
 		ESP_LOGW("Device::valid_path", "**** double slash and more - is not valid sequence in the path name ****");
 		return false;
-	    }; /* if /ctrl_cnt/ prev_ctrl == 0 */
+	    }; /* if prev_ctrl == 0 */
 	    // if non point sign is present in tested substring
-	    if (/*ctrl_cnt*/ prev_ctrl & alpha_present_mask)
+	    if (prev_ctrl & alpha_present_mask)
 	    {
 		ESP_LOGW("Device::valid_path", "alpha or other then point or slash symbol is present in current processing substring - nothing to do, continue");
 		ctrl_cnt = 0;
 		continue;
-	    }; /* if /ctrl_cnt/ prev_ctrl & alpha_present_mask */
+	    }; /* if prev_ctrl & alpha_present_mask */
 	    // if more then 3 point sequence in substring
-	    if (/*ctrl_cnt*/ prev_ctrl == three_point_mark)
+	    if (prev_ctrl == three_point_mark)
 	    {
 		ESP_LOGW("Device::valid_path", "3 point or more sequence is present in current substring - nothing to do, continue");
 		ctrl_cnt = 0;
 		continue;
-	    }; /* if /ctrl_cnt/ prev_ctrl & alpha_present_mask */
+	    }; /* if prev_ctrl & alpha_present_mask */
 
-	    ESP_LOGW("Device::valid_path", "====== One or two point sequence in the current meaning substring, ctrl_cnt is %2X, clear it ======", prev_ctrl);
-//	    ctrl_cnt = 0;
+	    ESP_LOGW("Device::valid_path", "====== One or two point sequence in the current meaning substring, ctrl_cnt is %2X, test current subpath for exist ======", prev_ctrl);
 
 	    break;
-/*	}; *//* if scan[0] == '/' */
-
-	// point symbol handling
-	/*if (scan[0] == '.')*/
-/*	{*/
 
 	// point symbol handling
 	case '.':
+#if 0	// switch_case_point
 	    // ctrl_cnt is zero, start of the substr handling
 	    if (ctrl_cnt < point_sign)
 	    {
@@ -910,44 +919,57 @@ bool Device::valid_path(/*const*/ char path[])
 		ctrl_cnt |= (point_sign << 2*sign_place);
 		continue;
 	    }; /* if ctrl_cnt < point_sign */
+#endif	// switch_case_point
 
-	    ESP_LOGW("Device::valid_path", "more then 3'd symbol of the processing substring, nothing to do");
+
+	    if (idx_ctrl <= 3)
+	    {
+		ESP_LOGW("Device::valid_path", "%d symbol of the processing substring", idx_ctrl);
+		ctrl_cnt |= (point_sign << (idx_ctrl++) * sign_place);
+	    } /* if idx_ctrl <= 3 */
+	    else
+		ESP_LOGW("Device::valid_path", "more then 3'd symbol of the processing substring, nothing to do");
 	    continue;
-/*	}; *//* if scan[0] == '.' */
 	    break;
 
 	// all other symbols
 	default:
 
-	// first symbol in the processing sequence
-	if (ctrl_cnt == 0)
-	{
-	    ESP_LOGW("Device::valid_path", "1'st sumbol of processing substring");
-	    ctrl_cnt = alpha_sign;
-	    continue;
-	}; /* if (ctrl_cnt == 0) */
-	// 2'nd symbol in the processing sequence
-	if (ctrl_cnt < (point_sign << sign_place))
-	{
-	    ESP_LOGW("Device::valid_path", "2'nd sumbol of processing substring");
-	    ctrl_cnt |= (alpha_sign << sign_place);
-	    continue;
-	}; /* if (ctrl_cnt == 0) */
-	// 3'd symbol in the processing sequence
-	if (ctrl_cnt < (point_sign << 2*sign_place))
-	{
-	    ESP_LOGW("Device::valid_path", "3'd sumbol of processing substring");
-	    ctrl_cnt |= (alpha_sign << 2*sign_place);
-	    continue;
-	}; /* if (ctrl_cnt == 0) */
-	ESP_LOGW("Device::valid_path", "more then 3'd symbol of the processing substring, nothing to do");
+#if 0	// switch_default
+	    // first symbol in the processing sequence
+	    if (ctrl_cnt == 0)
+	    {
+		ESP_LOGW("Device::valid_path", "1'st sumbol of processing substring");
+		ctrl_cnt = alpha_sign;
+		continue;
+	    }; /* if (ctrl_cnt == 0) */
+	    // 2'nd symbol in the processing sequence
+	    if (ctrl_cnt < (point_sign << sign_place))
+	    {
+		ESP_LOGW("Device::valid_path", "2'nd sumbol of processing substring");
+		ctrl_cnt |= (alpha_sign << sign_place);
+		continue;
+	    }; /* if (ctrl_cnt == 0) */
+	    // 3'd symbol in the processing sequence
+	    if (ctrl_cnt < (point_sign << 2*sign_place))
+	    {
+		ESP_LOGW("Device::valid_path", "3'd sumbol of processing substring");
+		ctrl_cnt |= (alpha_sign << 2*sign_place);
+		continue;
+	    }; /* if (ctrl_cnt == 0) */
+#endif	// switch_default
+
+	    if (idx_ctrl <= 3)
+	    {
+		ESP_LOGW("Device::valid_path", "%d symbol of the processing substring", idx_ctrl);
+		ctrl_cnt |= (alpha_sign << (idx_ctrl++) * sign_place);
+	    } /* if idx_ctrl <= 3 */
+	    else
+		ESP_LOGW("Device::valid_path", "more then 3'd symbol of the processing substring, nothing to do");
+	    //continue;
 
 	}; /* switch scan[0] */
 
-//	if (*scan == '.')
-//	{
-//	    ESP_LOGW("Device::valid_path", "====== current char of the path is point!!! ======");
-//	}; /* if (*scan == '.') */
 #if 0	// for_delete
 	if (point_cnt == 1 || point_cnt == 2)
 	{
