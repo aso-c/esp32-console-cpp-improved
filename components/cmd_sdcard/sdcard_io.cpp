@@ -463,7 +463,8 @@ char* CWD_emulating::get(const char path[], size_t len)
     ESP_LOGD("CWD_emulating:", "%s: \"len\" argument is %d",  __func__, len);
     // if len not defined
     if (len == 0)
-	len = strlen(path);
+	return get(path);
+//	len = strlen(path);
 
     // argument - absolute path
     if (!empty(path) && absolute_path(path))
@@ -482,14 +483,25 @@ char* CWD_emulating::get(const char path[], size_t len)
 	return operative_path_buff;
     }; /* if path[0] != '/' */
 
+#define __TEST_GET__
+#ifdef __TEST_GET__
+    get(/*pwd*/);
+    // pwd == "" --> catch it
+    if (empty(pwd))
+	return get_current();
+//    if (pwd[0] == '\0')
+//	return operative_path_buff;
+#else
     // pwd == "" --> catch it
     if (pwd[0] == '\0')
 	return operative_path_buff[0] = '\0', operative_path_buff;
 
     get(pwd);
+#endif	// __TEST_GET__
     // argument - NULL or empty string
     if (empty(path))
-	return operative_path_buff;
+//	return operative_path_buff;
+	return get_current();
 
     // relative path - finalize processing
     ESP_LOGD("CWD_emulating:", "%s: processing relative path: updating path on top of the current pwd", __func__);
@@ -501,6 +513,7 @@ char* CWD_emulating::get(const char path[], size_t len)
 	// add trailing '/' at the operative_path_buff
 	operative_path_buff[strlen(operative_path_buff) + 1] = '\0';
 	operative_path_buff[strlen(operative_path_buff)] = '/';
+	//strcat(operative_path_buff, "/");
 	ESP_LOGD("CWD_emulating:", "%s: operative_path_buff after adding trailing slash is: \"%s\"", __func__, operative_path_buff);
     }; /* if operative_path_buffer[strlen(operative_path_buff) - 1] != '/' */
 

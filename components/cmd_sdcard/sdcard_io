@@ -738,22 +738,22 @@ class CWD_emulating
 {
 public:
     CWD_emulating(char cwdbuff[], size_t cwdbufflen):
-	pwd(cwdbuff), pwd_bufflen(cwdbufflen) {esp_log_level_set("CWD_emulating:", ESP_LOG_DEBUG);};
+	pwd(cwdbuff), pwd_bufflen(cwdbufflen) {esp_log_level_set("CWD_emulating:", ESP_LOG_DEBUG); /* for debug purposes */};
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnonnull"
     // get current dir (if path == NULL or "") or generate fullpath for sended path
     // absent trailing slash in returned string is guaranteed
     // return current pwd (current dir) only
     char* get();
     // return full path appling current dir
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wnonnull"
-    char* get(const char path[]) {    ESP_LOGD("CWD_emulating:", "%s: \"path\" argument is %s",  __func__, path);
-    ESP_LOGD("CWD_emulating:", "%s: \"len\" argument is zero",  __func__);
-    return get(path, strlen(path));
+    char* get(const char path[]) { ESP_LOGD("CWD_emulating:", "%s: \"path\" argument is %s", __func__, path);
+        ESP_LOGD("CWD_emulating:", "%s: \"len\" argument is zero",  __func__);
+        return get(path, strlen(path));
     };
-#pragma GCC diagnostic pop
     // return full path appling current dir, use desired part of the passed path
     char* get(const char path[], size_t);
+#pragma GCC diagnostic pop
     // raw get path with current dir:
     // only concatenate path with current dir,
     // not processing output with realpath().
