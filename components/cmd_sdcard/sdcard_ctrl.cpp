@@ -350,22 +350,21 @@ esp_err_t Server::ls(SDMMC::Device& device, const char pattern[])
 {
 //#if defined(__PURE_C__) || __cplusplus < 201703L
 //#ifdef __PURE_C__
+    ESP_LOGD(CMD_TAG_PRFX, "%s: pattern is             : \"%s\"", __func__, pattern);
+    ESP_LOGD(CMD_TAG_PRFX, "%s: processed inner pattern: \"%s\"", __func__, device.get_cwd(pattern));
+
+    if (!device.valid_path(pattern))
+    {
+	ESP_LOGE(CMD_TAG_PRFX, "%s: pattern \"%s\" is invalid", __func__, pattern);
+	return ESP_ERR_NOT_FOUND;
+    }; /* !device.valid_path(pattern) */
+
     	int entry_cnt = 0;
 	DIR *dir;	// Directory descriptor
 	struct stat statbuf;	// buffer for stat
 	char* in_pattern = device.get_cwd(pattern);
 //	char* in_pattern = device.raw_cwd(pattern);
 
-    ESP_LOGD(CMD_TAG_PRFX, "%s: pattern is             : \"%s\"", __func__, pattern);
-    ESP_LOGD(CMD_TAG_PRFX, "%s: processed inner pattern: \"%s\"", __func__, in_pattern);
-
-    if (!device.valid_path((char*)pattern))
-    {
-	ESP_LOGE(CMD_TAG_PRFX, "%s: pattern \"%s\" is invalid", __func__, pattern);
-	return ESP_ERR_NOT_FOUND;
-    }; /* !device.valid_path(pattern) */
-
-    in_pattern = device.get_cwd(pattern);
     if (stat(in_pattern, &statbuf) == -1)
     {
 	ESP_LOGE(CMD_TAG_PRFX, "%s: Listing dir is failed - pattern \"%s\" (%s) is not exist", __func__, pattern, in_pattern);

@@ -10,6 +10,8 @@
 #define __PURE_C__
 
 
+//#define LOG_LOCAL_LEVEL ESP_LOG_DEBUG	// 4
+
 #include <limits>
 #include <cstdio>
 #include <cstdlib>
@@ -436,33 +438,43 @@ Slot& Slot::operator =(sdmmc_slot_config_t&& config) noexcept
 
 //--[ class CWD_emulating ]-----------------------------------------------------------------------------------------
 
+
 // get current dir (if path == NULL or "") or generate fullpath for sended path
-// trailing slash in returned string is absent
+// absent trailing slash in returned string is guaranteed
+
+// return current pwd (current dir) only
+char* CWD_emulating::get()
+{
+    ESP_LOGD("CWD_emulating:", "%s: \"path\" argument is absent",  __func__);
+    ESP_LOGD("CWD_emulating:", "%s: \"len\" argument is absent too",  __func__);
+    strcpy(operative_path_buff, pwd);
+    return operative_path_buff;
+}; /* char* CWD_emulating::get() */
+
+//// return full path appling current dir
+//char* get(const char path[]);
+
+// return full path appling current dir, use desired part of the passed path
+// return current dir (if path == NULL or "") or generate fullpath for sended path
+// trailing slash in returned string is absent always
 char* CWD_emulating::get(const char path[], size_t len)
 {
-    ESP_LOGW("CWD_emulating:", "%s: \"path\" argument is %s",  __func__, path);
-    ESP_LOGW("CWD_emulating:", "%s: \"len\" argument is %d",  __func__, len);
+    ESP_LOGD("CWD_emulating:", "%s: \"path\" argument is %s",  __func__, path);
+    ESP_LOGD("CWD_emulating:", "%s: \"len\" argument is %d",  __func__, len);
     // if len not defined
     if (len == 0)
-    {
-	ESP_LOGW("CWD_emulating:", "%s: the \"len\" argument is zero or greater than strlen(path), use a strlen of the path",  __func__);
 	len = strlen(path);
-	ESP_LOGW("CWD_emulating:", "%s: \"n\" strlen of the path is %d",  __func__, len);
-    }; /* if n == 0 */
+
     // argument - absolute path
-//    if (path != nullptr && path[0] != '\0' && path[0] == '/')
     if (!empty(path) && absolute_path(path))
     {
-//	if (strlen(path) < sizeof(operative_path_buff) / sizeof(char))
-//	    return realpath(path, operative_path_buff);
-//	else
-//	    clearbuff();	// path don't fit in operative_path_buff - error, return empty str
 	if (len > sizeof(operative_path_buff) / sizeof(char) - 1)
 	    clearbuff();	// path don't fit in operative_path_buff - error, return empty str
 	else
 	{
 		char* tmpstr = (char*)malloc(len + 1);
-	    strncpy(tmpstr, path, len + 1);
+	    strncpy(tmpstr, path, len/* + 1*/);
+	    tmpstr[len] = '\0';	// complete the NULL-terminated string
 	    realpath(tmpstr, operative_path_buff);
 	    free(tmpstr);
 	}; /* if len > (sizeof(operative_path_buff) / sizeof(char) - 1) */
@@ -480,26 +492,25 @@ char* CWD_emulating::get(const char path[], size_t len)
 	return operative_path_buff;
 
     // relative path - finalize processing
-    ESP_LOGW("CWD_emulating:", "%s: processing relative path: updating path on top of the current pwd", __func__);
+    ESP_LOGD("CWD_emulating:", "%s: processing relative path: updating path on top of the current pwd", __func__);
     // add a trailing slash at end of the relative path base
     if (operative_path_buff[strlen(operative_path_buff) - 1] != '/')
     {
-	ESP_LOGW("CWD_emulating:", "%s: operative_path_buff before adding trailing slash is: \"%s\"", __func__, operative_path_buff);
+	ESP_LOGD("CWD_emulating:", "%s: operative_path_buff before adding trailing slash is: \"%s\"", __func__, operative_path_buff);
 	// add EOL behind the string data in the operative_path_buff
 	// add trailing '/' at the operative_path_buff
 	operative_path_buff[strlen(operative_path_buff) + 1] = '\0';
 	operative_path_buff[strlen(operative_path_buff)] = '/';
-	ESP_LOGW("CWD_emulating:", "%s: operative_path_buff after adding trailing slash is: \"%s\"", __func__, operative_path_buff);
+	ESP_LOGD("CWD_emulating:", "%s: operative_path_buff after adding trailing slash is: \"%s\"", __func__, operative_path_buff);
     }; /* if operative_path_buffer[strlen(operative_path_buff) - 1] != '/' */
 
     // copy path on top of base bath
-    if (strlen(operative_path_buff) + len /*strlen(path)*/ < sizeof(operative_path_buff) / sizeof(char))
-	strncat(operative_path_buff, path, /*(len == 0)? strlen(path):*/ len);
+    if (strlen(operative_path_buff) + len < sizeof(operative_path_buff) / sizeof(char))
+	strncat(operative_path_buff, path, len);
     else
 	return clearbuff();
 
-
-     ESP_LOGW("CWD_emulating:", "%s: final operative_path_buff after drop it's trailing slash: \"%s\"", __func__, operative_path_buff);
+     ESP_LOGD("CWD_emulating:", "%s: final operative_path_buff after drop it's trailing slash: \"%s\"", __func__, operative_path_buff);
 
 	 char* src = realpath(operative_path_buff, NULL);	// resolve dirty path
     strcpy(operative_path_buff, src);
@@ -507,6 +518,7 @@ char* CWD_emulating::get(const char path[], size_t len)
 
     return operative_path_buff;
 }; /* CWD_emulating::get */
+
 
 // raw_get path with current dir:
 // only concatenate path with current dir,
@@ -723,7 +735,7 @@ esp_err_t Device::unmount()
 // of a directory name, and a dirname (the path prefix) -
 // is an existing file, not a directory, or any other impossible variants
 // of the full file/path name
-bool Device::valid_path(/*const*/ char path[])
+bool Device::valid_path(const char path[])
 {
 #if 0	// test
     dest = device.get_cwd(dest_raw);
@@ -816,10 +828,10 @@ bool Device::valid_path(/*const*/ char path[])
 	ESP_LOGW("Device::valid_path", "len of the path - is 1, always valid");
 	return true;
     }; /* if strlen(path) == 1 */
-    // if dirname - empty
+    // if dirname - empty or one symbol length (it can only be the slash)
     if ((base - path) < 2)
     {
-#if 0	// over_implement
+#if 0	// over_implemented
 	if (strcmp(base, "..") == 0)
 	{
 
@@ -840,13 +852,25 @@ bool Device::valid_path(/*const*/ char path[])
 	    } /* else if base > path */
 	}; /* if strcmp(base, "..") */
 	ESP_LOGW("Device::valid_path", "dirname of the path is empty, base - path is %d, valid (conditionally\??\?)", base - path);
-#endif	// over_implement
+#endif	// over_implemented
+
+	ESP_LOGW("Device::valid_path", "Len of dirname is 1 or 0, then path is valid");
 	return true;
-    }; /* if (base - path) == 0 */
+    }; /* if (base - path) < 2 */
+
     // if base is empty
     if (empty(base))
     {
-	ESP_LOGW("Device::valid_path", "###!!! the path basename - is empty, seek to begin of last dir manually !!!###");
+	if (stat(fake_cwd.get(path), &st) == 0)
+	{
+	    ESP_LOGW("Device::valid_path", "###!!! the path basename - is empty, test the path is exist and a directory... ###");
+	    if (!S_ISDIR(st.st_mode))
+	    {
+		ESP_LOGE("Device::valid_path", "Path is a file, but marked as a directory, it's invalid!!!");
+		return false;	// the path is invalid (inconsist)
+	    }; /* subpath is exist */
+	}; /* if stat(real_path, &st) == 0 */
+	ESP_LOGW("Device::valid_path", "###!!! test dirname preliminary is OK, seek to begin of last dir manually for continue test... ###");
 	while (base > path)
 	{
 	    base--;
@@ -859,6 +883,22 @@ bool Device::valid_path(/*const*/ char path[])
 	//return false;	// need special analyze for empty(base) case
     }; /* if (empty(base)) */
 
+    // dirname of the path must be exist
+    // and be a directory, not a file
+    if (stat(fake_cwd.get(path, base - path - 1), &st) != 0)
+    {
+	ESP_LOGW("Device::valid_path", "###!!! 1'st subdir of the path is not exist, but should be... ###");
+	return false;
+    }
+    else
+    {
+	ESP_LOGW("Device::valid_path", "###!!! 1'st subdir of the path is exist, must be a directory... ###");
+	if (!S_ISDIR(st.st_mode))
+	{
+	    ESP_LOGE("Device::valid_path", "Path is a file, but must be a directory, it's invalid!!!");
+	    return false;	// the path is invalid (inconsist)
+	}; /* subpath is exist */
+    }; /* if stat(real_path, &st) == 0 */
 #define sign_place 0x2	// with of the place for the sign
 #define point_sign 0x1	// mark a point symbol in a string
 #define alpha_sign 0x2	// mark a non-point or a non-slash symbol in a string
