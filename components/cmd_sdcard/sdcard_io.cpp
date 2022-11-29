@@ -10,7 +10,7 @@
 #define __PURE_C__
 
 
-//#define LOG_LOCAL_LEVEL ESP_LOG_DEBUG	// 4
+//#define LOG_LOCAL_LEVEL ESP_LOG_DEBUG	// 4 - set 'DEBUG' logging level
 
 #include <limits>
 #include <cstdio>
@@ -464,7 +464,6 @@ char* CWD_emulating::get(const char path[], size_t len)
     // if len not defined
     if (len == 0)
 	return get(path);
-//	len = strlen(path);
 
     // argument - absolute path
     if (!empty(path) && absolute_path(path))
@@ -483,24 +482,13 @@ char* CWD_emulating::get(const char path[], size_t len)
 	return operative_path_buff;
     }; /* if path[0] != '/' */
 
-#define __TEST_GET__
-#ifdef __TEST_GET__
-    get(/*pwd*/);
+    get();
     // pwd == "" --> catch it
     if (empty(pwd))
 	return get_current();
-//    if (pwd[0] == '\0')
-//	return operative_path_buff;
-#else
-    // pwd == "" --> catch it
-    if (pwd[0] == '\0')
-	return operative_path_buff[0] = '\0', operative_path_buff;
 
-    get(pwd);
-#endif	// __TEST_GET__
     // argument - NULL or empty string
     if (empty(path))
-//	return operative_path_buff;
 	return get_current();
 
     // relative path - finalize processing
@@ -523,7 +511,7 @@ char* CWD_emulating::get(const char path[], size_t len)
     else
 	return clearbuff();
 
-     ESP_LOGD("CWD_emulating:", "%s: final operative_path_buff after drop it's trailing slash: \"%s\"", __func__, operative_path_buff);
+    ESP_LOGD("CWD_emulating:", "%s: final operative_path_buff after drop it's trailing slash: \"%s\"", __func__, operative_path_buff);
 
 	 char* src = realpath(operative_path_buff, NULL);	// resolve dirty path
     strcpy(operative_path_buff, src);

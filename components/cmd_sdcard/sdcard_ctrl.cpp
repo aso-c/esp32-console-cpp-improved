@@ -185,10 +185,14 @@ esp_err_t Server::pwd(SDMMC::Device& device)
 // create a new directory
 esp_err_t Server::mkdir(SDMMC::Device& device, const char dirname[])
 {
-	struct stat statbuf;
-	char *path = device.get_cwd(dirname);
+    if (!device.valid_path(dirname))
+    {
+	ESP_LOGE(CMD_TAG_PRFX, "%s: the new directory name \"%s\" is invalid", __func__, dirname);
+	return ESP_ERR_NOT_FOUND;
+    }; /* !device.valid_path(pattern) */
 
-    if (dirname == NULL || strcmp(dirname, "") == 0)
+//    if (dirname == NULL || strcmp(dirname, "") == 0)
+    if (empty(dirname))
     {
 	ESP_LOGE(CMD_TAG_PRFX, "%s: invoke command \"%s\" without parameters.\n%s", __func__, CMD_NM,
 		"This command required the creating directory name.");
@@ -196,11 +200,14 @@ esp_err_t Server::mkdir(SDMMC::Device& device, const char dirname[])
     }; /* if dirname == NULL || strcmp(dirname, "") */
 #ifdef __PURE_C__
 
+	struct stat statbuf;
+	char *path = device.get_cwd(dirname);
+
     ESP_LOGI(CMD_TAG_PRFX, "%s: Create directory with name \"%s\", real path is %s", __func__, dirname, path);
 
     if (stat(path, &statbuf) == 0)
         {
-    	ESP_LOGE(CMD_TAG_PRFX, "%s: Invalid directory name - requested path \"%s\" is exist;\n", __func__, path);
+    	ESP_LOGE(CMD_TAG_PRFX, "%s: Invalid argument - requested path \"%s\" is exist; denied create duplication name\n", __func__, path);
     	return ESP_ERR_INVALID_ARG;
         }; /* if stat(tmpstr, &statbuf) == -1 */
     errno = 0;
@@ -224,16 +231,24 @@ esp_err_t Server::mkdir(SDMMC::Device& device, const char dirname[])
 // create a new directory
 esp_err_t Server::rmdir(SDMMC::Device& device, const char dirname[])
 {
-	struct stat st;
-	char *path = device.get_cwd(dirname);
+    if (!device.valid_path(dirname))
+    {
+	ESP_LOGE(CMD_TAG_PRFX, "%s: the directory name \"%s\" is invalid", __func__, dirname);
+	return ESP_ERR_NOT_FOUND;
+    }; /* !device.valid_path(pattern) */
 
-    if (dirname == NULL || strcmp(dirname, "") == 0)
+//    if (dirname == NULL || strcmp(dirname, "") == 0)
+    if (empty(dirname))
     {
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: invoke command \"%s\" without parameters.\n%s", __func__, CMD_NM,
 		     "This command required the name of the deleting directory.");
 	    return ESP_ERR_INVALID_ARG;
     }; /* if dirname == NULL || strcmp(dirname, "") */
 #ifdef __PURE_C__
+
+	struct stat st;
+	char *path = device.get_cwd(dirname);
+
     ESP_LOGI(CMD_TAG_PRFX, "%s: Delete directory <%s>, real path is %s", __func__, dirname, path);
 
     // Check if destination directory or file exists before deleting
@@ -296,6 +311,12 @@ esp_err_t Server::rmdir(SDMMC::Device& device, const char dirname[])
 esp_err_t Server::cd(SDMMC::Device& device, const char dirname[])
 {
 	esp_err_t err;
+
+    if (!device.valid_path(dirname))
+    {
+	ESP_LOGE(CMD_TAG_PRFX, "%s: the directory name \"%s\" is invalid", __func__, dirname);
+	return ESP_ERR_NOT_FOUND;
+    }; /* !device.valid_path(pattern) */
 
 #ifdef __PURE_C__
 //    if (dirname != nullptr && dirname[0] != '\0')
@@ -571,6 +592,17 @@ esp_err_t Server::cp(SDMMC::Device& device, const char src_raw[], const char des
 	return ESP_ERR_INVALID_ARG;
     }; /* if is_empty(dest_raw) */
 
+    if (!device.valid_path(src_raw))
+    {
+	ESP_LOGE(CMD_TAG_PRFX, "%s: the source file name \"%s\" is invalid", __func__, src_raw);
+	return ESP_ERR_NOT_FOUND;
+    }; /* !device.valid_path(pattern) */
+    if (!device.valid_path(dest_raw))
+    {
+	ESP_LOGE(CMD_TAG_PRFX, "%s: the destination file name \"%s\" is invalid", __func__, dest_raw);
+	return ESP_ERR_NOT_FOUND;
+    }; /* !device.valid_path(pattern) */
+
 	char *src = device.get_cwd(src_raw);
 
 #ifdef __PURE_C__
@@ -628,15 +660,50 @@ esp_err_t Server::cp(SDMMC::Device& device, const char src_raw[], const char des
 	// if destination - exist path, not a directory
 	if (S_ISDIR(st.st_mode))
 	{
-		strcat(dest, "/");
-		strcat(dest, srcbase);
+	    strcat(dest, "/");
+	    strcat(dest, srcbase);
+
+	    // Recheck if modified destination file exist,
+	    if (stat(dest, &st) == 0)
+	    {
+		// final name of the destination file is the same
+		// as the existing directory name - error
+		if (S_ISDIR(st.st_mode))
+		{
+		    ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite exist \"%s\" directory by the destination file is denied; aborting.",
+			    __func__, dest);
+		    free(src);
+		    return ESP_ERR_NOT_SUPPORTED;
+		} /* if S_ISDIR(st.st_mode) */
+
+#if !defined(__NOT_OVERWRITE__) && defined(__CP_OVERWRITE_FILE__)
+		ESP_LOGW(CMD_TAG_PRFX, "%s: overwrite an existing file \"%s\".", __func__, dest);
+#else
+		ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite the existent file \"%s\" is denied; aborting.",
+			__func__, dest);
+		free(src);
+		return ESP_ERR_NOT_SUPPORTED;
+#endif	// __CP_OVER_EXIST_FILE__
+	    }; /* if stat(dest, &st) == 0 */
 	} /* if S_ISDIR(st.st_mode) */
     }; /* if stat(dest, &st) == 0 */
 
-    // Retry Check if destination file exist,
+#if 0	// wrong_recheck
+    // Recheck if destination file exist,
+    // file name can be renamed
     // destination - not a directory
     if (stat(dest, &st) == 0)
     {
+	// final name of the destination file is the same
+	// as the existing directory name - error
+	if (S_ISDIR(st.st_mode))
+	{
+		ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite exist \"%s\" directory by the destination file is denied; aborting.",
+			__func__, dest);
+		free(src);
+		return ESP_ERR_NOT_SUPPORTED;
+	} /* if S_ISDIR(st.st_mode) */
+
 #if !defined(__NOT_OVERWRITE__) && defined(__CP_OVERWRITE_FILE__)
 	ESP_LOGW(CMD_TAG_PRFX, "%s: overwrite an existing file \"%s\".", __func__, dest);
 #else
@@ -645,7 +712,8 @@ esp_err_t Server::cp(SDMMC::Device& device, const char src_raw[], const char des
 	free(src);
 	return ESP_ERR_NOT_SUPPORTED;
 #endif	// __CP_OVER_EXIST_FILE__
-    }; /* else if (S_ISDIR(st.st_mode)) */
+    }; /* if stat(dest, &st) == 0 */
+#endif	// wrong_recheck
 
     // destination file not exist or is overwrited
     ESP_LOGI(CMD_TAG_PRFX CMD_NM, "copy file %s to %s", src, dest);
@@ -697,7 +765,7 @@ esp_err_t Server::cp(SDMMC::Device& device, const char src_raw[], const char des
 esp_err_t Server::mv(SDMMC::Device& device, const char src_raw[], const char dest_raw[])
 {
 
-ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position 1 ########");
+ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, line num: %d ########", 1, __func__, __FILE__, __LINE__);
     if (empty(src_raw))
     {
 	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "too few arguments: invoke command \"%s\" with one parameters.\n%s", CMD_NM,
@@ -705,7 +773,7 @@ ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position 1 ########");
 	return ESP_ERR_INVALID_ARG;
     }; /* if empty(src) */
 
-ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position 2 ########");
+ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, line num: %d ########", 2, __func__, __FILE__, __LINE__);
     if (empty(dest_raw))
     {
 	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "too few arguments: invoke command \"%s\" without parameters.\n%s", CMD_NM,
@@ -713,13 +781,26 @@ ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position 2 ########");
 	return ESP_ERR_INVALID_ARG;
     }; /* if empty(dest) */
 
+    if (!device.valid_path(src_raw))
+    {
+	ESP_LOGE(CMD_TAG_PRFX, "%s: the souce file name \"%s\" is invalid", __func__, src_raw);
+	return ESP_ERR_NOT_FOUND;
+    }; /* !device.valid_path(pattern) */
+    if (!device.valid_path(dest_raw))
+    {
+	ESP_LOGE(CMD_TAG_PRFX, "%s: the destination file name \"%s\" is invalid", __func__, dest_raw);
+	return ESP_ERR_NOT_FOUND;
+    }; /* !device.valid_path(pattern) */
+
+
+
 #ifdef __PURE_C__
 
-ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position 3 ########");
+ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, line num: %d ########", 3, __func__, __FILE__, __LINE__);
 	char *src_stat = device.get_cwd(src_raw);
 	struct stat st;
 
-ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position 4 ########");
+ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, line num: %d ########", 4, __func__, __FILE__, __LINE__);
     // Check if source file is not exist
     if (stat(src_stat, &st) != 0)
     {
@@ -729,19 +810,19 @@ ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position 4 ########");
 	return ESP_ERR_NOT_FOUND;
     }; /* if stat(src_stat, &st) != 0 */
 
-ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position 5 ########");
+ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, line num: %d ########", 5, __func__, __FILE__, __LINE__);
 	char *src = NULL;
 	char *dest = NULL;
 
-ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position 6 ########");
+ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, line num: %d ########", 6, __func__, __FILE__, __LINE__);
     src = (char*)malloc(strlen(src_stat) * sizeof(char) + 1);
-ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position 7 ########");
+ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, line num: %d ########", 7, __func__, __FILE__, __LINE__);
     if (!src)
     {
 	ESP_LOGE(CMD_TAG_PRFX, "%s: Not enought memory for store souce file name", __func__);
 	return ESP_ERR_NO_MEM;
     }; /* if src == NULL*/
-ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position 8 ########");
+ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, line num: %d ########", 8, __func__, __FILE__, __LINE__);
 //    strcpy(src, device.curr_cwd());
     strcpy(src, src_stat);
 //    src = strcpy((char*)malloc(strlen(src_stat) * sizeof(char)) + 1, src_stat);

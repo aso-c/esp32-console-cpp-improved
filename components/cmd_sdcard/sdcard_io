@@ -738,7 +738,7 @@ class CWD_emulating
 {
 public:
     CWD_emulating(char cwdbuff[], size_t cwdbufflen):
-	pwd(cwdbuff), pwd_bufflen(cwdbufflen) {esp_log_level_set("CWD_emulating:", ESP_LOG_DEBUG); /* for debug purposes */};
+	pwd(cwdbuff), pwd_bufflen(cwdbufflen) {/*esp_log_level_set("CWD_emulating:", ESP_LOG_DEBUG);*//* for debug purposes */};
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wnonnull"
@@ -808,9 +808,12 @@ struct Device
     // method can modify fake_cwd::operative_path_buf
     bool valid_path(const char[]);
 
+    // get current dir
+    // trailing slash in returned string is absent guaranteed
+    char* get_cwd() {return fake_cwd.get();};
     // get current dir (if path == NULL or "") or generate fullpath for sended path
     // absent trailing slash in returned string is guaranteed
-    char* get_cwd(const char path[] = nullptr) {return fake_cwd.get(path);};
+    char* get_cwd(const char path[]) {return fake_cwd.get(path);};
     char* raw_cwd(const char path[] = nullptr) {return fake_cwd.raw_get(path);};
     char* curr_cwd() {return fake_cwd.get_current();};
     // change cwd dir
