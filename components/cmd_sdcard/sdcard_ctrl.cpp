@@ -206,10 +206,10 @@ esp_err_t Server::mkdir(SDMMC::Device& device, const char dirname[])
     ESP_LOGI(CMD_TAG_PRFX, "%s: Create directory with name \"%s\", real path is %s", __func__, dirname, path);
 
     if (stat(path, &statbuf) == 0)
-        {
-    	ESP_LOGE(CMD_TAG_PRFX, "%s: Invalid argument - requested path \"%s\" is exist; denied create duplication name\n", __func__, path);
-    	return ESP_ERR_INVALID_ARG;
-        }; /* if stat(tmpstr, &statbuf) == -1 */
+    {
+	ESP_LOGE(CMD_TAG_PRFX, "%s: Invalid argument - requested path \"%s\" is exist; denied create duplication name\n", __func__, path);
+	return ESP_ERR_INVALID_ARG;
+    }; /* if stat(tmpstr, &statbuf) == -1 */
     errno = 0;
     ::mkdir(path, /*0777*/ S_IRWXU | S_IRWXG | S_IRWXO);
     if (errno)
@@ -581,9 +581,10 @@ esp_err_t Server::cp(SDMMC::Device& device, const char src_raw[], const char des
 {
     if (empty(src_raw))
     {
-	    ESP_LOGE(CMD_TAG_PRFX, "%s: too few arguments: invoke command \"%s\" without parameters.\n%s", __func__, __func__,
-		     "Don't know what to copy.");
-	    return ESP_ERR_INVALID_ARG;
+
+	ESP_LOGE(CMD_TAG_PRFX, "%s: too few arguments: invoke command \"%s\" without parameters.\n%s", __func__, __func__,
+		"Don't know what to copy.");
+	return ESP_ERR_INVALID_ARG;
     }; /* if is_empty(src_raw) */
     if (empty(dest_raw))
     {
@@ -688,35 +689,8 @@ esp_err_t Server::cp(SDMMC::Device& device, const char src_raw[], const char des
 	} /* if S_ISDIR(st.st_mode) */
     }; /* if stat(dest, &st) == 0 */
 
-#if 0	// wrong_recheck
-    // Recheck if destination file exist,
-    // file name can be renamed
-    // destination - not a directory
-    if (stat(dest, &st) == 0)
-    {
-	// final name of the destination file is the same
-	// as the existing directory name - error
-	if (S_ISDIR(st.st_mode))
-	{
-		ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite exist \"%s\" directory by the destination file is denied; aborting.",
-			__func__, dest);
-		free(src);
-		return ESP_ERR_NOT_SUPPORTED;
-	} /* if S_ISDIR(st.st_mode) */
-
-#if !defined(__NOT_OVERWRITE__) && defined(__CP_OVERWRITE_FILE__)
-	ESP_LOGW(CMD_TAG_PRFX, "%s: overwrite an existing file \"%s\".", __func__, dest);
-#else
-	ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite the existent file \"%s\" is denied; aborting.",
-		__func__, dest);
-	free(src);
-	return ESP_ERR_NOT_SUPPORTED;
-#endif	// __CP_OVER_EXIST_FILE__
-    }; /* if stat(dest, &st) == 0 */
-#endif	// wrong_recheck
-
     // destination file not exist or is overwrited
-    ESP_LOGI(CMD_TAG_PRFX CMD_NM, "copy file %s to %s", src, dest);
+    ESP_LOGI(CMD_TAG_PRFX ":" CMD_NM, "copy file %s to %s", src, dest);
 
 	FILE* srcfile = fopen(src, "rb");
 	FILE* destfile = fopen(dest, "wb");

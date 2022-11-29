@@ -10,7 +10,7 @@
 #define __PURE_C__
 
 
-//#define LOG_LOCAL_LEVEL ESP_LOG_DEBUG	// 4 - set 'DEBUG' logging level
+#define LOG_LOCAL_LEVEL ESP_LOG_DEBUG	// 4 - set 'DEBUG' logging level
 
 #include <limits>
 #include <cstdio>
@@ -864,14 +864,15 @@ bool Device::valid_path(const char path[])
     {
 	if (stat(fake_cwd.get(path), &st) == 0)
 	{
-	    ESP_LOGW("Device::valid_path", "###!!! the path basename - is empty, test the path is exist and a directory... ###");
+	    ESP_LOGW("Device::valid_path", "###!!! the path basename - is empty, test the path \"%s\" (real path is %s) exist and a directory... ###", path, fake_cwd.get_current());
 	    if (!S_ISDIR(st.st_mode))
 	    {
-		ESP_LOGE("Device::valid_path", "Path is a file, but marked as a directory, it's invalid!!!");
+		ESP_LOGE("Device::valid_path", "Path \"%s\" (real path %s) is a file, but marked as a directory, it's invalid!!!", path, fake_cwd.get_current());
 		return false;	// the path is invalid (inconsist)
 	    }; /* subpath is exist */
 	}; /* if stat(real_path, &st) == 0 */
-	ESP_LOGW("Device::valid_path", "###!!! test dirname preliminary is OK, seek to begin of last dir manually for continue test... ###");
+	ESP_LOGW("Device::valid_path", "###!!! test dirname \"%s\" (real path is %s) preliminary is OK, seek to begin of last dir manually for continue test... ###", path, fake_cwd.get_current());
+	base--;
 	while (base > path)
 	{
 	    base--;
@@ -888,15 +889,15 @@ bool Device::valid_path(const char path[])
     // and be a directory, not a file
     if (stat(fake_cwd.get(path, base - path - 1), &st) != 0)
     {
-	ESP_LOGW("Device::valid_path", "###!!! 1'st subdir of the path is not exist, but should be... ###");
+	ESP_LOGW("Device::valid_path", "###!!! 1'st subdir (is \"%.*s\") of the path \"%s\" is not exist, but should be... ###", base - path - ((base==path)? 0: 1), path, path);
 	return false;
     }
     else
     {
-	ESP_LOGW("Device::valid_path", "###!!! 1'st subdir of the path is exist, must be a directory... ###");
+	ESP_LOGW("Device::valid_path", "###!!! 1'st subdir (\"%.*s\") of the path \"%s\" is exist, must be a directory... ###", base - path - ((base==path)? 0: 1), path, path);
 	if (!S_ISDIR(st.st_mode))
 	{
-	    ESP_LOGE("Device::valid_path", "Path is a file, but must be a directory, it's invalid!!!");
+	    ESP_LOGE("Device::valid_path", "Path \"%.*s\" is a file, but must be a directory, it's invalid!!!", base - path - ((base==path)? 0:  1), path);
 	    return false;	// the path is invalid (inconsist)
 	}; /* subpath is exist */
     }; /* if stat(real_path, &st) == 0 */
