@@ -738,72 +738,6 @@ esp_err_t Device::unmount()
 // of the full file/path name
 bool Device::valid_path(const char path[])
 {
-#if 0	// test
-    dest = device.get_cwd(dest_raw);
-
-    if (stat(dest, &st) == 0)
-    {
-	// Destination file exist
-//	ESP_LOGW(CMD_TAG_PRFX, "%s: destination file \"%s\" (%s) exist - rename denied,%s",
-//		__func__, dest_raw, dest, "\n\t\t\t\tnow is not any actions implemented");
-	ESP_LOGW(CMD_TAG_PRFX, "%s: destination file \"%s\" (%s) exist",
-		__func__, dest_raw, dest);
-	// if destination is existing directory
-	if (S_ISDIR(st.st_mode))
-	{
-		char *basenm = basename(src);
-
-	    ESP_LOGW(CMD_TAG_PRFX, "%s: destination file is exist directory,\n\t\t\tbasename of src is: %s ", __func__,
-		    basenm);
-	    strcat(dest, "/");
-	    ESP_LOGW(CMD_TAG_PRFX, "%s: adding trailing slash to a destination file: %s", __func__, dest);
-	    strcat(dest, basenm);
-	    ESP_LOGW(CMD_TAG_PRFX, "%s: adding src basename to a destination file: %s", __func__, dest);
-	} /* if S_ISDIR(st.st_mode) */
-	else
-	{
-	    if (dir_tail(dest_raw))
-	    {
-		ESP_LOGE(CMD_TAG_PRFX, "%s: destination file name defined as a directory name: %s, but tranlated to a exist file name: %s", __func__, dest_raw, dest);
-		free(src);
-		return ESP_ERR_INVALID_ARG;
-	    }; /* if (dir_tail(dest_raw)) */
-#if !defined(__NOT_OVERWRITE__) && defined(__MV_OVERWRITE_FILE__)
-	    ESP_LOGW(CMD_TAG_PRFX, "%s: overwrite this file", __func__);
-#else
-	    ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite this file is denied,%s", __func__);
-	    free(src);
-	    return ESP_ERR_INVALID_VERSION;
-#endif	// !defined(__NOT_OVERWRITE__) && defined(__CP_OVERWRITE_FILE__)
-	}; /* else if S_ISDIR(st.st_mode) */
-    } /* if stat(dest, &st) != 0 */
-    else
-    {
-	// Destination file is not exist,
-	// check existing dirname
-//	if (stat(::dirname(dest), &st) != 0)
-	    char *base = basename(dest);
-//	dest[strlen(dest) - strlen(base) - 1] = '\0';
-	*(base - 1) = '\0';
-	ESP_LOGI("mv", "destination dirname is: %s, basename of dest is: %s", dest, base);
-	if (stat(dest, &st) != 0)
-	{
-	    ESP_LOGE(CMD_TAG_PRFX, "%s: dirname of the file \"%s\" (%s) is not exist - renaming is impossible",
-		    __func__, dest_raw, dest);
-	    free(src);
-	    return ESP_ERR_NOT_FOUND;
-	}; /* if stat(dirname(dest), &st != 0) */
-	*(base - 1) = '/';	// restore last slash in prefix of destination file name
-	// If destination path look like a directorty name
-	if (dir_tail(dest_raw))
-	{
-	    ESP_LOGE(CMD_TAG_PRFX, "%s: destination file name defined as a directory name: %s, but tranlated to a non-exist file name: %s", __func__, dest_raw, dest);
-	    free(src);
-	    return ESP_ERR_INVALID_ARG;
-	}; /* if (dir_tail(dest_raw)) */
-	ESP_LOGI("mv", "destination base is: %s", base);
-    }; /* if stat(dest, &st) != 0 */
-#endif
 
 	struct stat st;
 //	char* real_path = fake_cwd.get(base);
@@ -832,29 +766,6 @@ bool Device::valid_path(const char path[])
     // if dirname - empty or one symbol length (it can only be the slash)
     if ((base - path) < 2)
     {
-#if 0	// over_implemented
-	if (strcmp(base, "..") == 0)
-	{
-
-	    ESP_LOGW("Device::valid_path", "basename is %s, base - path is %d, continue check", base, base - path);
-	    if (base > path)
-	    {
-		ESP_LOGE("Device::valid_path", "path is parent of the root: %s, base - path is %d, path invalid", path, base - path);
-		return false;
-	    } /* if base > path */
-	    else
-	    {
-		ESP_LOGW("Device::valid_path", "path is the relative parent path: %s, base - path is %d, continue check", path, base - path);
-		if (fake_cwd.pwd_is_root())
-		{
-		    ESP_LOGE("Device::valid_path", "path is the relative parent path: %s, pwd is %s, base - path is %d, invalid path", path, fake_cwd_path, base - path);
-		    return false;
-		}; /* if fake_cwd.pwd_is_root() */
-	    } /* else if base > path */
-	}; /* if strcmp(base, "..") */
-	ESP_LOGW("Device::valid_path", "dirname of the path is empty, base - path is %d, valid (conditionally\??\?)", base - path);
-#endif	// over_implemented
-
 	ESP_LOGW("Device::valid_path", "Len of dirname is 1 or 0, then path is valid");
 	return true;
     }; /* if (base - path) < 2 */
@@ -872,6 +783,15 @@ bool Device::valid_path(const char path[])
 	    }; /* subpath is exist */
 	}; /* if stat(real_path, &st) == 0 */
 	ESP_LOGW("Device::valid_path", "###!!! test dirname \"%s\" (real path is %s) preliminary is OK, seek to begin of last dir manually for continue test... ###", path, fake_cwd.get_current());
+#define __FOR_LOOP_PATH_BACKTRACK__
+#ifdef __FOR_LOOP_PATH_BACKTRACK__
+	for (--base; base > path; --base)
+	    if (base[0] == '/')
+	    {
+		base++;
+		break;
+	    }; /* if base[0] == '/' */
+#else
 	base--;
 	while (base > path)
 	{
@@ -882,7 +802,7 @@ bool Device::valid_path(const char path[])
 		break;
 	    }; /* if base[0] == '/' */
 	}; /* while base > path */
-	//return false;	// need special analyze for empty(base) case
+#endif
     }; /* if (empty(base)) */
 
     // dirname of the path must be exist
@@ -901,20 +821,13 @@ bool Device::valid_path(const char path[])
 	    return false;	// the path is invalid (inconsist)
 	}; /* subpath is exist */
     }; /* if stat(real_path, &st) == 0 */
+
 #define sign_place 0x2	// with of the place for the sign
 #define point_sign 0x1	// mark a point symbol in a string
 #define alpha_sign 0x2	// mark a non-point or a non-slash symbol in a string
 #define alpha_present_mask (alpha_sign | (alpha_sign << 1*sign_place) | (alpha_sign << 2*sign_place) | (alpha_sign << 3*sign_place))
 #define three_point_mark (point_sign | (point_sign << 1*sign_place) | (point_sign << 2*sign_place))
-//    if (base[-1] == '/')
-//	return false;	// double slash - is invalid
-    //*(base - 1) = '\0';	// break the path at the dirname
-    //if (stat(path, &st) == 0)
-    //{
-    //	if (!S_ISDIR(st.st_mode))
-    //	    return true;	// the path is inconsist
-    //}; /* if stat(real_path, &st) == 0 */
-    //*(base - 1) = '/';	// restore full path name
+
 	unsigned int ctrl_cnt = 0;
 	unsigned int idx_ctrl = 0;
     // scan the dirname of the path for found '/.' or '/..' sequence
@@ -962,7 +875,6 @@ bool Device::valid_path(const char path[])
 	    	{
 		    ESP_LOGE("Device::valid_path", "!!! Subpath is non exist, it's invalid!!!");
 		    return false;	// the path is invalid (inconsist)
-	    //	    return true;	// the path is inconsist
 	    	}; /* subpath is exist */
 	    }; /* if stat(real_path, &st) == 0 */
 	    //*(base - 1) = '/';	// restore full path name
@@ -971,30 +883,6 @@ bool Device::valid_path(const char path[])
 
 	// point symbol handling
 	case '.':
-#if 0	// switch_case_point
-	    // ctrl_cnt is zero, start of the substr handling
-	    if (ctrl_cnt < point_sign)
-	    {
-		ESP_LOGW("Device::valid_path", "1'st sumbol of the processing substring");
-		ctrl_cnt = point_sign;
-		continue;
-	    }; /* if ctrl_cnt < point_sign */
-	    // point in a 2'nd position in sequence
-	    if (ctrl_cnt < (point_sign << sign_place))
-	    {
-		ESP_LOGW("Device::valid_path", "2'nd symbol of the processing substring");
-		ctrl_cnt |= (point_sign << sign_place);
-		continue;
-	    }; /* if ctrl_cnt < point_sign */
-	    // point in a 3'd position in sequence
-	    if (ctrl_cnt < (point_sign << 2*sign_place))
-	    {
-		ESP_LOGW("Device::valid_path", "3'd symbol of the processing substring");
-		ctrl_cnt |= (point_sign << 2*sign_place);
-		continue;
-	    }; /* if ctrl_cnt < point_sign */
-#endif	// switch_case_point
-
 
 	    if (idx_ctrl <= 3)
 	    {
@@ -1009,30 +897,6 @@ bool Device::valid_path(const char path[])
 	// all other symbols
 	default:
 
-#if 0	// switch_default
-	    // first symbol in the processing sequence
-	    if (ctrl_cnt == 0)
-	    {
-		ESP_LOGW("Device::valid_path", "1'st sumbol of processing substring");
-		ctrl_cnt = alpha_sign;
-		continue;
-	    }; /* if (ctrl_cnt == 0) */
-	    // 2'nd symbol in the processing sequence
-	    if (ctrl_cnt < (point_sign << sign_place))
-	    {
-		ESP_LOGW("Device::valid_path", "2'nd sumbol of processing substring");
-		ctrl_cnt |= (alpha_sign << sign_place);
-		continue;
-	    }; /* if (ctrl_cnt == 0) */
-	    // 3'd symbol in the processing sequence
-	    if (ctrl_cnt < (point_sign << 2*sign_place))
-	    {
-		ESP_LOGW("Device::valid_path", "3'd sumbol of processing substring");
-		ctrl_cnt |= (alpha_sign << 2*sign_place);
-		continue;
-	    }; /* if (ctrl_cnt == 0) */
-#endif	// switch_default
-
 	    if (idx_ctrl <= 3)
 	    {
 		ESP_LOGW("Device::valid_path", "%d symbol of the processing substring", idx_ctrl);
@@ -1043,48 +907,13 @@ bool Device::valid_path(const char path[])
 	    //continue;
 
 	}; /* switch scan[0] */
-
-#if 0	// for_delete
-	if (point_cnt == 1 || point_cnt == 2)
-	{
-	    if (scan[1] == '/')
-	    {
-		scan[1] = '\0';	// break the path string
-		fake_cwd.get(path);
-		scan[1] = '/';	// restore the path string
-		//int statres = stat(path, &st);
-		if (stat(fake_cwd.get_current(), &st) != 0)
-		    return false;
-//		if (statres == 0 && !S_ISDIR(st.st_mode))
-		else if (!S_ISDIR(st.st_mode))
-		    return false;	// the path is invalid
-	    }; /* if scan[1] == '/' */
-	}; /* if (point_cnt == 1 || point_cnt == 2) */
-	// clear the counters
-	point_cnt = 0;
-	slash_cnt = 0;
-#endif	// for_deleting
     }; /* for char* scan = base - 1; scan > path; scan-- */
 
-#if 0	// dev_continue
-//    // if path exist
-//    if (stat(real_path, &st) == 0)
-//	dest[strlen(dest) - strlen(base) - 1] = '\0';
-	ESP_LOGI("mv", "destination dirname is: %s, basename of dest is: %s", dest, base);
-	if (stat(dest, &st) != 0)
-	{
-	    ESP_LOGE(CMD_TAG_PRFX, "%s: dirname of the file \"%s\" (%s) is not exist - renaming is impossible",
-		    __func__, dest_raw, dest);
-	    free(src);
-	    return ESP_ERR_NOT_FOUND;
-	}; /* if stat(dirname(dest), &st != 0) */
-	*(base - 1) = '/';	// restore last slash in prefix of destination file name
-#endif	// dev_continue
-
     return true;
-}; /* Device::inconsist_path */
+}; /* Device::valid_path */
 
 
+#if 0	// simply_dir_verify
 // is the filename ending
 // really like as a directory name end?
 extern "C"
@@ -1119,7 +948,7 @@ bool dir_tail(const char fname[])
 	return true;
     return false;
 }; /* dir_tail */
-
+#endif
 
 
 

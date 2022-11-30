@@ -35,6 +35,7 @@
 #endif
 
 
+#if 0	// simply_dir_verify
 // is the filename ending
 // really like as a directory name end?
 extern "C"
@@ -47,6 +48,7 @@ bool dir_tail(const char[]);
 // of the full file/path name
 extern "C"
 bool inconsist_path(char[]);
+#endif 	// simply_dir_verify
 
 // if path - is absolute path
 inline
