@@ -803,25 +803,25 @@ ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, li
 #ifdef __PURE_C__
 
 ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, line num: %d ########", 3, __func__, __FILE__, __LINE__);
-	char *src_stat = device.get_cwd(src_raw);
-	struct stat st;
+	char *src = device.get_cwd(src_raw);
+	struct stat st/*_src*/;
 
 ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, line num: %d ########", 4, __func__, __FILE__, __LINE__);
     // Check if source file is not exist
-    if (stat(src_stat, &st) != 0)
+    if (stat(src, &st/*_src*/) != 0)
     {
 	// Source file must be exist
 	ESP_LOGE(CMD_TAG_PRFX, "%s: file \"%s\" (%s) is not exist - renaming a non-existent file is not possible.\n%s",
-		__func__, src_raw, src_stat, esp_err_to_name(ESP_ERR_NOT_FOUND));
+		__func__, src/*_raw*/, src/*_stat*/, esp_err_to_name(ESP_ERR_NOT_FOUND));
 	return ESP_ERR_NOT_FOUND;
     }; /* if stat(src_stat, &st) != 0 */
 
 ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, line num: %d ########", 5, __func__, __FILE__, __LINE__);
-	char *src = NULL;
+	/*char *src = NULL;*/
 	char *dest = NULL;
 
 ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, line num: %d ########", 6, __func__, __FILE__, __LINE__);
-    src = (char*)malloc(strlen(src_stat) * sizeof(char) + 1);
+    src = (char*)malloc(strlen(src) * sizeof(char) + 1);
 ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, line num: %d ########", 7, __func__, __FILE__, __LINE__);
     if (!src)
     {
@@ -829,8 +829,8 @@ ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, li
 	return ESP_ERR_NO_MEM;
     }; /* if src == NULL*/
 ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, line num: %d: %s ########", 8, __func__, __FILE__, __LINE__, "copy src_stat to src");
-//    strcpy(src, device.curr_cwd());
-    strcpy(src, src_stat);
+    strcpy(src, device.curr_cwd());
+//    strcpy(src, src_stat);
 //    src = strcpy((char*)malloc(strlen(src_stat) * sizeof(char)) + 1, src_stat);
     ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, line num: %d: %s ########", 9, __func__, __FILE__, __LINE__, "dest = get_cwd(src_raw)");
     dest = device.get_cwd(dest_raw);
@@ -921,9 +921,6 @@ ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, li
 	} /* if S_ISDIR(st.st_mode) */
 
 	stat(src, &st);	// src - always exists get the src info
-//	if (stat(src, &st) == 0)
-//	{
-
 	// if source - is dir, but destination - ordinary file
 	if (S_ISDIR(st.st_mode))
 	{
@@ -931,7 +928,6 @@ ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, li
 		    __func__, dest, src);
 	    return ESP_ERR_NOT_SUPPORTED;
 	}; /* if S_ISDIR(st.st_mode) */
-//	}; /* if (stat(src, &st) == 0) */
 
 #if !defined(__NOT_OVERWRITE__) && defined(__CP_OVERWRITE_FILE__)
 	ESP_LOGW(CMD_TAG_PRFX, "%s: overwrite an existing file \"%s\".", __func__, dest);
