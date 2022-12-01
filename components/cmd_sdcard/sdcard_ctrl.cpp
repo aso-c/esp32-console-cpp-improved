@@ -839,17 +839,6 @@ ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, li
     cout << aso::format("Move file \"%s\" (%s) to \"%s\" (%s)") %src_raw %src
 			%dest_raw %dest << endl;
 
-#if 0	// earl_check_mv2itself
-ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, line num: %d: %s ########", 11, __func__, __FILE__, __LINE__, "checking that the source and a target are same");
-    if (strcmp(src, dest) == 0)
-    {
-	ESP_LOGE(CMD_TAG_PRFX, "%s: source & destination file name are same: \"%s\";\n\t\t\t moving file to iself is not needed",
-		__func__, dest);
-	free(src);
-	return ESP_ERR_NOT_SUPPORTED;
-    }; /* if strcmp(src, dest) == 0 */
-#endif	// earl_check_mv2itself
-
 ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, line num: %d: %s ########", 12, __func__, __FILE__, __LINE__, "if stat(dest)");
     if (stat(dest, &st) == 0)
     {
@@ -930,20 +919,19 @@ ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, li
 	    free(src);
 	    return ESP_ERR_NOT_SUPPORTED;
 	} /* if S_ISDIR(st.st_mode) */
-	else
+
+	stat(src, &st);	// src - always exists get the src info
+//	if (stat(src, &st) == 0)
+//	{
+
+	// if source - is dir, but destination - ordinary file
+	if (S_ISDIR(st.st_mode))
 	{
-	    // if src - exist (always, actually)
-	    if (stat(src, &st) == 0)
-	    {
-		// if source - is dir, but destination - ordinary file
-		if (S_ISDIR(st.st_mode))
-		{
-		    ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite exist file \"%s\" by renaming the source directory %s to it - is not allowed; aborting.",
-			    __func__, dest, src);
-		    return ESP_ERR_NOT_SUPPORTED;
-		}; /* if S_ISDIR(st.st_mode) */
-	    }; /* if (stat(src, &st) == 0) */
-	}; /* else if S_ISDIR(st.st_mode) */
+	    ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite exist file \"%s\" by renaming the source directory %s to it - is not allowed; aborting.",
+		    __func__, dest, src);
+	    return ESP_ERR_NOT_SUPPORTED;
+	}; /* if S_ISDIR(st.st_mode) */
+//	}; /* if (stat(src, &st) == 0) */
 
 #if !defined(__NOT_OVERWRITE__) && defined(__CP_OVERWRITE_FILE__)
 	ESP_LOGW(CMD_TAG_PRFX, "%s: overwrite an existing file \"%s\".", __func__, dest);
@@ -955,6 +943,9 @@ ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, li
 #endif	// __CP_OVER_EXIST_FILE__
     }; /* if stat(dest, &st) == 0 */
 
+    // Names of the moving/renaming file
+    ESP_LOGI(TAG, "Renaming file %s (%s) to %s (%s)", src_raw, src, dest_raw,
+		    dest/*device.get_cwd(dest_raw)*/);
     // check the source and destination file are same
     if (strcmp(src, dest) == 0)
     {
@@ -1045,8 +1036,10 @@ ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, li
 #endif	// cp_souce_sample
 
     // Rename original file
-    ESP_LOGI(TAG, "Renaming file %s (%s) to %s (%s)", src_raw, src, dest_raw,
-		    dest/*device.get_cwd(dest_raw)*/);
+//    ESP_LOGI(TAG, "Renaming file %s (%s) to %s (%s)", src_raw, src, dest_raw,
+//		    dest/*device.get_cwd(dest_raw)*/);
+    cout << aso::format("Move/rename file %s (%s) to %s (%s)") %src_raw %src
+			%dest_raw %dest << endl;
 //    if (rename(src, dest/*device.curr_cwd()*/) != 0)
 //    {
 //    	ESP_LOGE(TAG, "Rename failed");
