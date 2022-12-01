@@ -675,14 +675,7 @@ esp_err_t Server::cp(SDMMC::Device& device, const char src_raw[], const char des
 		free(src);
 		return ESP_ERR_NOT_SUPPORTED;
 	    } /* if S_ISDIR(st.st_mode) */
-#if 0	// concluse_checks
-	}; /* if stat(dest, &st) == 0 */
 
-	// Re-check modified version of the
-	// destination file for exist:
-	if (stat(dest, &st) == 0)
-	{
-#endif	// concluse_checks
 #if !defined(__NOT_OVERWRITE__) && defined(__CP_OVERWRITE_FILE__)
 	    ESP_LOGW(CMD_TAG_PRFX, "%s: overwrite an existing file \"%s\".", __func__, dest);
 #else
@@ -694,15 +687,6 @@ esp_err_t Server::cp(SDMMC::Device& device, const char src_raw[], const char des
 	}; /* if stat(dest, &st) == 0 */
 #endif	// inner_recheck
     }; /* if stat(dest, &st) == 0 */
-
-    // check the source and destination file are same
-    if (strcmp(src, dest) == 0)
-    {
-	ESP_LOGE(CMD_TAG_PRFX, "%s: source & destination file name are same: \"%s\";\n\t\t\t copying file to iself is unsupported",
-		__func__, dest);
-	free(src);
-	return ESP_ERR_NOT_SUPPORTED;
-    }; /* if strcmp(src, dest) == 0 */
 
     // Re-check the modified version of the
     // destination filename, that may be exist:
@@ -728,7 +712,16 @@ esp_err_t Server::cp(SDMMC::Device& device, const char src_raw[], const char des
 #endif	// __CP_OVER_EXIST_FILE__
     }; /* if stat(dest, &st) == 0 */
 
-    // destination file not exist or is overwrited
+    // check the source and destination file are same
+    if (strcmp(src, dest) == 0)
+    {
+	ESP_LOGE(CMD_TAG_PRFX, "%s: source & destination file name are same: \"%s\";\n\t\t\t copying file to iself is unsupported",
+		__func__, dest);
+	free(src);
+	return ESP_ERR_NOT_SUPPORTED;
+    }; /* if strcmp(src, dest) == 0 */
+
+    // destination file - OK, it's not exist or is may be overwrited
     ESP_LOGI(CMD_TAG_PRFX ":" CMD_NM, "copy file %s to %s", src, dest);
 
 	FILE* srcfile = fopen(src, "rb");
@@ -846,6 +839,7 @@ ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, li
     cout << aso::format("Move file \"%s\" (%s) to \"%s\" (%s)") %src_raw %src
 			%dest_raw %dest << endl;
 
+#if 0	// earl_check_mv2itself
 ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, line num: %d: %s ########", 11, __func__, __FILE__, __LINE__, "checking that the source and a target are same");
     if (strcmp(src, dest) == 0)
     {
@@ -854,14 +848,13 @@ ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, li
 	free(src);
 	return ESP_ERR_NOT_SUPPORTED;
     }; /* if strcmp(src, dest) == 0 */
+#endif	// earl_check_mv2itself
 
 ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, line num: %d: %s ########", 12, __func__, __FILE__, __LINE__, "if stat(dest)");
     if (stat(dest, &st) == 0)
     {
-	// Destination file exist
-//	ESP_LOGW(CMD_TAG_PRFX, "%s: destination file \"%s\" (%s) exist - rename denied,%s",
-//		__func__, dest_raw, dest, "\n\t\t\t\tnow is not any actions implemented");
-	ESP_LOGW(CMD_TAG_PRFX, "%s: destination file name \"%s\" (%s) exist",
+	// Target file exist
+	ESP_LOGW(CMD_TAG_PRFX, "%s: target file name \"%s\" (%s) exist",
 		__func__, dest_raw, dest);
 	// if destination is existing directory
 	if (S_ISDIR(st.st_mode))
@@ -875,6 +868,7 @@ ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, li
 	    strcat(dest, basenm);
 	    ESP_LOGW(CMD_TAG_PRFX, "%s: adding src basename to a destination file: %s", __func__, dest);
 	} /* if S_ISDIR(st.st_mode) */
+#if 0	// not_nedeed_part
 	else
 	{
 	    if (0/*dir_tail(dest_raw)*/)
@@ -892,7 +886,9 @@ ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, li
 	    return ESP_ERR_INVALID_VERSION;
 #endif	// !defined(__NOT_OVERWRITE__) && defined(__CP_OVERWRITE_FILE__)
 	}; /* else if S_ISDIR(st.st_mode) */
+#endif	// not_nedeed_part
     } /* if stat(dest, &st) != 0 */
+#if 0	// unneeded_part2
     else
     {
 	// Destination file is not exist,
@@ -919,6 +915,56 @@ ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, li
 	}; /* if (dir_tail(dest_raw)) */
 	ESP_LOGI("mv", "destination base is: %s", base);
     }; /* else if stat(dest, &st) == 0 */
+#endif	// unneeded_part2
+
+    // Re-check the modified version of the
+    // destination filename, that may be exist:
+    if (stat(dest, &st) == 0)
+    {
+	// the final name of the target file
+	// must not be a existing directory name
+	if (S_ISDIR(st.st_mode))
+	{
+	    ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite exist directory \"%s\" by the destination file from the %s is not allowed; aborting.",
+		    __func__, dest, src);
+	    free(src);
+	    return ESP_ERR_NOT_SUPPORTED;
+	} /* if S_ISDIR(st.st_mode) */
+	else
+	{
+	    // if src - exist (always, actually)
+	    if (stat(src, &st) == 0)
+	    {
+		// if source - is dir, but destination - ordinary file
+		if (S_ISDIR(st.st_mode))
+		{
+		    ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite exist file \"%s\" by renaming the source directory %s to it - is not allowed; aborting.",
+			    __func__, dest, src);
+		    return ESP_ERR_NOT_SUPPORTED;
+		}; /* if S_ISDIR(st.st_mode) */
+	    }; /* if (stat(src, &st) == 0) */
+	}; /* else if S_ISDIR(st.st_mode) */
+
+#if !defined(__NOT_OVERWRITE__) && defined(__CP_OVERWRITE_FILE__)
+	ESP_LOGW(CMD_TAG_PRFX, "%s: overwrite an existing file \"%s\".", __func__, dest);
+#else
+	ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite the existent file \"%s\" is denied; aborting.",
+		__func__, dest);
+	free(src);
+	return ESP_ERR_NOT_SUPPORTED;
+#endif	// __CP_OVER_EXIST_FILE__
+    }; /* if stat(dest, &st) == 0 */
+
+    // check the source and destination file are same
+    if (strcmp(src, dest) == 0)
+    {
+	ESP_LOGE(CMD_TAG_PRFX, "%s: source & destination file name are same: \"%s\";\n\t\t\t copying file to iself is unsupported",
+		__func__, dest);
+	free(src);
+	return ESP_ERR_NOT_SUPPORTED;
+    }; /* if strcmp(src, dest) == 0 */
+
+
 
 #if 0	// cp_souce_sample
     // Check if destination file is exist
@@ -932,29 +978,69 @@ ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, li
 	{
 	    strcat(dest, "/");
 	    strcat(dest, srcbase);
-	    // Recheck if modified destination file exist,
-	    if (stat(dest, &st) == 0)
-	    {
-		// final name of the destination file is the same
-		// as the existing directory name - error
-		if (S_ISDIR(st.st_mode))
-		{
-		    ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite exist \"%s\" directory by the destination file is denied; aborting.",
-			    __func__, dest);
-		    free(src);
-		    return ESP_ERR_NOT_SUPPORTED;
-		} /* if S_ISDIR(st.st_mode) */
-	    }; /* if stat(dest, &st) == 0 */
 	} /* if S_ISDIR(st.st_mode) */
-    }; /* if stat(dest, &st) == 0 */
+
+#if 0	// inner_recheck
+
+	// Recheck if modified destination file exist,
+	// Re-check modified version of the
+	// destination file for exist:
+	if (stat(dest, &st) == 0)
+	{
+	    // final name of the destination file is the same
+	    // as the existing directory name - error
+	    if (S_ISDIR(st.st_mode))
+	    {
+		ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite exist \"%s\" directory by the destination file is denied; aborting.",
+			__func__, dest);
+		free(src);
+		return ESP_ERR_NOT_SUPPORTED;
+	    } /* if S_ISDIR(st.st_mode) */
+
 #if !defined(__NOT_OVERWRITE__) && defined(__CP_OVERWRITE_FILE__)
-    ESP_LOGW(CMD_TAG_PRFX, "%s: overwrite an existing file \"%s\".", __func__, dest);
+	    ESP_LOGW(CMD_TAG_PRFX, "%s: overwrite an existing file \"%s\".", __func__, dest);
 #else
-    ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite the existent file \"%s\" is denied; aborting.",
-	    __func__, dest);
-    free(src);
-    return ESP_ERR_NOT_SUPPORTED;
+	    ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite the existent file \"%s\" is denied; aborting.",
+		    __func__, dest);
+	    free(src);
+	    return ESP_ERR_NOT_SUPPORTED;
 #endif	// __CP_OVER_EXIST_FILE__
+	}; /* if stat(dest, &st) == 0 */
+#endif	// inner_recheck
+    }; /* if stat(dest, &st) == 0 */
+
+    // Re-check the modified version of the
+    // destination filename, that may be exist:
+    if (stat(dest, &st) == 0)
+    {
+	// the final name of the target file
+	// must not be a existing directory name
+	if (S_ISDIR(st.st_mode))
+	{
+	    ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite exist \"%s\" directory by the destination file is denied; aborting.",
+		    __func__, dest);
+	    free(src);
+	    return ESP_ERR_NOT_SUPPORTED;
+	} /* if S_ISDIR(st.st_mode) */
+
+#if !defined(__NOT_OVERWRITE__) && defined(__CP_OVERWRITE_FILE__)
+		ESP_LOGW(CMD_TAG_PRFX, "%s: overwrite an existing file \"%s\".", __func__, dest);
+#else
+		ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite the existent file \"%s\" is denied; aborting.",
+			__func__, dest);
+		free(src);
+		return ESP_ERR_NOT_SUPPORTED;
+#endif	// __CP_OVER_EXIST_FILE__
+    }; /* if stat(dest, &st) == 0 */
+
+    // check the source and destination file are same
+    if (strcmp(src, dest) == 0)
+    {
+	ESP_LOGE(CMD_TAG_PRFX, "%s: source & destination file name are same: \"%s\";\n\t\t\t copying file to iself is unsupported",
+		__func__, dest);
+	free(src);
+	return ESP_ERR_NOT_SUPPORTED;
+    }; /* if strcmp(src, dest) == 0 */
 
 #endif	// cp_souce_sample
 

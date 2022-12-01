@@ -783,26 +783,12 @@ bool Device::valid_path(const char path[])
 	    }; /* subpath is exist */
 	}; /* if stat(real_path, &st) == 0 */
 	ESP_LOGW("Device::valid_path", "###!!! test dirname \"%s\" (real path is %s) preliminary is OK, seek to begin of last dir manually for continue test... ###", path, fake_cwd.get_current());
-#define __FOR_LOOP_PATH_BACKTRACK__
-#ifdef __FOR_LOOP_PATH_BACKTRACK__
-	for (--base; base > path; --base)
-	    if (base[0] == '/')
+	for (base--; base > path; base--)
+	    if (*base == '/')
 	    {
 		base++;
 		break;
 	    }; /* if base[0] == '/' */
-#else
-	base--;
-	while (base > path)
-	{
-	    base--;
-	    if (base[0] == '/')
-	    {
-		base++;
-		break;
-	    }; /* if base[0] == '/' */
-	}; /* while base > path */
-#endif
     }; /* if (empty(base)) */
 
     // dirname of the path must be exist
