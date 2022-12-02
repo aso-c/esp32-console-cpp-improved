@@ -804,34 +804,36 @@ ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, li
 
 ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, line num: %d ########", 3, __func__, __FILE__, __LINE__);
 	char *src = device.get_cwd(src_raw);
-	struct stat st/*_src*/;
+	struct stat st_src;
 
 ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, line num: %d ########", 4, __func__, __FILE__, __LINE__);
     // Check if source file is not exist
-    if (stat(src, &st/*_src*/) != 0)
+    if (stat(src, &st_src) != 0)
     {
 	// Source file must be exist
 	ESP_LOGE(CMD_TAG_PRFX, "%s: file \"%s\" (%s) is not exist - renaming a non-existent file is not possible.\n%s",
-		__func__, src/*_raw*/, src/*_stat*/, esp_err_to_name(ESP_ERR_NOT_FOUND));
+		__func__, src_raw, src, esp_err_to_name(ESP_ERR_NOT_FOUND));
 	return ESP_ERR_NOT_FOUND;
     }; /* if stat(src_stat, &st) != 0 */
 
 ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, line num: %d ########", 5, __func__, __FILE__, __LINE__);
-	/*char *src = NULL;*/
-	char *dest = NULL;
-
-ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, line num: %d ########", 6, __func__, __FILE__, __LINE__);
     src = (char*)malloc(strlen(src) * sizeof(char) + 1);
-ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, line num: %d ########", 7, __func__, __FILE__, __LINE__);
+ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, line num: %d ########", 6, __func__, __FILE__, __LINE__);
     if (!src)
     {
 	ESP_LOGE(CMD_TAG_PRFX, "%s: Not enought memory for store souce file name", __func__);
 	return ESP_ERR_NO_MEM;
     }; /* if src == NULL*/
-ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, line num: %d: %s ########", 8, __func__, __FILE__, __LINE__, "copy src_stat to src");
+ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, line num: %d: %s ########", 7, __func__, __FILE__, __LINE__, "copy src_stat to src");
     strcpy(src, device.curr_cwd());
 //    strcpy(src, src_stat);
 //    src = strcpy((char*)malloc(strlen(src_stat) * sizeof(char)) + 1, src_stat);
+
+
+ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, line num: %d ########", 8, __func__, __FILE__, __LINE__);
+    	char *dest = NULL;
+    	struct stat st_dest;
+
     ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, line num: %d: %s ########", 9, __func__, __FILE__, __LINE__, "dest = get_cwd(src_raw)");
     dest = device.get_cwd(dest_raw);
 
@@ -840,13 +842,13 @@ ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, li
 			%dest_raw %dest << endl;
 
 ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, line num: %d: %s ########", 12, __func__, __FILE__, __LINE__, "if stat(dest)");
-    if (stat(dest, &st) == 0)
+    if (stat(dest, &st_dest) == 0)
     {
 	// Target file exist
 	ESP_LOGW(CMD_TAG_PRFX, "%s: target file name \"%s\" (%s) exist",
 		__func__, dest_raw, dest);
 	// if destination is existing directory
-	if (S_ISDIR(st.st_mode))
+	if (S_ISDIR(st_dest.st_mode))
 	{
 		char *basenm = basename(src);
 
@@ -908,11 +910,11 @@ ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, li
 
     // Re-check the modified version of the
     // destination filename, that may be exist:
-    if (stat(dest, &st) == 0)
+    if (stat(dest, &st_dest) == 0)
     {
 	// the final name of the target file
 	// must not be a existing directory name
-	if (S_ISDIR(st.st_mode))
+	if (S_ISDIR(st_dest.st_mode))
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite exist directory \"%s\" by the destination file from the %s is not allowed; aborting.",
 		    __func__, dest, src);
@@ -920,9 +922,10 @@ ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, li
 	    return ESP_ERR_NOT_SUPPORTED;
 	} /* if S_ISDIR(st.st_mode) */
 
-	stat(src, &st);	// src - always exists get the src info
+//	stat(src, &st);	// src - always exists get the src info
 	// if source - is dir, but destination - ordinary file
-	if (S_ISDIR(st.st_mode))
+//	if (S_ISDIR(st.st_mode))
+	if (S_ISDIR(st_src.st_mode))
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite exist file \"%s\" by renaming the source directory %s to it - is not allowed; aborting.",
 		    __func__, dest, src);
