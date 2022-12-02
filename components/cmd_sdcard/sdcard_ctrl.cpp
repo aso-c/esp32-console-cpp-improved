@@ -771,7 +771,6 @@ esp_err_t Server::cp(SDMMC::Device& device, const char src_raw[], const char des
 esp_err_t Server::mv(SDMMC::Device& device, const char src_raw[], const char dest_raw[])
 {
 
-ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, line num: %d ########", 1, __func__, __FILE__, __LINE__);
     if (empty(src_raw))
     {
 	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "too few arguments: invoke command \"%s\" with one parameters.\n%s", CMD_NM,
@@ -779,7 +778,6 @@ ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, li
 	return ESP_ERR_INVALID_ARG;
     }; /* if empty(src) */
 
-ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, line num: %d ########", 2, __func__, __FILE__, __LINE__);
     if (empty(dest_raw))
     {
 	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "too few arguments: invoke command \"%s\" without parameters.\n%s", CMD_NM,
@@ -802,11 +800,9 @@ ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, li
 
 #ifdef __PURE_C__
 
-ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, line num: %d ########", 3, __func__, __FILE__, __LINE__);
 	char *src = device.get_cwd(src_raw);
 	struct stat st_src;
 
-ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, line num: %d ########", 4, __func__, __FILE__, __LINE__);
     // Check if source file is not exist
     if (stat(src, &st_src) != 0)
     {
@@ -816,32 +812,24 @@ ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, li
 	return ESP_ERR_NOT_FOUND;
     }; /* if stat(src_stat, &st) != 0 */
 
-ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, line num: %d ########", 5, __func__, __FILE__, __LINE__);
     src = (char*)malloc(strlen(src) * sizeof(char) + 1);
-ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, line num: %d ########", 6, __func__, __FILE__, __LINE__);
     if (!src)
     {
 	ESP_LOGE(CMD_TAG_PRFX, "%s: Not enought memory for store souce file name", __func__);
 	return ESP_ERR_NO_MEM;
     }; /* if src == NULL*/
-ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, line num: %d: %s ########", 7, __func__, __FILE__, __LINE__, "copy src_stat to src");
     strcpy(src, device.curr_cwd());
-//    strcpy(src, src_stat);
-//    src = strcpy((char*)malloc(strlen(src_stat) * sizeof(char)) + 1, src_stat);
+//    src = strcpy((char*)malloc(strlen(src) * sizeof(char)) + 1, src);
 
 
-ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, line num: %d ########", 8, __func__, __FILE__, __LINE__);
     	char *dest = NULL;
     	struct stat st_dest;
 
-    ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, line num: %d: %s ########", 9, __func__, __FILE__, __LINE__, "dest = get_cwd(src_raw)");
     dest = device.get_cwd(dest_raw);
 
-ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, line num: %d: %s ########", 10, __func__, __FILE__, __LINE__, "aso::format output");
     cout << aso::format("Move file \"%s\" (%s) to \"%s\" (%s)") %src_raw %src
 			%dest_raw %dest << endl;
 
-ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, line num: %d: %s ########", 12, __func__, __FILE__, __LINE__, "if stat(dest)");
     if (stat(dest, &st_dest) == 0)
     {
 	// Target file exist
@@ -852,12 +840,12 @@ ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, li
 	{
 		char *basenm = basename(src);
 
-	    ESP_LOGW(CMD_TAG_PRFX, "%s: destination file is exist directory,\n\t\t\tbasename of src is: %s ", __func__,
+	    ESP_LOGD(CMD_TAG_PRFX, "%s: destination file is exist directory,\n\t\t\tbasename of src is: %s ", __func__,
 		    basenm);
 	    strcat(dest, "/");
-	    ESP_LOGW(CMD_TAG_PRFX, "%s: adding trailing slash to a destination file: %s", __func__, dest);
+	    ESP_LOGD(CMD_TAG_PRFX, "%s: adding trailing slash to a destination file: %s", __func__, dest);
 	    strcat(dest, basenm);
-	    ESP_LOGW(CMD_TAG_PRFX, "%s: adding src basename to a destination file: %s", __func__, dest);
+	    ESP_LOGD(CMD_TAG_PRFX, "%s: adding src basename to a destination file: %s", __func__, dest);
 	} /* if S_ISDIR(st.st_mode) */
     } /* if stat(dest, &st) != 0 */
 
@@ -894,8 +882,7 @@ ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, li
     }; /* if stat(dest, &st) == 0 */
 
     // Names of the moving/renaming file
-    ESP_LOGI(TAG, "Renaming file %s (%s) to %s (%s)", src_raw, src, dest_raw,
-		    dest/*device.get_cwd(dest_raw)*/);
+    ESP_LOGI(CMD_TAG_PRFX, "%s: Moving/renaming file %s (%s) to %s (%s)", __func__, src_raw, src, dest_raw, dest);
     // check the source and destination file are same
     if (strcmp(src, dest) == 0)
     {
@@ -906,14 +893,11 @@ ESP_LOGW(CMD_TAG_PRFX CMD_NM, "######## Step Position %d, func: %s, file: %s, li
     }; /* if strcmp(src, dest) == 0 */
 
 
-    // Rename original file
-//    ESP_LOGI(TAG, "Renaming file %s (%s) to %s (%s)", src_raw, src, dest_raw,
-//		    dest/*device.get_cwd(dest_raw)*/);
-    cout << aso::format("Move/rename file %s (%s) to %s (%s)") %src_raw %src
-			%dest_raw %dest << endl;
+//    // Rename original file
+//    cout << aso::format("Move/rename file %s (%s) to %s (%s)") %src_raw %src
+//			%dest_raw %dest << endl;
     if (rename(src, dest/*device.curr_cwd()*/) != 0)
     {
-//    	ESP_LOGE(TAG, "Rename failed");
 	ESP_LOGE(CMD_TAG_PRFX, "%s: Error %d: %s", __func__, errno, strerror(errno));
     	free(src);
     	return ESP_FAIL;
