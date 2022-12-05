@@ -594,7 +594,7 @@ Device::Device(bus::width width, Host::Pullup pullst, esp_vfs_fat_sdmmc_mount_co
 	_host(width, pullst),
 	fake_cwd(fake_cwd_path, sizeof(fake_cwd_path))
 {
-    selective_log_level_set("Device::valid_path");	/* for debug purposes */
+    selective_log_level_set("Device::valid_path", ESP_LOG_DEBUG);	/* for debug purposes */
 //#ifdef CONFIG_EXAMPLE_FORMAT_IF_MOUNT_FAILED
 //	mnt.format_if_mount_failed = true;
 //#else
@@ -613,7 +613,7 @@ Device::Device(Card::format::mntfail autofmt, int max_files, size_t size,
 		_host(width, pull),
 		fake_cwd(fake_cwd_path, sizeof(fake_cwd_path))
 {
-    selective_log_level_set("Device::valid_path");	/* for debug purposes */
+    selective_log_level_set("Device::valid_path", ESP_LOG_DEBUG);	/* for debug purposes */
         mnt.format_if_mount_failed = (autofmt == Card::format::yes)? true: false;
     //	mnt.max_files = 5;
         mnt.max_files = max_files;
@@ -698,7 +698,7 @@ esp_err_t Device::unmount()
 	return ESP_ERR_NOT_FOUND;
     }; /* if card */
 
-//    if (mountpath == NULL || strcmp(mountpath, "") == 0)
+//    if (empty(mountpath))
 //    {
 //	cout << TAG << ": " << "Call: unmount(" << mounting.target << ");" << endl;
 //	ret = unmount(mounting.target);
@@ -725,15 +725,6 @@ esp_err_t Device::unmount()
 //    esp_err_t unmount(const char *base_path, sdmmc_card_t *card);	// Unmount mounted SD-card "card", mounted onto mountpath
 
 
-//// change cwd dir
-//esp_err_t Device::change_currdir(const char path[])
-//{
-//    if (path == nullptr || path[0] == '\0')
-//	return fake_cwd.change_dir(mountpath());
-//    return fake_cwd.change_dir(path);
-//}; /* Device::change_currdir */
-
-
 // if the basename (the last part of the path) - has the characteristics
 // of a directory name, and a dirname (the path prefix) -
 // is an existing file, not a directory, or any other impossible variants
@@ -742,16 +733,12 @@ bool Device::valid_path(const char path[])
 {
 
 	struct stat st;
-//	char* real_path = fake_cwd.get(base);
-//	char* given_path = strcpy(malloc(strlen(fake_cwd.raw_get(path)) +1 ),
-//					fake_cwd.curr_get());
-//	char *base = basename(givan_path);	// get a filename of a path
 	char *base = basename(path);	// get a filename of a path
 
 /*esp_log_level_set("Device::valid_path", ESP_LOG_DEBUG);*//* for debug purposes */
     ESP_LOGD("Device::valid_path", "basename of the path is: \"%s\"", base);
     ESP_LOGD("Device::valid_path", "full path is: \"%s\"", path);
-    ESP_LOGD("Device::valid_path", "dirname path is: %.*s", base - path, path);
+    ESP_LOGD("Device::valid_path", "dirname path is: \"%.*s\"", base - path, path);
 
 //    strcpy(given_path, fake_cwd.curr_get());
     // if path is empty
@@ -769,6 +756,9 @@ bool Device::valid_path(const char path[])
     // if dirname - empty or one symbol length (it can only be the slash)
     if ((base - path) < 2)
     {
+	// if path == '/..' - it's invalid
+	if (strcmp(path, "/..") == 0)
+	    return false;
 	ESP_LOGD("Device::valid_path", "Len of dirname is 1 or 0, then path is valid");
 	return true;
     }; /* if (base - path) < 2 */
@@ -783,17 +773,21 @@ bool Device::valid_path(const char path[])
 	    {
 		ESP_LOGE("Device::valid_path", "Path \"%s\" (real path %s) is a file, but marked as a directory, it's invalid!!!", path, fake_cwd.get_current());
 		return false;	// the path is invalid (inconsist)
-	    }; /* subpath is exist */
+	    }; /* path is not dir */
 	}; /* if stat(real_path, &st) == 0 */
 	ESP_LOGD("Device::valid_path", "###!!! test dirname \"%s\" (real path is %s) preliminary is OK, seek to begin of last dir manually for continue test... ###", path, fake_cwd.get_current());
-	for (base--; base > path; base--)
+	for (base -= 2; base > path; base--)
+	{
+	    ESP_LOGD("Device::valid_path", "=== base[0] is \"%c\" ===", base[0]);
 	    if (*base == '/')
 	    {
-		base++;
+//		base++;
 		break;
 	    }; /* if base[0] == '/' */
+	}; /* for base--; base > path; base-- */
     }; /* if (empty(base)) */
 
+#if 0
     // dirname of the path must be exist
     // and be a directory, not a file
     if (stat(fake_cwd.get(path, base - path - 1), &st) != 0)
@@ -810,14 +804,16 @@ bool Device::valid_path(const char path[])
 	    return false;	// the path is invalid (inconsist)
 	}; /* subpath is exist */
     }; /* if stat(real_path, &st) == 0 */
+#endif
 
 #define sign_place 0x2	// with of the place for the sign
 #define point_sign 0x1	// mark a point symbol in a string
 #define alpha_sign 0x2	// mark a non-point or a non-slash symbol in a string
+#define initial_ctrl (0x3 << 3*sign_place)	// mark for the initial pass of the control of the path validity
 #define alpha_present_mask (alpha_sign | (alpha_sign << 1*sign_place) | (alpha_sign << 2*sign_place) | (alpha_sign << 3*sign_place))
 #define three_point_mark (point_sign | (point_sign << 1*sign_place) | (point_sign << 2*sign_place))
 
-	unsigned int ctrl_cnt = 0;
+	unsigned int ctrl_cnt = initial_ctrl;	// marked the firs pass of the control loop
 	unsigned int idx_ctrl = 0;
     // scan the dirname of the path for found '/.' or '/..' sequence
     for ( char* scan = base - 2; scan >= path; scan--)
@@ -856,8 +852,6 @@ bool Device::valid_path(const char path[])
 	    }; /* if prev_ctrl & alpha_present_mask */
 
 	    ESP_LOGD("Device::valid_path", "====== One or two point sequence in the current meaning substring, ctrl_cnt is %2X, test current subpath for exist ======", prev_ctrl);
-	    //*(base - 1) = '\0';	// break the path at the dirname
-	    //if (stat(path, &st) == 0)
 	    if (stat(fake_cwd.get(path, scan - path - 1), &st) == 0)
 	    {
 	    	if (!S_ISDIR(st.st_mode))
@@ -866,7 +860,6 @@ bool Device::valid_path(const char path[])
 		    return false;	// the path is invalid (inconsist)
 	    	}; /* subpath is exist */
 	    }; /* if stat(real_path, &st) == 0 */
-	    //*(base - 1) = '/';	// restore full path name
 
 	    break;
 
