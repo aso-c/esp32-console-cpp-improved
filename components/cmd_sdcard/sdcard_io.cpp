@@ -594,6 +594,7 @@ Device::Device(bus::width width, Host::Pullup pullst, esp_vfs_fat_sdmmc_mount_co
 	_host(width, pullst),
 	fake_cwd(fake_cwd_path, sizeof(fake_cwd_path))
 {
+    selective_log_level_set("Device::valid_path");	/* for debug purposes */
 //#ifdef CONFIG_EXAMPLE_FORMAT_IF_MOUNT_FAILED
 //	mnt.format_if_mount_failed = true;
 //#else
@@ -612,6 +613,7 @@ Device::Device(Card::format::mntfail autofmt, int max_files, size_t size,
 		_host(width, pull),
 		fake_cwd(fake_cwd_path, sizeof(fake_cwd_path))
 {
+    selective_log_level_set("Device::valid_path");	/* for debug purposes */
         mnt.format_if_mount_failed = (autofmt == Card::format::yes)? true: false;
     //	mnt.max_files = 5;
         mnt.max_files = max_files;
@@ -746,27 +748,28 @@ bool Device::valid_path(const char path[])
 //	char *base = basename(givan_path);	// get a filename of a path
 	char *base = basename(path);	// get a filename of a path
 
-    ESP_LOGW("Device::valid_path", "basename of the path is: \"%s\"", base);
-    ESP_LOGW("Device::valid_path", "full path is: \"%s\"", path);
-    ESP_LOGW("Device::valid_path", "dirname path len is: %d", base - path);
+/*esp_log_level_set("Device::valid_path", ESP_LOG_DEBUG);*//* for debug purposes */
+    ESP_LOGD("Device::valid_path", "basename of the path is: \"%s\"", base);
+    ESP_LOGD("Device::valid_path", "full path is: \"%s\"", path);
+    ESP_LOGD("Device::valid_path", "dirname path is: %.*s", base - path, path);
 
 //    strcpy(given_path, fake_cwd.curr_get());
     // if path is empty
     if (empty(path))
     {
-	ESP_LOGW("Device::valid_path", "path is empty, always valid");
+	ESP_LOGD("Device::valid_path", "path is empty, always valid");
 	return true;
     }; /* if empty(path) */
     // if path - only base, not a dir
     if (strlen(path) == 1)
     {
-	ESP_LOGW("Device::valid_path", "len of the path - is 1, always valid");
+	ESP_LOGD("Device::valid_path", "len of the path - is 1, always valid");
 	return true;
     }; /* if strlen(path) == 1 */
     // if dirname - empty or one symbol length (it can only be the slash)
     if ((base - path) < 2)
     {
-	ESP_LOGW("Device::valid_path", "Len of dirname is 1 or 0, then path is valid");
+	ESP_LOGD("Device::valid_path", "Len of dirname is 1 or 0, then path is valid");
 	return true;
     }; /* if (base - path) < 2 */
 
@@ -775,14 +778,14 @@ bool Device::valid_path(const char path[])
     {
 	if (stat(fake_cwd.get(path), &st) == 0)
 	{
-	    ESP_LOGW("Device::valid_path", "###!!! the path basename - is empty, test the path \"%s\" (real path is %s) exist and a directory... ###", path, fake_cwd.get_current());
+	    ESP_LOGD("Device::valid_path", "###!!! the path basename - is empty, test the path \"%s\" (real path is %s) exist and a directory... ###", path, fake_cwd.get_current());
 	    if (!S_ISDIR(st.st_mode))
 	    {
 		ESP_LOGE("Device::valid_path", "Path \"%s\" (real path %s) is a file, but marked as a directory, it's invalid!!!", path, fake_cwd.get_current());
 		return false;	// the path is invalid (inconsist)
 	    }; /* subpath is exist */
 	}; /* if stat(real_path, &st) == 0 */
-	ESP_LOGW("Device::valid_path", "###!!! test dirname \"%s\" (real path is %s) preliminary is OK, seek to begin of last dir manually for continue test... ###", path, fake_cwd.get_current());
+	ESP_LOGD("Device::valid_path", "###!!! test dirname \"%s\" (real path is %s) preliminary is OK, seek to begin of last dir manually for continue test... ###", path, fake_cwd.get_current());
 	for (base--; base > path; base--)
 	    if (*base == '/')
 	    {
@@ -795,12 +798,12 @@ bool Device::valid_path(const char path[])
     // and be a directory, not a file
     if (stat(fake_cwd.get(path, base - path - 1), &st) != 0)
     {
-	ESP_LOGW("Device::valid_path", "###!!! 1'st subdir (is \"%.*s\") of the path \"%s\" is not exist, but should be... ###", base - path - ((base==path)? 0: 1), path, path);
+	ESP_LOGD("Device::valid_path", "###!!! 1'st subdir (is \"%.*s\") of the path \"%s\" is not exist, but should be... ###", base - path - ((base==path)? 0: 1), path, path);
 	return false;
     }
     else
     {
-	ESP_LOGW("Device::valid_path", "###!!! 1'st subdir (\"%.*s\") of the path \"%s\" is exist, must be a directory... ###", base - path - ((base==path)? 0: 1), path, path);
+	ESP_LOGD("Device::valid_path", "###!!! 1'st subdir (\"%.*s\") of the path \"%s\" is exist, must be a directory... ###", base - path - ((base==path)? 0: 1), path, path);
 	if (!S_ISDIR(st.st_mode))
 	{
 	    ESP_LOGE("Device::valid_path", "Path \"%.*s\" is a file, but must be a directory, it's invalid!!!", base - path - ((base==path)? 0:  1), path);
@@ -819,7 +822,7 @@ bool Device::valid_path(const char path[])
     // scan the dirname of the path for found '/.' or '/..' sequence
     for ( char* scan = base - 2; scan >= path; scan--)
     {
-	ESP_LOGI("Device::valid_path", "current char from the path is: '%c', ctrl_cnt is %2X", *scan, ctrl_cnt);
+	ESP_LOGD("Device::valid_path", "current char from the path is: '%c', ctrl_cnt is %2X", *scan, ctrl_cnt);
 
 	    unsigned int prev_ctrl = ctrl_cnt;
 
@@ -830,29 +833,29 @@ bool Device::valid_path(const char path[])
 
 	    ctrl_cnt = 0;
 	    idx_ctrl = 0;	// reset the idx_ctrl
-	    ESP_LOGW("Device::valid_path", "###### Solution point: current path char ######");
+	    ESP_LOGD("Device::valid_path", "###### Solution point: current path char ######");
 	    // double slash - prev symbol is slash
 	    if (prev_ctrl == 0)
 	    {
-		ESP_LOGW("Device::valid_path", "**** double slash and more - is not valid sequence in the path name ****");
+		ESP_LOGD("Device::valid_path", "**** double slash and more - is not valid sequence in the path name ****");
 		return false;
 	    }; /* if prev_ctrl == 0 */
 	    // if non point sign is present in tested substring
 	    if (prev_ctrl & alpha_present_mask)
 	    {
-		ESP_LOGW("Device::valid_path", "alpha or other then point or slash symbol is present in current processing substring - nothing to do, continue");
+		ESP_LOGD("Device::valid_path", "alpha or other then point or slash symbol is present in current processing substring - test subpath for exist, continue");
 		ctrl_cnt = 0;
 		continue;
 	    }; /* if prev_ctrl & alpha_present_mask */
 	    // if more then 3 point sequence in substring
 	    if (prev_ctrl == three_point_mark)
 	    {
-		ESP_LOGW("Device::valid_path", "3 point or more sequence is present in current substring - nothing to do, continue");
+		ESP_LOGD("Device::valid_path", "3 point or more sequence is present in current substring - nothing to do, continue");
 		ctrl_cnt = 0;
 		continue;
 	    }; /* if prev_ctrl & alpha_present_mask */
 
-	    ESP_LOGW("Device::valid_path", "====== One or two point sequence in the current meaning substring, ctrl_cnt is %2X, test current subpath for exist ======", prev_ctrl);
+	    ESP_LOGD("Device::valid_path", "====== One or two point sequence in the current meaning substring, ctrl_cnt is %2X, test current subpath for exist ======", prev_ctrl);
 	    //*(base - 1) = '\0';	// break the path at the dirname
 	    //if (stat(path, &st) == 0)
 	    if (stat(fake_cwd.get(path, scan - path - 1), &st) == 0)
@@ -872,11 +875,11 @@ bool Device::valid_path(const char path[])
 
 	    if (idx_ctrl <= 3)
 	    {
-		ESP_LOGW("Device::valid_path", "%d symbol of the processing substring", idx_ctrl);
+		ESP_LOGD("Device::valid_path", "%d symbol of the processing substring", idx_ctrl);
 		ctrl_cnt |= (point_sign << (idx_ctrl++) * sign_place);
 	    } /* if idx_ctrl <= 3 */
 	    else
-		ESP_LOGW("Device::valid_path", "more then 3'd symbol of the processing substring, nothing to do");
+		ESP_LOGD("Device::valid_path", "more then 3'd symbol of the processing substring, nothing to do");
 	    continue;
 	    break;
 
@@ -885,11 +888,11 @@ bool Device::valid_path(const char path[])
 
 	    if (idx_ctrl <= 3)
 	    {
-		ESP_LOGW("Device::valid_path", "%d symbol of the processing substring", idx_ctrl);
+		ESP_LOGD("Device::valid_path", "%d symbol of the processing substring", idx_ctrl);
 		ctrl_cnt |= (alpha_sign << (idx_ctrl++) * sign_place);
 	    } /* if idx_ctrl <= 3 */
 	    else
-		ESP_LOGW("Device::valid_path", "more then 3'd symbol of the processing substring, nothing to do");
+		ESP_LOGD("Device::valid_path", "more then 3'd symbol of the processing substring, nothing to do");
 	    //continue;
 
 	}; /* switch scan[0] */

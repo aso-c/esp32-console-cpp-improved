@@ -624,15 +624,6 @@ esp_err_t Server::cp(SDMMC::Device& device, const char src_raw[], const char des
 		__func__, esp_err_to_name(ESP_ERR_NOT_SUPPORTED));
 	return ESP_ERR_NOT_SUPPORTED;
     }; /* if (S_ISDIR(st.st_mode)) */
-#if 0	// unneeded_src_raw_extra_validity
-    if (src_raw[strlen(src_raw) - 1] == '/' || (src_raw[strlen(src_raw) - 1] == '.' && src_raw[strlen(src_raw) - 2] == '/'))
-    {
-	ESP_LOGE(CMD_TAG_PRFX, "%s: %s -\n\t\t\t\t%s; source file name \"%s\" is invalid", __func__,
-		"The source file name must not be a directory",
-		"and cannot end with a slash or a slash dot.", src_raw);
-	return ESP_ERR_INVALID_ARG;
-    }; /* if src_raw[strlen(src_raw) - 1] == '/' || (src_raw[strlen(src_raw) - 1] == '.' && src_raw[strlen(src_raw) - 2] == '/') */
-#endif	// unneeded_src_raw_extra_validity
 
     /* or open source file at this point? */
     src = (char*)malloc(strlen(device.curr_cwd()) + 1);
@@ -658,34 +649,6 @@ esp_err_t Server::cp(SDMMC::Device& device, const char src_raw[], const char des
 	    strcat(dest, "/");
 	    strcat(dest, srcbase);
 	} /* if S_ISDIR(st.st_mode) */
-
-#if 0	// inner_recheck
-
-	// Recheck if modified destination file exist,
-	// Re-check modified version of the
-	// destination file for exist:
-	if (stat(dest, &st) == 0)
-	{
-	    // final name of the destination file is the same
-	    // as the existing directory name - error
-	    if (S_ISDIR(st.st_mode))
-	    {
-		ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite exist \"%s\" directory by the destination file is denied; aborting.",
-			__func__, dest);
-		free(src);
-		return ESP_ERR_NOT_SUPPORTED;
-	    } /* if S_ISDIR(st.st_mode) */
-
-#if !defined(__NOT_OVERWRITE__) && defined(__CP_OVERWRITE_FILE__)
-	    ESP_LOGW(CMD_TAG_PRFX, "%s: overwrite an existing file \"%s\".", __func__, dest);
-#else
-	    ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite the existent file \"%s\" is denied; aborting.",
-		    __func__, dest);
-	    free(src);
-	    return ESP_ERR_NOT_SUPPORTED;
-#endif	// __CP_OVER_EXIST_FILE__
-	}; /* if stat(dest, &st) == 0 */
-#endif	// inner_recheck
     }; /* if stat(dest, &st) == 0 */
 
     // Re-check the modified version of the
@@ -920,6 +883,12 @@ esp_err_t Server::mv(SDMMC::Device& device, const char src_raw[], const char des
 esp_err_t Server::rm(SDMMC::Device& device, const char pattern[])
 {
 
+    if (!device.valid_path(pattern))
+    {
+	ESP_LOGE(CMD_TAG_PRFX, "%s: pattern \"%s\" is invalid", __func__, pattern);
+	return ESP_ERR_NOT_FOUND;
+    }; /* !device.valid_path(pattern) */
+
 	struct stat st;
 	char *path = device.get_cwd(pattern);
 
@@ -975,11 +944,17 @@ esp_err_t Server::rm(SDMMC::Device& device, const char pattern[])
 // type file contents
 esp_err_t Server::cat(SDMMC::Device& device, const char fname[])
 {
+
+    if (!device.valid_path(fname))
+    {
+	ESP_LOGE(CMD_TAG_PRFX, "%s: pattern \"%s\" is invalid", __func__, fname);
+	return ESP_ERR_NOT_FOUND;
+    }; /* !device.valid_path(fname) */
+
 	struct stat st;
 	char *fullname = device.get_cwd(fname);
 	FILE *text = nullptr; // file for type to screen
 
-//    if (fname == NULL || strcmp(fullname, "") == 0)
     if (empty(fname))
     {
 	cout << endl
@@ -1035,7 +1010,7 @@ esp_err_t Server::cat(SDMMC::Device& device, const char fname[])
 
 
 #else
-#endif
+#endif	// __PURE_C__
 
     cout << endl
 	 << "*** End of printing file " << fname << ". **************" << endl
@@ -1091,6 +1066,12 @@ static esp_err_t err4existent(const char fname[], const struct stat* statbuf);
 // type text from keyboard to file and to screen
 esp_err_t Server::type(SDMMC::Device& device, const char fname[], size_t sector_size)
 {
+    if (!device.valid_path(fname))
+    {
+	ESP_LOGE(CMD_TAG_PRFX, "%s: pattern \"%s\" is invalid", __func__, fname);
+	return ESP_ERR_NOT_FOUND;
+    }; /* !device.valid_path(fname) */
+
 	struct stat st;
 	char *fullname = device.get_cwd(fname);
 	FILE *storage = NULL;
@@ -1108,12 +1089,12 @@ esp_err_t Server::type(SDMMC::Device& device, const char fname[], size_t sector_
 	    cout << aso::format("Open file %s for the write") % fullname << endl;
 	    errno = 0;	// clear error state
 	    storage = fopen(fullname, "w");
-	}
+	} /* if errno == ENOENT */
 	else	// error other than "file does not exist"
 	{
 	    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Error test existing file %s: %s", fullname , strerror(errno));
 	    return ESP_FAIL;
-	}
+	} /* else if errno == ENOENT */
     } /* if stat(fname, &statbuf) == -1 */
     else
     {	// Error - file fname is exist

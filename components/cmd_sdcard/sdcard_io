@@ -842,6 +842,8 @@ private:
     char fake_cwd_path[PATH_MAX] = "";	// simulation current dir at this device
     CWD_emulating fake_cwd;
 
+    void selective_log_level_set(const char tag[]) {esp_log_level_set(tag, ESP_LOG_DEBUG);/* for debug purposes */};
+
 }; /* struct Device */
 
 
