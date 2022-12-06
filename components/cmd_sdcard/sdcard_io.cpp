@@ -785,7 +785,9 @@ bool Device::valid_path(const char path[])
 		break;
 	    }; /* if base[0] == '/' */
 	}; /* for base--; base > path; base-- */
-    }; /* if (empty(base)) */
+    }/*;*/ /* if (empty(base)) */
+    else
+	base--;	// set base to a last slash in the path
 
 #if 0
     // dirname of the path must be exist
@@ -809,14 +811,14 @@ bool Device::valid_path(const char path[])
 #define sign_place 0x2	// with of the place for the sign
 #define point_sign 0x1	// mark a point symbol in a string
 #define alpha_sign 0x2	// mark a non-point or a non-slash symbol in a string
-#define initial_ctrl (0x3 << 3*sign_place)	// mark for the initial pass of the control of the path validity
-#define alpha_present_mask (alpha_sign | (alpha_sign << 1*sign_place) | (alpha_sign << 2*sign_place) | (alpha_sign << 3*sign_place))
+#define initial_ctrl (0x3 << 4*sign_place)	// mark for the initial pass of the control of the path validity
+#define alpha_present_mask (alpha_sign | (alpha_sign << 1*sign_place) | (alpha_sign << 2*sign_place))
 #define three_point_mark (point_sign | (point_sign << 1*sign_place) | (point_sign << 2*sign_place))
 
 	unsigned int ctrl_cnt = initial_ctrl;	// marked the firs pass of the control loop
 	unsigned int idx_ctrl = 0;
     // scan the dirname of the path for found '/.' or '/..' sequence
-    for ( char* scan = base - 2; scan >= path; scan--)
+    for ( char* scan = base /*- 2*/; scan >= path; scan--)
     {
 	ESP_LOGD("Device::valid_path", "current char from the path is: '%c', ctrl_cnt is %2X", *scan, ctrl_cnt);
 
@@ -851,15 +853,26 @@ bool Device::valid_path(const char path[])
 		continue;
 	    }; /* if prev_ctrl & alpha_present_mask */
 
-	    ESP_LOGD("Device::valid_path", "====== One or two point sequence in the current meaning substring, ctrl_cnt is %2X, test current subpath for exist ======", prev_ctrl);
-	    if (stat(fake_cwd.get(path, scan - path - 1), &st) == 0)
+	    if (prev_ctrl == initial_ctrl)
+		ESP_LOGD("Device::valid_path", "++++++ The first pass of the control loop ++++++");
+
+	    ESP_LOGD("Device::valid_path", "====== One or two point sequence in the current meaning substring, ctrl_cnt is %2X, test current subpath for existing ======", prev_ctrl);
+	    ESP_LOGD("Device::valid_path", "### Testing the current substring \"%s\" for existing ###", fake_cwd.get(path, scan - path/* - 1*/));
+	    if (stat(fake_cwd.get(path, scan - path/* - 1*/), &st) != 0)
 	    {
-	    	if (!S_ISDIR(st.st_mode))
-	    	{
+		if (strcmp(fake_cwd.get_current(), "/") != 0)
+		{
 		    ESP_LOGE("Device::valid_path", "!!! Subpath is non exist, it's invalid!!!");
 		    return false;	// the path is invalid (inconsist)
-	    	}; /* subpath is exist */
-	    }; /* if stat(real_path, &st) == 0 */
+		}
+		else
+		    ESP_LOGD("Device::valid_path", "----- Special case: current subpath is root (\"/\") -----");
+	    } /* if stat(fake_cwd.get(path, scan - path - 1), &st) != 0 */
+	    else if (!S_ISDIR(st.st_mode))
+	    	{
+		    ESP_LOGE("Device::valid_path", "!!! Subpath is exist, but not a dir - it's invalid!!!");
+		    return false;	// the path is invalid (inconsist)
+	    	}; /* subpath is exist and is not a dir */
 
 	    break;
 
