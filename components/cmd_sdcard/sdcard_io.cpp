@@ -843,9 +843,9 @@ bool Device::valid_path(const char path[])
 		ESP_LOGD("Device::valid_path", "3 point or more sequence is present in current substring - nothing to do, continue");
 		break;
 
+	    case initial_ctrl:
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wimplicit-fallthrough="
-	    case initial_ctrl:
 		ESP_LOGD("Device::valid_path", "++++++ The first pass of the control loop ++++++");
 #pragma GCC diagnostic pop
 
@@ -881,7 +881,8 @@ bool Device::valid_path(const char path[])
 	// point symbol handling
 	case '.':
 
-	    if (idx_ctrl </*=*/ 3)
+#if 0
+	    if (idx_ctrl < 3)
 	    {
 		ESP_LOGD("Device::valid_path", "%d symbol of the processing substring", idx_ctrl);
 		ctrl_cnt |= (point_sign << (idx_ctrl++) * sign_place);
@@ -890,14 +891,15 @@ bool Device::valid_path(const char path[])
 		ESP_LOGD("Device::valid_path", "more then 3'd symbol of the processing substring, nothing to do");
 	    continue;
 	    break;
+#endif
 
 	// all other symbols
 	default:
 
-	    if (idx_ctrl </*=*/ 3)
+	    if (idx_ctrl < 3)
 	    {
-		ESP_LOGD("Device::valid_path", "%d symbol of the processing substring", idx_ctrl);
-		ctrl_cnt |= (alpha_sign << (idx_ctrl++) * sign_place);
+		ESP_LOGD("Device::valid_path", "%d symbol of the processing substring, symbol is \"%c\"", idx_ctrl, scan[0]);
+		ctrl_cnt |= (((scan[0] == '.')? point_sign: alpha_sign) << /*(*/idx_ctrl++/*)*/ * sign_place);
 	    } /* if idx_ctrl <= 3 */
 	    else
 		ESP_LOGD("Device::valid_path", "more then 3'd symbol of the processing substring, nothing to do");
