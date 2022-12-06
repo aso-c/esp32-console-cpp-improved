@@ -829,6 +829,67 @@ bool Device::valid_path(const char path[])
 	// solution point
 	case '/':
 
+#if 1	// with_case_wariant
+	    idx_ctrl = 0;	// reset the idx_ctrl
+	    ESP_LOGD("Device::valid_path", "###### Solution point: current path char ######");
+	    switch (ctrl_cnt)
+	    {
+	    // double slash - prev symbol is slash
+	    case 0:
+//	    if (prev_ctrl == 0)
+//	    {
+		ESP_LOGD("Device::valid_path", "**** double slash and more - is not valid sequence in the path name ****");
+		return false;
+//	    }; /* if prev_ctrl == 0 */
+
+	    case three_point_mark:
+	    // if more then 3 point sequence in substring
+//	    if (prev_ctrl == three_point_mark)
+//	    {
+		ESP_LOGD("Device::valid_path", "3 point or more sequence is present in current substring - nothing to do, continue");
+	//	ctrl_cnt = 0;
+		break;
+//		continue;
+//	    }; /* if prev_ctrl & alpha_present_mask */
+
+		/* -Wimplicit-fallthrough= */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wimplicit-fallthrough="
+	    case initial_ctrl:
+//	    if (prev_ctrl == initial_ctrl)
+		ESP_LOGD("Device::valid_path", "++++++ The first pass of the control loop ++++++");
+#pragma GCC diagnostic pop
+
+	    default:
+		// if non point sign is present in tested substring
+//	    if (prev_ctrl & alpha_present_mask)
+		if (ctrl_cnt & alpha_present_mask)
+		{
+		    ESP_LOGD("Device::valid_path", "alpha or other then point or slash symbol is present in current processing substring - test subpath for exist, continue");
+		    ctrl_cnt = 0;
+		    continue;
+		}; /* if ctrl_cnt & alpha_present_mask */
+		ESP_LOGD("Device::valid_path", "====== One or two point sequence in the current meaning substring, ctrl_cnt is %2X, test current subpath for existing ======", prev_ctrl);
+		ESP_LOGD("Device::valid_path", "### Testing the current substring \"%s\" for existing ###", fake_cwd.get(path, scan - path/* - 1*/));
+		if (stat(fake_cwd.get(path, scan - path/* - 1*/), &st) != 0)
+		{
+		    if (strcmp(fake_cwd.get_current(), "/") != 0)
+		    {
+			ESP_LOGE("Device::valid_path", "!!! Subpath is non exist, it's invalid!!!");
+			return false;	// the path is invalid (inconsist)
+		    }
+		    else
+			ESP_LOGD("Device::valid_path", "----- Special case: current subpath is root (\"/\") -----");
+		} /* if stat(fake_cwd.get(path, scan - path - 1), &st) != 0 */
+		else if (!S_ISDIR(st.st_mode))
+		    {
+			ESP_LOGE("Device::valid_path", "!!! Subpath is exist, but not a dir - it's invalid!!!");
+			return false;	// the path is invalid (inconsist)
+		    }; /* subpath is exist and is not a dir */
+	    }; /* switch ctrl_cnt */
+	    ctrl_cnt = 0;
+
+#else	// else with_case_wariant
 	    ctrl_cnt = 0;
 	    idx_ctrl = 0;	// reset the idx_ctrl
 	    ESP_LOGD("Device::valid_path", "###### Solution point: current path char ######");
@@ -873,6 +934,7 @@ bool Device::valid_path(const char path[])
 		    ESP_LOGE("Device::valid_path", "!!! Subpath is exist, but not a dir - it's invalid!!!");
 		    return false;	// the path is invalid (inconsist)
 	    	}; /* subpath is exist and is not a dir */
+#endif	// with_case_wariant
 
 	    break;
 
