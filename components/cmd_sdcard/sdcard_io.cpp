@@ -764,7 +764,9 @@ bool Device::valid_path(const char path[])
     }; /* if (base - path) < 2 */
 
     // if base is empty
-    if (empty(base))
+    if (!empty(base))
+	base--;	// set base to a last slash in the path
+    else
     {
 	if (stat(fake_cwd.get(path), &st) == 0)
 	{
@@ -780,33 +782,9 @@ bool Device::valid_path(const char path[])
 	{
 	    ESP_LOGD("Device::valid_path", "=== base[0] is \"%c\" ===", base[0]);
 	    if (*base == '/')
-	    {
-//		base++;
 		break;
-	    }; /* if base[0] == '/' */
 	}; /* for base--; base > path; base-- */
-    }/*;*/ /* if (empty(base)) */
-    else
-	base--;	// set base to a last slash in the path
-
-#if 0
-    // dirname of the path must be exist
-    // and be a directory, not a file
-    if (stat(fake_cwd.get(path, base - path - 1), &st) != 0)
-    {
-	ESP_LOGD("Device::valid_path", "###!!! 1'st subdir (is \"%.*s\") of the path \"%s\" is not exist, but should be... ###", base - path - ((base==path)? 0: 1), path, path);
-	return false;
-    }
-    else
-    {
-	ESP_LOGD("Device::valid_path", "###!!! 1'st subdir (\"%.*s\") of the path \"%s\" is exist, must be a directory... ###", base - path - ((base==path)? 0: 1), path, path);
-	if (!S_ISDIR(st.st_mode))
-	{
-	    ESP_LOGE("Device::valid_path", "Path \"%.*s\" is a file, but must be a directory, it's invalid!!!", base - path - ((base==path)? 0:  1), path);
-	    return false;	// the path is invalid (inconsist)
-	}; /* subpath is exist */
-    }; /* if stat(real_path, &st) == 0 */
-#endif
+    }; /* if empty(base) */
 
 #define sign_place 0x2	// with of the place for the sign
 #define point_sign 0x1	// mark a point symbol in a string
@@ -818,11 +796,9 @@ bool Device::valid_path(const char path[])
 	unsigned int ctrl_cnt = initial_ctrl;	// marked the firs pass of the control loop
 	unsigned int idx_ctrl = 0;
     // scan the dirname of the path for found '/.' or '/..' sequence
-    for ( char* scan = base /*- 2*/; scan >= path; scan--)
+    for (char* scan = base; scan >= path; scan--)
     {
 	ESP_LOGD("Device::valid_path", "current char from the path is: '%c', ctrl_cnt is %2X", *scan, ctrl_cnt);
-
-//	    unsigned int prev_ctrl = ctrl_cnt;
 
 	switch (scan[0])
 	{
@@ -880,75 +856,22 @@ bool Device::valid_path(const char path[])
 
 	// point symbol handling
 	case '.':
-
-#if 0
-	    if (idx_ctrl < 3)
-	    {
-		ESP_LOGD("Device::valid_path", "%d symbol of the processing substring", idx_ctrl);
-		ctrl_cnt |= (point_sign << (idx_ctrl++) * sign_place);
-	    } /* if idx_ctrl <= 3 */
-	    else
-		ESP_LOGD("Device::valid_path", "more then 3'd symbol of the processing substring, nothing to do");
-	    continue;
-	    break;
-#endif
-
 	// all other symbols
 	default:
 
 	    if (idx_ctrl < 3)
 	    {
 		ESP_LOGD("Device::valid_path", "%d symbol of the processing substring, symbol is \"%c\"", idx_ctrl, scan[0]);
-		ctrl_cnt |= (((scan[0] == '.')? point_sign: alpha_sign) << /*(*/idx_ctrl++/*)*/ * sign_place);
+		ctrl_cnt |= (((scan[0] == '.')? point_sign: alpha_sign) << idx_ctrl++ * sign_place);
 	    } /* if idx_ctrl <= 3 */
 	    else
 		ESP_LOGD("Device::valid_path", "more then 3'd symbol of the processing substring, nothing to do");
-	    //continue;
 
 	}; /* switch scan[0] */
-    }; /* for char* scan = base - 1; scan > path; scan-- */
+    }; /* for char* scan = base; scan >= path; scan-- */
 
     return true;
 }; /* Device::valid_path */
-
-
-#if 0	// simply_dir_verify
-// is the filename ending
-// really like as a directory name end?
-extern "C"
-bool dir_tail(const char fname[])
-{
-	size_t len = strlen(fname);
-    if (len == 0)
-	return false;
-    // path == "blablabla/"
-    if (fname[len-1] == '/')
-	return true;
-    // path == "."
-    if (len == 1)
-    {
-	if (fname[0] == '.')
-	    return true;
-	else return false;
-    }; /* if len == 1 */
-    // path == "blablabla/."
-    if (fname[len-2] == '/' && fname[len-1] == '.')
-	return true;
-    if (len == 2)
-    {
-	// path == ".."
-	if (fname[len-2] == '.' && fname[len-1] == '.')
-	    return true;
-	// path != ".."
-	else return false;
-    }; /* if len == 2 */
-    // path == "blablabla/.."
-    if (fname[len-3] == '/' && fname[len-2] == '.' && fname[len-1] == '.')
-	return true;
-    return false;
-}; /* dir_tail */
-#endif
-
 
 
 //const char *Device::MOUNT_POINT_Default = MOUNT_POINT_def;
