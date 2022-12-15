@@ -833,11 +833,14 @@ bool Device::valid_path(const char path[])
 		    else
 			ESP_LOGD("Device::valid_path", "----- Special case: current subpath is root (\"/\") -----");
 		} /* if stat(fake_cwd.get(path, scan - path - 1), &st) != 0 */
-		else if (!S_ISDIR(st.st_mode))
+		else
+		{
+		    if (!S_ISDIR(st.st_mode))
 		    {
 			ESP_LOGE("Device::valid_path", "!!! Subpath is exist, but not a dir - it's invalid!!!");
 			return false;	// the path is invalid (inconsist)
 		    }; /* subpath is exist and is not a dir */
+		}; /* if stat(fake_cwd.get(path, scan - path), &st) != 0 */
 	    }; /* switch ctrl_cnt */
 	    ctrl_cnt = 0;
 	    break;
@@ -849,8 +852,6 @@ bool Device::valid_path(const char path[])
 
 	    if (idx_ctrl < 3)
 		ctrl_cnt |= (((scan[0] == '.')? point_sign: alpha_sign) << idx_ctrl++ * sign_place);	// ESP_LOGD("Device::valid_path", "%d symbol of the processing substring, symbol is \"%c\"", idx_ctrl, scan[0]);
-	    else
-		ESP_LOGD("Device::valid_path", "more then 3'd symbol of the processing substring, nothing to do");
 
 	}; /* switch scan[0] */
     }; /* for char* scan = base; scan >= path; scan-- */
