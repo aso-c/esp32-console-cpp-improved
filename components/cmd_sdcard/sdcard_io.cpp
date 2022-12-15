@@ -532,8 +532,6 @@ char* CWD_emulating::raw_get(const char path[])
 	return strcpy(operative_path_buff, path);
     raw_get();
     strcat(operative_path_buff, "/");	// add directory separator at end of the default path
-//    strcat(operative_path_buff, path);	// add the path above to default path
-//    return operative_path_buff;
     return strcat(operative_path_buff, path);	// add the path above to default path
 }; /* CWD_emulating::raw_get */
 
@@ -561,7 +559,7 @@ esp_err_t CWD_emulating::change_dir(const char path[])
 		"\t\t\t\tcurrent directory was not changing", tmpstr);
 	return ESP_ERR_NOT_FOUND;
     }; /* if stat(tmpstr, &statbuf) == -1 */
-    ESP_LOGI("CWD_emulating::change_dir", "to %s which is a %s\n", tmpstr,
+    ESP_LOGD("CWD_emulating::change_dir", "to %s which is a %s\n", tmpstr,
 	    (S_ISLNK(statbuf.st_mode))? "[symlink]":
 	    (S_ISREG(statbuf.st_mode))? "(file)":
 	    (S_ISDIR(statbuf.st_mode))? "<DIR>":
@@ -594,7 +592,7 @@ Device::Device(bus::width width, Host::Pullup pullst, esp_vfs_fat_sdmmc_mount_co
 	_host(width, pullst),
 	fake_cwd(fake_cwd_path, sizeof(fake_cwd_path))
 {
-    selective_log_level_set("Device::valid_path", ESP_LOG_DEBUG);	/* for debug purposes */
+    /*selective_log_level_set("Device::valid_path", ESP_LOG_DEBUG);*/	/* for debug purposes */
 //#ifdef CONFIG_EXAMPLE_FORMAT_IF_MOUNT_FAILED
 //	mnt.format_if_mount_failed = true;
 //#else
@@ -613,7 +611,7 @@ Device::Device(Card::format::mntfail autofmt, int max_files, size_t size,
 		_host(width, pull),
 		fake_cwd(fake_cwd_path, sizeof(fake_cwd_path))
 {
-    selective_log_level_set("Device::valid_path", ESP_LOG_DEBUG);	/* for debug purposes */
+    /*selective_log_level_set("Device::valid_path", ESP_LOG_DEBUG);*/	/* for debug purposes */
         mnt.format_if_mount_failed = (autofmt == Card::format::yes)? true: false;
     //	mnt.max_files = 5;
         mnt.max_files = max_files;
@@ -721,6 +719,7 @@ esp_err_t Device::unmount()
     fake_cwd_path[0] = '\0';	// set fake cwd path to: ""
     return ret;
 }; /* Device::unmount */
+
 //    esp_err_t unmount(sdmmc_card_t *card);	// Unmount SD-card "card", mounted onto default mountpath
 //    esp_err_t unmount(const char *base_path, sdmmc_card_t *card);	// Unmount mounted SD-card "card", mounted onto mountpath
 
@@ -823,40 +822,8 @@ bool Device::valid_path(const char path[])
 		}; /* if ctrl_cnt & alpha_present_mask */
 		ESP_LOGD("Device::valid_path", "====== One or two point sequence in the current meaning substring, ctrl_cnt is %2X, test current subpath for existing ======", ctrl_cnt);
 		ESP_LOGD("Device::valid_path", "### Testing the current substring \"%s\" for existing ###", fake_cwd.get(path, scan - path));
-#define __SHORT_CHECK_PATH_EXPR__
-#ifdef __SHORT_CHECK_PATH_EXPR__
 		if ((stat(fake_cwd.get(path, scan - path), &st) == 0)? !S_ISDIR(st.st_mode): (strcmp(fake_cwd.get_current(), "/") != 0))
 		    return false;
-//		{
-//		    if (!S_ISDIR(st.st_mode))
-//			return false;	// the path is invalid (inconsist) // ESP_LOGE("Device::valid_path", "!!! Subpath is exist, but not a dir - it's invalid!!!");
-//		} /* if stat(fake_cwd.get(path, scan - path), &st) == 0 */
-//		else
-//		{
-//		    if (strcmp(fake_cwd.get_current(), "/") != 0)
-//			return false;	// the path is invalid (inconsist) // ESP_LOGE("Device::valid_path", "!!! Subpath is non exist, it's invalid!!!");
-//		} /* else if stat(fake_cwd.get(path, scan - path - 1), &st) == 0 */
-#else
-		if (stat(fake_cwd.get(path, scan - path), &st) == 0)
-		{
-		    if (!S_ISDIR(st.st_mode))
-		    {
-//			ESP_LOGE("Device::valid_path", "!!! Subpath is exist, but not a dir - it's invalid!!!");
-			return false;	// the path is invalid (inconsist) // ESP_LOGE("Device::valid_path", "!!! Subpath is exist, but not a dir - it's invalid!!!");
-		    }; /* subpath is exist and is not a dir */
-		} /* if stat(fake_cwd.get(path, scan - path), &st) == 0 */
-		else
-		{
-		    if (strcmp(fake_cwd.get_current(), "/") != 0)
-		    {
-//			ESP_LOGE("Device::valid_path", "!!! Subpath is non exist, it's invalid!!!");
-			return false;	// the path is invalid (inconsist) // ESP_LOGE("Device::valid_path", "!!! Subpath is non exist, it's invalid!!!");
-
-		    }
-//		    else
-//			ESP_LOGD("Device::valid_path", "----- Special case: current subpath is root (\"/\") -----");
-		} /* else if stat(fake_cwd.get(path, scan - path - 1), &st) == 0 */
-#endif	// __SHORT_CHECK_PATH_EXPR__
 	    }; /* switch ctrl_cnt */
 	    ctrl_cnt = 0;
 	    break;
@@ -868,7 +835,6 @@ bool Device::valid_path(const char path[])
 
 	    if (idx_ctrl < 3)
 		ctrl_cnt |= (((scan[0] == '.')? point_sign: alpha_sign) << idx_ctrl++ * sign_place);	// ESP_LOGD("Device::valid_path", "%d symbol of the processing substring, symbol is \"%c\"", idx_ctrl, scan[0]);
-
 	}; /* switch scan[0] */
     }; /* for char* scan = base; scan >= path; scan-- */
 
@@ -954,160 +920,5 @@ esp_err_t Card::cis_info(FILE* outfile)
 
 }; /* namespace SDMMC */  //-------------------------------------------------------------------------------------------
 
-
-
-
-#if 0
-
-/********** Content of the file sd_card_example.nain.c **********/
-
-/* SD card and FAT filesystem example.
-   This example code is in the Public Domain (or CC0 licensed, at your option.)
-
-   Unless required by applicable law or agreed to in writing, this
-   software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-   CONDITIONS OF ANY KIND, either express or implied.
-*/
-
-// This example uses SDMMC peripheral to communicate with SD card.
-
-#include <string.h>
-#include <sys/unistd.h>
-#include <sys/stat.h>
-#include "esp_vfs_fat.h"
-#include "sdmmc_cmd.h"
-#include "driver/sdmmc_host.h"
-
-static const char *TAG = "example";
-
-#define MOUNT_POINT "/sdcard"
-
-
-void app_main(void)
-{
-    esp_err_t ret;
-
-    // Options for mounting the filesystem.
-    // If format_if_mount_failed is set to true, SD card will be partitioned and
-    // formatted in case when mounting fails.
-    esp_vfs_fat_sdmmc_mount_config_t mount_config = {
-#ifdef CONFIG_EXAMPLE_FORMAT_IF_MOUNT_FAILED
-        .format_if_mount_failed = true,
-#else
-        .format_if_mount_failed = false,
-#endif // EXAMPLE_FORMAT_IF_MOUNT_FAILED
-        .max_files = 5,
-        .allocation_unit_size = 16 * 1024
-    };
-    sdmmc_card_t *card;
-    const char mount_point[] = MOUNT_POINT;
-    ESP_LOGI(TAG, "Initializing SD card");
-
-    // Use settings defined above to initialize SD card and mount FAT filesystem.
-    // Note: esp_vfs_fat_sdmmc/sdspi_mount is all-in-one convenience functions.
-    // Please check its source code and implement error recovery when developing
-    // production applications.
-
-    ESP_LOGI(TAG, "Using SDMMC peripheral");
-    sdmmc_host_t cfg = SDMMC_HOST_DEFAULT();
-
-    // This initializes the slot without card detect (CD) and write protect (WP) signals.
-    // Modify slot_config.gpio_cd and slot_config.gpio_wp if your board has these signals.
-    sdmmc_slot_config_t slot_config = SDMMC_SLOT_CONFIG_DEFAULT();
-
-    // To use 1-line SD mode, change this to 1:
-    slot_config.width = 4;
-
-    // On chips where the GPIOs used for SD card can be configured, set them in
-    // the slot_config structure:
-#ifdef SOC_SDMMC_USE_GPIO_MATRIX
-    slot_config.clk = GPIO_NUM_14;
-    slot_config.cmd = GPIO_NUM_15;
-    slot_config.d0 = GPIO_NUM_2;
-    slot_config.d1 = GPIO_NUM_4;
-    slot_config.d2 = GPIO_NUM_12;
-    slot_config.d3 = GPIO_NUM_13;
-#endif
-
-    // Enable internal pullups on enabled pins. The internal pullups
-    // are insufficient however, please make sure 10k external pullups are
-    // connected on the bus. This is for debug / example purpose only.
-    slot_config.flags |= SDMMC_SLOT_FLAG_INTERNAL_PULLUP;
-
-    ESP_LOGI(TAG, "Mounting filesystem");
-    ret = esp_vfs_fat_sdmmc_mount(mount_point, &cfg, &slot_config, &mount_config, &card);
-
-    if (ret != ESP_OK) {
-        if (ret == ESP_FAIL) {
-            ESP_LOGE(TAG, "Failed to mount filesystem. "
-                     "If you want the card to be formatted, set the EXAMPLE_FORMAT_IF_MOUNT_FAILED menuconfig option.");
-        } else {
-            ESP_LOGE(TAG, "Failed to initialize the card (%s). "
-                     "Make sure SD card lines have pull-up resistors in place.", esp_err_to_name(ret));
-        }
-        return;
-    }
-    ESP_LOGI(TAG, "Filesystem mounted");
-
-    // Card has been initialized, print its properties
-    sdmmc_card_print_info(stdout, card);
-
-    // Use POSIX and C standard library functions to work with files:
-
-    // First create a file.
-    const char *file_hello = MOUNT_POINT"/hello.txt";
-
-    ESP_LOGI(TAG, "Opening file %s", file_hello);
-    FILE *f = fopen(file_hello, "w");
-    if (f == NULL) {
-        ESP_LOGE(TAG, "Failed to open file for writing");
-        return;
-    }
-    fprintf(f, "Hello %s!\n", card->cid.name);
-    fclose(f);
-    ESP_LOGI(TAG, "File written");
-
-    const char *file_foo = MOUNT_POINT"/foo.txt";
-
-    // Check if destination file exists before renaming
-    struct stat st;
-    if (stat(file_foo, &st) == 0) {
-        // Delete it if it exists
-        unlink(file_foo);
-    }
-
-    // Rename original file
-    ESP_LOGI(TAG, "Renaming file %s to %s", file_hello, file_foo);
-    if (rename(file_hello, file_foo) != 0) {
-        ESP_LOGE(TAG, "Rename failed");
-        return;
-    }
-
-    // Open renamed file for reading
-    ESP_LOGI(TAG, "Reading file %s", file_foo);
-    f = fopen(file_foo, "r");
-    if (f == NULL) {
-        ESP_LOGE(TAG, "Failed to open file for reading");
-        return;
-    }
-
-    // Read a line from file
-    char line[64];
-    fgets(line, sizeof(line), f);
-    fclose(f);
-
-    // Strip newline
-    char *pos = strchr(line, '\n');
-    if (pos) {
-        *pos = '\0';
-    }
-    ESP_LOGI(TAG, "Read from file: '%s'", line);
-
-    // All done, unmount partition and disable SDMMC peripheral
-    esp_vfs_fat_sdcard_unmount(mount_point, card);
-    ESP_LOGI(TAG, "Card unmounted");
-}
-
-#endif
 
 //--[ sdcard_ctrl.cpp ]----------------------------------------------------------------------------
