@@ -743,24 +743,18 @@ bool Device::valid_path(const char path[])
 //    strcpy(given_path, fake_cwd.curr_get());
     // if path is empty
     if (empty(path))
-    {
-	ESP_LOGD("Device::valid_path", "path is empty, always valid");
-	return true;
-    }; /* if empty(path) */
+	return true;	// ESP_LOGD("Device::valid_path", "path is empty, always valid");
+
     // if path - only base, not a dir
     if (strlen(path) == 1)
-    {
-	ESP_LOGD("Device::valid_path", "len of the path - is 1, always valid");
-	return true;
-    }; /* if strlen(path) == 1 */
+	return true;	// ESP_LOGD("Device::valid_path", "len of the path - is 1, always valid");
+
     // if dirname - empty or one symbol length (it can only be the slash)
     if ((base - path) < 2)
     {
-	// if path == '/..' - it's invalid
-	if (strcmp(path, "/..") == 0)
+	if (strcmp(path, "/..") == 0)	// if path == '/..' - it's invalid
 	    return false;
-	ESP_LOGD("Device::valid_path", "Len of dirname is 1 or 0, then path is valid");
-	return true;
+	return true;	// ESP_LOGD("Device::valid_path", "Len of dirname is 1 or 0, then path is valid");
     }; /* if (base - path) < 2 */
 
     // if base is empty
@@ -769,14 +763,8 @@ bool Device::valid_path(const char path[])
     else
     {
 	if (stat(fake_cwd.get(path), &st) == 0)
-	{
-	    ESP_LOGD("Device::valid_path", "###!!! the path basename - is empty, test the path \"%s\" (real path is %s) exist and a directory... ###", path, fake_cwd.get_current());
-	    if (!S_ISDIR(st.st_mode))
-	    {
-		ESP_LOGE("Device::valid_path", "Path \"%s\" (real path %s) is a file, but marked as a directory, it's invalid!!!", path, fake_cwd.get_current());
-		return false;	// the path is invalid (inconsist)
-	    }; /* path is not dir */
-	}; /* if stat(real_path, &st) == 0 */
+	    if (!S_ISDIR(st.st_mode))	// ESP_LOGD("Device::valid_path", "###!!! the path basename - is empty, test the path \"%s\" (real path is %s) exist and a directory... ###", path, fake_cwd.get_current());
+		return false;	// the path is invalid (inconsist) // ESP_LOGE("Device::valid_path", "Path \"%s\" (real path %s) is a file, but marked as a directory, it's invalid!!!", path, fake_cwd.get_current());
 	ESP_LOGD("Device::valid_path", "###!!! test dirname \"%s\" (real path is %s) preliminary is OK, seek to begin of last dir manually for continue test... ###", path, fake_cwd.get_current());
 	for (base -= 2; base > path; base--)
 	{
@@ -860,10 +848,7 @@ bool Device::valid_path(const char path[])
 	default:
 
 	    if (idx_ctrl < 3)
-	    {
-		ESP_LOGD("Device::valid_path", "%d symbol of the processing substring, symbol is \"%c\"", idx_ctrl, scan[0]);
-		ctrl_cnt |= (((scan[0] == '.')? point_sign: alpha_sign) << idx_ctrl++ * sign_place);
-	    } /* if idx_ctrl <= 3 */
+		ctrl_cnt |= (((scan[0] == '.')? point_sign: alpha_sign) << idx_ctrl++ * sign_place);	// ESP_LOGD("Device::valid_path", "%d symbol of the processing substring, symbol is \"%c\"", idx_ctrl, scan[0]);
 	    else
 		ESP_LOGD("Device::valid_path", "more then 3'd symbol of the processing substring, nothing to do");
 
