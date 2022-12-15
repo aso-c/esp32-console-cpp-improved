@@ -823,24 +823,40 @@ bool Device::valid_path(const char path[])
 		}; /* if ctrl_cnt & alpha_present_mask */
 		ESP_LOGD("Device::valid_path", "====== One or two point sequence in the current meaning substring, ctrl_cnt is %2X, test current subpath for existing ======", ctrl_cnt);
 		ESP_LOGD("Device::valid_path", "### Testing the current substring \"%s\" for existing ###", fake_cwd.get(path, scan - path));
-		if (stat(fake_cwd.get(path, scan - path), &st) != 0)
-		{
-		    if (strcmp(fake_cwd.get_current(), "/") != 0)
-		    {
-			ESP_LOGE("Device::valid_path", "!!! Subpath is non exist, it's invalid!!!");
-			return false;	// the path is invalid (inconsist)
-		    }
-		    else
-			ESP_LOGD("Device::valid_path", "----- Special case: current subpath is root (\"/\") -----");
-		} /* if stat(fake_cwd.get(path, scan - path - 1), &st) != 0 */
-		else
+#define __SHORT_CHECK_PATH_EXPR__
+#ifdef __SHORT_CHECK_PATH_EXPR__
+		if ((stat(fake_cwd.get(path, scan - path), &st) == 0)? !S_ISDIR(st.st_mode): (strcmp(fake_cwd.get_current(), "/") != 0))
+		    return false;
+//		{
+//		    if (!S_ISDIR(st.st_mode))
+//			return false;	// the path is invalid (inconsist) // ESP_LOGE("Device::valid_path", "!!! Subpath is exist, but not a dir - it's invalid!!!");
+//		} /* if stat(fake_cwd.get(path, scan - path), &st) == 0 */
+//		else
+//		{
+//		    if (strcmp(fake_cwd.get_current(), "/") != 0)
+//			return false;	// the path is invalid (inconsist) // ESP_LOGE("Device::valid_path", "!!! Subpath is non exist, it's invalid!!!");
+//		} /* else if stat(fake_cwd.get(path, scan - path - 1), &st) == 0 */
+#else
+		if (stat(fake_cwd.get(path, scan - path), &st) == 0)
 		{
 		    if (!S_ISDIR(st.st_mode))
 		    {
-			ESP_LOGE("Device::valid_path", "!!! Subpath is exist, but not a dir - it's invalid!!!");
-			return false;	// the path is invalid (inconsist)
+//			ESP_LOGE("Device::valid_path", "!!! Subpath is exist, but not a dir - it's invalid!!!");
+			return false;	// the path is invalid (inconsist) // ESP_LOGE("Device::valid_path", "!!! Subpath is exist, but not a dir - it's invalid!!!");
 		    }; /* subpath is exist and is not a dir */
-		}; /* if stat(fake_cwd.get(path, scan - path), &st) != 0 */
+		} /* if stat(fake_cwd.get(path, scan - path), &st) == 0 */
+		else
+		{
+		    if (strcmp(fake_cwd.get_current(), "/") != 0)
+		    {
+//			ESP_LOGE("Device::valid_path", "!!! Subpath is non exist, it's invalid!!!");
+			return false;	// the path is invalid (inconsist) // ESP_LOGE("Device::valid_path", "!!! Subpath is non exist, it's invalid!!!");
+
+		    }
+//		    else
+//			ESP_LOGD("Device::valid_path", "----- Special case: current subpath is root (\"/\") -----");
+		} /* else if stat(fake_cwd.get(path, scan - path - 1), &st) == 0 */
+#endif	// __SHORT_CHECK_PATH_EXPR__
 	    }; /* switch ctrl_cnt */
 	    ctrl_cnt = 0;
 	    break;
