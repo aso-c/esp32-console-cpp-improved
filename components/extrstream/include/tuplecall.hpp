@@ -86,7 +86,7 @@ namespace aso
 	    template <typename FnType>
 #if __cplusplus < 201402L	// before С++2014
 	    static auto invoke(FnType fn, const std::tuple<ParamTypes...>& argstuple) ->
-				    typename std::result_of<FnType(ParamTypes...)>::type
+				    typename std::result_of<FnType(ParamTypes...)>::type {
 #else
 	    static decltype(auto) invoke(FnType fn, const std::tuple<ParamTypes...>& argstuple) {
 #endif
