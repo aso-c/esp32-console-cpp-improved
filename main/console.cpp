@@ -238,7 +238,7 @@ static void register_info(void)
  *      - ESP_OK on success
  *      - ESP_ERR_INVALID_STATE, if esp_console_init wasn't called
  */
-esp_err_t console_example_register_help_command(void)
+esp_err_t console_register_help_command(void)
 {
     return (esp_err_t)esp_console_register_help_command();
 }; /* console_example_register_help_command */
@@ -261,7 +261,7 @@ extern "C" void app_main(void)
 
     /* Register commands */
     //esp_console_register_help_command();
-    console_example_register_help_command();
+    console_register_help_command();
     register_system();
     register_wifi();
     register_nvs();
@@ -302,7 +302,7 @@ extern "C" void app_main(void)
 	<< "This is an example of ESP-IDF console component." << endl
 	<<   "Version " << CONFIG_APP_PROJECT_VER << '-' << CONFIG_APP_PROJECT_FLAVOUR
 	<< " of " << CONFIG_APP_PROJECT_DATE << ',' << " modified by "
-	<< CONFIG_APP_PROJECT_MODIFICATOR << '.' << endl
+	<< CONFIG_APP_PROJECT_AUTHOR << '.' << endl
 	<< "Builded " << __DATE__ << " " << __TIME__ << endl
 	<< "Type 'help' to get the list of commands." << endl
 	<< "Use UP/DOWN arrows to navigate through command history." << endl

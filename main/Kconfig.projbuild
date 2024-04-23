@@ -1,4 +1,4 @@
-menu "Example Configuration"
+menu "Improved ESP32 Console"
 
     config STORE_HISTORY
         bool "Store command history in flash"
@@ -8,36 +8,41 @@ menu "Example Configuration"
             command history. If this option is enabled, initalizes a FAT filesystem
             and uses it to store command history.
 
-endmenu
 
-menu "Application manager"
+    menu "Version management"
 
-    config APP_PROJECT_VER
-    string "Project version"
-    depends on APP_PROJECT_VER_FROM_CONFIG
-    help
+        config APP_PROJECT_VER
+        string "Project version"
+#        depends on APP_PROJECT_VER_FROM_CONFIG
+        help
             Project version
 
-    config APP_PROJECT_FLAVOUR
-    string "Flavour of the current project branch"
-    depends on APP_PROJECT_VER_FROM_CONFIG
-    help
+        config APP_PROJECT_FLAVOUR
+        string "Flavour of the current project branch"
+#        depends on APP_PROJECT_VER_FROM_CONFIG
+        help
             Variant of the project application
 
-    config APP_PROJECT_DATE
-    string "Current project version date"
-    depends on APP_PROJECT_VER_FROM_CONFIG
-    help
+        config APP_PROJECT_DATE
+        string "Current project version date"
+#        depends on APP_PROJECT_VER_FROM_CONFIG
+        help
             Date of the project current version
 
-    config APP_PROJECT_MODIFICATOR
-    string "Modificator of the current project version"
-    depends on APP_PROJECT_VER_FROM_CONFIG
-    help
-            The person, who made the current version of the changes
+        config APP_PROJECT_AUTHOR
+        string "Author (modificator) of the current project version"
+#        depends on APP_PROJECT_VER_FROM_CONFIG
+        help
+            The person, who made changes of the current version
             in the source code of the project
 
-endmenu
+        config APP_PROJECT_AUTHOR_NICK
+        string "Nickname of the author"
+        help
+            Nickname (short name aka alias) of the Author, who made modify source code
+            of the current version this project
 
+    endmenu # Version management
 
+endmenu	# Improved ESP32 Console
 

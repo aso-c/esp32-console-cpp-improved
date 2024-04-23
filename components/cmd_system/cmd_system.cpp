@@ -128,7 +128,7 @@ static int get_version(int argc, char **argv)
 	  % CONFIG_APP_PROJECT_VER
 	  % CONFIG_APP_PROJECT_FLAVOUR
 	  % CONFIG_APP_PROJECT_DATE << std::endl;
-    cout << aso::format("\t\t\t\t\t      modified by %s") % CONFIG_APP_PROJECT_MODIFICATOR << std::endl;
+    cout << aso::format("\t\t\t\t\t      modified by %s") % CONFIG_APP_PROJECT_AUTHOR << std::endl;
     cout << "IDF Version: " << esp_get_idf_version() << endl;
     cout << "Chip info: " << endl;
     cout << "\tmodel: " << (info.model == CHIP_ESP32 ? "ESP32" : "Unknown") << endl;
@@ -462,7 +462,7 @@ const char* version_str(void)
 {
     return "Version " CONFIG_APP_PROJECT_VER "-" CONFIG_APP_PROJECT_FLAVOUR
 	    " of " CONFIG_APP_PROJECT_DATE ","
-	    " modified by " CONFIG_APP_PROJECT_MODIFICATOR "."/* "\r\n"
+	    " modified by " CONFIG_APP_PROJECT_AUTHOR "."/* "\r\n"
 	    "Build Date: " __DATE__ " " __TIME__ "."*/;
 }; /* get_version */
 
