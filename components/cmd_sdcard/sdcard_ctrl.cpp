@@ -7,7 +7,7 @@
  *	Version: 0.6
  */
 
-#define __PURE_C__
+//#define __PURE_C__
 
 
 #include <limits>
@@ -17,6 +17,7 @@
 #include <iomanip>
 #include <cstdarg>
 
+#include <string>
 #include <cstring>
 #include <cctype>
 #include <sys/unistd.h>
@@ -30,16 +31,18 @@
 #include <sys/types.h>
 //#include <unistd.h>
 #include <regex>
-#ifdef __PURE_C__
-//#include <fcntl.h>
-#include <dirent.h>
-#else
-#if __cplusplus < 201703L
+//#ifdef __PURE_C__
+////#include <fcntl.h>
+//#include <dirent.h>
+//#else
+  //#if __cplusplus < 201703L
+#ifndef __PURE_C__
 #include <fcntl.h>
+#endif // ifndef __PURE_C__
 #include <dirent.h>
-#else
-#endif // __cplusplus < 201703L
-#endif // ifdef __PURE_C__
+  //#else
+  //#endif // __cplusplus < 201703L
+//#endif // ifdef __PURE_C__
 
 #include "esp_vfs_fat.h"
 #include "sdmmc_cmd.h"
@@ -162,8 +165,8 @@ const char* const Server::MOUNT_POINT_Default = SD_MOUNT_POINT;
 // print current directory name
 esp_err_t Server::pwd(SDMMC::Device& device)
 {
-#ifdef __PURE_C__
-
+//#ifdef __PURE_C__
+#if __cplusplus < 201703L
 
 	const char* buf = device.get_cwd();
 
@@ -175,9 +178,16 @@ esp_err_t Server::pwd(SDMMC::Device& device)
 
     return ESP_OK;
 #else
-    cout << "Command \"pwd\" is not yet implemented now for C++ edition." << endl;
-    return ESP_ERR_INVALID_VERSION;
-#endif
+	const char* buf = device.get_cwd();
+
+if (!buf)
+	return errno;
+cout << endl
+	<< "PWD is: \"" << buf << '"' << endl
+	<< endl;
+
+return ESP_OK;
+#endif	//
 }; /* Server::pwd */
 
 
@@ -191,14 +201,14 @@ esp_err_t Server::mkdir(SDMMC::Device& device, const char dirname[])
 	return ESP_ERR_NOT_FOUND;
     }; /* !device.valid_path(pattern) */
 
-//    if (dirname == NULL || strcmp(dirname, "") == 0)
     if (empty(dirname))
     {
 	ESP_LOGE(CMD_TAG_PRFX, "%s: invoke command \"%s\" without parameters.\n%s", __func__, CMD_NM,
 		"This command required the creating directory name.");
 	return ESP_ERR_INVALID_ARG;
     }; /* if dirname == NULL || strcmp(dirname, "") */
-#ifdef __PURE_C__
+//#ifdef __PURE_C__
+#if __cplusplus < 201703L
 
 	struct stat statbuf;
 	char *path = device.get_cwd(dirname);
@@ -220,10 +230,27 @@ esp_err_t Server::mkdir(SDMMC::Device& device, const char dirname[])
     return ESP_OK;
 
 #else
-    cout << "Change directory to " << '"' << dirname << '"' << endl;
-    cout << "Command \"mkdir\" is not yet implemented now for C++ edition." << endl;
-    return ESP_ERR_INVALID_VERSION;
-#endif
+
+	struct stat statbuf;
+	char *path = device.get_cwd(dirname);
+
+    ESP_LOGI(CMD_TAG_PRFX, "%s: Create directory with name \"%s\", real path is %s", __func__, dirname, path);
+
+    if (stat(path, &statbuf) == 0)
+    {
+	ESP_LOGE(CMD_TAG_PRFX, "%s: Invalid argument - requested path \"%s\" is exist; denied create duplication name\n", __func__, path);
+	return ESP_ERR_INVALID_ARG;
+    }; /* if stat(tmpstr, &statbuf) == -1 */
+    errno = 0;
+    ::mkdir(path, S_IRWXU | S_IRWXG | S_IRWXO);
+    if (errno)
+    {
+	ESP_LOGE(CMD_TAG_PRFX, "%s: Error creating directory \"%s\": %s", __func__, dirname, strerror(errno));
+	return ESP_FAIL;
+    }; /* if (errno) */
+    return ESP_OK;
+
+#endif	// __cplusplus < 201703L
 }; /* Server::mkdir */
 
 #undef CMD_NM
@@ -244,7 +271,8 @@ esp_err_t Server::rmdir(SDMMC::Device& device, const char dirname[])
 		     "This command required the name of the deleting directory.");
 	    return ESP_ERR_INVALID_ARG;
     }; /* if dirname == NULL || strcmp(dirname, "") */
-#ifdef __PURE_C__
+//#ifdef __PURE_C__
+#if __cplusplus < 201703L
 
 	struct stat st;
 	char *path = device.get_cwd(dirname);
@@ -295,11 +323,56 @@ esp_err_t Server::rmdir(SDMMC::Device& device, const char dirname[])
     return ESP_OK;
 
 #else
-    cout << "Delete directory " << '<' << dirname << '>' << endl;
-    //cout << aso::format("Command \"%s\" is not yet implemented now for C++ edition.") % CND_NM << endl;
-    ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Command \"%s\" is not yet implemented now", CMD_NM);
-    return ESP_ERR_INVALID_VERSION;
-#endif
+	struct stat st;
+	char *path = device.get_cwd(dirname);
+
+    ESP_LOGI(CMD_TAG_PRFX, "%s: Delete directory <%s>, real path is %s", __func__, dirname, path);
+
+    // Check if destination directory or file exists before deleting
+    if (stat(path, &st) != 0)
+    {
+	// deleting a non-exist directory is not possible
+	ESP_LOGE(CMD_TAG_PRFX, "%s: Directory \"%s\" is not exist - deleting a non-existent catalogue is not possible.\n%s", __func__, dirname, esp_err_to_name(ESP_ERR_NOT_FOUND));
+	return ESP_ERR_NOT_FOUND;
+    }; /* if stat(file_foo, &st) != 0 */
+    if (!S_ISDIR(st.st_mode))
+    {
+	ESP_LOGE(CMD_TAG_PRFX, "%s: The %s command delete directories, not the files.\n%s", __func__, CMD_NM, esp_err_to_name(ESP_ERR_NOT_SUPPORTED));
+	return ESP_ERR_INVALID_ARG;
+    }; /* if (S_ISDIR(st.st_mode)) */
+
+	DIR *dir = opendir(path);	// Directory descriptor
+
+    errno = 0;	// clear any possible errors
+
+    struct dirent *entry = readdir(dir);
+
+    closedir(dir);
+    if (errno)
+    {
+	ESP_LOGE(CMD_TAG_PRFX, "%s: Fail when closing directory \"%s\": %s", __func__, dirname, strerror(errno));
+	return ESP_FAIL;
+    }; /* if errno */
+    if (entry)
+    {
+	ESP_LOGE(CMD_TAG_PRFX, "%s: Directory \"%s\" is not empty, deletung non-emty directories "
+		"is not supported.", __func__, dirname);
+	return ESP_ERR_NOT_SUPPORTED;
+    }; /* if (entry) */
+
+    errno = 0;
+    //cout << aso::format("[[[ unlink the path [%s] ]]]") % path << endl;
+    unlink(path);
+    if (errno)
+    {
+	ESP_LOGE(CMD_TAG_PRFX, "%s: Fail when deleting \"%s\": %s", __func__, dirname, strerror(errno));
+	return ESP_FAIL;
+    }; /* if errno */
+
+    return ESP_OK;
+
+#endif // __cplusplus < 201703L
+
 }; /* Server::rmdir */
 
 
@@ -318,7 +391,8 @@ esp_err_t Server::cd(SDMMC::Device& device, const char dirname[])
 	return ESP_ERR_NOT_FOUND;
     }; /* !device.valid_path(pattern) */
 
-#ifdef __PURE_C__
+//#ifdef __PURE_C__
+#if __cplusplus < 201703L
 //    if (dirname != nullptr && dirname[0] != '\0')
     if (!empty(dirname))
 	ESP_LOGI(CMD_TAG_PRFX, "%s: Change current dir to %s", __func__, dirname);
@@ -341,10 +415,22 @@ esp_err_t Server::cd(SDMMC::Device& device, const char dirname[])
     return err;
 //    return ESP_OK;
 #else
-    cout << "Change directory to " << '"' << dirname << '"' << endl;
-    cout << "Command \"" CMD_NM "\" is not yet implemented now for C++ edition." << endl;
-    return ESP_ERR_INVALID_VERSION;
-#endif
+    if (!empty(dirname))
+	ESP_LOGI(CMD_TAG_PRFX, "%s: Change current dir to %s", __func__, dirname);
+    else if (device.card != nullptr)
+	ESP_LOGI(CMD_TAG_PRFX, "%s: Not specified directory for jump to, change current dir to %s, [mountpoint].", __func__, device.mountpath());
+	else
+	{
+    	    ESP_LOGW(CMD_TAG_PRFX, "%s: Card is not mounted, mountpoint is not valid, nothing to do", __func__);
+    	    return ESP_ERR_NOT_SUPPORTED;
+	}; /* else if device.card != nullptr */
+    // change cwd dir: chdir(dirname);
+        err = device.change_currdir(dirname);
+    if (err != 0)
+    	ESP_LOGE(CMD_TAG_PRFX, "%s: fail change directory to %s\n%s", __func__, dirname, /*strerror(errno)*/ esp_err_to_name(err));
+    return err;
+
+#endif	// __cplusplus < 201703L
 }; /* Server::cd */
 
 
@@ -369,8 +455,6 @@ static int listing_direntries_Cpp(DIR *dir, const char path[]);
 // print a list of files in the specified directory
 esp_err_t Server::ls(SDMMC::Device& device, const char pattern[])
 {
-//#if defined(__PURE_C__) || __cplusplus < 201703L
-//#ifdef __PURE_C__
     ESP_LOGD(CMD_TAG_PRFX, "%s: pattern is             : \"%s\"", __func__, pattern);
     ESP_LOGD(CMD_TAG_PRFX, "%s: processed inner pattern: \"%s\"", __func__, device.get_cwd(pattern));
 
@@ -384,7 +468,6 @@ esp_err_t Server::ls(SDMMC::Device& device, const char pattern[])
 	DIR *dir;	// Directory descriptor
 	struct stat statbuf;	// buffer for stat
 	char* in_pattern = device.get_cwd(pattern);
-//	char* in_pattern = device.raw_cwd(pattern);
 
     if (stat(in_pattern, &statbuf) == -1)
     {
@@ -422,11 +505,11 @@ esp_err_t Server::ls(SDMMC::Device& device, const char pattern[])
 
 	esp_err_t ret = ESP_OK;
 
-//    printf("Files in the directory <%s>\n",  pattern);
     ESP_LOGI(__func__, "Files in the directory <%s> (%s)",  pattern, in_pattern);
     printf("----------------\n");
 
 #ifdef __PURE_C__
+//#if __cplusplus < 201703L
     entry_cnt = listing_direntries_pureC(dir, in_pattern);
 #else
     entry_cnt = listing_direntries_Cpp(dir, in_pattern);
@@ -606,7 +689,8 @@ esp_err_t Server::cp(SDMMC::Device& device, const char src_raw[], const char des
 
 	char *src = device.get_cwd(src_raw);
 
-#ifdef __PURE_C__
+//#ifdef __PURE_C__
+#if __cplusplus < 201703L
 
 	struct stat st;
 
@@ -718,9 +802,117 @@ esp_err_t Server::cp(SDMMC::Device& device, const char src_raw[], const char des
 
     return ESP_OK;
 #else
-    ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Command \"%s\" is not yet implemented now for C++ edition.", CMD_NM);
-    return ESP_ERR_INVALID_VERSION;
-#endif
+
+	struct stat st;
+
+    // Check if source file is not exist
+    if (stat(src, &st) != 0)
+    {
+	// Source file must be exist
+	ESP_LOGE(CMD_TAG_PRFX, "%s: file \"%s\" (%s) is not exist - copyng a non-existent file is not possible.\n%s",
+		__func__, src_raw, src, esp_err_to_name(ESP_ERR_NOT_FOUND));
+	return ESP_ERR_NOT_FOUND;
+    }; /* if stat(src, &st) != 0 */
+    if (S_ISDIR(st.st_mode))
+    {
+	ESP_LOGE(CMD_TAG_PRFX, "%s: copyng directories is unsupported.\n%s",
+		__func__, esp_err_to_name(ESP_ERR_NOT_SUPPORTED));
+	return ESP_ERR_NOT_SUPPORTED;
+    }; /* if (S_ISDIR(st.st_mode)) */
+
+    /* or open source file at this point? */
+    src = (char*)malloc(strlen(device.curr_cwd()) + 1);
+    if (src == nullptr)
+    {
+	ESP_LOGE(CMD_TAG_PRFX, "%s: not enought memory for store source file name \"%s\"", __func__, device.curr_cwd());
+	return ESP_ERR_NO_MEM;
+    }; /* if (src == nullptr) */
+    strcpy(src, device.curr_cwd());
+
+	char* srcbase = basename(src);
+	char *dest = device.get_cwd(dest_raw);
+
+    // Check if destination file is exist
+    if (stat(dest, &st) == 0)
+    {
+	// Destination file is exist
+	ESP_LOGI(CMD_TAG_PRFX, "%s: path \"%s\" (%s) is exist - copy is write to an existent file or directory.",
+		__func__, dest_raw, dest);
+	// if destination - exist path, not a directory
+	if (S_ISDIR(st.st_mode))
+	{
+	    strcat(dest, "/");
+	    strcat(dest, srcbase);
+	} /* if S_ISDIR(st.st_mode) */
+    }; /* if stat(dest, &st) == 0 */
+
+    // Re-check the modified version of the
+    // destination filename, that may be exist:
+    if (stat(dest, &st) == 0)
+    {
+	// the final name of the target file
+	// must not be a existing directory name
+	if (S_ISDIR(st.st_mode))
+	{
+	    ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite exist \"%s\" directory by the destination file is denied; aborting.",
+		    __func__, dest);
+	    free(src);
+	    return ESP_ERR_NOT_SUPPORTED;
+	} /* if S_ISDIR(st.st_mode) */
+
+#if !defined(__NOT_OVERWRITE__) && defined(__CP_OVERWRITE_FILE__)
+	ESP_LOGW(CMD_TAG_PRFX, "%s: overwrite an existing file \"%s\".", __func__, dest);
+#else
+	ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite the existent file \"%s\" is denied; aborting.", __func__, dest);
+	free(src);
+	return ESP_ERR_NOT_SUPPORTED;
+#endif	// __CP_OVER_EXIST_FILE__
+    }; /* if stat(dest, &st) == 0 */
+
+    // check the source and destination file are same
+    if (strcmp(src, dest) == 0)
+    {
+	ESP_LOGE(CMD_TAG_PRFX, "%s: source & destination file name are same: \"%s\";\n\t\t\t copying file to iself is unsupported",
+		__func__, dest);
+	free(src);
+	return ESP_ERR_NOT_SUPPORTED;
+    }; /* if strcmp(src, dest) == 0 */
+
+    // destination file - OK, it's not exist or is may be overwrited
+    ESP_LOGI(CMD_TAG_PRFX ":" CMD_NM, "copy file %s to %s", src, dest);
+
+	FILE* srcfile = fopen(src, "rb");
+	FILE* destfile = fopen(dest, "wb");
+
+    free(src);
+
+    if (!destfile)
+    {
+	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "failed creating file %s, aborting ", device.curr_cwd());
+	fclose(srcfile);
+	return ESP_ERR_NOT_FOUND;
+    }; /* if !destfile */
+
+#define CP_BUFSIZE 512
+	char buf[CP_BUFSIZE];
+	size_t readcnt;
+
+    while (!feof(srcfile))
+    {
+	readcnt = fread(buf, 1, CP_BUFSIZE, srcfile);
+	if (readcnt == 0)
+	    break;
+	fwrite(buf, 1, readcnt, destfile);
+    }; /* while !feof(srcfile) */
+
+    fflush(destfile);
+    fsync(fileno(destfile));
+    fclose(destfile);
+    fclose(srcfile);
+
+    return ESP_OK;
+#endif	// __cplusplus < 201703L
+
 }; /* Server::cp */
 
 
@@ -761,7 +953,8 @@ esp_err_t Server::mv(SDMMC::Device& device, const char src_raw[], const char des
 
 
 
-#ifdef __PURE_C__
+//#ifdef __PURE_C__
+#if __cplusplus < 201703L
 
 	char *src = device.get_cwd(src_raw);
 	struct stat st_src;
@@ -869,9 +1062,113 @@ esp_err_t Server::mv(SDMMC::Device& device, const char src_raw[], const char des
     ESP_LOGW(CMD_TAG_PRFX CMD_NM, "the command '%s' now is partyally implemented for C edition", __func__);
     return ESP_OK;
 #else
-    ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Command \"%s\" is not yet implemented now for C++ edition.", CMD_NM);
-    return ESP_ERR_INVALID_VERSION;
-#endif
+
+	char *src = device.get_cwd(src_raw);
+	struct stat st_src;
+
+    // Check if source file is not exist
+    if (stat(src, &st_src) != 0)
+    {
+	// Source file must be exist
+	ESP_LOGE(CMD_TAG_PRFX, "%s: file \"%s\" (%s) is not exist - renaming a non-existent file is not possible.\n%s",
+		__func__, src_raw, src, esp_err_to_name(ESP_ERR_NOT_FOUND));
+	return ESP_ERR_NOT_FOUND;
+    }; /* if stat(src_stat, &st) != 0 */
+
+    src = (char*)malloc(strlen(src) * sizeof(char) + 1);
+    if (!src)
+    {
+	ESP_LOGE(CMD_TAG_PRFX, "%s: Not enought memory for store souce file name", __func__);
+	return ESP_ERR_NO_MEM;
+    }; /* if src == NULL*/
+    strcpy(src, device.curr_cwd());
+    //    src = strcpy((char*)malloc(strlen(src) * sizeof(char)) + 1, src);
+
+
+	char *dest = NULL;
+	struct stat st_dest;
+
+    dest = device.get_cwd(dest_raw);
+
+    cout << aso::format("Move file \"%s\" (%s) to \"%s\" (%s)") %src_raw %src
+			%dest_raw %dest << endl;
+
+    if (stat(dest, &st_dest) == 0)
+    {
+	// Target file exist
+	ESP_LOGW(CMD_TAG_PRFX, "%s: target file name \"%s\" (%s) exist",
+		__func__, dest_raw, dest);
+	// if destination is existing directory
+	if (S_ISDIR(st_dest.st_mode))
+	{
+		char *basenm = basename(src);
+
+	    ESP_LOGD(CMD_TAG_PRFX, "%s: destination file is exist directory,\n\t\t\tbasename of src is: %s ", __func__,
+		    basenm);
+	    strcat(dest, "/");
+	    ESP_LOGD(CMD_TAG_PRFX, "%s: adding trailing slash to a destination file: %s", __func__, dest);
+	    strcat(dest, basenm);
+	    ESP_LOGD(CMD_TAG_PRFX, "%s: adding src basename to a destination file: %s", __func__, dest);
+	} /* if S_ISDIR(st.st_mode) */
+    } /* if stat(dest, &st) != 0 */
+
+    // Re-check the modified version of the
+    // destination filename, that may be exist:
+    if (stat(dest, &st_dest) == 0)
+    {
+	// the final name of the target file
+	// must not be a existing directory name
+	if (S_ISDIR(st_dest.st_mode))
+	{
+	    ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite exist directory \"%s\" by the destination file from the %s is not allowed; aborting.",
+		    __func__, dest, src);
+	    free(src);
+	    return ESP_ERR_NOT_SUPPORTED;
+	} /* if S_ISDIR(st.st_mode) */
+
+	// if source - is dir, but destination - ordinary file
+	if (S_ISDIR(st_src.st_mode))
+	{
+	    ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite exist file \"%s\" by renaming the source directory %s to it - is not allowed; aborting.",
+		    __func__, dest, src);
+	    return ESP_ERR_NOT_SUPPORTED;
+	}; /* if S_ISDIR(st.st_mode) */
+
+#if !defined(__NOT_OVERWRITE__) && defined(__CP_OVERWRITE_FILE__)
+	ESP_LOGW(CMD_TAG_PRFX, "%s: overwrite an existing file \"%s\".", __func__, dest);
+#else
+	ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite the existent file \"%s\" is denied; aborting.",
+		__func__, dest);
+	free(src);
+	return ESP_ERR_NOT_SUPPORTED;
+#endif	// __CP_OVER_EXIST_FILE__
+    }; /* if stat(dest, &st) == 0 */
+
+    // Names of the moving/renaming file
+    ESP_LOGI(CMD_TAG_PRFX, "%s: Moving/renaming file %s (%s) to %s (%s)", __func__, src_raw, src, dest_raw, dest);
+    // check the source and destination file are same
+    if (strcmp(src, dest) == 0)
+    {
+	ESP_LOGE(CMD_TAG_PRFX, "%s: source & destination file name are same: \"%s\";\n\t\t\t copying file to iself is unsupported",
+		__func__, dest);
+	free(src);
+	return ESP_ERR_NOT_SUPPORTED;
+    }; /* if strcmp(src, dest) == 0 */
+
+
+//    // Rename original file
+//    cout << aso::format("Move/rename file %s (%s) to %s (%s)") %src_raw %src
+//			%dest_raw %dest << endl;
+    if (rename(src, dest/*device.curr_cwd()*/) != 0)
+    {
+	ESP_LOGE(CMD_TAG_PRFX, "%s: Error %d: %s", __func__, errno, strerror(errno));
+	free(src);
+	return ESP_FAIL;
+    }; /* if rename(src, dest) != 0 */
+    free(src);
+    ESP_LOGW(CMD_TAG_PRFX CMD_NM, "the command '%s' now is partyally implemented for C edition", __func__);
+    return ESP_OK;
+    #endif
 }; /* Server::mv */
 
 
@@ -902,7 +1199,8 @@ esp_err_t Server::rm(SDMMC::Device& device, const char pattern[])
 
 //    cout << "Delete file " << '"' << pattern << '"' << endl;
     ESP_LOGI(CMD_TAG_PRFX, "%s: delete file \"%s\" (%s)", __func__,  pattern, path);
-#ifdef __PURE_C__
+//#ifdef __PURE_C__
+#if __cplusplus < 201703L
 
     // Check if destination file exists before deleting
     if (stat(path, &st) != 0)
@@ -931,9 +1229,35 @@ esp_err_t Server::rm(SDMMC::Device& device, const char pattern[])
 
     return ESP_OK;
 #else
-    ESP_LOGW(CMD_TAG_PRFX, "%s: Command \"%s\" is not yet implemented now for C++ edition.", __func__, CMD_NM);
-    return ESP_ERR_INVALID_VERSION;
-#endif
+    // Check if destination file exists before deleting
+    if (stat(path, &st) != 0)
+    {
+        // deleting a non-existent file is not possible
+	ESP_LOGE(CMD_TAG_PRFX, "%s: file \"%s\" is not exist - deleting a non-existent file is not possible.\n%s",
+		__func__, pattern, esp_err_to_name(ESP_ERR_NOT_FOUND));
+	return ESP_ERR_NOT_FOUND;
+    }; /* if stat(file_foo, &st) != 0 */
+    if (S_ISDIR(st.st_mode))
+    {
+	ESP_LOGE(CMD_TAG_PRFX, "%s: deleting directories unsupported.\n%s",
+		__func__, esp_err_to_name(ESP_ERR_NOT_SUPPORTED));
+	return ESP_ERR_NOT_SUPPORTED;
+    }; /* if (S_ISDIR(st.st_mode)) */
+    errno = 0;
+    //cout << "Now exec: ===>> " << aso::format("unlink(%s)") % path << "<<===" << endl;
+    unlink(path);
+    if (errno)
+    {
+	ESP_LOGE(CMD_TAG_PRFX, "%s: Fail when deleting \"%s\": %s", __func__, pattern, strerror(errno));
+
+//	ESP_LOGE(CMD_TAG_PRFX, "%s: Error %d: %s", __func__, errno, strerror(errno));
+	return ESP_FAIL;
+    }; /* if errno */
+
+    return ESP_OK;
+
+#endif // __cplusplus < 201703L
+
 }; /* Server::rm */
 
 
@@ -971,7 +1295,8 @@ esp_err_t Server::cat(SDMMC::Device& device, const char fname[])
 	 << aso::format("*** Printing contents of the file <%s> (realname '%s'). ***") % fname % fullname  << endl
 	 << endl;
 
-#ifdef __PURE_C__
+//#ifdef __PURE_C__
+#if __cplusplus < 201703L
 
     // Check if destination file exists before deleting
     if (stat(fullname, &st) != 0)
@@ -1010,7 +1335,41 @@ esp_err_t Server::cat(SDMMC::Device& device, const char fname[])
 
 
 #else
-#endif	// __PURE_C__
+    // Check if destination file exists before deleting
+    if (stat(fullname, &st) != 0)
+    {
+        // typing a non-exist file is not possible
+    	ESP_LOGE(CMD_TAG_PRFX, "%s: \"%s\" file does not exist - printing of the missing file is not possible.\n%s",
+    		__func__, fname, esp_err_to_name(ESP_ERR_NOT_FOUND));
+    	return ESP_ERR_NOT_FOUND;
+    }; /* if stat(path, &st) != 0 */
+
+    if (S_ISDIR(st.st_mode))
+    {
+    	ESP_LOGE(CMD_TAG_PRFX, "%s: Typing directories unsupported, use the 'ls' command instead.\n%s",
+    		__func__, esp_err_to_name(ESP_ERR_NOT_SUPPORTED));
+    	return ESP_ERR_NOT_SUPPORTED;
+    }; /* if (S_ISDIR(st.st_mode)) */
+
+    errno = 0;	// clear possible errors
+    text = fopen(fullname, "r"); // open the file for type to screen
+    if (!text)
+    {
+	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Error opening file <%s> (%s), %s", fname, fullname, strerror(errno));
+	return ESP_FAIL;
+    }; /* if !FILE */
+
+    for (char c = getc(text); !feof(text); c = getc(text))
+	putchar(c);
+
+//    putchar('\n');
+    if (errno)
+    {
+	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Error during type the file %s (%s) to output, %s", fname, fullname, strerror(errno));
+	fclose(text);
+	return ESP_FAIL;
+    }; /* if errno */
+#endif	// __cplusplus < 201703L
 
     cout << endl
 	 << "*** End of printing file " << fname << ". **************" << endl

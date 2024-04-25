@@ -40,6 +40,12 @@ using namespace std;
 #error This example is incompatible with USB CDC console. Please try "console_usb" example instead.
 #endif // CONFIG_ESP_CONSOLE_USB_CDC
 
+
+#define __INN_STR__(str) #str
+#define STRING(str) __INN_STR__(str)
+#pragma message("ESP32 Improved Console" ", version v." CONFIG_APP_PROJECT_VER "-" CONFIG_APP_PROJECT_FLAVOUR " of " CONFIG_APP_PROJECT_DATE " by " CONFIG_APP_PROJECT_AUTHOR " (" CONFIG_APP_PROJECT_AUTHOR_NICK ")")
+#pragma message("C++ version is: " STRING(__cplusplus) )
+
 static const char* TAG = "example";
 #define PROMPT_STR CONFIG_IDF_TARGET
 

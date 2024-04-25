@@ -1,4 +1,4 @@
-menu "SD card cfg"
+menu "Storage Configuration"
 
     config EXAMPLE_FORMAT_IF_MOUNT_FAILED
         bool "Format the card if mount failed"
@@ -6,6 +6,18 @@ menu "SD card cfg"
         help
             If this config item is set, format_if_mount_failed will be set to true and the card will be formatted if
             the mount has failed.
+
+    config UNIT_SD_CARD_MOUNT_POINT
+        string "Prefix for SD card mounting"
+        default "/sdcard"
+        help
+            Directory to mounting SD-Card.
+
+    config UNIT_SPIFLASH_MOUNT_POINT
+        string "Prefix for ESP32 SPI Flash mounting"
+        default "/data"
+        help
+            Directory to mounting SPI Flash data storage partition.
 
     config AUTO_CHDIR_BEHIND_MOUNTING
         bool "Auto change dir after mount SD-card"

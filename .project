@@ -3664,36 +3664,6 @@
 			<location>/usr/share/esp/esp-idf-v4.4.7/components/wpa_supplicant/src/wps/wps_validate.c</location>
 		</link>
 		<link>
-			<name>build/ide/esp_idf_components/examples/cxx/experimental/experimental_cpp_component/esp_event_api.cpp</name>
-			<type>1</type>
-			<location>/usr/share/esp/esp-idf/examples/cxx/experimental/experimental_cpp_component/esp_event_api.cpp</location>
-		</link>
-		<link>
-			<name>build/ide/esp_idf_components/examples/cxx/experimental/experimental_cpp_component/esp_event_cxx.cpp</name>
-			<type>1</type>
-			<location>/usr/share/esp/esp-idf/examples/cxx/experimental/experimental_cpp_component/esp_event_cxx.cpp</location>
-		</link>
-		<link>
-			<name>build/ide/esp_idf_components/examples/cxx/experimental/experimental_cpp_component/esp_exception.cpp</name>
-			<type>1</type>
-			<location>/usr/share/esp/esp-idf/examples/cxx/experimental/experimental_cpp_component/esp_exception.cpp</location>
-		</link>
-		<link>
-			<name>build/ide/esp_idf_components/examples/cxx/experimental/experimental_cpp_component/esp_timer_cxx.cpp</name>
-			<type>1</type>
-			<location>/usr/share/esp/esp-idf/examples/cxx/experimental/experimental_cpp_component/esp_timer_cxx.cpp</location>
-		</link>
-		<link>
-			<name>build/ide/esp_idf_components/examples/cxx/experimental/experimental_cpp_component/gpio_cxx.cpp</name>
-			<type>1</type>
-			<location>/usr/share/esp/esp-idf/examples/cxx/experimental/experimental_cpp_component/gpio_cxx.cpp</location>
-		</link>
-		<link>
-			<name>build/ide/esp_idf_components/examples/cxx/experimental/experimental_cpp_component/i2c_cxx.cpp</name>
-			<type>1</type>
-			<location>/usr/share/esp/esp-idf/examples/cxx/experimental/experimental_cpp_component/i2c_cxx.cpp</location>
-		</link>
-		<link>
 			<name>build/ide/esp_idf_components/-v4.4.7/asio/asio/asio/src/asio.cpp</name>
 			<type>1</type>
 			<location>/usr/share/esp/esp-idf-v4.4.7/components/asio/asio/asio/src/asio.cpp</location>
