@@ -1,10 +1,10 @@
-/*
- * SD-card manipulations command definition
- * Implementation file
- * 	File: cmd_sdcard.cpp
- *	Author:  aso (Solomatov A.A.)
- *	Created: 04.04.2022
- *	Version: 0.1
+/*!
+ * @brief Implementation of SD-card manipulations commands
+ *
+ * 	@file	cmd_sdcard.cpp
+ *	@author	Solomatov A.A. (aso)
+ *	@date	Created 04.04.2022
+ *	@version: 0.5
  */
 
 #include <cstdlib>
@@ -14,9 +14,9 @@
 
 #include <string.h>
 //#include <sys/unistd.h>
-#include "esp_log.h"
-#include "esp_console.h"
-#include "esp_system.h"
+#include <esp_log.h>
+#include <esp_console.h>
+#include <esp_system.h>
 #include <argtable3/argtable3.h>
 #include <unistd.h>
 #include <sys/stat.h>
@@ -24,11 +24,12 @@
 #include <regex>
 #include "esp_vfs_fat.h"
 #include "sdmmc_cmd.h"
-#include "driver/sdmmc_host.h"
+#include <driver/sdmmc_host.h>
 #include <cmd_sdcard>
 
 #include "sdcard_io"
-#include "sdcard_ctrl"
+//#include "sdcard_ctrl"
+#include "fs_ctrl"
 
 //#include <cstdio>
 

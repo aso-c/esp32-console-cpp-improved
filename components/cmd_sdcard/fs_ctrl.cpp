@@ -1,10 +1,10 @@
-/*
- * SD-card control classes
+/*!
+ * @brief Filesystem on storege device (SD-card etc) control/navigation classes
  * Implementation file
- * 	File: sdcard_ctrl.cpp
- *	Author:  aso (Solomatov A.A.)
- *	Created: 14.07.2022
- *	Version: 0.6
+ * 	@file: fs_ctrl.cpp
+ *	@author: Solomatov A.A. aso
+ *	@date 14.07.2022 - 27.04.2024
+ *	@version: 0.7
  */
 
 //#define __PURE_C__
@@ -22,10 +22,10 @@
 #include <cctype>
 #include <sys/unistd.h>
 #include <cerrno>
-#include "esp_err.h"
-#include "esp_log.h"
-#include "esp_console.h"
-#include "esp_system.h"
+#include <esp_err.h>
+#include <esp_log.h>
+#include <esp_console.h>
+#include <esp_system.h>
 #include <argtable3/argtable3.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -44,12 +44,13 @@
   //#endif // __cplusplus < 201703L
 //#endif // ifdef __PURE_C__
 
-#include "esp_vfs_fat.h"
+#include <esp_vfs_fat.h>
 #include "sdmmc_cmd.h"
-#include "driver/sdmmc_host.h"
+#include <driver/sdmmc_host.h>
 
-#include <sdcard_io>
-#include <sdcard_ctrl>
+#include "sdcard_io"
+//#include "sdcard_ctrl"
+#include "fs_ctrl"
 
 
 #include "extrstream"

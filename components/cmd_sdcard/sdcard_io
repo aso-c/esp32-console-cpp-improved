@@ -374,7 +374,6 @@ private:
 
     friend class Card;
 
-//public:
     Slot _slot;
 }; /* struct Host */
 
@@ -612,7 +611,6 @@ public:
     // Parameters:
     //	    stream – stream obtained using fopen or fdopen
     //	    card – card information structure initialized using sdmmc_card_init
-//    void sdmmc_card_print_info(FILE *stream, const sdmmc_card_t *card);
     void print_info(FILE* outfile);		// Print the card info
     // print the SD-card info to stdout (wrapper for the external caller)
     esp_err_t info();
@@ -627,7 +625,6 @@ public:
     // Returns
     //	    ESP_OK on success
     //	    One of the error codes from SDMMC host controller
-//    esp_err_t sdmmc_get_status(sdmmc_card_t *card);
     esp_err_t get_status() { return sdmmc_get_status(self); };
 
     // Write given number of sectors to SD/MMC card
@@ -639,7 +636,6 @@ public:
     // Returns
     //	    ESP_OK on success
     //	    One of the error codes from SDMMC host controller
-//    esp_err_t sdmmc_write_sectors(sdmmc_card_t *card, const void *src, size_t start_sector, size_t sector_count);
     esp_err_t write_sectors(const void *src, size_t start_sector, size_t sector_count)
 		{ return sdmmc_write_sectors(self, src, start_sector, sector_count); };
 
@@ -652,7 +648,6 @@ public:
     // Returns
     //	    ESP_OK on success
     //	    One of the error codes from SDMMC host controller
-//    esp_err_t sdmmc_read_sectors(sdmmc_card_t *card, void *dst, size_t start_sector, size_t sector_count);
     esp_err_t read_sectors(void *dst, size_t start_sector, size_t sector_count)
 		{ return sdmmc_read_sectors(self, dst, start_sector, sector_count);};
 
@@ -672,7 +667,6 @@ public:
     // Returns
     //	    ESP_OK on success
     //	    One of the error codes from SDMMC host controller
-//    esp_err_t sdmmc_erase_sectors(sdmmc_card_t *card, size_t start_sector, size_t sector_count, sdmmc_erase_arg_t arg);
     esp_err_t erase_sectors(size_t start_sector, size_t sector_count, sdmmc_erase_arg_t arg)
 		{ return sdmmc_erase_sectors(&self, start_sector, sector_count, arg);};
 
@@ -682,7 +676,6 @@ public:
     // Returns
     //	    ESP_OK if supported by the card/device
     //	    ESP_FAIL if not supported by the card/device
-//    esp_err_t sdmmc_can_discard(sdmmc_card_t *card);
     esp_err_t can_discard() { return sdmmc_can_discard(&self);};
 
     // Check if SD/MMC card supports trim
@@ -691,7 +684,6 @@ public:
     // Returns
     //	    ESP_OK if supported by the card/device
     //	    ESP_FAIL if not supported by the card/device
-//    esp_err_t sdmmc_can_trim(sdmmc_card_t *card);
     esp_err_t can_trim() { return sdmmc_can_trim(&self);};
 
     // Check if SD/MMC card supports sanitize
@@ -700,7 +692,6 @@ public:
     // Returns:
     //	    ESP_OK if supported by the card/device
     //	    ESP_FAIL if not supported by the card/device
-//    esp_err_t sdmmc_mmc_can_sanitize(sdmmc_card_t *card);
     esp_err_t mmc_can_sanitize() {return sdmmc_mmc_can_sanitize(&self);};
 
     //Sanitize the data that was unmapped by a Discard command
@@ -712,7 +703,6 @@ public:
     // Returns
     //	    ESP_OK on success
     //	    One of the error codes from SDMMC host controller
-//    esp_err_t sdmmc_mmc_sanitize(sdmmc_card_t *card, uint32_t timeout_ms);
     esp_err_t mmc_sanitize(uint32_t timeout_ms) { return sdmmc_mmc_sanitize(&self, timeout_ms); };
 
     // Erase complete SD/MMC card
@@ -721,7 +711,6 @@ public:
     // Returns
     //	    ESP_OK on success
     //	    One of the error codes from SDMMC host controller
-//    esp_err_t sdmmc_full_erase(sdmmc_card_t *card);
     esp_err_t full_erase() { return sdmmc_full_erase(&self);};
 #endif	// ESP_IDF_VERSION_VAL(x,y,p)
 
