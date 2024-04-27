@@ -48,8 +48,8 @@
 #include "sdmmc_cmd.h"
 #include <driver/sdmmc_host.h>
 
+#include "cwd_emulate"
 #include "sdcard_io"
-//#include "sdcard_ctrl"
 #include "fs_ctrl"
 
 

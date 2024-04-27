@@ -50,9 +50,11 @@ extern "C"
 bool inconsist_path(char[]);
 #endif 	// simply_dir_verify
 
+#if 0
 // if path - is absolute path
 inline
 bool absolute_path(const char path[]) { return (path[0] == '/'); };
+#endif
 
 
 namespace SDMMC	//-----------------------------------------------------------------------------------------------------
@@ -724,7 +726,7 @@ public:
 }; /* class Card */
 
 
-
+#if 0	// --- Exclude CWD_emulating ------------------
 class CWD_emulating
 {
 public:
@@ -764,6 +766,7 @@ private:
     static char operative_path_buff[PATH_MAX];	// temporary buffer for file fullpath composing
 
 }; /* CWD_emulating */
+#endif // --- Exclude CWD_emulating ------------------
 
 
 // Implementation of the mounting actions:
@@ -829,7 +832,7 @@ private:
     const char* target = nullptr;
     esp_vfs_fat_sdmmc_mount_config_t mnt;
     char fake_cwd_path[PATH_MAX] = "";	// simulation current dir at this device
-    CWD_emulating fake_cwd;
+    ::fs::CWD_emulating fake_cwd;
 
     void selective_log_level_set(const char tag[], esp_log_level_t level) {esp_log_level_set(tag, level);/* for debug purposes */};
 

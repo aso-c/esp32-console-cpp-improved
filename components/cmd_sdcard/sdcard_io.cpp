@@ -23,9 +23,9 @@
 #include <cctype>
 #include <sys/unistd.h>
 #include <cerrno>
-#include "esp_log.h"
-#include "esp_console.h"
-#include "esp_system.h"
+#include <esp_log.h>
+#include <esp_console.h>
+#include <esp_system.h>
 #include <argtable3/argtable3.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -42,10 +42,11 @@
 #endif // __cplusplus < 201703L
 #endif // ifdef __PURE_C__
 
-#include "esp_vfs_fat.h"
-#include "sdmmc_cmd.h"
-#include "driver/sdmmc_host.h"
+#include <esp_vfs_fat.h>
+#include <sdmmc_cmd.h>
+#include <driver/sdmmc_host.h>
 
+#include "cwd_emulate"	//FIXME Include only for once build, remove after not needed!!!
 #include "sdcard_io"
 
 #include "extrstream"
@@ -437,6 +438,7 @@ Slot& Slot::operator =(sdmmc_slot_config_t&& config) noexcept
 
 
 //--[ class CWD_emulating ]-----------------------------------------------------------------------------------------
+#if 0	//---- exclude CWD_emulating ------------------
 
 
 // get current dir (if path == NULL or "") or generate fullpath for sended path
@@ -583,6 +585,7 @@ final_copy:
 
 // temporary buffer for file fullpath composing
 char CWD_emulating::operative_path_buff[PATH_MAX];
+#endif	//---- exclude CWD_emulating ------------------
 
 //--[ struct Device ]-----------------------------------------------------------------------------------------------
 
