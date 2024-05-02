@@ -25,9 +25,9 @@
 #include <sys/unistd.h>
 #include <cerrno>
 #include <esp_log.h>
-#include <esp_console.h>
-#include <esp_system.h>
-#include <argtable3/argtable3.h>
+//#include <esp_console.h>
+//#include <esp_system.h>
+//#include <argtable3/argtable3.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 //#include <unistd.h>
@@ -44,8 +44,8 @@
 #endif // ifdef __PURE_C__
 
 #include <esp_vfs_fat.h>
-#include <sdmmc_cmd.h>
-#include <driver/sdmmc_host.h>
+//#include <sdmmc_cmd.h>
+//#include <driver/sdmmc_host.h>
 
 #include "cwd_emulate"
 
@@ -58,12 +58,13 @@
 using namespace std;
 
 
-#define SD_MOUNT_POINT "/sdcard"
+//#define SD_MOUNT_POINT "/sdcard"
 
 
 namespace fs	//-----------------------------------------------------------------------------------------------------
 {
 
+    [[maybe_unused]]
     static const char *TAG = "CWD emulating";
 
 
