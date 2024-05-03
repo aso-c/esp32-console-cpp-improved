@@ -442,9 +442,8 @@ Slot& Slot::operator =(sdmmc_slot_config_t&& config) noexcept
 
 
 Device::Device(bus::width width, Host::Pullup pullst, esp_vfs_fat_sdmmc_mount_config_t&& mnt_cfg):
-	/*card(nullptr),*/
-	_host(width, pullst),
-	fake_cwd(fake_cwd_path, sizeof(fake_cwd_path))
+	_host(width, pullst)//,
+	/*fake_cwd(fake_cwd_path, sizeof(fake_cwd_path))*/
 {
     /*selective_log_level_set("Device::valid_path", ESP_LOG_DEBUG);*/	/* for debug purposes */
 //#ifdef CONFIG_EXAMPLE_FORMAT_IF_MOUNT_FAILED
@@ -462,8 +461,8 @@ Device::Device(bus::width width, Host::Pullup pullst, esp_vfs_fat_sdmmc_mount_co
 
 Device::Device(Card::format::mntfail autofmt, int max_files, size_t size,
 	    bus::width width, Host::Pullup pull):
-		_host(width, pull),
-		fake_cwd(fake_cwd_path, sizeof(fake_cwd_path))
+		_host(width, pull)//,
+		/*fake_cwd(fake_cwd_path, sizeof(fake_cwd_path))*/
 {
     /*selective_log_level_set("Device::valid_path", ESP_LOG_DEBUG);*/	/* for debug purposes */
         mnt.format_if_mount_failed = (autofmt == Card::format::yes)? true: false;
@@ -511,6 +510,7 @@ esp_err_t Device::mount(Card& excard, const char mountpoint[])
 
     ESP_LOGI(TAG, "Filesystem mounted at the %s", mountpath());
 
+#if 0
 #ifdef CONFIG_AUTO_CHDIR_BEHIND_MOUNTING
 //    change_currdir(DIRECTORY_FOR_AUTOCHANGE);
     change_currdir(mountpath());
@@ -519,7 +519,8 @@ esp_err_t Device::mount(Card& excard, const char mountpoint[])
 //    change_currdir("/");
     getcwd(fake_cwd_path, sizeof(fake_cwd_path));	// set fake_cwd according system pwd (through get_cwd())
     ESP_LOGI(TAG, "Current directory set to: %s,  according system pwd", fake_cwd_path);
-#endif
+#endif	// defined CONFIG_AUTO_CHDIR_BEHIND_MOUNTING
+#endif // *
 
     return ret;
 }; /* Device::mount(Card&, char[]) */
@@ -570,14 +571,14 @@ esp_err_t Device::unmount()
     ESP_LOGI(TAG, "Card at %s unmounted", mountpath());
     card = nullptr;	// card is unmounted - clear this field as unmounted sign
     clean_mountpath();
-    fake_cwd_path[0] = '\0';	// set fake cwd path to: ""
+//    fake_cwd_path[0] = '\0';	// set fake cwd path to: ""
     return ret;
 }; /* Device::unmount */
 
 //    esp_err_t unmount(sdmmc_card_t *card);	// Unmount SD-card "card", mounted onto default mountpath
 //    esp_err_t unmount(const char *base_path, sdmmc_card_t *card);	// Unmount mounted SD-card "card", mounted onto mountpath
 
-
+#if 0
 // if the basename (the last part of the path) - has the characteristics
 // of a directory name, and a dirname (the path prefix) -
 // is an existing file, not a directory, or any other impossible variants
@@ -694,7 +695,7 @@ bool Device::valid_path(const char path[])
 
     return true;
 }; /* Device::valid_path */
-
+#endif
 
 //const char *Device::MOUNT_POINT_Default = MOUNT_POINT_def;
 

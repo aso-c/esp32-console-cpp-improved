@@ -735,11 +735,14 @@ struct Device
     //esp_err_t unmount(const char *base_path, sdmmc_card_t *card);	// Unmount mounted SD-card "card", mounted onto mountpath
     bool mounted() {return card != nullptr;};	// is devise mounted?
 
+#if 0
     // Path valididy - whatever the path exist or not -
     // any subpath is a valid existing path
     // method can modify fake_cwd::operative_path_buf
     bool valid_path(const char[]);
+#endif
 
+#if 0
     // get current dir
     // trailing slash in returned string is absent guaranteed
     char* get_cwd() {return fake_cwd.get();};
@@ -751,9 +754,10 @@ struct Device
     // change cwd dir
     esp_err_t change_currdir(const char path[])
     { return mounted()? fake_cwd.change_dir( (path == nullptr || path[0] == '\0')? mountpath(): path): ESP_FAIL; }
+#endif
 
     // get mountpath
-    const char *mountpath() {return target;};
+    const char *mountpath() const {return target;};
     // set mountpath, return old mountpath
     const char *mountpath(const char newpath[]) {const char* oldpath = target; target = (card)? newpath: target; return oldpath;};
     const char *clean_mountpath() {return mountpath(nullptr);};
@@ -769,8 +773,10 @@ private:
     Host _host;
     const char* target = nullptr;
     esp_vfs_fat_sdmmc_mount_config_t mnt;
+#if 0
     char fake_cwd_path[PATH_MAX] = "";	// simulation current dir at this device
-    ::fs::CWD_emulating fake_cwd;
+    fs::CWD_emulating fake_cwd;
+#endif
 
     void selective_log_level_set(const char tag[], esp_log_level_t level) {esp_log_level_set(tag, level);/* for debug purposes */};
 

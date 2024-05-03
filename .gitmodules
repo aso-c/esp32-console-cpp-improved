@@ -1,0 +1,3 @@
+[submodule "components/fake_cwd"]
+	path = components/fake_cwd
+	url = https://github.com/aso-c/fake_cwd
