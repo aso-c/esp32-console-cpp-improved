@@ -27,7 +27,6 @@
 #include <driver/sdmmc_host.h>
 #include <cmd_sdcard>
 
-//#include "cwd_emulate"	//FIXME Include only for once build, remove after not needed!!!
 #include "sdcard_io"
 #include "fs_ctrl"
 

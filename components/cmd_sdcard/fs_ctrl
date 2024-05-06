@@ -45,7 +45,7 @@ namespace Exec	//---------------------------------------------------------------
     class Server
     {
     public:
-	Server()/*: fake_cwd(fake_cwd_path, sizeof(fake_cwd_path))*/ {};
+	Server() {};
 	/// Mount default SD-card slot onto path "mountpoint"
 	esp_err_t mount(SDMMC::Device&, SDMMC::Card&, const char mountpoint[] = MOUNT_POINT_Default);
 	/// Mount SD-card slot "slot_no" onto desired mount path, default mount path is MOUNT_POINT_Default
@@ -77,9 +77,6 @@ namespace Exec	//---------------------------------------------------------------
     private:
 
 	esp_err_t ret = ESP_OK;
-
-//	char fake_cwd_path[PATH_MAX] = "";	// simulation current dir at this device
-//	fs::CWD_emulating fake_cwd;
 
 	static const char* const MOUNT_POINT_Default;
 	static const char* TAG;
