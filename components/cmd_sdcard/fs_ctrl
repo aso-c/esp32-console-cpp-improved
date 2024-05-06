@@ -45,12 +45,10 @@ namespace Exec	//---------------------------------------------------------------
     class Server
     {
     public:
-	Server(): fake_cwd(fake_cwd_path, sizeof(fake_cwd_path)) {};
-//	esp_err_t mount(SDMMC::Device&, SDMMC::Card&);	// Mount SD-card to Device with default parameters
+	Server()/*: fake_cwd(fake_cwd_path, sizeof(fake_cwd_path))*/ {};
 	/// Mount default SD-card slot onto path "mountpoint"
 	esp_err_t mount(SDMMC::Device&, SDMMC::Card&, const char mountpoint[] = MOUNT_POINT_Default);
-//	esp_err_t mount(SDMMC::Device&, SDMMC::Card&, int slot_no);		// Mount SD-card slot "slot_no" onto default mount path
-	/// Mount SD-card slot "slot_no" onto default mount path
+	/// Mount SD-card slot "slot_no" onto desired mount path, default mount path is MOUNT_POINT_Default
 	esp_err_t mount(SDMMC::Device&, SDMMC::Card&, int slot_no, const char mountpoint[] = MOUNT_POINT_Default);
 
 	esp_err_t unmount(SDMMC::Device&/*, const char mountpath[] = NULL*/);	// Unmount SD-card from Device
@@ -76,27 +74,12 @@ namespace Exec	//---------------------------------------------------------------
 	/// @note method can modify fake_cwd::operative_path_buf
 	bool valid_path(const char[]);
 
-#if 0
-	// get current dir
-	// trailing slash in returned string is absent guaranteed
-	char* get_cwd() {return fake_cwd.get();};
-	// get current dir (if path == NULL or "") or generate fullpath for sended path
-	// absent trailing slash in returned string is guaranteed
-	char* get_cwd(const char path[]) {return fake_cwd.get(path);};
-	char* raw_cwd(const char path[] = nullptr) {return fake_cwd.raw_get(path);};
-	char* curr_cwd() {return fake_cwd.get_current();};
-	// change cwd dir
-	esp_err_t change_currdir(const char path[])
-	{ return mounted()? fake_cwd.change_dir( (path == nullptr || path[0] == '\0')? mountpath(): path): ESP_FAIL; }
-#endif
-
-
     private:
 
 	esp_err_t ret = ESP_OK;
 
-	char fake_cwd_path[PATH_MAX] = "";	// simulation current dir at this device
-	fs::CWD_emulating fake_cwd;
+//	char fake_cwd_path[PATH_MAX] = "";	// simulation current dir at this device
+//	fs::CWD_emulating fake_cwd;
 
 	static const char* const MOUNT_POINT_Default;
 	static const char* TAG;

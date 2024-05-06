@@ -80,8 +80,12 @@ using namespace std;
 namespace Exec	//-----------------------------------------------------------------------------------------------------
 {
 
-//    static const char *TAG = "SD/MMC service";
+//--[ inner instance of the cwd_emulation ]----------------------------------------------------------------------------
+    	char cwd_path_buff[PATH_MAX] = "";	// simulation current dir at this device
+	fs::CWD_emulating fake_cwd(cwd_path_buff, sizeof(cwd_path_buff));
 
+
+//    static const char *TAG = "SD/MMC service";
 
 //--[ class Server ]------------------------------------------------------------------------------------------------
 
@@ -93,12 +97,6 @@ const char* const Server::MOUNT_POINT_Default = SD_MOUNT_POINT;
 #undef CMD_TAG_PRFX
 #define CMD_TAG_PRFX "SD/MMC CMD server:"
 
-#if 0
-    // Mount SD-card with default parameters
-    esp_err_t Server::mount(SDMMC::Device& device, SDMMC::Card& card) { // @suppress("Type cannot be resolved") // @suppress("Member declaration not found")
-	return device.mount(card, MOUNT_POINT_Default); // @suppress("Method cannot be resolved")
-    }; /* Server::mount */
-#endif
 
     /// Mount default SD-card slot onto path "mountpoint", default mountpoint is MOUNT_POINT_Default
     esp_err_t Server::mount(SDMMC::Device& device, SDMMC::Card& card, const char mountpoint[]) // @suppress("Type cannot be resolved") // @suppress("Member declaration not found")
@@ -112,24 +110,16 @@ const char* const Server::MOUNT_POINT_Default = SD_MOUNT_POINT;
 #ifdef CONFIG_AUTO_CHDIR_BEHIND_MOUNTING
 //	    change_currdir(mountpath());
 	    fake_cwd.change_dir(mountpoint);
-	    ESP_LOGI(TAG, "Current directory autochanged to: %s", fake_cwd_path);
+	    ESP_LOGI(TAG, "Current directory autochanged to: %s", fake_cwd.get_current());
 #else
 //	    change_currdir("/");
-	    getcwd(fake_cwd_path, sizeof(fake_cwd_path));	// set fake_cwd according system pwd (through get_cwd())
-	    ESP_LOGI(TAG, "Current directory set to: %s,  according system pwd", fake_cwd_path);
+	    fake_cwd.get(fake_cwd_path, sizeof(fake_cwd_path));	// set fake_cwd according system pwd (through get_cwd())
+	    ESP_LOGI(TAG, "Current directory set to: %s,  according system pwd", fake_cwd.current());
 #endif
 	}; /* if ret == ESP_OK */
 	return ret;
     }; /* Server::mount */
 
-#if 0
-    // Mount SD-card slot "slot_no" onto default mount path
-    esp_err_t Server::mount(SDMMC::Device& device, SDMMC::Card &card, int slot_no) // @suppress("Member declaration not found") // @suppress("Type cannot be resolved")
-    {
-	device.slot_no(slot_no); // @suppress("Method cannot be resolved")
-	return mount(device, card); // @suppress("Invalid arguments")
-    }; /* Server::mount */
-#endif
 
     /// Mount SD-card slot "slot_no" onto specified mount path, default mountpoint is MOUNT_POINT_Default
     esp_err_t Server::mount(SDMMC::Device& device, SDMMC::Card& card, int slot_no, const char mountpoint[]) // @suppress("Member declaration not found") // @suppress("Type cannot be resolved")
@@ -201,7 +191,6 @@ esp_err_t Server::pwd(SDMMC::Device& device)
 
     return ESP_OK;
 #else
-//	const char* buf = device.get_cwd();
 	const char* buf = fake_cwd.get();
 
 if (!buf)
@@ -225,12 +214,10 @@ bool Server::valid_path(const char path[])
 	struct stat st;
 	char *base = basename(path);	// get a filename of a path
 
-/*esp_log_level_set("Device::valid_path", ESP_LOG_DEBUG);*//* for debug purposes */
     ESP_LOGD(__PRETTY_FUNCTION__, "basename of the path is: \"%s\"", base);
     ESP_LOGD(__PRETTY_FUNCTION__, "full path is: \"%s\"", path);
     ESP_LOGD(__PRETTY_FUNCTION__, "dirname path is: \"%.*s\"", base - path, path);
 
-//    strcpy(given_path, fake_cwd.curr_get());
     // if path is empty
     if (empty(path))
 	return true;	// ESP_LOGD("Device::valid_path", "path is empty, always valid");
@@ -376,7 +363,6 @@ esp_err_t Server::mkdir(SDMMC::Device& device, const char dirname[])
 #else
 
 	struct stat statbuf;
-//	char *path = device.get_cwd(dirname);
 	char *path = fake_cwd.get(dirname);
 
     ESP_LOGI(CMD_TAG_PRFX, "%s: Create directory with name \"%s\", real path is %s", __func__, dirname, path);
@@ -410,14 +396,12 @@ esp_err_t Server::rmdir(SDMMC::Device& device, const char dirname[])
 	return ESP_ERR_NOT_FOUND;
     }; /* !device.valid_path(pattern) */
 
-//    if (dirname == NULL || strcmp(dirname, "") == 0)
     if (empty(dirname))
     {
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: invoke command \"%s\" without parameters.\n%s", __func__, CMD_NM,
 		     "This command required the name of the deleting directory.");
 	    return ESP_ERR_INVALID_ARG;
     }; /* if dirname == NULL || strcmp(dirname, "") */
-//#ifdef __PURE_C__
 #if __cplusplus < 201703L
 
 	struct stat st;
@@ -532,14 +516,12 @@ esp_err_t Server::cd(SDMMC::Device& device, const char dirname[])
 {
 	esp_err_t err;
 
-//    if (!device.valid_path(dirname))
     if (!fake_cwd.valid_path(dirname))
     {
 	ESP_LOGE(CMD_TAG_PRFX, "%s: the directory name \"%s\" is invalid", __func__, dirname);
 	return ESP_ERR_NOT_FOUND;
     }; /* !device.valid_path(pattern) */
 
-//#ifdef __PURE_C__
 #if __cplusplus < 201703L
 //    if (dirname != nullptr && dirname[0] != '\0')
     if (!empty(dirname))
@@ -607,10 +589,8 @@ static int listing_direntries_Cpp(DIR *dir, const char path[]);
 esp_err_t Server::ls(SDMMC::Device& device, const char pattern[])
 {
     ESP_LOGD(CMD_TAG_PRFX, "%s: pattern is             : \"%s\"", __func__, pattern);
-//    ESP_LOGD(CMD_TAG_PRFX, "%s: processed inner pattern: \"%s\"", __func__, device.get_cwd(pattern));
     ESP_LOGD(CMD_TAG_PRFX, "%s: processed inner pattern: \"%s\"", __func__, fake_cwd.get(pattern));
 
-//    if (!device.valid_path(pattern))
     if (!fake_cwd.valid_path(pattern))
     {
 	ESP_LOGE(CMD_TAG_PRFX, "%s: pattern \"%s\" is invalid", __func__, pattern);
@@ -620,7 +600,6 @@ esp_err_t Server::ls(SDMMC::Device& device, const char pattern[])
     	int entry_cnt = 0;
 	DIR *dir;	// Directory descriptor
 	struct stat statbuf;	// buffer for stat
-//	char* in_pattern = device.get_cwd(pattern);
 	char* in_pattern = fake_cwd.get(pattern);
 
     if (stat(in_pattern, &statbuf) == -1)
@@ -830,23 +809,20 @@ esp_err_t Server::cp(SDMMC::Device& device, const char src_raw[], const char des
 	return ESP_ERR_INVALID_ARG;
     }; /* if is_empty(dest_raw) */
 
-//    if (!device.valid_path(src_raw))
     if (!fake_cwd.valid_path(src_raw))
     {
 	ESP_LOGE(CMD_TAG_PRFX, "%s: the source file name \"%s\" is invalid", __func__, src_raw);
 	return ESP_ERR_NOT_FOUND;
     }; /* !device.valid_path(pattern) */
-//    if (!device.valid_path(dest_raw))
+
     if (!fake_cwd.valid_path(dest_raw))
     {
 	ESP_LOGE(CMD_TAG_PRFX, "%s: the destination file name \"%s\" is invalid", __func__, dest_raw);
 	return ESP_ERR_NOT_FOUND;
     }; /* !device.valid_path(pattern) */
 
-//	char *src = device.get_cwd(src_raw);
 	char *src = fake_cwd.get(src_raw);
 
-//#ifdef __PURE_C__
 #if __cplusplus < 201703L
 
 	struct stat st;
@@ -978,19 +954,15 @@ esp_err_t Server::cp(SDMMC::Device& device, const char src_raw[], const char des
     }; /* if (S_ISDIR(st.st_mode)) */
 
     /* or open source file at this point? */
-//    src = (char*)malloc(strlen(device.curr_cwd()) + 1);
     src = (char*)malloc(strlen(fake_cwd.get_current()) + 1);
     if (src == nullptr)
     {
-//	ESP_LOGE(CMD_TAG_PRFX, "%s: not enought memory for store source file name \"%s\"", __func__, device.curr_cwd());
 	ESP_LOGE(CMD_TAG_PRFX, "%s: not enought memory for store source file name \"%s\"", __func__, fake_cwd.get_current());
 	return ESP_ERR_NO_MEM;
     }; /* if (src == nullptr) */
-//    strcpy(src, device.curr_cwd());
     strcpy(src, fake_cwd.get_current());
 
 	char* srcbase = basename(src);
-//	char *dest = device.get_cwd(dest_raw);
 	char *dest = fake_cwd.get(dest_raw);
 
     // Check if destination file is exist
@@ -1049,7 +1021,6 @@ esp_err_t Server::cp(SDMMC::Device& device, const char src_raw[], const char des
 
     if (!destfile)
     {
-//	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "failed creating file %s, aborting ", device.curr_cwd());
 	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "failed creating file %s, aborting ", fake_cwd.get_current());
 	fclose(srcfile);
 	return ESP_ERR_NOT_FOUND;
@@ -1116,7 +1087,6 @@ esp_err_t Server::mv(SDMMC::Device& device, const char src_raw[], const char des
 
 
 
-//#ifdef __PURE_C__
 #if __cplusplus < 201703L
 
 	char *src = device.get_cwd(src_raw);
@@ -1226,7 +1196,6 @@ esp_err_t Server::mv(SDMMC::Device& device, const char src_raw[], const char des
     return ESP_OK;
 #else
 
-//	char *src = device.get_cwd(src_raw);
 	char *src = fake_cwd.get(src_raw);
 	struct stat st_src;
 
@@ -1245,15 +1214,12 @@ esp_err_t Server::mv(SDMMC::Device& device, const char src_raw[], const char des
 	ESP_LOGE(CMD_TAG_PRFX, "%s: Not enought memory for store souce file name", __func__);
 	return ESP_ERR_NO_MEM;
     }; /* if src == NULL*/
-//    strcpy(src, device.curr_cwd());
     strcpy(src, fake_cwd.get_current());
-    //    src = strcpy((char*)malloc(strlen(src) * sizeof(char)) + 1, src);
 
 
 	char *dest = NULL;
 	struct stat st_dest;
 
-//    dest = device.get_cwd(dest_raw);
     dest = fake_cwd.get(dest_raw);
 
     cout << aso::format("Move file \"%s\" (%s) to \"%s\" (%s)") %src_raw %src
@@ -1354,10 +1320,8 @@ esp_err_t Server::rm(SDMMC::Device& device, const char pattern[])
     }; /* !device.valid_path(pattern) */
 
 	struct stat st;
-//	char *path = device.get_cwd(pattern);
 	char *path = fake_cwd.get(pattern);
 
-//    if (pattern == NULL || strcmp(pattern, "") == 0)
     if (empty(pattern))
     {
 	ESP_LOGE(CMD_TAG_PRFX, "%s: invoke command \"%s\" without parameters.\n%s", __func__, __func__,
@@ -1365,7 +1329,6 @@ esp_err_t Server::rm(SDMMC::Device& device, const char pattern[])
 	return ESP_ERR_INVALID_ARG;
     }; /* if empty(pattern) */ /* if pattern == NULL || strcmp(pattern, "") */
 
-//    cout << "Delete file " << '"' << pattern << '"' << endl;
     ESP_LOGI(CMD_TAG_PRFX, "%s: delete file \"%s\" (%s)", __func__,  pattern, path);
 //#ifdef __PURE_C__
 #if __cplusplus < 201703L
@@ -1418,7 +1381,6 @@ esp_err_t Server::rm(SDMMC::Device& device, const char pattern[])
     {
 	ESP_LOGE(CMD_TAG_PRFX, "%s: Fail when deleting \"%s\": %s", __func__, pattern, strerror(errno));
 
-//	ESP_LOGE(CMD_TAG_PRFX, "%s: Error %d: %s", __func__, errno, strerror(errno));
 	return ESP_FAIL;
     }; /* if errno */
 
@@ -1437,7 +1399,6 @@ esp_err_t Server::rm(SDMMC::Device& device, const char pattern[])
 esp_err_t Server::cat(SDMMC::Device& device, const char fname[])
 {
 
-//    if (!device.valid_path(fname))
     if (!fake_cwd.valid_path(fname))
     {
 	ESP_LOGE(CMD_TAG_PRFX, "%s: pattern \"%s\" is invalid", __func__, fname);
@@ -1445,7 +1406,6 @@ esp_err_t Server::cat(SDMMC::Device& device, const char fname[])
     }; /* !device.valid_path(fname) */
 
 	struct stat st;
-//	char *fullname = device.get_cwd(fname);
 	char *fullname = fake_cwd.get(fname);
 	FILE *text = nullptr; // file for type to screen
 
@@ -1465,7 +1425,6 @@ esp_err_t Server::cat(SDMMC::Device& device, const char fname[])
 	 << aso::format("*** Printing contents of the file <%s> (realname '%s'). ***") % fname % fullname  << endl
 	 << endl;
 
-//#ifdef __PURE_C__
 #if __cplusplus < 201703L
 
     // Check if destination file exists before deleting
@@ -1532,7 +1491,6 @@ esp_err_t Server::cat(SDMMC::Device& device, const char fname[])
     for (char c = getc(text); !feof(text); c = getc(text))
 	putchar(c);
 
-//    putchar('\n');
     if (errno)
     {
 	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Error during type the file %s (%s) to output, %s", fname, fullname, strerror(errno));
@@ -1595,7 +1553,6 @@ static esp_err_t err4existent(const char fname[], const struct stat* statbuf);
 // type text from keyboard to file and to screen
 esp_err_t Server::type(SDMMC::Device& device, const char fname[], size_t sector_size)
 {
-//    if (!device.valid_path(fname))
     if (!fake_cwd.valid_path(fname))
     {
 	ESP_LOGE(CMD_TAG_PRFX, "%s: pattern \"%s\" is invalid", __func__, fname);
@@ -1603,7 +1560,6 @@ esp_err_t Server::type(SDMMC::Device& device, const char fname[], size_t sector_
     }; /* !device.valid_path(fname) */
 
 	struct stat st;
-//	char *fullname = device.get_cwd(fname);
 	char *fullname = fake_cwd.get(fname);
 	FILE *storage = NULL;
 

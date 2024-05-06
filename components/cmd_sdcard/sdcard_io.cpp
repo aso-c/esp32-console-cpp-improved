@@ -29,10 +29,8 @@
 #include <argtable3/argtable3.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-//#include <unistd.h>
 #include <regex>
 #ifdef __PURE_C__
-//#include <fcntl.h>
 #include <dirent.h>
 #else
 #if __cplusplus < 201703L
@@ -46,7 +44,7 @@
 #include <sdmmc_cmd.h>
 #include <driver/sdmmc_host.h>
 
-#include "cwd_emulate"	//FIXME Include only for once build, remove after not needed!!!
+//#include "cwd_emulate"	//FIXME Include only for once build, remove after not needed!!!
 #include "sdcard_io"
 
 #include "extrstream"
