@@ -270,44 +270,44 @@ static esp_err_t get_value_from_nvs(const char *key, const char *str_type)
         int8_t value;
         err = nvs_get_i8(nvs, key, &value);
         if (err == ESP_OK) {
-            printf("%d\n", value);
+            printf("%"PRIi8"\n", value);
         }
     } else if (type == NVS_TYPE_U8) {
         uint8_t value;
         err = nvs_get_u8(nvs, key, &value);
         if (err == ESP_OK) {
-            printf("%u\n", value);
+            printf("%"PRIu8"\n", value);
         }
     } else if (type == NVS_TYPE_I16) {
         int16_t value;
         err = nvs_get_i16(nvs, key, &value);
         if (err == ESP_OK) {
-            printf("%u\n", value);
+            printf("%"PRIi16"\n", value);
         }
     } else if (type == NVS_TYPE_U16) {
         uint16_t value;
         if ((err = nvs_get_u16(nvs, key, &value)) == ESP_OK) {
-            printf("%u\n", value);
+            printf("%"PRIu16"\n", value);
         }
     } else if (type == NVS_TYPE_I32) {
         int32_t value;
         if ((err = nvs_get_i32(nvs, key, &value)) == ESP_OK) {
-            printf("%d\n", value);
+            printf(/*"%ld\n"*/"%"PRIi32"\n", value);
         }
     } else if (type == NVS_TYPE_U32) {
         uint32_t value;
         if ((err = nvs_get_u32(nvs, key, &value)) == ESP_OK) {
-            printf("%u\n", value);
+            printf("%"PRIu32"\n", value);
         }
     } else if (type == NVS_TYPE_I64) {
         int64_t value;
         if ((err = nvs_get_i64(nvs, key, &value)) == ESP_OK) {
-            printf("%lld\n", value);
+            printf("%"PRIi64"\n", value);
         }
     } else if (type == NVS_TYPE_U64) {
         uint64_t value;
         if ( (err = nvs_get_u64(nvs, key, &value)) == ESP_OK) {
-            printf("%llu\n", value);
+            printf("%"PRIu64"\n", value);
         }
     } else if (type == NVS_TYPE_STR) {
         size_t len;
@@ -374,20 +374,31 @@ static int list(const char *part, const char *name, const char *str_type)
 {
     nvs_type_t type = str_to_type(str_type);
 
-    nvs_iterator_t it = nvs_entry_find(part, NULL, type);
-    if (it == NULL) {
-        ESP_LOGE(TAG, "No such enty was found");
+    nvs_iterator_t it = NULL;
+    esp_err_t result = nvs_entry_find(part, NULL, type, &it);
+    if (result == ESP_ERR_NVS_NOT_FOUND) {
+        ESP_LOGE(TAG, "No such entry was found");
+        return 1;
+    }
+
+    if (result != ESP_OK) {
+        ESP_LOGE(TAG, "NVS error: %s", esp_err_to_name(result));
         return 1;
     }
 
     do {
         nvs_entry_info_t info;
         nvs_entry_info(it, &info);
-        it = nvs_entry_next(it);
+        result = nvs_entry_next(&it);
 
         printf("namespace '%s', key '%s', type '%s' \n",
                info.namespace_name, info.key, type_to_str(info.type));
-    } while (it != NULL);
+    } while (result == ESP_OK);
+
+    if (result != ESP_ERR_NVS_NOT_FOUND) { // the last iteration ran into an internal error
+        ESP_LOGE(TAG, "NVS error %s at current iteration, stopping.", esp_err_to_name(result));
+        return 1;
+    }
 
     return 0;
 }
@@ -536,9 +547,9 @@ void register_nvs(void)
     const esp_console_cmd_t set_cmd = {
         .command = "nvs_set",
         .help = "Set key-value pair in selected namespace.\n"
-        "Examples:                        "
-        " nvs_set VarName i32 -v 123 \n "
-        " nvs_set VarName str -v YourString            "
+        "Examples:\n"
+        " nvs_set VarName i32 -v 123 \n"
+        " nvs_set VarName str -v YourString \n"
         " nvs_set VarName blob -v 0123456789abcdef \n",
         .hint = NULL,
         .func = &set_value,
@@ -580,11 +591,10 @@ void register_nvs(void)
 
     const esp_console_cmd_t list_entries_cmd = {
         .command = "nvs_list",
-        .help = "List of the key-value pairs, that stored in NVS.  "
-        "Namespace and type can be  specified to print only selected key-value pairs. "
-        "Following command printout the variables stored in the 'nvs' partition, of the 'storage' namespace with type uint32_t\n"
-        "Example:\n"
-        " nvs_list nvs -n storage -t u32",
+        .help = "List stored key-value pairs stored in NVS."
+        "Namespace and type can be specified to print only those key-value pairs.\n"
+        "Following command list variables stored inside 'nvs' partition, under namespace 'storage' with type uint32_t"
+        "Example: nvs_list nvs -n storage -t u32 \n",
         .hint = NULL,
         .func = &list_entries,
         .argtable = &list_args

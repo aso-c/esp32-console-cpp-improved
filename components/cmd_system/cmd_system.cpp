@@ -18,7 +18,7 @@
 
 //#include <thread>
 //#include "esp_log.h"
-#include "gpio_cxx.hpp"
+//#include "gpio_cxx.hpp"
 
 //#define __WITH_STDIO__
 //#define __WITH_BOOST__
@@ -27,12 +27,15 @@
 
 #include <string.h>
 #include <ctype.h>
+#include <inttypes.h>
 #include <unistd.h>
 #include "esp_log.h"
 #include "esp_console.h"
-#include "esp_system.h"
+//#include "esp_system.h"
+#include "esp_chip_info.h"
 #include "esp_sleep.h"
-#include "esp_spi_flash.h"
+//#include "esp_spi_flash.h"
+#include "esp_flash.h"
 #include "driver/rtc_io.h"
 #include "driver/uart.h"
 #include "argtable3/argtable3.h"
@@ -93,6 +96,7 @@ static void register_light_sleep(void);
 #if WITH_TASKS_INFO
 static void register_tasks(void);
 #endif
+static void register_log_level(void);
 
 void register_system_common(void)
 {
@@ -103,6 +107,7 @@ void register_system_common(void)
 #if WITH_TASKS_INFO
     register_tasks();
 #endif
+    register_log_level();
 }
 
 void register_system_sleep(void)
@@ -120,9 +125,58 @@ void register_system(void)
 /* 'version' command */
 static int get_version(int argc, char **argv)
 {
-	esp_chip_info_t info;
-
+    const char *model;
+    esp_chip_info_t info;
+    uint32_t flash_size;
     esp_chip_info(&info);
+
+    switch(info.model) {
+        case CHIP_ESP32:
+            model = "ESP32";
+            break;
+        case CHIP_ESP32S2:
+            model = "ESP32-S2";
+            break;
+        case CHIP_ESP32S3:
+            model = "ESP32-S3";
+            break;
+        case CHIP_ESP32C3:
+            model = "ESP32-C3";
+            break;
+        case CHIP_ESP32H2:
+            model = "ESP32-H2";
+            break;
+        case CHIP_ESP32C2:
+            model = "ESP32-C2";
+            break;
+        default:
+            model = "Unknown";
+            break;
+    }
+
+#if 0	// org version of print systeminfo, v.5.0.6
+    if(esp_flash_get_size(NULL, &flash_size) != ESP_OK) {
+        printf("Get flash size failed");
+        return 1;
+    }
+    printf("IDF Version:%s\r\n", esp_get_idf_version());
+    printf("Chip info:\r\n");
+    printf("\tmodel:%s\r\n", model);
+    printf("\tcores:%d\r\n", info.cores);
+    printf("\tfeature:%s%s%s%s%"PRIu32"%s\r\n",
+           info.features & CHIP_FEATURE_WIFI_BGN ? "/802.11bgn" : "",
+           info.features & CHIP_FEATURE_BLE ? "/BLE" : "",
+           info.features & CHIP_FEATURE_BT ? "/BT" : "",
+           info.features & CHIP_FEATURE_EMB_FLASH ? "/Embedded-Flash:" : "/External-Flash:",
+           flash_size / (1024 * 1024), " MB");
+    printf("\trevision number:%d\r\n", info.revision);
+#endif // org version of print systeminfo, v.5.0.6
+
+    if (esp_flash_get_size(NULL, &flash_size) != ESP_OK)
+    {
+        cout << "Get flash size failed" << endl;
+        return 1;
+    }; /* if esp_flash_get_size(NULL, &flash_size) != ESP_OK */
 
     cout << aso::format("ESP Console Example, Version: %s-%s of %s,")
 	  % CONFIG_APP_PROJECT_VER
@@ -131,14 +185,16 @@ static int get_version(int argc, char **argv)
     cout << aso::format("\t\t\t\t\t      modified by %s") % CONFIG_APP_PROJECT_AUTHOR << std::endl;
     cout << "IDF Version: " << esp_get_idf_version() << endl;
     cout << "Chip info: " << endl;
-    cout << "\tmodel: " << (info.model == CHIP_ESP32 ? "ESP32" : "Unknown") << endl;
+//    cout << "\tmodel: " << (info.model == CHIP_ESP32 ? "ESP32" : "Unknown") << endl;
+    cout << "\tmodel: " << model << endl;
     cout << "\tcores: " << (int)info.cores << endl;
     cout << aso::format("\tfeature:%s%s%s%s%d%s")
          % (info.features & CHIP_FEATURE_WIFI_BGN ? "/802.11bgn" : "")
          % (info.features & CHIP_FEATURE_BLE ? "/BLE" : "")
          % (info.features & CHIP_FEATURE_BT ? "/BT" : "")
          % (info.features & CHIP_FEATURE_EMB_FLASH ? "/Embedded-Flash:" : "/External-Flash:")
-         % (spi_flash_get_chip_size() / (1024 * 1024)) % " MB" << std::endl;
+//         % (spi_flash_get_chip_size() / (1024 * 1024)) % " MB" << std::endl;
+         % (flash_size / (1024 * 1024)) % " MB" << std::endl;
     cout << "\trevision number: " << (int)info.revision << endl;
 
     return 0;
@@ -170,8 +226,6 @@ static int restart(int argc, char **argv)
 static void register_restart(void)
 {
 #pragma GCC diagnostic push
-//#pragma -Wmissing-field-initializers
-//#pragma GCC diagnostic [warning|error|ignored] OPTION
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
     const esp_console_cmd_t cmd = {
         .command = "restart",
@@ -212,7 +266,6 @@ static int heap_size(int argc, char **argv)
 {
     uint32_t heap_size = heap_caps_get_minimum_free_size(MALLOC_CAP_DEFAULT);
     cout << "min heap size: " << prn_KMbytes(heap_size);
-//    cout << " (" << prettybytes(heap_size) << " bytes)" << endl;
     cout << " (" << prettynumber(heap_size) << " bytes)" << endl;
     return 0;
 }; /* heap_size */
@@ -452,6 +505,81 @@ static void register_light_sleep(void)
     ESP_ERROR_CHECK( esp_console_cmd_register(&cmd) );
 }
 
+/** log_level command changes log level via esp_log_level_set */
+
+static struct {
+    struct arg_str *tag;
+    struct arg_str *level;
+    struct arg_end *end;
+} log_level_args;
+
+static const char* s_log_level_names[] = {
+    "none",
+    "error",
+    "warn",
+    "info",
+    "debug",
+    "verbose"
+};
+
+template <typename T>
+inline T next(T& item)
+{
+    item = static_cast<T>(static_cast<int>(item) + 1);
+    return item;
+}; /* next() */
+
+
+static int log_level(int argc, char **argv)
+{
+    int nerrors = arg_parse(argc, argv, (void **) &log_level_args);
+    if (nerrors != 0) {
+        arg_print_errors(stderr, log_level_args.end, argv[0]);
+        return 1;
+    }
+    assert(log_level_args.tag->count == 1);
+    assert(log_level_args.level->count == 1);
+    const char* tag = log_level_args.tag->sval[0];
+    const char* level_str = log_level_args.level->sval[0];
+    esp_log_level_t level;
+    size_t level_len = strlen(level_str);
+//    for (level = ESP_LOG_NONE; level <= ESP_LOG_VERBOSE; level++)
+//    for (level = ESP_LOG_NONE; level <= ESP_LOG_VERBOSE; level = static_cast<esp_log_level_t>(static_cast<int>(level) + 1))
+    for (level = ESP_LOG_NONE; level <= ESP_LOG_VERBOSE; next(level))
+    {
+        if (memcmp(level_str, s_log_level_names[level], level_len) == 0) {
+            break;
+        }
+    }; /* for level = ESP_LOG_NONE; level <= ESP_LOG_VERBOSE; level++ */
+    if (level > ESP_LOG_VERBOSE) {
+        printf("Invalid log level '%s', choose from none|error|warn|info|debug|verbose\n", level_str);
+        return 1;
+    }
+    if (level > CONFIG_LOG_MAXIMUM_LEVEL) {
+        printf("Can't set log level to %s, max level limited in menuconfig to %s. "
+               "Please increase CONFIG_LOG_MAXIMUM_LEVEL in menuconfig.\n",
+               s_log_level_names[level], s_log_level_names[CONFIG_LOG_MAXIMUM_LEVEL]);
+        return 1;
+    }
+    esp_log_level_set(tag, level);
+    return 0;
+}
+
+static void register_log_level(void)
+{
+    log_level_args.tag = arg_str1(NULL, NULL, "<tag|*>", "Log tag to set the level for, or * to set for all tags");
+    log_level_args.level = arg_str1(NULL, NULL, "<none|error|warn|debug|verbose>", "Log level to set. Abbreviated words are accepted.");
+    log_level_args.end = arg_end(2);
+
+    const esp_console_cmd_t cmd = {
+        .command = "log_level",
+        .help = "Set log level for all tags or a specific tag.",
+        .hint = NULL,
+        .func = &log_level,
+        .argtable = &log_level_args
+    };
+    ESP_ERROR_CHECK( esp_console_cmd_register(&cmd) );
+}
 
 
 /*
@@ -462,8 +590,7 @@ const char* version_str(void)
 {
     return "Version " CONFIG_APP_PROJECT_VER "-" CONFIG_APP_PROJECT_FLAVOUR
 	    " of " CONFIG_APP_PROJECT_DATE ","
-	    " modified by " CONFIG_APP_PROJECT_AUTHOR "."/* "\r\n"
-	    "Build Date: " __DATE__ " " __TIME__ "."*/;
+	    " modified by " CONFIG_APP_PROJECT_AUTHOR ".";
 }; /* get_version */
 
 
@@ -540,11 +667,9 @@ ostream& pretty_bytes(ostream& out, uint32_t value)
 
     if (head > 0)
     {
-	//	printf("%c%03u", DIGDELIM, value % 1000);
 	out << prettynumber(head) << DIGDELIM << setw(3) << setfill('0') << value % 1000;
     }
     else
-//	printf("%u", value);
 	out << value;
     return out;
 }; /* pretty_bytes */
@@ -562,14 +687,12 @@ ostream& prn_KMbytes(ostream& out, uint32_t value)
     else if (value < Knum * Knum)
     {
 	// Printout of Kbytes
-//	printf("%u Kbytes", value / Knum);
 	out << value / Knum << " Kbytes";
 	;
     } /* else if size < Knum^2 */
     else if (value < Knum * Knum * Knum)
     {
 	// Printout of Mbytes
-//	printf("%u Mbytes", value / Knum / Knum);
 	out << value / Knum / Knum << " Mbytes";
     } /* else if size < Knum^3 */
     else

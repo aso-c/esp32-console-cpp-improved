@@ -650,7 +650,7 @@ public:
     //	    ESP_OK on success
     //	    One of the error codes from SDMMC host controller
     esp_err_t erase_sectors(size_t start_sector, size_t sector_count, sdmmc_erase_arg_t arg)
-		{ return sdmmc_erase_sectors(&self, start_sector, sector_count, arg);};
+		{ return sdmmc_erase_sectors(self, start_sector, sector_count, arg);};
 
     // Check if SD/MMC card supports discard
     // Parameters
@@ -658,7 +658,7 @@ public:
     // Returns
     //	    ESP_OK if supported by the card/device
     //	    ESP_FAIL if not supported by the card/device
-    esp_err_t can_discard() { return sdmmc_can_discard(&self);};
+    esp_err_t can_discard() { return sdmmc_can_discard(self);};
 
     // Check if SD/MMC card supports trim
     // Parameters
@@ -666,7 +666,7 @@ public:
     // Returns
     //	    ESP_OK if supported by the card/device
     //	    ESP_FAIL if not supported by the card/device
-    esp_err_t can_trim() { return sdmmc_can_trim(&self);};
+    esp_err_t can_trim() { return sdmmc_can_trim(self);};
 
     // Check if SD/MMC card supports sanitize
     // Parameters
@@ -674,7 +674,7 @@ public:
     // Returns:
     //	    ESP_OK if supported by the card/device
     //	    ESP_FAIL if not supported by the card/device
-    esp_err_t mmc_can_sanitize() {return sdmmc_mmc_can_sanitize(&self);};
+    esp_err_t mmc_can_sanitize() {return sdmmc_mmc_can_sanitize(self);};
 
     //Sanitize the data that was unmapped by a Discard command
     // Warning! Discard command has to precede sanitize operation.
@@ -685,7 +685,7 @@ public:
     // Returns
     //	    ESP_OK on success
     //	    One of the error codes from SDMMC host controller
-    esp_err_t mmc_sanitize(uint32_t timeout_ms) { return sdmmc_mmc_sanitize(&self, timeout_ms); };
+    esp_err_t mmc_sanitize(uint32_t timeout_ms) { return sdmmc_mmc_sanitize(self, timeout_ms); };
 
     // Erase complete SD/MMC card
     // Parameters
@@ -693,7 +693,7 @@ public:
     // Returns
     //	    ESP_OK on success
     //	    One of the error codes from SDMMC host controller
-    esp_err_t full_erase() { return sdmmc_full_erase(&self);};
+    esp_err_t full_erase() { return sdmmc_full_erase(self);};
 #endif	// ESP_IDF_VERSION_VAL(x,y,p)
 
 private:
@@ -718,9 +718,13 @@ struct Device
 {
 
     Device(bus::width = bus::width_def, Host::Pullup = Host::nopullup,
-	    esp_vfs_fat_sdmmc_mount_config_t&& mnt_cfg = {false, 5, 16*1024});
-    Device(Card::format::mntfail autofmt/* = Card::format::no*/,
-	    int max_files = 5, size_t unit_size = 16 * 1024,
+	    esp_vfs_fat_sdmmc_mount_config_t&& mnt_cfg = {
+						.format_if_mount_failed = false,
+						.max_files = 5,
+						.allocation_unit_size = 16*1024,
+						.disk_status_check_enable = false});
+    Device(Card::format::mntfail autofmt,
+	    int max_files = 5, size_t unit_size = 16 * 1024, bool disk_st_chk = false,
 	    bus::width = bus::width_def, Host::Pullup = Host::nopullup);
 
     Host& host() {return _host;};
@@ -735,26 +739,6 @@ struct Device
     //esp_err_t unmount(const char *base_path, sdmmc_card_t *card);	// Unmount mounted SD-card "card", mounted onto mountpath
     bool mounted() {return card != nullptr;};	// is devise mounted?
 
-#if 0
-    // Path valididy - whatever the path exist or not -
-    // any subpath is a valid existing path
-    // method can modify fake_cwd::operative_path_buf
-    bool valid_path(const char[]);
-#endif
-
-#if 0
-    // get current dir
-    // trailing slash in returned string is absent guaranteed
-    char* get_cwd() {return fake_cwd.get();};
-    // get current dir (if path == NULL or "") or generate fullpath for sended path
-    // absent trailing slash in returned string is guaranteed
-    char* get_cwd(const char path[]) {return fake_cwd.get(path);};
-    char* raw_cwd(const char path[] = nullptr) {return fake_cwd.raw_get(path);};
-    char* curr_cwd() {return fake_cwd.get_current();};
-    // change cwd dir
-    esp_err_t change_currdir(const char path[])
-    { return mounted()? fake_cwd.change_dir( (path == nullptr || path[0] == '\0')? mountpath(): path): ESP_FAIL; }
-#endif
 
     // get mountpath
     const char *mountpath() const {return target;};
@@ -773,10 +757,6 @@ private:
     Host _host;
     const char* target = nullptr;
     esp_vfs_fat_sdmmc_mount_config_t mnt;
-#if 0
-    char fake_cwd_path[PATH_MAX] = "";	// simulation current dir at this device
-    fs::CWD_emulating fake_cwd;
-#endif
 
     void selective_log_level_set(const char tag[], esp_log_level_t level) {esp_log_level_set(tag, level);/* for debug purposes */};
 

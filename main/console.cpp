@@ -10,8 +10,7 @@
 #include <cstdlib>
 #include <iostream>
 //#include <thread>
-//#include "esp_log.h"
-#include "gpio_cxx.hpp"
+//#include "gpio_cxx.hpp"
 
 //#include <boost/format.hpp>
 
@@ -33,7 +32,7 @@
 #include "nvs.h"
 #include "nvs_flash.h"
 
-using namespace idf;
+//using namespace idf;
 using namespace std;
 
 #ifdef CONFIG_ESP_CONSOLE_USB_CDC

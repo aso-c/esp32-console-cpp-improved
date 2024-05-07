@@ -456,18 +456,20 @@ Device::Device(bus::width width, Host::Pullup pullst, esp_vfs_fat_sdmmc_mount_co
 	//ESP_LOGI(TAG, "Initializing SD card");
 }; /* Device::Device(bus::width, Host::Pullup, esp_vfs_fat_sdmmc_mount_config_t&) */
 
-Device::Device(Card::format::mntfail autofmt, int max_files, size_t size,
+Device::Device(Card::format::mntfail autofmt, int max_files, size_t size, bool disk_st_chk,
 	    bus::width width, Host::Pullup pull):
 		_host(width, pull)//,
 		/*fake_cwd(fake_cwd_path, sizeof(fake_cwd_path))*/
 {
     /*selective_log_level_set("Device::valid_path", ESP_LOG_DEBUG);*/	/* for debug purposes */
+	//ESP_LOGI(TAG, "Initializing SD card");
         mnt.format_if_mount_failed = (autofmt == Card::format::yes)? true: false;
     //	mnt.max_files = 5;
         mnt.max_files = max_files;
     //	mnt.allocation_unit_size = 16 * 1024;
         mnt.allocation_unit_size = size;
-    	//ESP_LOGI(TAG, "Initializing SD card");
+    //    mnt.disk_status_check_enable = false;
+        mnt.disk_status_check_enable = disk_st_chk;
 }; /* Device::Device(Card::format::mntfail, int, size_t, bus::width, Host::Pullup) */
 
 
