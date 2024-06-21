@@ -323,16 +323,17 @@ bool Server::valid_path(const char path[])
 
 #define CMD_NM "mkdir"
 // create a new directory
-esp_err_t Server::mkdir(SDMMC::Device& device, const char dirname[])
+//esp_err_t Server::mkdir(SDMMC::Device& device, const char dirname[])
+esp_err_t Server::mkdir(SDMMC::Device& device, const std::string& dirname)
 {
 //    if (!device.valid_path(dirname))
-    if (!fake_cwd.valid(dirname))
+    if (!fake_cwd.valid(dirname.c_str()))
     {
-	ESP_LOGE(CMD_TAG_PRFX, "%s: the new directory name \"%s\" is invalid", __func__, dirname);
+	ESP_LOGE(CMD_TAG_PRFX, "%s: the new directory name \"%s\" is invalid", __func__, dirname.c_str());
 	return ESP_ERR_NOT_FOUND;
     }; /* !device.valid_path(pattern) */
 
-    if (empty(dirname))
+    if (empty(dirname.c_str()))
     {
 	ESP_LOGE(CMD_TAG_PRFX, "%s: invoke command \"%s\" without parameters.\n%s", __func__, CMD_NM,
 		"This command required the creating directory name.");
@@ -363,20 +364,21 @@ esp_err_t Server::mkdir(SDMMC::Device& device, const char dirname[])
 #else
 
 	struct stat statbuf;
-	char *path = fake_cwd.compose(dirname);
+//	char *path = fake_cwd.compose(dirname.c_str());
+	std::string path = fake_cwd.compose(dirname.c_str());
 
-    ESP_LOGI(CMD_TAG_PRFX, "%s: Create directory with name \"%s\", real path is %s", __func__, dirname, path);
+    ESP_LOGI(CMD_TAG_PRFX, "%s: Create directory with name \"%s\", real path is %s", __func__, dirname.c_str(), path.c_str());
 
-    if (stat(path, &statbuf) == 0)
+    if (stat(path.c_str(), &statbuf) == 0)
     {
-	ESP_LOGE(CMD_TAG_PRFX, "%s: Invalid argument - requested path \"%s\" is exist; denied create duplication name\n", __func__, path);
+	ESP_LOGE(CMD_TAG_PRFX, "%s: Invalid argument - requested path \"%s\" is exist; denied create duplication name\n", __func__, path.c_str());
 	return ESP_ERR_INVALID_ARG;
     }; /* if stat(tmpstr, &statbuf) == -1 */
     errno = 0;
-    ::mkdir(path, S_IRWXU | S_IRWXG | S_IRWXO);
+    ::mkdir(path.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
     if (errno)
     {
-	ESP_LOGE(CMD_TAG_PRFX, "%s: Error creating directory \"%s\": %s", __func__, dirname, strerror(errno));
+	ESP_LOGE(CMD_TAG_PRFX, "%s: Error creating directory \"%s\": %s", __func__, dirname.c_str(), strerror(errno));
 	return ESP_FAIL;
     }; /* if (errno) */
     return ESP_OK;
