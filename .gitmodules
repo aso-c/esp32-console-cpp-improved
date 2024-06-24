@@ -1,3 +1,6 @@
 [submodule "components/fake_cwd"]
 	path = components/fake_cwd
 	url = https://github.com/aso-c/fake_cwd
+[submodule "components/utils"]
+	path = components/utils
+	url = https://github.com/aso-c/esp32-utils

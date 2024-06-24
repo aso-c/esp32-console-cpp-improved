@@ -326,14 +326,14 @@ bool Server::valid_path(const char path[])
 //esp_err_t Server::mkdir(SDMMC::Device& device, const char dirname[])
 esp_err_t Server::mkdir(SDMMC::Device& device, const std::string& dirname)
 {
-//    if (!device.valid_path(dirname))
     if (!fake_cwd.valid(dirname.c_str()))
     {
 	ESP_LOGE(CMD_TAG_PRFX, "%s: the new directory name \"%s\" is invalid", __func__, dirname.c_str());
 	return ESP_ERR_NOT_FOUND;
     }; /* !device.valid_path(pattern) */
 
-    if (empty(dirname.c_str()))
+//    if (empty(dirname.c_str()))
+    if (astr::is_space(dirname))
     {
 	ESP_LOGE(CMD_TAG_PRFX, "%s: invoke command \"%s\" without parameters.\n%s", __func__, CMD_NM,
 		"This command required the creating directory name.");
@@ -364,7 +364,6 @@ esp_err_t Server::mkdir(SDMMC::Device& device, const std::string& dirname)
 #else
 
 	struct stat statbuf;
-//	char *path = fake_cwd.compose(dirname.c_str());
 	std::string path = fake_cwd.compose(dirname.c_str());
 
     ESP_LOGI(CMD_TAG_PRFX, "%s: Create directory with name \"%s\", real path is %s", __func__, dirname.c_str(), path.c_str());

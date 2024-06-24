@@ -154,24 +154,6 @@ static int get_version(int argc, char **argv)
             break;
     }
 
-#if 0	// org version of print systeminfo, v.5.0.6
-    if(esp_flash_get_size(NULL, &flash_size) != ESP_OK) {
-        printf("Get flash size failed");
-        return 1;
-    }
-    printf("IDF Version:%s\r\n", esp_get_idf_version());
-    printf("Chip info:\r\n");
-    printf("\tmodel:%s\r\n", model);
-    printf("\tcores:%d\r\n", info.cores);
-    printf("\tfeature:%s%s%s%s%"PRIu32"%s\r\n",
-           info.features & CHIP_FEATURE_WIFI_BGN ? "/802.11bgn" : "",
-           info.features & CHIP_FEATURE_BLE ? "/BLE" : "",
-           info.features & CHIP_FEATURE_BT ? "/BT" : "",
-           info.features & CHIP_FEATURE_EMB_FLASH ? "/Embedded-Flash:" : "/External-Flash:",
-           flash_size / (1024 * 1024), " MB");
-    printf("\trevision number:%d\r\n", info.revision);
-#endif // org version of print systeminfo, v.5.0.6
-
     if (esp_flash_get_size(NULL, &flash_size) != ESP_OK)
     {
         cout << "Get flash size failed" << endl;
@@ -181,9 +163,11 @@ static int get_version(int argc, char **argv)
     cout << aso::format("ESP Console Example, Version: %s-%s of %s,")
 	  % CONFIG_APP_PROJECT_VER
 	  % CONFIG_APP_PROJECT_FLAVOUR
-	  % CONFIG_APP_PROJECT_DATE << std::endl;
-    cout << aso::format("\t\t\t\t\t      modified by %s") % CONFIG_APP_PROJECT_AUTHOR << std::endl;
-    cout << "IDF Version: " << esp_get_idf_version() << endl;
+	  % CONFIG_APP_PROJECT_DATE /*<< std::endl;*/
+	  << aso::format(" modified by %s") % CONFIG_APP_PROJECT_AUTHOR << std::endl;
+//    cout << aso::format("\t\t\t\t\t      modified by %s") % CONFIG_APP_PROJECT_AUTHOR << std::endl;
+    cout << "IDF Version\t" << esp_get_idf_version() << endl;
+    cout << "Build w/C++\t" << __cplusplus << endl;
     cout << "Chip info: " << endl;
 //    cout << "\tmodel: " << (info.model == CHIP_ESP32 ? "ESP32" : "Unknown") << endl;
     cout << "\tmodel: " << model << endl;
