@@ -47,10 +47,8 @@ namespace Exec	//---------------------------------------------------------------
     public:
 	Server() {};
 	/// Mount default SD-card slot onto path "mountpoint"
-//	esp_err_t mount(SDMMC::Device&, SDMMC::Card&, const char mountpoint[] = MOUNT_POINT_Default);
 	esp_err_t mount(SDMMC::Device&, SDMMC::Card&, const std::string& mountpoint = MOUNT_POINT_Default);
 	/// Mount SD-card slot "slot_no" onto desired mount path, default mount path is MOUNT_POINT_Default
-//	esp_err_t mount(SDMMC::Device&, SDMMC::Card&, int slot_no, const char mountpoint[] = MOUNT_POINT_Default);
 	esp_err_t mount(SDMMC::Device&, SDMMC::Card&, int slot_no, const std::string& mountpoint = MOUNT_POINT_Default);
 
 	esp_err_t unmount(SDMMC::Device&/*, const char mountpath[] = NULL*/);	// Unmount SD-card from Device
@@ -63,18 +61,16 @@ namespace Exec	//---------------------------------------------------------------
 	esp_err_t ls(SDMMC::Device&, const std::string& pattern = ".");	// print a list of files in the specified directory
 	esp_err_t cp(SDMMC::Device&, const char[] = NULL, const char[] = NULL);	// copy files src to dest
 	esp_err_t mv(SDMMC::Device&, const char src[] = NULL, const char dest[] = NULL);	// move files from src to dest
-	esp_err_t rm(SDMMC::Device&, const char pattern[] = NULL);	// remove files according a pattern
+//	esp_err_t rm(SDMMC::Device&, const char pattern[] = NULL);	// remove files according a pattern
+	esp_err_t rm(SDMMC::Device&, const std::string& pattern = "");	// remove files according a pattern
 	esp_err_t rmdir(SDMMC::Device&, const std::string& dirname = "");   // remove an empty existing directory
 
-	esp_err_t cat(SDMMC::Device&, const char fname[] = NULL);	// type file contents
+//	esp_err_t cat(SDMMC::Device&, const char fname[] = NULL);	// type file contents
+	esp_err_t cat(SDMMC::Device&, const std::string& fname = "");	// type file contents
 
 	esp_err_t type();	// type text from keyboard to screen
 	esp_err_t type(SDMMC::Device&, const char fname[], size_t = 512);	// type text from keyboard to file and to screen
 
-	/// @brief Path validation - whatever the path exist or not -
-	/// any subpath is a valid existing path
-	/// @note method can modify fake_cwd::operative_path_buf
-/*	bool valid_path(const char[]);*/
 
     private:
 

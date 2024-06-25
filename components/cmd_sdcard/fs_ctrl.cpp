@@ -45,16 +45,16 @@
 //#endif // ifdef __PURE_C__
 
 #include <esp_vfs_fat.h>
-#include "sdmmc_cmd.h"
+#include <sdmmc_cmd.h>
 #include <driver/sdmmc_host.h>
 
-#include "cwd_emulate"
-#include "sdcard_io"
+#include <cwd_emulate>
+#include <sdcard_io>
 #include "fs_ctrl"
 
 
-#include "extrstream"
-#include "astring.h"
+#include <extrstream>
+#include <astring.h>
 
 //using namespace idf;
 using namespace std;
@@ -99,10 +99,8 @@ const char* const Server::MOUNT_POINT_Default = SD_MOUNT_POINT;
 
 
     /// Mount default SD-card slot onto path "mountpoint", default mountpoint is MOUNT_POINT_Default
-//    esp_err_t Server::mount(SDMMC::Device& device, SDMMC::Card& card, const char mountpoint[]) // @suppress("Type cannot be resolved") // @suppress("Member declaration not found")
     esp_err_t Server::mount(SDMMC::Device& device, SDMMC::Card& card, const std::string& mountpoint) // @suppress("Type cannot be resolved") // @suppress("Member declaration not found")
     {
-//	if (isdigit(mountpoint[0]))
 	if (astr::is_digitex(mountpoint))
 	    return mount(device, card, atoi(mountpoint.c_str())); // @suppress("Invalid arguments")
 
@@ -123,7 +121,6 @@ const char* const Server::MOUNT_POINT_Default = SD_MOUNT_POINT;
 
 
     /// Mount SD-card slot "slot_no" onto specified mount path, default mountpoint is MOUNT_POINT_Default
-//    esp_err_t Server::mount(SDMMC::Device& device, SDMMC::Card& card, int slot_no, const char mountpoint[]) // @suppress("Member declaration not found") // @suppress("Type cannot be resolved")
     esp_err_t Server::mount(SDMMC::Device& device, SDMMC::Card& card, int slot_no, const std::string& mountpoint) // @suppress("Member declaration not found") // @suppress("Type cannot be resolved")
     {
 	device.slot_no(slot_no); // @suppress("Method cannot be resolved")
@@ -1120,86 +1117,89 @@ esp_err_t Server::mv(SDMMC::Device& device, const char src_raw[], const char des
 #define CMD_NM "rm"
 
 // remove files according a pattern
-esp_err_t Server::rm(SDMMC::Device& device, const char pattern[])
-{
+//esp_err_t Server::rm(SDMMC::Device& device, const char pattern[])
+    esp_err_t Server::rm(SDMMC::Device& device, const std::string& pattern)
+    {
 
 //    if (!device.valid_path(pattern))
-    if (!fake_cwd.valid(pattern))
-    {
-	ESP_LOGE(CMD_TAG_PRFX, "%s: pattern \"%s\" is invalid", __func__, pattern);
-	return ESP_ERR_NOT_FOUND;
-    }; /* !device.valid_path(pattern) */
+	if (!fake_cwd.valid(pattern.c_str()))
+	{
+	    ESP_LOGE(CMD_TAG_PRFX, "%s: pattern \"%s\" is invalid", __func__, pattern.c_str());
+	    return ESP_ERR_NOT_FOUND;
+	}; /* !device.valid_path(pattern) */
 
-	struct stat st;
-	char *path = fake_cwd.compose(pattern);
+	    struct stat st;
+//	char *path = fake_cwd.compose(pattern);
+	    std::string path = fake_cwd.compose(pattern.c_str());
 
-    if (empty(pattern))
-    {
-	ESP_LOGE(CMD_TAG_PRFX, "%s: invoke command \"%s\" without parameters.\n%s", __func__, __func__,
-		"Missing filename to remove.");
-	return ESP_ERR_INVALID_ARG;
-    }; /* if empty(pattern) */ /* if pattern == NULL || strcmp(pattern, "") */
+//    if (empty(pattern))
+	if (astr::is_space(pattern))
+	{
+	    ESP_LOGE(CMD_TAG_PRFX, "%s: invoke command \"%s\" without parameters.\n%s", __func__, __func__,
+		    "Missing filename to remove.");
+	    return ESP_ERR_INVALID_ARG;
+	}; /* if astr::is_space(pattern) */
 
-    ESP_LOGI(CMD_TAG_PRFX, "%s: delete file \"%s\" (%s)", __func__,  pattern, path);
+	ESP_LOGI(CMD_TAG_PRFX, "%s: delete file \"%s\" (%s)", __func__,  pattern.c_str(), path.c_str());
 //#ifdef __PURE_C__
 #if __cplusplus < 201703L
 
-    // Check if destination file exists before deleting
-    if (stat(path, &st) != 0)
-    {
-        // deleting a non-existent file is not possible
-	ESP_LOGE(CMD_TAG_PRFX, "%s: file \"%s\" is not exist - deleting a non-existent file is not possible.\n%s",
-		__func__, pattern, esp_err_to_name(ESP_ERR_NOT_FOUND));
-	return ESP_ERR_NOT_FOUND;
-    }; /* if stat(file_foo, &st) != 0 */
-    if (S_ISDIR(st.st_mode))
-    {
-	ESP_LOGE(CMD_TAG_PRFX, "%s: deleting directories unsupported.\n%s",
-		__func__, esp_err_to_name(ESP_ERR_NOT_SUPPORTED));
-	return ESP_ERR_NOT_SUPPORTED;
-    }; /* if (S_ISDIR(st.st_mode)) */
-    errno = 0;
-    //cout << "Now exec: ===>> " << aso::format("unlink(%s)") % path << "<<===" << endl;
-    unlink(path);
-    if (errno)
-    {
-	ESP_LOGE(CMD_TAG_PRFX, "%s: Fail when deleting \"%s\": %s", __func__, pattern, strerror(errno));
+	// Check if destination file exists before deleting
+	if (stat(path.c_str(), &st) != 0)
+	{
+	    // deleting a non-existent file is not possible
+	    ESP_LOGE(CMD_TAG_PRFX, "%s: file \"%s\" is not exist - deleting a non-existent file is not possible.\n%s",
+		    __func__, pattern.c_str(), esp_err_to_name(ESP_ERR_NOT_FOUND));
+	    return ESP_ERR_NOT_FOUND;
+	}; /* if stat(file_foo, &st) != 0 */
+	if (S_ISDIR(st.st_mode))
+	{
+	    ESP_LOGE(CMD_TAG_PRFX, "%s: deleting directories unsupported.\n%s",
+		    __func__, esp_err_to_name(ESP_ERR_NOT_SUPPORTED));
+	    return ESP_ERR_NOT_SUPPORTED;
+	}; /* if (S_ISDIR(st.st_mode)) */
+	errno = 0;
+	//cout << "Now exec: ===>> " << aso::format("unlink(%s)") % path << "<<===" << endl;
+	unlink(path.c_str());
+	if (errno)
+	{
+	    ESP_LOGE(CMD_TAG_PRFX, "%s: Fail when deleting \"%s\": %s", __func__, pattern.c_str(), strerror(errno));
 
-//	ESP_LOGE(CMD_TAG_PRFX, "%s: Error %d: %s", __func__, errno, strerror(errno));
-	return ESP_FAIL;
-    }; /* if errno */
+	    return ESP_FAIL;
+	}; /* if errno */
 
-    return ESP_OK;
+	return ESP_OK;
+
 #else
-    // Check if destination file exists before deleting
-    if (stat(path, &st) != 0)
-    {
-        // deleting a non-existent file is not possible
-	ESP_LOGE(CMD_TAG_PRFX, "%s: file \"%s\" is not exist - deleting a non-existent file is not possible.\n%s",
-		__func__, pattern, esp_err_to_name(ESP_ERR_NOT_FOUND));
-	return ESP_ERR_NOT_FOUND;
-    }; /* if stat(file_foo, &st) != 0 */
-    if (S_ISDIR(st.st_mode))
-    {
-	ESP_LOGE(CMD_TAG_PRFX, "%s: deleting directories unsupported.\n%s",
-		__func__, esp_err_to_name(ESP_ERR_NOT_SUPPORTED));
-	return ESP_ERR_NOT_SUPPORTED;
-    }; /* if (S_ISDIR(st.st_mode)) */
-    errno = 0;
-    //cout << "Now exec: ===>> " << aso::format("unlink(%s)") % path << "<<===" << endl;
-    unlink(path);
-    if (errno)
-    {
-	ESP_LOGE(CMD_TAG_PRFX, "%s: Fail when deleting \"%s\": %s", __func__, pattern, strerror(errno));
+	// Check if destination file exists before deleting
+	if (stat(path.c_str(), &st) != 0)
+	{
+	    // deleting a non-existent file is not possible
+	    ESP_LOGE(CMD_TAG_PRFX, "%s: file \"%s\" is not exist - deleting a non-existent file is not possible.\n%s",
+		    __func__, pattern.c_str(), esp_err_to_name(ESP_ERR_NOT_FOUND));
+	    return ESP_ERR_NOT_FOUND;
+	}; /* if stat(file_foo, &st) != 0 */
+	if (S_ISDIR(st.st_mode))
+	{
+	    ESP_LOGE(CMD_TAG_PRFX, "%s: deleting directories unsupported.\n%s",
+		    __func__, esp_err_to_name(ESP_ERR_NOT_SUPPORTED));
+	    return ESP_ERR_NOT_SUPPORTED;
+	}; /* if (S_ISDIR(st.st_mode)) */
+	errno = 0;
+	//cout << "Now exec: ===>> " << aso::format("unlink(%s)") % path << "<<===" << endl;
+	unlink(path.c_str());
+	if (errno)
+	{
+	    ESP_LOGE(CMD_TAG_PRFX, "%s: Fail when deleting \"%s\": %s", __func__, pattern.c_str(), strerror(errno));
 
-	return ESP_FAIL;
-    }; /* if errno */
+	    return ESP_FAIL;
+	}; /* if errno */
 
-    return ESP_OK;
+	return ESP_OK;
 
 #endif // __cplusplus < 201703L
 
-}; /* Server::rm */
+    }; /* Server::rm */
 
 
 
@@ -1207,123 +1207,128 @@ esp_err_t Server::rm(SDMMC::Device& device, const char pattern[])
 #define CMD_NM "cat"
 
 // type file contents
-esp_err_t Server::cat(SDMMC::Device& device, const char fname[])
-{
-
-    if (!fake_cwd.valid(fname))
+//    esp_err_t Server::cat(SDMMC::Device& device, const char fname[])
+    esp_err_t Server::cat(SDMMC::Device& device, const std::string& fname)
     {
-	ESP_LOGE(CMD_TAG_PRFX, "%s: pattern \"%s\" is invalid", __func__, fname);
-	return ESP_ERR_NOT_FOUND;
-    }; /* !device.valid_path(fname) */
 
-	struct stat st;
-	char *fullname = fake_cwd.compose(fname);
-	FILE *text = nullptr; // file for type to screen
+	if (!fake_cwd.valid(fname.c_str()))
+	{
+	    ESP_LOGE(CMD_TAG_PRFX, "%s: pattern \"%s\" is invalid", __func__, fname.c_str());
+	    return ESP_ERR_NOT_FOUND;
+	}; /* !device.valid_path(fname) */
 
-    if (empty(fname))
-    {
+	    struct stat st;
+//	    char *fullname = fake_cwd.compose(fname);
+	    std::string fullname = fake_cwd.compose(fname.c_str());
+	    FILE *text = nullptr; // file for type to screen
+
+	if (empty(fname))
+	{
+	    cout << endl
+		<< "*** Printing contents of the file <XXXX fname>. ***" << endl
+		<< endl;
+	    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "invoke command \"%s\" without parameters.\n%s", CMD_NM,
+		    "Missing filename for print to output.");
+
+	    cout << "*** End of printing file XXXX. ** ******************" << endl;
+	    return ESP_ERR_INVALID_ARG;
+	}; /* if empty(fname) */ /* if fname == NULL || strcmp(fname, "") */
+
+//	cout << endl
+//	    << aso::format("*** Printing contents of the file <%s> (realname '%s'). ***") % fname.c_str() % fullname.c_str()  << endl
+//	    << endl;
+
 	cout << endl
-	     << "*** Printing contents of the file <XXXX fname>. ***" << endl
-	     << endl;
-	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "invoke command \"%s\" without parameters.\n%s", CMD_NM,
-		"Missing filename for print to output.");
-
-	cout << "*** End of printing file XXXX. ** ******************" << endl;
-	return ESP_ERR_INVALID_ARG;
-    }; /* if empty(fname) */ /* if fname == NULL || strcmp(fname, "") */
-
-    cout << endl
-	 << aso::format("*** Printing contents of the file <%s> (realname '%s'). ***") % fname % fullname  << endl
-	 << endl;
+	    << "*** Printing contents of the file <" << fname << "> (realname '" << fullname << "'). ***"  << endl
+	    << endl;
 
 #if __cplusplus < 201703L
 
-    // Check if destination file exists before deleting
-    if (stat(fullname, &st) != 0)
-    {
-        // typing a non-exist file is not possible
-    	ESP_LOGE(CMD_TAG_PRFX, "%s: \"%s\" file does not exist - printing of the missing file is not possible.\n%s",
-    		__func__, fname, esp_err_to_name(ESP_ERR_NOT_FOUND));
-    	return ESP_ERR_NOT_FOUND;
-    }; /* if stat(path, &st) != 0 */
+	// Check if destination file exists before typing
+	if (stat(fullname.c_str(), &st) != 0)
+	{
+	    // typing a non-exist file is not possible
+	    ESP_LOGE(CMD_TAG_PRFX, "%s: \"%s\" file does not exist - printing of the missing file is not possible.\n%s",
+		    __func__, fname.c_str(), esp_err_to_name(ESP_ERR_NOT_FOUND));
+	    return ESP_ERR_NOT_FOUND;
+	}; /* if stat(path, &st) != 0 */
 
-    if (S_ISDIR(st.st_mode))
-    {
-    	ESP_LOGE(CMD_TAG_PRFX, "%s: Typing directories unsupported, use the 'ls' command instead.\n%s",
-    		__func__, esp_err_to_name(ESP_ERR_NOT_SUPPORTED));
-    	return ESP_ERR_NOT_SUPPORTED;
-    }; /* if (S_ISDIR(st.st_mode)) */
+	if (S_ISDIR(st.st_mode))
+	{
+	    ESP_LOGE(CMD_TAG_PRFX, "%s: Typing directories unsupported, use the 'ls' command instead.\n%s",
+		    __func__, esp_err_to_name(ESP_ERR_NOT_SUPPORTED));
+	    return ESP_ERR_NOT_SUPPORTED;
+	}; /* if (S_ISDIR(st.st_mode)) */
 
-    errno = 0;	// clear possible errors
-    text = fopen(fullname, "r"); // open the file for type to screen
-    if (!text)
-    {
-	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Error opening file <%s> (%s), %s", fname, fullname, strerror(errno));
-	return ESP_FAIL;
-    }; /* if !FILE */
+	errno = 0;	// clear possible errors
+	text = fopen(fullname.c_str(), "r"); // open the file for type to screen
+	if (!text)
+	{
+	    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Error opening file <%s> (%s), %s", fname.c_str(), fullname.c_str(), strerror(errno));
+	    return ESP_FAIL;
+	}; /* if !FILE */
 
-    for (char c = getc(text); !feof(text); c = getc(text))
-	putchar(c);
+	for (char c = getc(text); !feof(text); c = getc(text))
+	    putchar(c);
 
-//    putchar('\n');
-    if (errno)
-    {
-	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Error during type the file %s (%s) to output, %s", fname, fullname, strerror(errno));
-	fclose(text);
-	return ESP_FAIL;
-    }; /* if errno */
-
+	if (errno)
+	{
+	    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Error during type the file %s (%s) to output, %s", fname.c_str(), fullname.c_str(), strerror(errno));
+	    fclose(text);
+	    return ESP_FAIL;
+	}; /* if errno */
 
 #else
-    // Check if destination file exists before deleting
-    if (stat(fullname, &st) != 0)
-    {
-        // typing a non-exist file is not possible
-    	ESP_LOGE(CMD_TAG_PRFX, "%s: \"%s\" file does not exist - printing of the missing file is not possible.\n%s",
-    		__func__, fname, esp_err_to_name(ESP_ERR_NOT_FOUND));
-    	return ESP_ERR_NOT_FOUND;
-    }; /* if stat(path, &st) != 0 */
 
-    if (S_ISDIR(st.st_mode))
-    {
-    	ESP_LOGE(CMD_TAG_PRFX, "%s: Typing directories unsupported, use the 'ls' command instead.\n%s",
-    		__func__, esp_err_to_name(ESP_ERR_NOT_SUPPORTED));
-    	return ESP_ERR_NOT_SUPPORTED;
-    }; /* if (S_ISDIR(st.st_mode)) */
+	// Check if destination file exists before typing
+	if (stat(fullname.c_str(), &st) != 0)
+	{
+	    // typing a non-exist file is not possible
+	    ESP_LOGE(CMD_TAG_PRFX, "%s: \"%s\" file does not exist - printing of the missing file is not possible.\n%s",
+		    __func__, fname.c_str(), esp_err_to_name(ESP_ERR_NOT_FOUND));
+	    return ESP_ERR_NOT_FOUND;
+	}; /* if stat(path, &st) != 0 */
 
-    errno = 0;	// clear possible errors
-    text = fopen(fullname, "r"); // open the file for type to screen
-    if (!text)
-    {
-	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Error opening file <%s> (%s), %s", fname, fullname, strerror(errno));
-	return ESP_FAIL;
-    }; /* if !FILE */
+	if (S_ISDIR(st.st_mode))
+	{
+	    ESP_LOGE(CMD_TAG_PRFX, "%s: Typing directories unsupported, use the 'ls' command instead.\n%s",
+		    __func__, esp_err_to_name(ESP_ERR_NOT_SUPPORTED));
+	    return ESP_ERR_NOT_SUPPORTED;
+	}; /* if (S_ISDIR(st.st_mode)) */
 
-    for (char c = getc(text); !feof(text); c = getc(text))
-	putchar(c);
+	errno = 0;	// clear possible errors
+	text = fopen(fullname.c_str(), "r"); // open the file for type to screen
+	if (!text)
+	{
+	    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Error opening file <%s> (%s), %s", fname.c_str(), fullname.c_str(), strerror(errno));
+	    return ESP_FAIL;
+	}; /* if !FILE */
 
-    if (errno)
-    {
-	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Error during type the file %s (%s) to output, %s", fname, fullname, strerror(errno));
-	fclose(text);
-	return ESP_FAIL;
-    }; /* if errno */
+	for (char c = getc(text); !feof(text); c = getc(text))
+	    putchar(c);
+
+	if (errno)
+	{
+	    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Error during type the file %s (%s) to output, %s", fname.c_str(), fullname.c_str(), strerror(errno));
+	    fclose(text);
+	    return ESP_FAIL;
+	}; /* if errno */
 #endif	// __cplusplus < 201703L
 
-    cout << endl
-	 << "*** End of printing file " << fname << ". **************" << endl
-	 << endl;
+	cout << endl
+	    << "*** End of printing file " << fname << ". **************" << endl
+	    << endl;
 
-    fclose(text);
-    if (errno)
-    {
-	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Error during closing the file %s (%s) to output, %s", fname, fullname, strerror(errno));
 	fclose(text);
-	return ESP_ERR_INVALID_STATE;
-    }; /* if errno */
+	if (errno)
+	{
+	    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Error during closing the file %s (%s) to output, %s", fname.c_str(), fullname.c_str(), strerror(errno));
+	    fclose(text);
+	    return ESP_ERR_INVALID_STATE;
+	}; /* if errno */
 
-    return ESP_OK;
-}; /* cat */
+	return ESP_OK;
+    }; /* cat */
 
 
 
