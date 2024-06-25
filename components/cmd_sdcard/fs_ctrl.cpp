@@ -207,128 +207,9 @@ return ESP_OK;
 }; /* Server::pwd */
 
 
-#if 0
-// if the basename (the last part of the path) - has the characteristics
-// of a directory name, and a dirname (the path prefix) -
-// is an existing file, not a directory, or any other impossible variants
-// of the full file/path name
-bool Server::valid_path(const char path[])
-{
-
-	struct stat st;
-	char *base = basename(path);	// get a filename of a path
-
-    ESP_LOGD(__PRETTY_FUNCTION__, "basename of the path is: \"%s\"", base);
-    ESP_LOGD(__PRETTY_FUNCTION__, "full path is: \"%s\"", path);
-    ESP_LOGD(__PRETTY_FUNCTION__, "dirname path is: \"%.*s\"", base - path, path);
-
-    // if path is empty
-    if (empty(path))
-	return true;	// ESP_LOGD("Device::valid_path", "path is empty, always valid");
-
-    // if path - only base, not a dir
-    if (strlen(path) == 1)
-	return true;	// ESP_LOGD("Device::valid_path", "len of the path - is 1, always valid");
-
-    // if dirname - empty or one symbol length (it can only be the slash)
-    if ((base - path) < 2)
-    {
-	if (strcmp(path, "/..") == 0)	// if path == '/..' - it's invalid
-	    return false;
-	return true;	// ESP_LOGD("Device::valid_path", "Len of dirname is 1 or 0, then path is valid");
-    }; /* if (base - path) < 2 */
-
-    // if base is empty
-    if (!empty(base))
-	base--;	// set base to a last slash in the path
-    else
-    {
-	if (stat(fake_cwd.compose(path), &st) == 0)
-	    if (!S_ISDIR(st.st_mode))	// ESP_LOGD("Device::valid_path", "###!!! the path basename - is empty, test the path \"%s\" (real path is %s) exist and a directory... ###", path, fake_cwd.get_current());
-		return false;	// the path is invalid (inconsist) // ESP_LOGE("Device::valid_path", "Path \"%s\" (real path %s) is a file, but marked as a directory, it's invalid!!!", path, fake_cwd.get_current());
-	ESP_LOGD("Device::valid_path", "###!!! test dirname \"%s\" (real path is %s) preliminary is OK, seek to begin of last dir manually for continue test... ###", path, fake_cwd.current());
-	for (base -= 2; base > path; base--)
-	{
-	    ESP_LOGD("Device::valid_path", "=== base[0] is \"%c\" ===", base[0]);
-	    if (*base == '/')
-		break;
-	}; /* for base--; base > path; base-- */
-    }; /* if empty(base) */
-
-#define sign_place 0x2	// with of the place for the sign
-#define point_sign 0x1	// mark a point symbol in a string
-#define alpha_sign 0x2	// mark a non-point or a non-slash symbol in a string
-#define initial_ctrl (0x3 << 4*sign_place)	// mark for the initial pass of the control of the path validity
-#define alpha_present_mask (alpha_sign | (alpha_sign << 1*sign_place) | (alpha_sign << 2*sign_place))
-#define three_point_mark (point_sign | (point_sign << 1*sign_place) | (point_sign << 2*sign_place))
-
-	unsigned int ctrl_cnt = initial_ctrl;	// marked the firs pass of the control loop
-	unsigned int idx_ctrl = 0;
-    // scan the dirname of the path for found '/.' or '/..' sequence
-    for (char* scan = base; scan >= path; scan--)
-    {
-	ESP_LOGD("Device::valid_path", "current char from the path is: '%c', ctrl_cnt is %2X", *scan, ctrl_cnt);
-
-	switch (scan[0])
-	{
-	// solution point
-	case '/':
-
-	    idx_ctrl = 0;	// reset the idx_ctrl
-	    ESP_LOGD("Device::valid_path", "###### Solution point: current path char ######");
-	    switch (ctrl_cnt)
-	    {
-	    // double slash - prev symbol is slash
-	    case 0:
-		ESP_LOGD("Device::valid_path", "**** double slash and more - is not valid sequence in the path name ****");
-		return false;
-
-	    case three_point_mark:
-		// if more then 3 point sequence in substring
-		ESP_LOGD("Device::valid_path", "3 point or more sequence is present in current substring - nothing to do, continue");
-		break;
-
-	    case initial_ctrl:
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wimplicit-fallthrough="
-		ESP_LOGD(__PRETTY_FUNCTION__, "++++++ The first pass of the control loop ++++++");
-#pragma GCC diagnostic pop
-
-	    default:
-		// if non point sign is present in tested substring
-		if (ctrl_cnt & alpha_present_mask)
-		{
-		    ESP_LOGD("Device::valid_path", "alpha or other then point or slash symbol is present in current processing substring - test subpath for exist, continue");
-		    ctrl_cnt = 0;
-		    continue;
-		}; /* if ctrl_cnt & alpha_present_mask */
-		ESP_LOGD(__PRETTY_FUNCTION__, "====== One or two point sequence in the current meaning substring, ctrl_cnt is %2X, test current subpath for existing ======", ctrl_cnt);
-		ESP_LOGD(__PRETTY_FUNCTION__, "### Testing the current substring \"%s\" for existing ###", fake_cwd.compose(path, scan - path));
-		if ((stat(fake_cwd.compose(path, scan - path), &st) == 0)? !S_ISDIR(st.st_mode): (strcmp(fake_cwd.current(), "/") != 0))
-		    return false;
-	    }; /* switch ctrl_cnt */
-	    ctrl_cnt = 0;
-	    break;
-
-	// point symbol handling
-	case '.':
-	// all other symbols
-	default:
-
-	    if (idx_ctrl < 3)
-		ctrl_cnt |= (((scan[0] == '.')? point_sign: alpha_sign) << idx_ctrl++ * sign_place);	// ESP_LOGD("Device::valid_path", "%d symbol of the processing substring, symbol is \"%c\"", idx_ctrl, scan[0]);
-	}; /* switch scan[0] */
-    }; /* for char* scan = base; scan >= path; scan-- */
-
-    return true;
-}; /* Server::valid_path() */
-#endif
-
-
 
 #define CMD_NM "mkdir"
 // create a new directory
-//esp_err_t Server::mkdir(SDMMC::Device& device, const char dirname[])
 esp_err_t Server::mkdir(SDMMC::Device& device, const std::string& dirname)
 {
     if (!fake_cwd.valid(dirname.c_str()))
@@ -392,18 +273,15 @@ esp_err_t Server::mkdir(SDMMC::Device& device, const std::string& dirname)
 
 #undef CMD_NM
 #define CMD_NM "rmdir"
-// create a new directory
-//esp_err_t Server::rmdir(SDMMC::Device& device, const char dirname[])
+// delete empty directory
 esp_err_t Server::rmdir(SDMMC::Device& device, const std::string& dirname)
 {
-//    if (!fake_cwd.valid(dirname))
     if (!fake_cwd.valid(dirname.c_str()))
     {
 	ESP_LOGE(CMD_TAG_PRFX, "%s: the directory name \"%s\" is invalid", __func__, dirname.c_str());
 	return ESP_ERR_NOT_FOUND;
     }; /* !device.valid_path(pattern) */
 
-//    if (empty(dirname))
     if (astr::is_space(dirname))
     {
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: invoke command \"%s\" without parameters.\n%s", __func__, CMD_NM,
@@ -413,15 +291,15 @@ esp_err_t Server::rmdir(SDMMC::Device& device, const std::string& dirname)
 #if __cplusplus < 201703L
 
 	struct stat st;
-	char *path = device.get_cwd(dirname);
+	std::string path = fake_cwd.compose(dirname.c_str());
 
-    ESP_LOGI(CMD_TAG_PRFX, "%s: Delete directory <%s>, real path is %s", __func__, dirname, path);
+    ESP_LOGI(CMD_TAG_PRFX, "%s: Delete directory <%s>, real path is %s", __func__, dirname.c_str(), path.c_str());
 
     // Check if destination directory or file exists before deleting
-    if (stat(path, &st) != 0)
+    if (stat(path.c_str(), &st) != 0)
     {
-        // deleting a non-exist directory is not possible
-	ESP_LOGE(CMD_TAG_PRFX, "%s: Directory \"%s\" is not exist - deleting a non-existent catalogue is not possible.\n%s", __func__, dirname, esp_err_to_name(ESP_ERR_NOT_FOUND));
+	// deleting a non-exist directory is not possible
+	ESP_LOGE(CMD_TAG_PRFX, "%s: Directory \"%s\" is not exist - deleting a non-existent catalogue is not possible.\n%s", __func__, dirname.c_str(), esp_err_to_name(ESP_ERR_NOT_FOUND));
 	return ESP_ERR_NOT_FOUND;
     }; /* if stat(file_foo, &st) != 0 */
     if (!S_ISDIR(st.st_mode))
@@ -430,7 +308,7 @@ esp_err_t Server::rmdir(SDMMC::Device& device, const std::string& dirname)
 	return ESP_ERR_INVALID_ARG;
     }; /* if (S_ISDIR(st.st_mode)) */
 
-	DIR *dir = opendir(path);	// Directory descriptor
+	DIR *dir = opendir(path.c_str());	// Directory descriptor
 
     errno = 0;	// clear any possible errors
 
@@ -439,22 +317,22 @@ esp_err_t Server::rmdir(SDMMC::Device& device, const std::string& dirname)
     closedir(dir);
     if (errno)
     {
-	ESP_LOGE(CMD_TAG_PRFX, "%s: Fail when closing directory \"%s\": %s", __func__, dirname, strerror(errno));
+	ESP_LOGE(CMD_TAG_PRFX, "%s: Fail when closing directory \"%s\": %s", __func__, dirname.c_str(), strerror(errno));
 	return ESP_FAIL;
     }; /* if errno */
     if (entry)
     {
 	ESP_LOGE(CMD_TAG_PRFX, "%s: Directory \"%s\" is not empty, deletung non-emty directories "
-		"is not supported.", __func__, dirname);
+		"is not supported.", __func__, dirname.c_str());
 	return ESP_ERR_NOT_SUPPORTED;
     }; /* if (entry) */
 
     errno = 0;
     //cout << aso::format("[[[ unlink the path [%s] ]]]") % path << endl;
-    unlink(path);
+    unlink(path.c_str());
     if (errno)
     {
-	ESP_LOGE(CMD_TAG_PRFX, "%s: Fail when deleting \"%s\": %s", __func__, dirname, strerror(errno));
+	ESP_LOGE(CMD_TAG_PRFX, "%s: Fail when deleting \"%s\": %s", __func__, dirname.c_str(), strerror(errno));
 	return ESP_FAIL;
     }; /* if errno */
 
@@ -462,7 +340,6 @@ esp_err_t Server::rmdir(SDMMC::Device& device, const std::string& dirname)
 
 #else
 	struct stat st;
-//	char *path = fake_cwd.compose(dirname.c_str());
 	std::string path = fake_cwd.compose(dirname.c_str());
 
     ESP_LOGI(CMD_TAG_PRFX, "%s: Delete directory <%s>, real path is %s", __func__, dirname.c_str(), path.c_str());
@@ -520,7 +397,6 @@ esp_err_t Server::rmdir(SDMMC::Device& device, const std::string& dirname)
 #define CMD_NM "cd"
 
 // change a current directory
-//esp_err_t Server::cd(SDMMC::Device& device, const char dirname[])
 esp_err_t Server::cd(SDMMC::Device& device, const std::string& dirname)
 {
 	esp_err_t err;
@@ -547,10 +423,8 @@ esp_err_t Server::cd(SDMMC::Device& device, const std::string& dirname)
     if (err != 0)
 	ESP_LOGE(CMD_TAG_PRFX, "%s: fail change directory to %s\n%s", __func__, dirname.c_str(), esp_err_to_name(err));
     return err;
-//    return ESP_OK;
+
 #else
-//    if (!empty(dirname))
-//    if (!dirname.empty())
     if (!astr::is_space(dirname))
 	ESP_LOGI(CMD_TAG_PRFX, "%s: Change current dir to %s", __func__, dirname.c_str());
     else if (device.card != nullptr)
@@ -561,9 +435,7 @@ esp_err_t Server::cd(SDMMC::Device& device, const std::string& dirname)
     	    return ESP_ERR_NOT_SUPPORTED;
 	}; /* else if device.card != nullptr */
     // change cwd dir: chdir(dirname);
-//        err = device.change_currdir(dirname);
-//    err = device.mounted()? fake_cwd.change( (dirname == nullptr || dirname[0] == '\0')? device.mountpath(): dirname): ESP_FAIL;
-    err = device.mounted()? fake_cwd.change((/*dirname.empty()*/ astr::is_space(dirname))? device.mountpath(): dirname.c_str()): ESP_FAIL;
+    err = device.mounted()? fake_cwd.change((astr::is_space(dirname))? device.mountpath(): dirname.c_str()): ESP_FAIL;
 
     if (err != 0)
     	ESP_LOGE(CMD_TAG_PRFX, "%s: fail change directory to %s\n%s", __func__, dirname.c_str(), esp_err_to_name(err));
@@ -585,17 +457,11 @@ esp_err_t Server::cd(SDMMC::Device& device, const std::string& dirname)
 // Return:
 //	>=0 - listed entries counter;
 //	<0  - error - -1*(ESP_ERR_xxx) or ESP_FAIL (-1) immediately
-#if 0
-// Pure C edition
-static int listing_direntries_pureC(DIR *dir, const char path[]);
-#endif	// 0
 // C++ edition
-//static int listing_direntries_Cpp(DIR *dir, const char path[]);
 static int listing_direntries_Cpp(DIR *dir, const std::string& path);
 
 
 // print a list of files in the specified directory
-//esp_err_t Server::ls(SDMMC::Device& device, const char pattern[])
 esp_err_t Server::ls(SDMMC::Device& device, const std::string& pattern)
 {
     ESP_LOGD(CMD_TAG_PRFX, "%s: pattern is             : \"%s\"", __func__, pattern.c_str());
@@ -610,7 +476,6 @@ esp_err_t Server::ls(SDMMC::Device& device, const std::string& pattern)
     	int entry_cnt = 0;
 	DIR *dir;	// Directory descriptor
 	struct stat statbuf;	// buffer for stat
-//	char* in_pattern = fake_cwd.compose(pattern.c_str());
 	std::string in_pattern = fake_cwd.compose(pattern.c_str());
 
     if (stat(in_pattern.c_str(), &statbuf) == -1)
@@ -676,51 +541,9 @@ esp_err_t Server::ls(SDMMC::Device& device, const std::string& pattern)
 }; /* Server::ls */
 
 
-#if 0
-// Printout one entry of the dir, pure C edition
-static void ls_entry_printout_pure_C(const char fullpath[], const char name[]);
-#endif
 // Printout one entry of the dir, C++ edition
 static void ls_entry_printout_Cpp(const char fullpath[], const char name[]);
 
-#if 0
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-function"
-// Listing the entries of the opened directory
-// Pure C edition
-// Parameters:
-//	dir  - opened directory stream;
-//	path - full path of this directory
-// Return:
-//	>=0 - listed entries counter;
-//	<0  - error - -1*(ESP_ERR_xxx) or ESP_FAIL (-1) immediately
-int listing_direntries_pureC(DIR *dir, const char path[])
-{
-	char pathbuf[PATH_MAX + 1]; // @suppress("Symbol is not resolved")
-	char * fnbuf;
-	int cnt = 0;
-
-    if (realpath(path, pathbuf) == NULL)
-    {
-	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Error canonicalizing path \"<%s>\", %s", path, strerror(errno));
-	return ESP_FAIL;
-    }; /* if realpath(pattern, pathbuf) == NULL */
-
-    errno = 0;	// clear any possible errors
-    fnbuf = pathbuf + strlen(pathbuf);
-    fnbuf[0] = '/';
-    fnbuf++;
-
-    for ( struct dirent *entry = readdir(dir); entry != NULL; entry = readdir(dir))
-    {
-	cnt++;
-	strcpy(fnbuf, entry->d_name);
-
-	ls_entry_printout_pure_C(pathbuf, entry->d_name);
-    }; /* for entry = readdir(dir); entry != NULL; entry = readdir(dir) */
-    return cnt;
-}; /* listing_direntries_pureC */
-#endif // 0
 
 // Listing the entries of the opened directory
 // C++ edition
@@ -730,8 +553,6 @@ int listing_direntries_pureC(DIR *dir, const char path[])
 // Return:
 //	>=0 - listed entries counter;
 //	<0  - error - -1*(ESP_ERR_xxx) or ESP_FAIL (-1) immediately
-//-Wunused-function
-//int listing_direntries_Cpp(DIR *dir, const char path[])
 int listing_direntries_Cpp(DIR *dir, const std::string& path)
 {
 	char pathbuf[PATH_MAX + 1]; // @suppress("Symbol is not resolved")
@@ -757,28 +578,7 @@ int listing_direntries_Cpp(DIR *dir, const std::string& path)
     }; /* for entry = readdir(dir); entry != NULL; entry = readdir(dir) */
     return cnt;
 }; /* listing_direntries_Cpp */
-#if 0
-#pragma GCC diagnostic pop
-#endif	// 0
 
-#if 0
-void ls_entry_printout_pure_C(const char fullpath[], const char name[])
-{
-	struct stat statbuf;
-
-    stat(fullpath, &statbuf);
-    printf("%s\tsize %ld bytes\n\t%s %s\n", fullpath, statbuf.st_size, name,
-	    (S_ISLNK(statbuf.st_mode))? "[symlink]":
-	    (S_ISREG(statbuf.st_mode))? "(file)":
-	    (S_ISDIR(statbuf.st_mode))? "<DIR>":
-	    (S_ISCHR(statbuf.st_mode))? "[char dev]":
-	    (S_ISBLK(statbuf.st_mode))? "[blk dev]":
-	    (S_ISFIFO(statbuf.st_mode))? "[FIFO]":
-	    (S_ISSOCK(statbuf.st_mode))? "[socket]":
-	    "[unknown type]");
-
-}; /* ls_entry_printout_pure_C */
-#endif	// 0
 
 // Printout one entry of the dir, C++ edition
 void ls_entry_printout_Cpp(const char fullpath[], const char name[])
