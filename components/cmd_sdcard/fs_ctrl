@@ -47,9 +47,11 @@ namespace Exec	//---------------------------------------------------------------
     public:
 	Server() {};
 	/// Mount default SD-card slot onto path "mountpoint"
-	esp_err_t mount(SDMMC::Device&, SDMMC::Card&, const char mountpoint[] = MOUNT_POINT_Default);
+//	esp_err_t mount(SDMMC::Device&, SDMMC::Card&, const char mountpoint[] = MOUNT_POINT_Default);
+	esp_err_t mount(SDMMC::Device&, SDMMC::Card&, const std::string& mountpoint = MOUNT_POINT_Default);
 	/// Mount SD-card slot "slot_no" onto desired mount path, default mount path is MOUNT_POINT_Default
-	esp_err_t mount(SDMMC::Device&, SDMMC::Card&, int slot_no, const char mountpoint[] = MOUNT_POINT_Default);
+//	esp_err_t mount(SDMMC::Device&, SDMMC::Card&, int slot_no, const char mountpoint[] = MOUNT_POINT_Default);
+	esp_err_t mount(SDMMC::Device&, SDMMC::Card&, int slot_no, const std::string& mountpoint = MOUNT_POINT_Default);
 
 	esp_err_t unmount(SDMMC::Device&/*, const char mountpath[] = NULL*/);	// Unmount SD-card from Device
 //	esp_err_t unmount(sdmmc_card_t *card);	// Unmount SD-card "card", mounted onto default mountpath
