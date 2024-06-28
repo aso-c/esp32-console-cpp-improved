@@ -36,6 +36,20 @@
 #endif
 
 
+/// Text representation mode of statbuf (directory entry information)
+inline constexpr const char* statmode_txt(const struct stat* statbuf)
+{
+    return (S_ISLNK(statbuf->st_mode))? "symlink":
+	    (S_ISDIR(statbuf->st_mode))? "directory":
+	    (S_ISCHR(statbuf->st_mode))? "character device":
+	    (S_ISBLK(statbuf->st_mode))? "block device":
+	    (S_ISFIFO(statbuf->st_mode))? "FIFO channel":
+	    (S_ISSOCK(statbuf->st_mode))? "socket":
+					"(unknown type)";
+}; /* stat_mode_txt() */
+
+
+
 // Mw delay for the SD/MMC command execution
 //#define SDMMC_COMMAND_TIMEOUT 500
 
@@ -59,9 +73,7 @@ namespace Exec	//---------------------------------------------------------------
 	esp_err_t mkdir(SDMMC::Device&, const std::string& dirname = "");   // create a new directory
 	esp_err_t cd(SDMMC::Device&, const std::string& dirname = "");	// change a current directory
 	esp_err_t ls(SDMMC::Device&, const std::string& pattern = ".");	// print a list of files in the specified directory
-//	esp_err_t cp(SDMMC::Device&, const char[] = NULL, const char[] = NULL);	// copy files src to dest
 	esp_err_t cp(SDMMC::Device&, const std::string& = "", const std::string& = "");	// copy files src to dest
-//	esp_err_t mv(SDMMC::Device&, const char src[] = NULL, const char dest[] = NULL);	// move files from src to dest
 	esp_err_t mv(SDMMC::Device&, const std::string& = "", const std::string& = "");	// move files from src to dest
 	esp_err_t rm(SDMMC::Device&, const std::string& pattern = "");	// remove files according a pattern
 	esp_err_t rmdir(SDMMC::Device&, const std::string& dirname = "");   // remove an empty existing directory
@@ -69,7 +81,8 @@ namespace Exec	//---------------------------------------------------------------
 	esp_err_t cat(SDMMC::Device&, const std::string& fname = "");	// type file contents
 
 	esp_err_t type();	// type text from keyboard to screen
-	esp_err_t type(SDMMC::Device&, const char fname[], size_t = 512);	// type text from keyboard to file and to screen
+//	esp_err_t type(SDMMC::Device&, const char fname[], size_t = 512);	// type text from keyboard to file and to screen
+	esp_err_t type(SDMMC::Device&, const std::string& fname, size_t = 512);	// type text from keyboard to file and to screen
 
 
     private:
