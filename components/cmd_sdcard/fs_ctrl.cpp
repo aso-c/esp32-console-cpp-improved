@@ -462,7 +462,7 @@ const char* const Server::MOUNT_POINT_Default = SD_MOUNT_POINT;
     {
 	ESP_LOGD(CMD_TAG_PRFX, "%s: pattern is             : \"%s\"", __func__, pattern.c_str());
 	ESP_LOGD(CMD_TAG_PRFX, "%s: processed inner pattern: \"%s\"", __func__, fake_cwd.compose(pattern.c_str()));
-
+	cout << aso::format("Check type cast for std::string in the aso::format pure call: pattern is: [%s], check the \"%%\" operator now %s", pattern) % "[output for % operator]" << endl;
 	if (!fake_cwd.valid(pattern.c_str()))
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: pattern \"%s\" is invalid", __func__, pattern.c_str());
@@ -601,15 +601,17 @@ const char* const Server::MOUNT_POINT_Default = SD_MOUNT_POINT;
 #define __CP_OVERWRITE_FILE__
 
 // copy files according a pattern
-esp_err_t Server::cp(SDMMC::Device& device, const char src_raw[], const char dest_raw[])
+esp_err_t Server::cp(SDMMC::Device& device, const std::string& src_raw, const std::string& dest_raw)
 {
-    if (empty(src_raw))
+//    if (empty(src_raw))
+    if (astr::is_space(src_raw))
     {
 
 	ESP_LOGE(CMD_TAG_PRFX, "%s: too few arguments: invoke command \"%s\" without parameters.\n%s", __func__, __func__,
 		"Don't know what to copy.");
 	return ESP_ERR_INVALID_ARG;
     }; /* if is_empty(src_raw) */
+//    if (empty(dest_raw))
     if (empty(dest_raw))
     {
 	ESP_LOGE(CMD_TAG_PRFX, "%s: too few arguments: invoke command \"%s\" with one parameters.\n%s", __func__, __func__,
@@ -617,19 +619,21 @@ esp_err_t Server::cp(SDMMC::Device& device, const char src_raw[], const char des
 	return ESP_ERR_INVALID_ARG;
     }; /* if is_empty(dest_raw) */
 
-    if (!fake_cwd.valid(src_raw))
+//    if (!fake_cwd.valid(src_raw))
+    if (!fake_cwd.valid(src_raw.c_str()))
     {
-	ESP_LOGE(CMD_TAG_PRFX, "%s: the source file name \"%s\" is invalid", __func__, src_raw);
+	ESP_LOGE(CMD_TAG_PRFX, "%s: the source file name \"%s\" is invalid", __func__, src_raw.c_str());
 	return ESP_ERR_NOT_FOUND;
     }; /* !device.valid_path(pattern) */
 
-    if (!fake_cwd.valid(dest_raw))
+    if (!fake_cwd.valid(dest_raw.c_str()))
     {
-	ESP_LOGE(CMD_TAG_PRFX, "%s: the destination file name \"%s\" is invalid", __func__, dest_raw);
+	ESP_LOGE(CMD_TAG_PRFX, "%s: the destination file name \"%s\" is invalid", __func__, dest_raw.c_str());
 	return ESP_ERR_NOT_FOUND;
     }; /* !device.valid_path(pattern) */
 
-	char *src = fake_cwd.compose(src_raw);
+//	char *src = fake_cwd.compose(src_raw.c_str());
+	std::string src = fake_cwd.compose(src_raw.c_str());
 
 #if __cplusplus < 201703L
 
@@ -747,11 +751,11 @@ esp_err_t Server::cp(SDMMC::Device& device, const char src_raw[], const char des
 	struct stat st;
 
     // Check if source file is not exist
-    if (stat(src, &st) != 0)
+    if (stat(src.c_str(), &st) != 0)
     {
 	// Source file must be exist
 	ESP_LOGE(CMD_TAG_PRFX, "%s: file \"%s\" (%s) is not exist - copyng a non-existent file is not possible.\n%s",
-		__func__, src_raw, src, esp_err_to_name(ESP_ERR_NOT_FOUND));
+		__func__, src_raw.c_str(), src.c_str(), esp_err_to_name(ESP_ERR_NOT_FOUND));
 	return ESP_ERR_NOT_FOUND;
     }; /* if stat(src, &st) != 0 */
     if (S_ISDIR(st.st_mode))
@@ -761,6 +765,7 @@ esp_err_t Server::cp(SDMMC::Device& device, const char src_raw[], const char des
 	return ESP_ERR_NOT_SUPPORTED;
     }; /* if (S_ISDIR(st.st_mode)) */
 
+#if 0	// It's fucking unneeded part if used sts::string types
     /* or open source file at this point? */
     src = (char*)malloc(strlen(fake_cwd.current()) + 1);
     if (src == nullptr)
@@ -769,67 +774,75 @@ esp_err_t Server::cp(SDMMC::Device& device, const char src_raw[], const char des
 	return ESP_ERR_NO_MEM;
     }; /* if (src == nullptr) */
     strcpy(src, fake_cwd.current());
+#endif	// It's fucking unneeded part if used sts::string types
 
-	char* srcbase = basename(src);
-	char *dest = fake_cwd.compose(dest_raw);
+//	char* srcbase = basename(src);
+	std::string srcbase = basename(src.c_str());
+//	char *dest = fake_cwd.compose(dest_raw.c_str());
+	std::string dest = fake_cwd.compose(dest_raw.c_str());
 
     // Check if destination file is exist
-    if (stat(dest, &st) == 0)
+    if (stat(dest.c_str(), &st) == 0)
     {
 	// Destination file is exist
 	ESP_LOGI(CMD_TAG_PRFX, "%s: path \"%s\" (%s) is exist - copy is write to an existent file or directory.",
-		__func__, dest_raw, dest);
+		__func__, dest_raw.c_str(), dest.c_str());
 	// if destination - exist path, not a directory
 	if (S_ISDIR(st.st_mode))
 	{
-	    strcat(dest, "/");
-	    strcat(dest, srcbase);
+//	    strcat(dest, "/");
+//	    strcat(dest, srcbase);
+	    dest = dest + ((dest.back() != '/')? "/": "") + srcbase;	// create destination file full name
 	} /* if S_ISDIR(st.st_mode) */
     }; /* if stat(dest, &st) == 0 */
 
     // Re-check the modified version of the
     // destination filename, that may be exist:
-    if (stat(dest, &st) == 0)
+    if (stat(dest.c_str(), &st) == 0)
     {
 	// the final name of the target file
 	// must not be a existing directory name
 	if (S_ISDIR(st.st_mode))
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite exist \"%s\" directory by the destination file is denied; aborting.",
-		    __func__, dest);
-	    free(src);
+		    __func__, dest.c_str());
+//	    free(src);
 	    return ESP_ERR_NOT_SUPPORTED;
 	} /* if S_ISDIR(st.st_mode) */
 
 #if !defined(__NOT_OVERWRITE__) && defined(__CP_OVERWRITE_FILE__)
-	ESP_LOGW(CMD_TAG_PRFX, "%s: overwrite an existing file \"%s\".", __func__, dest);
+	ESP_LOGW(CMD_TAG_PRFX, "%s: overwrite an existing file \"%s\".", __func__, dest.c_str());
 #else
-	ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite the existent file \"%s\" is denied; aborting.", __func__, dest);
-	free(src);
+	ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite the existent file \"%s\" is denied; aborting.", __func__, dest.c_str());
+//	free(src);
 	return ESP_ERR_NOT_SUPPORTED;
 #endif	// __CP_OVER_EXIST_FILE__
     }; /* if stat(dest, &st) == 0 */
 
     // check the source and destination file are same
-    if (strcmp(src, dest) == 0)
+//    if (strcmp(src, dest) == 0)
+    if (src == dest)
     {
 	ESP_LOGE(CMD_TAG_PRFX, "%s: source & destination file name are same: \"%s\";\n\t\t\t copying file to iself is unsupported",
-		__func__, dest);
-	free(src);
+		__func__, dest.c_str());
+//	free(src);
 	return ESP_ERR_NOT_SUPPORTED;
     }; /* if strcmp(src, dest) == 0 */
 
     // destination file - OK, it's not exist or is may be overwrited
-    ESP_LOGI(CMD_TAG_PRFX ":" CMD_NM, "copy file %s to %s", src, dest);
+    ESP_LOGI(CMD_TAG_PRFX ":" CMD_NM, "copy file %s to %s", src.c_str(), dest.c_str());
 
-	FILE* srcfile = fopen(src, "rb");
-	FILE* destfile = fopen(dest, "wb");
+//	FILE* srcfile = fopen(src, "rb");
+	FILE* srcfile = fopen(src.c_str(), "rb");
+//	FILE* destfile = fopen(dest, "wb");
+	FILE* destfile = fopen(dest.c_str(), "wb");
 
-    free(src);
+//    free(src);
 
     if (!destfile)
     {
-	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "failed creating file %s, aborting ", fake_cwd.current());
+//	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "failed creating file %s, aborting ", fake_cwd.current());
+	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "failed creating file %s, aborting ", dest.c_str());
 	fclose(srcfile);
 	return ESP_ERR_NOT_FOUND;
     }; /* if !destfile */
@@ -864,17 +877,20 @@ esp_err_t Server::cp(SDMMC::Device& device, const char src_raw[], const char des
 #define CMD_NM "mv"
 
 // move files according a pattern
-esp_err_t Server::mv(SDMMC::Device& device, const char src_raw[], const char dest_raw[])
+//esp_err_t Server::mv(SDMMC::Device& device, const char src_raw[], const char dest_raw[])
+esp_err_t Server::mv(SDMMC::Device& device, const std::string& src_raw, const std::string& dest_raw)
 {
 
-    if (empty(src_raw))
+//    if (empty(src_raw))
+    if (astr::is_space(src_raw))
     {
 	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "too few arguments: invoke command \"%s\" with one parameters.\n%s", CMD_NM,
 		"Don't know what to move?");
 	return ESP_ERR_INVALID_ARG;
     }; /* if empty(src) */
 
-    if (empty(dest_raw))
+//    if (empty(dest_raw))
+    if (astr::is_space(dest_raw))
     {
 	ESP_LOGE(CMD_TAG_PRFX CMD_NM, "too few arguments: invoke command \"%s\" without parameters.\n%s", CMD_NM,
 		"Don't know where to move?");
@@ -882,14 +898,14 @@ esp_err_t Server::mv(SDMMC::Device& device, const char src_raw[], const char des
     }; /* if empty(dest) */
 
 //    if (!device.valid_path(src_raw))
-    if (!fake_cwd.valid(src_raw))
+    if (!fake_cwd.valid(src_raw.c_str()))
     {
-	ESP_LOGE(CMD_TAG_PRFX, "%s: the souce file name \"%s\" is invalid", __func__, src_raw);
+	ESP_LOGE(CMD_TAG_PRFX, "%s: the souce file name \"%s\" is invalid", __func__, src_raw.c_str());
 	return ESP_ERR_NOT_FOUND;
     }; /* !device.valid_path(pattern) */
-    if (!fake_cwd.valid(dest_raw))
+    if (!fake_cwd.valid(dest_raw.c_str()))
     {
-	ESP_LOGE(CMD_TAG_PRFX, "%s: the destination file name \"%s\" is invalid", __func__, dest_raw);
+	ESP_LOGE(CMD_TAG_PRFX, "%s: the destination file name \"%s\" is invalid", __func__, dest_raw.c_str());
 	return ESP_ERR_NOT_FOUND;
     }; /* !device.valid_path(pattern) */
 
@@ -1002,20 +1018,22 @@ esp_err_t Server::mv(SDMMC::Device& device, const char src_raw[], const char des
     free(src);
     ESP_LOGW(CMD_TAG_PRFX CMD_NM, "the command '%s' now is partyally implemented for C edition", __func__);
     return ESP_OK;
-#else
+#else	// __cplusplus < 201703L
 
-	char *src = fake_cwd.compose(src_raw);
+//	char *src = fake_cwd.compose(src_raw);
+	std::string src = fake_cwd.compose(src_raw.c_str());
 	struct stat st_src;
 
     // Check if source file is not exist
-    if (stat(src, &st_src) != 0)
+    if (stat(src.c_str(), &st_src) != 0)
     {
 	// Source file must be exist
 	ESP_LOGE(CMD_TAG_PRFX, "%s: file \"%s\" (%s) is not exist - renaming a non-existent file is not possible.\n%s",
-		__func__, src_raw, src, esp_err_to_name(ESP_ERR_NOT_FOUND));
+		__func__, src_raw.c_str(), src.c_str(), esp_err_to_name(ESP_ERR_NOT_FOUND));
 	return ESP_ERR_NOT_FOUND;
     }; /* if stat(src_stat, &st) != 0 */
 
+#if 0	// fucking exceed uneeded pure C legasy with std::string! Remove it fuck'all!!!!!
     src = (char*)malloc(strlen(src) * sizeof(char) + 1);
     if (!src)
     {
@@ -1023,46 +1041,53 @@ esp_err_t Server::mv(SDMMC::Device& device, const char src_raw[], const char des
 	return ESP_ERR_NO_MEM;
     }; /* if src == NULL*/
     strcpy(src, fake_cwd.current());
+#endif	// fucking exceed uneeded pure C legasy! Remove it!!!!!
 
 
-	char *dest = NULL;
+//	char *dest = NULL;
+	std::string dest = fake_cwd.compose(dest_raw.c_str());
 	struct stat st_dest;
 
-    dest = fake_cwd.compose(dest_raw);
+//    dest = fake_cwd.compose(dest_raw);
 
     cout << aso::format("Move file \"%s\" (%s) to \"%s\" (%s)") %src_raw %src
 			%dest_raw %dest << endl;
 
-    if (stat(dest, &st_dest) == 0)
+    if (stat(dest.c_str(), &st_dest) == 0)
     {
 	// Target file exist
 	ESP_LOGW(CMD_TAG_PRFX, "%s: target file name \"%s\" (%s) exist",
-		__func__, dest_raw, dest);
+		__func__, dest_raw.c_str(), dest.c_str());
 	// if destination is existing directory
 	if (S_ISDIR(st_dest.st_mode))
 	{
-		char *basenm = basename(src);
+//		char *basenm = basename(src);
+		std::string basenm = basename(src.c_str());
 
 	    ESP_LOGD(CMD_TAG_PRFX, "%s: destination file is exist directory,\n\t\t\tbasename of src is: %s ", __func__,
-		    basenm);
-	    strcat(dest, "/");
-	    ESP_LOGD(CMD_TAG_PRFX, "%s: adding trailing slash to a destination file: %s", __func__, dest);
-	    strcat(dest, basenm);
-	    ESP_LOGD(CMD_TAG_PRFX, "%s: adding src basename to a destination file: %s", __func__, dest);
+		    basenm.c_str());
+//	    strcat(dest, "/");
+	    // Add trailing slash if it absent
+	    if (dest.back() != '/')
+		dest += '/';
+	    ESP_LOGD(CMD_TAG_PRFX, "%s: adding trailing slash to a destination file: %s", __func__, dest.c_str());
+//	    strcat(dest, basenm);
+	    dest += basenm;
+	    ESP_LOGD(CMD_TAG_PRFX, "%s: adding src basename to a destination file: %s", __func__, dest.c_str());
 	} /* if S_ISDIR(st.st_mode) */
     } /* if stat(dest, &st) != 0 */
 
     // Re-check the modified version of the
     // destination filename, that may be exist:
-    if (stat(dest, &st_dest) == 0)
+    if (stat(dest.c_str(), &st_dest) == 0)
     {
 	// the final name of the target file
 	// must not be a existing directory name
 	if (S_ISDIR(st_dest.st_mode))
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite exist directory \"%s\" by the destination file from the %s is not allowed; aborting.",
-		    __func__, dest, src);
-	    free(src);
+		    __func__, dest.c_str(), src.c_str());
+//	    free(src);
 	    return ESP_ERR_NOT_SUPPORTED;
 	} /* if S_ISDIR(st.st_mode) */
 
@@ -1070,28 +1095,29 @@ esp_err_t Server::mv(SDMMC::Device& device, const char src_raw[], const char des
 	if (S_ISDIR(st_src.st_mode))
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite exist file \"%s\" by renaming the source directory %s to it - is not allowed; aborting.",
-		    __func__, dest, src);
+		    __func__, dest.c_str(), src.c_str());
 	    return ESP_ERR_NOT_SUPPORTED;
 	}; /* if S_ISDIR(st.st_mode) */
 
 #if !defined(__NOT_OVERWRITE__) && defined(__CP_OVERWRITE_FILE__)
-	ESP_LOGW(CMD_TAG_PRFX, "%s: overwrite an existing file \"%s\".", __func__, dest);
+	ESP_LOGW(CMD_TAG_PRFX, "%s: overwrite an existing file \"%s\".", __func__, dest.c_str());
 #else
 	ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite the existent file \"%s\" is denied; aborting.",
-		__func__, dest);
-	free(src);
+		__func__, dest.c_str());
+//	free(src);
 	return ESP_ERR_NOT_SUPPORTED;
 #endif	// __CP_OVER_EXIST_FILE__
     }; /* if stat(dest, &st) == 0 */
 
     // Names of the moving/renaming file
-    ESP_LOGI(CMD_TAG_PRFX, "%s: Moving/renaming file %s (%s) to %s (%s)", __func__, src_raw, src, dest_raw, dest);
+    ESP_LOGI(CMD_TAG_PRFX, "%s: Moving/renaming file %s (%s) to %s (%s)", __func__, src_raw.c_str(), src.c_str(), dest_raw.c_str(), dest.c_str());
     // check the source and destination file are same
-    if (strcmp(src, dest) == 0)
+//    if (strcmp(src, dest) == 0)
+    if (src == dest)
     {
 	ESP_LOGE(CMD_TAG_PRFX, "%s: source & destination file name are same: \"%s\";\n\t\t\t copying file to iself is unsupported",
-		__func__, dest);
-	free(src);
+		__func__, dest.c_str());
+//	free(src);
 	return ESP_ERR_NOT_SUPPORTED;
     }; /* if strcmp(src, dest) == 0 */
 
@@ -1099,16 +1125,18 @@ esp_err_t Server::mv(SDMMC::Device& device, const char src_raw[], const char des
 //    // Rename original file
 //    cout << aso::format("Move/rename file %s (%s) to %s (%s)") %src_raw %src
 //			%dest_raw %dest << endl;
-    if (rename(src, dest/*device.curr_cwd()*/) != 0)
+////    if (rename(src, dest/*device.curr_cwd()*/) != 0)
+    if (rename(src.c_str(), dest.c_str()) != 0)
     {
 	ESP_LOGE(CMD_TAG_PRFX, "%s: Error %d: %s", __func__, errno, strerror(errno));
-	free(src);
+//	free(src);
 	return ESP_FAIL;
     }; /* if rename(src, dest) != 0 */
-    free(src);
+//    free(src);
     ESP_LOGW(CMD_TAG_PRFX CMD_NM, "the command '%s' now is partyally implemented for C edition", __func__);
     return ESP_OK;
-    #endif
+#endif	// __cplusplus < 201703L
+
 }; /* Server::mv */
 
 
@@ -1121,7 +1149,6 @@ esp_err_t Server::mv(SDMMC::Device& device, const char src_raw[], const char des
     esp_err_t Server::rm(SDMMC::Device& device, const std::string& pattern)
     {
 
-//    if (!device.valid_path(pattern))
 	if (!fake_cwd.valid(pattern.c_str()))
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: pattern \"%s\" is invalid", __func__, pattern.c_str());
@@ -1129,10 +1156,8 @@ esp_err_t Server::mv(SDMMC::Device& device, const char src_raw[], const char des
 	}; /* !device.valid_path(pattern) */
 
 	    struct stat st;
-//	char *path = fake_cwd.compose(pattern);
 	    std::string path = fake_cwd.compose(pattern.c_str());
 
-//    if (empty(pattern))
 	if (astr::is_space(pattern))
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: invoke command \"%s\" without parameters.\n%s", __func__, __func__,
@@ -1141,7 +1166,6 @@ esp_err_t Server::mv(SDMMC::Device& device, const char src_raw[], const char des
 	}; /* if astr::is_space(pattern) */
 
 	ESP_LOGI(CMD_TAG_PRFX, "%s: delete file \"%s\" (%s)", __func__,  pattern.c_str(), path.c_str());
-//#ifdef __PURE_C__
 #if __cplusplus < 201703L
 
 	// Check if destination file exists before deleting
@@ -1234,13 +1258,15 @@ esp_err_t Server::mv(SDMMC::Device& device, const char src_raw[], const char des
 	    return ESP_ERR_INVALID_ARG;
 	}; /* if empty(fname) */ /* if fname == NULL || strcmp(fname, "") */
 
-//	cout << endl
-//	    << aso::format("*** Printing contents of the file <%s> (realname '%s'). ***") % fname.c_str() % fullname.c_str()  << endl
-//	    << endl;
-
+#if 1
+	cout << endl
+	    << aso::format("*** Printing contents of the file <%s> (realname '%s'). ***") % fname.c_str() % fullname.c_str()  << endl
+	    << endl;
+#else
 	cout << endl
 	    << "*** Printing contents of the file <" << fname << "> (realname '" << fullname << "'). ***"  << endl
 	    << endl;
+#endif
 
 #if __cplusplus < 201703L
 

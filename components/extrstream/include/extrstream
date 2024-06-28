@@ -94,13 +94,23 @@ namespace aso
 
 	template<typename T>
 	Formatter<PrnTypes..., T> generate(T&& item) const {
-	    return /*Formatter<PrnTypes..., T>(*/std::tuple_cat(items, std::make_tuple(std::forward<T>(item)));};
+	    return /*Formatter<PrnTypes..., T>(*/ std::tuple_cat(items, std::make_tuple(std::forward<T>(item)));};
+	// Template specialization for std::string for this methods??? - for const std::string& str forwarding str.c_str() instead str ???
+////	template<>
+//	Formatter<PrnTypes..., const std::string&> generate(const std::string& item) const {
+//	    std::cout << "Exec Formatter<PrnTypes..., const std::string&>::generate(const std::string&) method" << std::endl;
+//	    return std::tuple_cat(items, std::make_tuple(/*std::forward<const std::string&>(*/item.c_str()/*)*/));};
+//	Formatter<PrnTypes..., std::string&> generate(std::string& item) const {
+//	    std::cout << "Exec Formatter<PrnTypes..., std::string&>::generate(std::string&) method" << std::endl;
+//	    return std::tuple_cat(items, std::make_tuple(/*std::forward<const std::string&>(*/item.c_str()/*)*/));};
 
     private:
 
 	std::tuple<std::string, PrnTypes...> items;
 
     }; /* Formatter */
+
+
 
 
     // helper for aso::format::output
@@ -110,9 +120,57 @@ namespace aso
     extern std::ostringstream& output_helper(std::ostringstream& os, const std::string& ...);
     extern std::stringstream& output_helper(std::stringstream& os, const std::string& ...);
 
+
+
+    /// subctitution of procedure for desired types
+    template <typename TItem>
+    inline TItem&& subst(TItem&& item) {
+	std::clog << "=== My forwarding of obj is: (" << item << ") with " << __PRETTY_FUNCTION__ << " ===" << std::endl;
+	return std::forward<TItem>(item);
+    };
+    template <>
+    inline std::string& subst<std::string&>(std::string&) = delete;
+    template <>
+    inline std::string&& subst<std::string>(std::string&&) = delete;
+    template <>
+    inline const std::string& subst<const std::string&>(const std::string&) = delete;
+    template <>
+    inline const std::string&& subst<const std::string>(const std::string&&) = delete;
+//    template <>
+//    inline const std::string subst<const std::string>(const std::string) = delete;
+
+////    template <>
+//    inline const char* subst/*<const char*>*/(const char* item) {
+//	std::cerr << "=== My forwarding of obj for const char*: [" << item << "] ===" << std::endl;
+//	return item;
+//    };
+#if 0
+    template <>
+    inline const std::string& subst<const std::string&>(const std::string& item) {
+	std::clog << "=== My forwarding of const std::string& obj is: [" << item << "] ===" << std::endl;
+	return item;
+    };
+#endif
+
+
+//    template <>
+//    inline std::string& subst<std::string&>(std::string& item) {
+//    inline const std::string& subst(const std::string& item) {
+    inline const char* subst(const std::string& item) {
+	std::clog << "=== My forwarding of std::string& obj is: {" << item << "} ===" << std::endl;
+	return item.c_str();
+    };
+//    inline const std::string& subst(std::string& item) {
+    inline const char* subst(std::string& item) {
+	std::clog << "=== My forwarding of std::string& obj is: [" << item << "] ===" << std::endl;
+	return item.c_str();
+    };
+
+
+
     // Comnstructor
     template <typename ...PrnTypes>
-    inline Formatter<PrnTypes...>::Formatter(const std::string&& fmt_str, PrnTypes&&... prnvals):
+    inline Formatter<PrnTypes...>::Formatter(const std::string&& fmt_str, PrnTypes&&  ... prnvals):
 	items(std::forward<const std::string>(fmt_str), prnvals...)
     {};
 
@@ -136,9 +194,12 @@ namespace aso
     // for formatting output according format string as (x)prinf() library
     // (Using (x)printf() library with iostream sequence.)
     template<typename... PrnTypes>
-    inline const Formatter<PrnTypes...> format(const std::string&& formatstr, PrnTypes&&... prn_values)
+//    inline const Formatter<PrnTypes...> format(const std::string&& formatstr, PrnTypes&&... prn_values)
+    inline const auto format(const std::string&& formatstr, PrnTypes&&... prn_values)
     {
-	return Formatter<PrnTypes...>(std::forward<const std::string>(formatstr), std::forward<PrnTypes>(prn_values)...);
+	std::clog << "=== Generate tuple in the aso::format() with std::string cast to const char*, item is: {" << "prn_values now is not expanded..." << "} with " << __PRETTY_FUNCTION__ << " ===" << std::endl;
+//	return Formatter<PrnTypes...>(std::forward<const std::string>(formatstr), subst(std::forward<PrnTypes>(prn_values))...);
+	return Formatter/*<PrnTypes...>*/(std::forward<const std::string>(formatstr), subst(std::forward<PrnTypes>(prn_values))...);
     }; /* format */
 
     template<typename OutStream, typename... PrnTypes>
@@ -151,7 +212,13 @@ namespace aso
     // Generate call 'format' with parameters from the expression
     template<typename T, typename...PrnTypes>
     inline Formatter<PrnTypes..., T> operator %(const Formatter<PrnTypes...> fmt, T prnitem) {
-	return fmt.generate(std::forward<T>(prnitem));
+	return fmt.generate(subst(std::forward<T>(prnitem)));
+    };
+    // Generate call 'format' with parameters from the expression, specialization for std::string types.
+    template<typename...PrnTypes>
+    inline Formatter<PrnTypes..., const char*> operator %(const Formatter<PrnTypes...> fmt, const std::string& stritem) {
+	std::clog << "=== Generate tuple with another next parameter of std::string, item is: {" << stritem << "} with " << __PRETTY_FUNCTION__ << " ===" << std::endl;
+	return fmt.generate(stritem.c_str());
     };
 
 }; /* namespace aso */
