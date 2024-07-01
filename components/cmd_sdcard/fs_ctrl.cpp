@@ -1265,10 +1265,8 @@ static esp_err_t err4existent(const std::string& fname, const struct stat* statb
 
 
 // type text from keyboard to file and to screen
-//esp_err_t Server::type(SDMMC::Device& device, const char fname[], size_t sector_size)
 esp_err_t Server::type(SDMMC::Device& device, const std::string& fname, size_t sector_size)
 {
-//    if (!fake_cwd.valid(fname))
     if (!fake_cwd.valid(fname.c_str()))
     {
 	ESP_LOGE(CMD_TAG_PRFX, "%s: pattern \"%s\" is invalid", __func__, fname.c_str());
@@ -1276,7 +1274,6 @@ esp_err_t Server::type(SDMMC::Device& device, const std::string& fname, size_t s
     }; /* !device.valid_path(fname) */
 
 	struct stat st;
-//	char *fullname = fake_cwd.compose(fname);
 	std::string fullname = fake_cwd.compose(fname.c_str());
 	FILE *storage = NULL;
 
@@ -1309,7 +1306,6 @@ esp_err_t Server::type(SDMMC::Device& device, const std::string& fname, size_t s
 	if (!stat(fullname.c_str(), &st) && !S_ISREG(st.st_mode)) // @suppress("Symbol is not resolved")
 	    return err4existent(fname, &st);
 
-//	printf("File %s is exist.\nDo you want use this file? [yes(add)/over(write)/No]: ", fname);
 	cout << aso::format("File %s is exist.\nDo you want use this file? [yes(add)/over(write)/No]: ") % fname;
 	cin >> noskipws >> c;
 	cout << c;
@@ -1408,7 +1404,7 @@ esp_err_t Server::type(SDMMC::Device& device, const std::string& fname, size_t s
 	 << aso::format("**** End of typing the text on keyboard for the screen and the file %s. ****") % fname << endl
 	 << endl;
     return ESP_OK;
-//    return ESP_ERR_INVALID_VERSION;
+
 }; /* Server::type <file> */
 
 
@@ -1420,13 +1416,7 @@ esp_err_t err4existent(const std::string& fname, const struct stat* statbuf)
 {
 #define EXIST_FN_TAG "console::type exist chechk"
     ESP_LOGE(EXIST_FN_TAG, "Error: path %s exist, and is not a file, but a %s.\nOperation is not permitted.",
-	    fname.c_str(), statmode_txt(statbuf)/*(S_ISLNK(statbuf->st_mode))? "symlink":
-		    (S_ISDIR(statbuf->st_mode))? "directory":
-		    (S_ISCHR(statbuf->st_mode))? "character device":
-		    (S_ISBLK(statbuf->st_mode))? "block device":
-		    (S_ISFIFO(statbuf->st_mode))? "FIFO channel":
-		    (S_ISSOCK(statbuf->st_mode))? "socket":
-			    "(unknown type)"*/);
+	    fname.c_str(), statmode_txt(statbuf));
     return ESP_ERR_NOT_SUPPORTED;
 #undef EXIST_FN_TAG
 }; /* err4existent */

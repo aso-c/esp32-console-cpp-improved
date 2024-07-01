@@ -81,7 +81,6 @@ namespace Exec	//---------------------------------------------------------------
 	esp_err_t cat(SDMMC::Device&, const std::string& fname = "");	// type file contents
 
 	esp_err_t type();	// type text from keyboard to screen
-//	esp_err_t type(SDMMC::Device&, const char fname[], size_t = 512);	// type text from keyboard to file and to screen
 	esp_err_t type(SDMMC::Device&, const std::string& fname, size_t = 512);	// type text from keyboard to file and to screen
 
 
