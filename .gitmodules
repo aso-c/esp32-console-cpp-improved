@@ -5,5 +5,5 @@
 	path = components/utils
 	url = https://github.com/aso-c/esp32-utils
 [submodule "components/extrstream/stream"]
-	path = components/extrstream/stream
+	path = components/extrstream/src
 	url = https://github.com/aso-c/extrstream

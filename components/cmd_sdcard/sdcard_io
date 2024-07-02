@@ -40,14 +40,16 @@
 namespace SDMMC	//-----------------------------------------------------------------------------------------------------
 {
 
-    struct bus{
-	enum width {
+    struct bus
+    {
+	enum width
+	{
 	    width_def = SDMMC_SLOT_WIDTH_DEFAULT, /* maximum bus width of the slot*/
 	    width_1 = 1,
 	    width_4 = 4,
 	    width_8 = 8,
-	};
-    };
+	}; /* enum width */
+    }; /* struct bus */
 
 struct Slot
 {
@@ -729,7 +731,8 @@ struct Device
 
     Host& host() {return _host;};
 
-    esp_err_t mount(Card&, const char mountpoint[]);	// Mount default SD-card slot onto path "mountpoint"
+//    esp_err_t mount(Card&, const char mountpoint[]);	// Mount default SD-card slot onto path "mountpoint"
+    esp_err_t mount(Card&, const std::string& mountpoint);	// Mount default SD-card slot onto path "mountpoint"
 //    esp_err_t mount(Card&, int slot_no);		// Mount SD-card slot "slot_no" onto default mount path
 //    esp_err_t mount(Card&, int slot_no, const char mountpoint[]);  // Mount SD-card slot "slot_no" onto default mount path
 
@@ -740,11 +743,16 @@ struct Device
     bool mounted() {return card != nullptr;};	// is devise mounted?
 
 
-    // get mountpath
-    const char *mountpath() const {return target;};
+    /// get mountpath
+//    const char *mountpath() const {return target;};
+    /*const*/ std::string mountpath() const {return target;};
+    /// get mountpath, C string version
+    const char *mountpath_c() const {return target.c_str();};
     // set mountpath, return old mountpath
-    const char *mountpath(const char newpath[]) {const char* oldpath = target; target = (card)? newpath: target; return oldpath;};
-    const char *clean_mountpath() {return mountpath(nullptr);};
+//    const char *mountpath(const char newpath[]) {const char* oldpath = target; target = (card)? newpath: target; return oldpath;};
+    /*const*/ std::string mountpath(const std::string& newpath) {std::string oldpath = newpath; if (!mounted()) std::swap(oldpath, target); return oldpath;};
+//    const char *clean_mountpath() {return mountpath(nullptr);};
+    /*const*/ std::string clean_mountpath() {return mountpath("");};
 
     // use сarefully! may be incorrect behavior!
     int slot_no() {return _host.slot_no();}
@@ -755,7 +763,8 @@ struct Device
 private:
 
     Host _host;
-    const char* target = nullptr;
+//    const char* target = nullptr;
+    std::string target = ""/*nullptr*/;
     esp_vfs_fat_sdmmc_mount_config_t mnt;
 
     void selective_log_level_set(const char tag[], esp_log_level_t level) {esp_log_level_set(tag, level);/* for debug purposes */};

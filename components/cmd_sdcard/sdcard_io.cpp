@@ -7,7 +7,7 @@
  *	Version: 0.6
  */
 
-#define __PURE_C__
+//#define __PURE_C__
 
 
 #define LOG_LOCAL_LEVEL ESP_LOG_DEBUG	// 4 - set 'DEBUG' logging level
@@ -36,7 +36,9 @@
 #if __cplusplus < 201703L
 #include <fcntl.h>
 #include <dirent.h>
-#else
+#else	//  __cplusplus < 201703L
+#include <fcntl.h>
+#include <dirent.h>
 #endif // __cplusplus < 201703L
 #endif // ifdef __PURE_C__
 
@@ -79,26 +81,27 @@ namespace SDMMC	//--------------------------------------------------------------
 //--[ strust Host ]----------------------------------------------------------------------------------------------------
 
 
-// Default constructor
-Host::Host(bus::width width, Pullup pullupst) // @suppress("Member declaration not found") // @suppress("Type cannot be resolved")
-{
-    //slot.default_num(cfg.slot);
-    ESP_LOGI(TAG, "Using SDMMC peripheral - default constructor");
-    // Define my delay for SD/MMC command execution
-   // cfg.command_timeout_ms = SDMMC_COMMAND_TIMEOUT;
-    bus_width(width);
-    set_pullup(pullupst);
-}; /* Host::Host */
+    // Default constructor
+    Host::Host(bus::width width, Pullup pullupst) // @suppress("Member declaration not found") // @suppress("Type cannot be resolved")
+    {
+	//slot.default_num(cfg.slot);
+	ESP_LOGI(TAG, "Using SDMMC peripheral - default constructor");
+	// Define my delay for SD/MMC command execution
+	// cfg.command_timeout_ms = SDMMC_COMMAND_TIMEOUT;
+	bus_width(width);
+	set_pullup(pullupst);
+    }; /* Host::Host */
 
-// Constructor with default slot configuration by number of the slot
-Host::Host(Slot::number number, bus::width width, Host::Pullup pullupst): // @suppress("Member declaration not found") // @suppress("Type cannot be resolved")
-	_slot(number) // @suppress("Symbol is not resolved")
-{
-    cfg.slot = number; // @suppress("Field cannot be resolved")
-    ((sdmmc_slot_config_t*)_slot)->width = width;
-    bus_width(width);
-    set_pullup(pullupst);
-}; /* Host::Host(Slot::number, bus::width, Host::Pullup) */
+    // Constructor with default slot configuration by number of the slot
+    Host::Host(Slot::number number, bus::width width, Host::Pullup pullupst): // @suppress("Member declaration not found") // @suppress("Type cannot be resolved")
+		_slot(number) // @suppress("Symbol is not resolved")
+    {
+	cfg.slot = number; // @suppress("Field cannot be resolved")
+//	((sdmmc_slot_config_t*)_slot)->width = width;
+	static_cast<sdmmc_slot_config_t*>(_slot)->width = width;
+	bus_width(width);
+	set_pullup(pullupst);
+    }; /* Host::Host(Slot::number, bus::width, Host::Pullup) */
 
 // Custom slot configuration in temporary obj
 // for desired slot number
@@ -476,22 +479,25 @@ Device::Device(Card::format::mntfail autofmt, int max_files, size_t size, bool d
 
 
 // Mount default SD-card slot onto path "mountpoint"
-esp_err_t Device::mount(Card& excard, const char mountpoint[])
+//esp_err_t Device::mount(Card& excard, const char mountpoint[])
+esp_err_t Device::mount(Card& excard, const std::string& mountpoint)
 {
 	esp_err_t ret;
 
     // if card already mounted - exit with error
     if (card)
     {
-	ESP_LOGE(TAG, "%s: card already mounted at the %s, refuse to mount again", __func__, mountpath());
+	ESP_LOGE(TAG, "%s: card already mounted at the %s, refuse to mount again", __func__, mountpath_c());
 //	return ESP_ERR_INVALID_STATE;
 	return ESP_ERR_NOT_SUPPORTED;
     }; /* if card */
 
     card  = &excard;
-    target = mountpoint;
+    //target = mountpoint;
+    mountpath(mountpoint);
 
-    ret = esp_vfs_fat_sdmmc_mount(mountpoint, _host, _host.slot(), &mnt, &card->self);
+//    ret = esp_vfs_fat_sdmmc_mount(mountpoint.c_str(), _host, _host.slot(), &mnt, &card->self);
+    ret = esp_vfs_fat_sdmmc_mount(mountpath_c(), _host, _host.slot(), &mnt, &card->self);
     if (ret != ESP_OK)
     {
 	if (ret == ESP_FAIL)
@@ -507,7 +513,7 @@ esp_err_t Device::mount(Card& excard, const char mountpoint[])
 	return ret;
     }; /* if ret != ESP_OK */
 
-    ESP_LOGI(TAG, "Filesystem mounted at the %s", mountpath());
+    ESP_LOGI(TAG, "Filesystem mounted at the %s", mountpath_c());
 
 #if 0
 #ifdef CONFIG_AUTO_CHDIR_BEHIND_MOUNTING
@@ -550,24 +556,16 @@ esp_err_t Device::unmount()
 	return ESP_ERR_NOT_FOUND;
     }; /* if card */
 
-//    if (empty(mountpath))
-//    {
-//	cout << TAG << ": " << "Call: unmount(" << mounting.target << ");" << endl;
-//	ret = unmount(mounting.target);
-//	return ret;
-//    }; /* if mountpath == NULL || strcmp(mountpath, "") == 0 */
-    ret = esp_vfs_fat_sdcard_unmount(target, card->self);
+//    ret = esp_vfs_fat_sdcard_unmount(target, card->self);
+    ret = esp_vfs_fat_sdcard_unmount(mountpath_c(), card->self);
     //ESP_LOGI(TAG, "Card unmounted");
     if (ret != ESP_OK)
     {
-//	cout << TAG << ": "  << "Error: " << ret
-//	    << ", " << esp_err_to_name(ret) << endl;
 	ESP_LOGE(TAG, "Error: %d, %s", ret, esp_err_to_name(ret));
 	return ret;
     }; /* if ret != ESP_OK */
 
-//    cout << TAG << ": " << "Card unmounted" << endl;
-    ESP_LOGI(TAG, "Card at %s unmounted", mountpath());
+    ESP_LOGI(TAG, "Card at %s unmounted", mountpath_c());
     card = nullptr;	// card is unmounted - clear this field as unmounted sign
     clean_mountpath();
 //    fake_cwd_path[0] = '\0';	// set fake cwd path to: ""
@@ -576,125 +574,6 @@ esp_err_t Device::unmount()
 
 //    esp_err_t unmount(sdmmc_card_t *card);	// Unmount SD-card "card", mounted onto default mountpath
 //    esp_err_t unmount(const char *base_path, sdmmc_card_t *card);	// Unmount mounted SD-card "card", mounted onto mountpath
-
-#if 0
-// if the basename (the last part of the path) - has the characteristics
-// of a directory name, and a dirname (the path prefix) -
-// is an existing file, not a directory, or any other impossible variants
-// of the full file/path name
-bool Device::valid_path(const char path[])
-{
-
-	struct stat st;
-	char *base = basename(path);	// get a filename of a path
-
-/*esp_log_level_set("Device::valid_path", ESP_LOG_DEBUG);*//* for debug purposes */
-    ESP_LOGD("Device::valid_path", "basename of the path is: \"%s\"", base);
-    ESP_LOGD("Device::valid_path", "full path is: \"%s\"", path);
-    ESP_LOGD("Device::valid_path", "dirname path is: \"%.*s\"", base - path, path);
-
-//    strcpy(given_path, fake_cwd.curr_get());
-    // if path is empty
-    if (empty(path))
-	return true;	// ESP_LOGD("Device::valid_path", "path is empty, always valid");
-
-    // if path - only base, not a dir
-    if (strlen(path) == 1)
-	return true;	// ESP_LOGD("Device::valid_path", "len of the path - is 1, always valid");
-
-    // if dirname - empty or one symbol length (it can only be the slash)
-    if ((base - path) < 2)
-    {
-	if (strcmp(path, "/..") == 0)	// if path == '/..' - it's invalid
-	    return false;
-	return true;	// ESP_LOGD("Device::valid_path", "Len of dirname is 1 or 0, then path is valid");
-    }; /* if (base - path) < 2 */
-
-    // if base is empty
-    if (!empty(base))
-	base--;	// set base to a last slash in the path
-    else
-    {
-	if (stat(fake_cwd.get(path), &st) == 0)
-	    if (!S_ISDIR(st.st_mode))	// ESP_LOGD("Device::valid_path", "###!!! the path basename - is empty, test the path \"%s\" (real path is %s) exist and a directory... ###", path, fake_cwd.get_current());
-		return false;	// the path is invalid (inconsist) // ESP_LOGE("Device::valid_path", "Path \"%s\" (real path %s) is a file, but marked as a directory, it's invalid!!!", path, fake_cwd.get_current());
-	ESP_LOGD("Device::valid_path", "###!!! test dirname \"%s\" (real path is %s) preliminary is OK, seek to begin of last dir manually for continue test... ###", path, fake_cwd.get_current());
-	for (base -= 2; base > path; base--)
-	{
-	    ESP_LOGD("Device::valid_path", "=== base[0] is \"%c\" ===", base[0]);
-	    if (*base == '/')
-		break;
-	}; /* for base--; base > path; base-- */
-    }; /* if empty(base) */
-
-#define sign_place 0x2	// with of the place for the sign
-#define point_sign 0x1	// mark a point symbol in a string
-#define alpha_sign 0x2	// mark a non-point or a non-slash symbol in a string
-#define initial_ctrl (0x3 << 4*sign_place)	// mark for the initial pass of the control of the path validity
-#define alpha_present_mask (alpha_sign | (alpha_sign << 1*sign_place) | (alpha_sign << 2*sign_place))
-#define three_point_mark (point_sign | (point_sign << 1*sign_place) | (point_sign << 2*sign_place))
-
-	unsigned int ctrl_cnt = initial_ctrl;	// marked the firs pass of the control loop
-	unsigned int idx_ctrl = 0;
-    // scan the dirname of the path for found '/.' or '/..' sequence
-    for (char* scan = base; scan >= path; scan--)
-    {
-	ESP_LOGD("Device::valid_path", "current char from the path is: '%c', ctrl_cnt is %2X", *scan, ctrl_cnt);
-
-	switch (scan[0])
-	{
-	// solution point
-	case '/':
-
-	    idx_ctrl = 0;	// reset the idx_ctrl
-	    ESP_LOGD("Device::valid_path", "###### Solution point: current path char ######");
-	    switch (ctrl_cnt)
-	    {
-	    // double slash - prev symbol is slash
-	    case 0:
-		ESP_LOGD("Device::valid_path", "**** double slash and more - is not valid sequence in the path name ****");
-		return false;
-
-	    case three_point_mark:
-		// if more then 3 point sequence in substring
-		ESP_LOGD("Device::valid_path", "3 point or more sequence is present in current substring - nothing to do, continue");
-		break;
-
-	    case initial_ctrl:
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wimplicit-fallthrough="
-		ESP_LOGD("Device::valid_path", "++++++ The first pass of the control loop ++++++");
-#pragma GCC diagnostic pop
-
-	    default:
-		// if non point sign is present in tested substring
-		if (ctrl_cnt & alpha_present_mask)
-		{
-		    ESP_LOGD("Device::valid_path", "alpha or other then point or slash symbol is present in current processing substring - test subpath for exist, continue");
-		    ctrl_cnt = 0;
-		    continue;
-		}; /* if ctrl_cnt & alpha_present_mask */
-		ESP_LOGD("Device::valid_path", "====== One or two point sequence in the current meaning substring, ctrl_cnt is %2X, test current subpath for existing ======", ctrl_cnt);
-		ESP_LOGD("Device::valid_path", "### Testing the current substring \"%s\" for existing ###", fake_cwd.get(path, scan - path));
-		if ((stat(fake_cwd.get(path, scan - path), &st) == 0)? !S_ISDIR(st.st_mode): (strcmp(fake_cwd.get_current(), "/") != 0))
-		    return false;
-	    }; /* switch ctrl_cnt */
-	    ctrl_cnt = 0;
-	    break;
-
-	// point symbol handling
-	case '.':
-	// all other symbols
-	default:
-
-	    if (idx_ctrl < 3)
-		ctrl_cnt |= (((scan[0] == '.')? point_sign: alpha_sign) << idx_ctrl++ * sign_place);	// ESP_LOGD("Device::valid_path", "%d symbol of the processing substring, symbol is \"%c\"", idx_ctrl, scan[0]);
-	}; /* switch scan[0] */
-    }; /* for char* scan = base; scan >= path; scan-- */
-
-    return true;
-}; /* Device::valid_path */
-#endif
 
 //const char *Device::MOUNT_POINT_Default = MOUNT_POINT_def;
 
