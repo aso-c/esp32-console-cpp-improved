@@ -181,8 +181,6 @@ const char* const Server::MOUNT_POINT_Default = SD_MOUNT_POINT;
 
 	    const std::string buf = fake_cwd.get();
 
-//    if (!buf.c_str())
-//    	return errno;
 	cout << endl
 	    << "PWD is: \"" << buf << '"' << endl
 	    << endl;
@@ -224,7 +222,7 @@ const char* const Server::MOUNT_POINT_Default = SD_MOUNT_POINT;
 #if __cplusplus < 201703L
 
 	    struct stat statbuf;
-	    std::string path = fake_cwd.compose(dirname.c_str());
+	    std::string path = fake_cwd.compose(dirname/*.c_str()*/);
 
 	ESP_LOGI(CMD_TAG_PRFX, "%s: Create directory with name \"%s\", real path is %s", __func__, dirname.c_str(), path.c_str());
 
@@ -245,7 +243,7 @@ const char* const Server::MOUNT_POINT_Default = SD_MOUNT_POINT;
 #else	// __cplusplus < 201703L
 
 	    struct stat statbuf;
-	    std::string path = fake_cwd.compose(dirname.c_str());
+	    std::string path = fake_cwd.compose(dirname/*.c_str()*/);
 
 	    ESP_LOGI(CMD_TAG_PRFX, "%s: Create directory with name \"%s\", real path is %s", __func__, dirname.c_str(), path.c_str());
 
@@ -286,7 +284,7 @@ const char* const Server::MOUNT_POINT_Default = SD_MOUNT_POINT;
 #if __cplusplus < 201703L
 
 	    struct stat st;
-	    std::string path = fake_cwd.compose(dirname.c_str());
+	    std::string path = fake_cwd.compose(dirname/*.c_str()*/);
 
 	ESP_LOGI(CMD_TAG_PRFX, "%s: Delete directory <%s>, real path is %s", __func__, dirname.c_str(), path.c_str());
 
@@ -335,7 +333,7 @@ const char* const Server::MOUNT_POINT_Default = SD_MOUNT_POINT;
 
 #else	// __cplusplus < 201703L
 	    struct stat st;
-	    std::string path = fake_cwd.compose(dirname.c_str());
+	    std::string path = fake_cwd.compose(dirname/*.c_str()*/);
 
 	ESP_LOGI(CMD_TAG_PRFX, "%s: Delete directory <%s>, real path is %s", __func__, dirname.c_str(), path.c_str());
 
@@ -462,7 +460,7 @@ const char* const Server::MOUNT_POINT_Default = SD_MOUNT_POINT;
     esp_err_t Server::ls(SDMMC::Device& device, const std::string& pattern)
     {
 	ESP_LOGD(CMD_TAG_PRFX, "%s: pattern is             : \"%s\"", __func__, pattern.c_str());
-	ESP_LOGD(CMD_TAG_PRFX, "%s: processed inner pattern: \"%s\"", __func__, fake_cwd.compose(pattern.c_str()));
+	ESP_LOGD(CMD_TAG_PRFX, "%s: processed inner pattern: \"%s\"", __func__, fake_cwd.compose(pattern/*.c_str()*/).c_str());
 	if (!fake_cwd.valid(pattern.c_str()))
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: pattern \"%s\" is invalid", __func__, pattern.c_str());
@@ -472,7 +470,7 @@ const char* const Server::MOUNT_POINT_Default = SD_MOUNT_POINT;
     	    int entry_cnt = 0;
     	    DIR *dir;	// Directory descriptor
     	    struct stat statbuf;	// buffer for stat
-    	    std::string in_pattern = fake_cwd.compose(pattern.c_str());
+    	    std::string in_pattern = fake_cwd.compose(pattern/*.c_str()*/);
 
 	if (stat(in_pattern.c_str(), &statbuf) == -1)
 	{
@@ -630,7 +628,7 @@ const char* const Server::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	    return ESP_ERR_NOT_FOUND;
 	}; /* if !fake_cwd.valid(dest_raw.c_str()) */
 
-	    std::string src = fake_cwd.compose(src_raw.c_str());
+	    std::string src = fake_cwd.compose(src_raw/*.c_str()*/);
 
 #if __cplusplus < 201703L
 
@@ -653,7 +651,7 @@ const char* const Server::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	}; /* if (S_ISDIR(st.st_mode)) */
 
 	    std::string srcbase = basename(src.c_str());
-	    std::string dest = fake_cwd.compose(dest_raw.c_str());
+	    std::string dest = fake_cwd.compose(dest_raw/*.c_str()*/);
 
 	    // Check if destination file is exist
 	if (stat(dest.c_str(), &st) == 0)
@@ -727,7 +725,7 @@ const char* const Server::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	}; /* if (S_ISDIR(st.st_mode)) */
 
 	    std::string srcbase = basename(src.c_str());
-	    std::string dest = fake_cwd.compose(dest_raw.c_str());
+	    std::string dest = fake_cwd.compose(dest_raw/*.c_str()*/);
 
 	    // Check if destination file is exist
 	if (stat(dest.c_str(), &st) == 0)
@@ -845,7 +843,7 @@ const char* const Server::MOUNT_POINT_Default = SD_MOUNT_POINT;
 #if __cplusplus < 201703L
 
 
-	    std::string src = fake_cwd.compose(src_raw.c_str());
+	    std::string src = fake_cwd.compose(src_raw/*.c_str()*/);
 	    struct stat st_src;
 
 	// Check if source file is not exist
@@ -858,7 +856,7 @@ const char* const Server::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	}; /* if stat(src.c_str(), &st_src) != 0 */
 
 
-	    std::string dest = fake_cwd.compose(dest_raw.c_str());
+	    std::string dest = fake_cwd.compose(dest_raw/*.c_str()*/);
 	    struct stat st_dest;
 
 	cout << aso::format("Move file \"%s\" (%s) to \"%s\" (%s)") %src_raw %src
@@ -918,7 +916,7 @@ const char* const Server::MOUNT_POINT_Default = SD_MOUNT_POINT;
 
 #else	// __cplusplus < 201703L
 
-	    std::string src = fake_cwd.compose(src_raw.c_str());
+	    std::string src = fake_cwd.compose(src_raw/*.c_str()*/);
 	    struct stat st_src;
 
 	// Check if source file is not exist
@@ -931,7 +929,7 @@ const char* const Server::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	}; /* if stat(src.c_str(), &st_src) != 0 */
 
 
-	    std::string dest = fake_cwd.compose(dest_raw.c_str());
+	    std::string dest = fake_cwd.compose(dest_raw/*.c_str()*/);
 	    struct stat st_dest;
 
 	cout << aso::format("Move file \"%s\" (%s) to \"%s\" (%s)") %src_raw %src
@@ -1030,7 +1028,7 @@ const char* const Server::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	}; /* !device.valid_path(pattern) */
 
 	    struct stat st;
-	    std::string path = fake_cwd.compose(pattern.c_str());
+	    std::string path = fake_cwd.compose(pattern/*.c_str()*/);
 
 	if (astr::is_space(pattern))
 	{
@@ -1115,7 +1113,7 @@ const char* const Server::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	}; /* !device.valid_path(fname) */
 
 	    struct stat st;
-	    std::string fullname = fake_cwd.compose(fname.c_str());
+	    std::string fullname = fake_cwd.compose(fname/*.c_str()*/);
 	    FILE *text = nullptr; // file for type to screen
 
 	if (empty(fname))
@@ -1262,7 +1260,7 @@ const char* const Server::MOUNT_POINT_Default = SD_MOUNT_POINT;
     // refers to an object, other than a file.
     // fname - the name of the object referenced by the struct stat.
     //static esp_err_t err4existent(const char fname[], const struct stat* statbuf);
-    static esp_err_t err4existent(const std::string& fname, const struct stat* statbuf);
+    static esp_err_t err4existent(const std::string& fname, const struct stat& statbuf);
 
 
     // type text from keyboard to file and to screen
@@ -1275,7 +1273,7 @@ const char* const Server::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	}; /* !device.valid_path(fname) */
 
 	    struct stat st;
-	    std::string fullname = fake_cwd.compose(fname.c_str());
+	    std::string fullname = fake_cwd.compose(fname/*.c_str()*/);
 	    FILE *storage = NULL;
 
 	// Test file 'fname' for existing
@@ -1286,7 +1284,7 @@ const char* const Server::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	    {
 
 		if (!stat(fullname.c_str(), &st))	// but if the fname still exists here, then it is a directory // @suppress("Symbol is not resolved")
-		    return err4existent(fname, &st);
+		    return err4existent(fname, st);
 		ESP_LOGI(CMD_TAG_PRFX CMD_NM, "OK, file \"%s\" does not exist, opening this file.", fname.c_str());
 		cout << aso::format("Open file %s for the write") % fullname << endl;
 		errno = 0;	// clear error state
@@ -1305,7 +1303,7 @@ const char* const Server::MOUNT_POINT_Default = SD_MOUNT_POINT;
 
 	    // fname exists, check that is a regular file
 	    if (!stat(fullname.c_str(), &st) && !S_ISREG(st.st_mode)) // @suppress("Symbol is not resolved")
-		return err4existent(fname, &st);
+		return err4existent(fname, st);
 
 	    cout << aso::format("File %s is exist.\nDo you want use this file? [yes(add)/over(write)/No]: ") % fname;
 	    cin >> noskipws >> c;
@@ -1413,11 +1411,11 @@ const char* const Server::MOUNT_POINT_Default = SD_MOUNT_POINT;
     // refers to an object, other than a file.
     // fname - the name of the object referenced by the struct stat.
     //esp_err_t err4existent(const char fname[], const struct stat* statbuf)
-    esp_err_t err4existent(const std::string& fname, const struct stat* statbuf)
+    esp_err_t err4existent(const std::string& fname, const struct stat& statbuf)
     {
 #define EXIST_FN_TAG "console::type exist chechk"
 	ESP_LOGE(EXIST_FN_TAG, "Error: path %s exist, and is not a file, but a %s.\nOperation is not permitted.",
-		fname.c_str(), statmode_txt(statbuf));
+		fname.c_str(), statmode2txt(statbuf));
 	return ESP_ERR_NOT_SUPPORTED;
 #undef EXIST_FN_TAG
     }; /* err4existent */

@@ -441,94 +441,79 @@ Slot& Slot::operator =(sdmmc_slot_config_t&& config) noexcept
 //--[ struct Device ]-----------------------------------------------------------------------------------------------
 
 
-Device::Device(bus::width width, Host::Pullup pullst, esp_vfs_fat_sdmmc_mount_config_t&& mnt_cfg):
-	_host(width, pullst)//,
-	/*fake_cwd(fake_cwd_path, sizeof(fake_cwd_path))*/
-{
-    /*selective_log_level_set("Device::valid_path", ESP_LOG_DEBUG);*/	/* for debug purposes */
-//#ifdef CONFIG_EXAMPLE_FORMAT_IF_MOUNT_FAILED
-//	mnt.format_if_mount_failed = true;
-//#else
-//	mnt.format_if_mount_failed = false;
-//#endif // EXAMPLE_FORMAT_IF_MOUNT_FAILED
-    mnt.format_if_mount_failed = mnt_cfg.format_if_mount_failed;
-//	mnt.max_files = 5;
-    mnt.max_files = mnt_cfg.max_files;
-//	mnt.allocation_unit_size = 16 * 1024;
-    mnt.allocation_unit_size = mnt_cfg.allocation_unit_size;
+    Device::Device(bus::width width, Host::Pullup pullst, esp_vfs_fat_sdmmc_mount_config_t&& mnt_cfg):
+		_host(width, pullst)
+    {
+	/*selective_log_level_set("Device::valid_path", ESP_LOG_DEBUG);*/	/* for debug purposes */
+	mnt.format_if_mount_failed = mnt_cfg.format_if_mount_failed;
+	mnt.max_files = mnt_cfg.max_files;
+	mnt.allocation_unit_size = mnt_cfg.allocation_unit_size;
 	//ESP_LOGI(TAG, "Initializing SD card");
-}; /* Device::Device(bus::width, Host::Pullup, esp_vfs_fat_sdmmc_mount_config_t&) */
+    }; /* Device::Device(bus::width, Host::Pullup, esp_vfs_fat_sdmmc_mount_config_t&) */
 
-Device::Device(Card::format::mntfail autofmt, int max_files, size_t size, bool disk_st_chk,
-	    bus::width width, Host::Pullup pull):
-		_host(width, pull)//,
-		/*fake_cwd(fake_cwd_path, sizeof(fake_cwd_path))*/
-{
-    /*selective_log_level_set("Device::valid_path", ESP_LOG_DEBUG);*/	/* for debug purposes */
+    Device::Device(Card::format::mntfail autofmt, int max_files, size_t size, bool disk_st_chk,
+		    bus::width width, Host::Pullup pull):
+		_host(width, pull)
+    {
+	/*selective_log_level_set("Device::valid_path", ESP_LOG_DEBUG);*/	/* for debug purposes */
 	//ESP_LOGI(TAG, "Initializing SD card");
-        mnt.format_if_mount_failed = (autofmt == Card::format::yes)? true: false;
-    //	mnt.max_files = 5;
+	mnt.format_if_mount_failed = (autofmt == Card::format::yes)? true: false;
         mnt.max_files = max_files;
-    //	mnt.allocation_unit_size = 16 * 1024;
         mnt.allocation_unit_size = size;
-    //    mnt.disk_status_check_enable = false;
         mnt.disk_status_check_enable = disk_st_chk;
-}; /* Device::Device(Card::format::mntfail, int, size_t, bus::width, Host::Pullup) */
+    }; /* Device::Device(Card::format::mntfail, int, size_t, bus::width, Host::Pullup) */
 
 
 
 
-// Mount default SD-card slot onto path "mountpoint"
-//esp_err_t Device::mount(Card& excard, const char mountpoint[])
-esp_err_t Device::mount(Card& excard, const std::string& mountpoint)
-{
-	esp_err_t ret;
-
-    // if card already mounted - exit with error
-    if (card)
+    // Mount default SD-card slot onto path "mountpoint"
+    esp_err_t Device::mount(Card& excard, const std::string& mountpoint)
     {
-	ESP_LOGE(TAG, "%s: card already mounted at the %s, refuse to mount again", __func__, mountpath_c());
-//	return ESP_ERR_INVALID_STATE;
-	return ESP_ERR_NOT_SUPPORTED;
-    }; /* if card */
+	    esp_err_t ret;
 
-    card  = &excard;
-    //target = mountpoint;
-    mountpath(mountpoint);
+	// if card already mounted - exit with error
+	if (card)
+	{
+	    ESP_LOGE(TAG, "%s: card already mounted at the %s, refuse to mount again", __func__, mountpath_c());
+//	    return ESP_ERR_INVALID_STATE;
+	    return ESP_ERR_NOT_SUPPORTED;
+	}; /* if card */
 
-//    ret = esp_vfs_fat_sdmmc_mount(mountpoint.c_str(), _host, _host.slot(), &mnt, &card->self);
-    ret = esp_vfs_fat_sdmmc_mount(mountpath_c(), _host, _host.slot(), &mnt, &card->self);
-    if (ret != ESP_OK)
-    {
-	if (ret == ESP_FAIL)
-//	    cout << TAG << ": " << "Failed to mount filesystem. "
-//		<< "If you want the card to be formatted, set the EXAMPLE_FORMAT_IF_MOUNT_FAILED menuconfig option.";
-	    ESP_LOGI(TAG, "Failed to mount filesystem. %s",
-		"If you want the card to be formatted, set the EXAMPLE_FORMAT_IF_MOUNT_FAILED menuconfig option.");
-	else
-//	    cout << TAG << ": " << "Failed to initialize the card (error " << ret << ", " << esp_err_to_name(ret) << "). "
-//		<< "Make sure SD card lines have pull-up resistors in place.";
-	    ESP_LOGI(TAG, "Failed to initialize the card (error %d, %s). %s", ret,  esp_err_to_name(ret),
-		"Make sure SD card lines have pull-up resistors in place.");
-	return ret;
-    }; /* if ret != ESP_OK */
+	card  = &excard;
+	mountpath(mountpoint);
 
-    ESP_LOGI(TAG, "Filesystem mounted at the %s", mountpath_c());
+	ret = esp_vfs_fat_sdmmc_mount(mountpath_c(), _host, _host.slot(), &mnt, &card->self);
+	if (ret != ESP_OK)
+	{
+	    if (ret == ESP_FAIL)
+//	    	cout << TAG << ": " << "Failed to mount filesystem. "
+//			<< "If you want the card to be formatted, set the EXAMPLE_FORMAT_IF_MOUNT_FAILED menuconfig option.";
+		ESP_LOGI(TAG, "Failed to mount filesystem. %s",
+			"If you want the card to be formatted, set the EXAMPLE_FORMAT_IF_MOUNT_FAILED menuconfig option.");
+	    else
+//		cout << TAG << ": " << "Failed to initialize the card (error " << ret << ", " << esp_err_to_name(ret) << "). "
+//			<< "Make sure SD card lines have pull-up resistors in place.";
+		ESP_LOGI(TAG, "Failed to initialize the card (error %d, %s). %s", ret,  esp_err_to_name(ret),
+			"Make sure SD card lines have pull-up resistors in place.");
+	    return ret;
+	}; /* if ret != ESP_OK */
+
+	ESP_LOGI(TAG, "Filesystem mounted at the %s", mountpath_c());
 
 #if 0
 #ifdef CONFIG_AUTO_CHDIR_BEHIND_MOUNTING
-//    change_currdir(DIRECTORY_FOR_AUTOCHANGE);
-    change_currdir(mountpath());
-    ESP_LOGI(TAG, "Current directory autochanged to: %s", fake_cwd_path);
+	//    change_currdir(DIRECTORY_FOR_AUTOCHANGE);
+	change_currdir(mountpath());
+	ESP_LOGI(TAG, "Current directory autochanged to: %s", fake_cwd_path);
 #else
-//    change_currdir("/");
-    getcwd(fake_cwd_path, sizeof(fake_cwd_path));	// set fake_cwd according system pwd (through get_cwd())
-    ESP_LOGI(TAG, "Current directory set to: %s,  according system pwd", fake_cwd_path);
+//	change_currdir("/");
+	getcwd(fake_cwd_path, sizeof(fake_cwd_path));	// set fake_cwd according system pwd (through get_cwd())
+	ESP_LOGI(TAG, "Current directory set to: %s,  according system pwd", fake_cwd_path);
 #endif	// defined CONFIG_AUTO_CHDIR_BEHIND_MOUNTING
 #endif // *
 
-    return ret;
-}; /* Device::mount(Card&, char[]) */
+	return ret;
+    }; /* Device::mount(Card&, const std::string&) */
 
 
 

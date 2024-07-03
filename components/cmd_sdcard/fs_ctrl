@@ -35,7 +35,7 @@
 #error "The sdcard_ctrl file usable in C++ projects only."
 #endif
 
-
+#if 0
 /// Text representation mode of statbuf (directory entry information)
 inline constexpr const char* statmode_txt(const struct stat* statbuf)
 {
@@ -47,6 +47,7 @@ inline constexpr const char* statmode_txt(const struct stat* statbuf)
 	    (S_ISSOCK(statbuf->st_mode))? "socket":
 					"(unknown type)";
 }; /* stat_mode_txt() */
+#endif
 
 
 
