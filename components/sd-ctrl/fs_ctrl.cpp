@@ -109,7 +109,7 @@ const char* const Server::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	{
 #ifdef CONFIG_AUTO_CHDIR_BEHIND_MOUNTING
 	    fake_cwd.change(mountpoint.c_str());
-	    ESP_LOGI(TAG, "Current directory autochanged to: %s", fake_cwd.current());
+	    ESP_LOGI(TAG, "Current directory autochanged to: %s", fake_cwd.current().c_str());
 #else
 //	    change_currdir("/");
 	    fake_cwd.get(fake_cwd_path, sizeof(fake_cwd_path));	// set fake_cwd according system pwd (through get_cwd())
