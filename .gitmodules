@@ -7,3 +7,6 @@
 [submodule "components/extrstream/stream"]
 	path = components/extrstream/src
 	url = https://github.com/aso-c/extrstream
+[submodule "components/sd-ctrl"]
+	path = components/sd-ctrl
+	url = https://github.com/aso-c/esp32-sd-ctrl
