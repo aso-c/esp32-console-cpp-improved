@@ -145,8 +145,8 @@ bool isempty(const char *str)
 }; /* isempty */
 
 
-SDMMC::Card sdmmc_card; // @suppress("Type cannot be resolved")
-SDMMC::Device device(SDMMC::bus::width_4, SDMMC::Host::pullup); // @suppress("Type cannot be resolved")
+SD::Card sdmmc_card; // @suppress("Type cannot be resolved")
+SD::Device device(SD::bus::width_4, SD::Host::pullup); // @suppress("Type cannot be resolved")
 Exec::Server exec_server;
 
 
