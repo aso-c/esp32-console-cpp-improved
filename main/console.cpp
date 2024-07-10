@@ -32,6 +32,8 @@
 #include "nvs.h"
 #include "nvs_flash.h"
 
+#include <astring.h>
+
 //using namespace idf;
 using namespace std;
 
@@ -342,6 +344,12 @@ extern "C" void app_main(void)
         prompt = PROMPT_STR "> ";
 #endif //CONFIG_LOG_COLORS
     }
+
+    std::string test1 = "   3front_space";
+    std::string test2 = "   3front_5tail_space     ";
+    ESP_LOGW("astr::trim_check", "Trimming check1, orig: [%s], trimmed: [%s]", test1.c_str(), astr::trim(test1).c_str());
+    ESP_LOGW("astr::trim_check", "Trimming check2, orig: [%s], trimmed: [%s]", test2.c_str(), astr::trim(test2).c_str());
+    ESP_LOGW("astr::trim_check", "Check the Trimm 3, 5 spaces, orig: [%s], trimmed: [%s]", "  \t   ", astr::trim("  \t   ").c_str());
 
     /* Main loop */
     while(true) {
