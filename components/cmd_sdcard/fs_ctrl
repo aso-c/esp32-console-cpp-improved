@@ -31,25 +31,6 @@
  */
 
 
-#ifndef __cplusplus
-#error "The sdcard_ctrl file usable in C++ projects only."
-#endif
-
-#if 0
-/// Text representation mode of statbuf (directory entry information)
-inline constexpr const char* statmode_txt(const struct stat* statbuf)
-{
-    return (S_ISLNK(statbuf->st_mode))? "symlink":
-	    (S_ISDIR(statbuf->st_mode))? "directory":
-	    (S_ISCHR(statbuf->st_mode))? "character device":
-	    (S_ISBLK(statbuf->st_mode))? "block device":
-	    (S_ISFIFO(statbuf->st_mode))? "FIFO channel":
-	    (S_ISSOCK(statbuf->st_mode))? "socket":
-					"(unknown type)";
-}; /* stat_mode_txt() */
-#endif
-
-
 
 // Mw delay for the SD/MMC command execution
 //#define SDMMC_COMMAND_TIMEOUT 500
@@ -57,10 +38,10 @@ inline constexpr const char* statmode_txt(const struct stat* statbuf)
 namespace Exec	//-----------------------------------------------------------------------------------------------------
 {
 
-    class Server
+    class Cmd
     {
     public:
-	Server() {};
+	Cmd() {};
 	/// Mount default SD-card slot onto path "mountpoint"
 	esp_err_t mount(SD::MMC::Device&, SD::MMC::Card&, const std::string& mountpoint = MOUNT_POINT_Default);
 	/// Mount SD-card slot "slot_no" onto desired mount path, default mount path is MOUNT_POINT_Default
@@ -92,7 +73,7 @@ namespace Exec	//---------------------------------------------------------------
 	static const char* const MOUNT_POINT_Default;
 	static const char* TAG;
 
-    }; /* class Exec::Server */
+    }; /* class Exec::Cmd */
 
 }; //--[ namespace Exec ]----------------------------------------------------------------------------------------------
 

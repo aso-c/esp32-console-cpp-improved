@@ -90,19 +90,19 @@ namespace Exec	//---------------------------------------------------------------
 
 //    static const char *TAG = "SD/MMC service";
 
-//--[ class Server ]------------------------------------------------------------------------------------------------
+//--[ class Cmd ]------------------------------------------------------------------------------------------------------
 
 
 
-const char* const Server::MOUNT_POINT_Default = SD_MOUNT_POINT;
+const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 
 
 #undef CMD_TAG_PRFX
-#define CMD_TAG_PRFX "SD/MMC CMD server:"
+#define CMD_TAG_PRFX "SD/MMC CMD Exec server:"
 
 
     /// Mount default SD-card slot onto path "mountpoint", default mountpoint is MOUNT_POINT_Default
-    esp_err_t Server::mount(SD::MMC::Device& device, SD::MMC::Card& card, const std::string& mountpoint) // @suppress("Type cannot be resolved") // @suppress("Member declaration not found")
+    esp_err_t Cmd::mount(SD::MMC::Device& device, SD::MMC::Card& card, const std::string& mountpoint) // @suppress("Type cannot be resolved") // @suppress("Member declaration not found")
     {
 	ESP_LOGI(TAG, "Mounting SD-Cart to a mountpoint %s", mountpoint.c_str());
 
@@ -123,15 +123,15 @@ const char* const Server::MOUNT_POINT_Default = SD_MOUNT_POINT;
 #endif
 	}; /* if ret == ESP_OK */
 	return ret;
-    }; /* Server::mount */
+    }; /* Cmd::mount */
 
 
     /// Mount SD-card slot "slot_no" onto specified mount path, default mountpoint is MOUNT_POINT_Default
-    esp_err_t Server::mount(SD::MMC::Device& device, SD::MMC::Card& card, int slot_no, const std::string& mountpoint) // @suppress("Member declaration not found") // @suppress("Type cannot be resolved")
+    esp_err_t Cmd::mount(SD::MMC::Device& device, SD::MMC::Card& card, int slot_no, const std::string& mountpoint) // @suppress("Member declaration not found") // @suppress("Type cannot be resolved")
     {
 	device.slot_no(slot_no); // @suppress("Method cannot be resolved")
 	return device.mount(card, mountpoint); // @suppress("Method cannot be resolved")
-    }; /* Server::mount */
+    }; /* Cmd::mount */
 
 
     //------------------------------------------------------------------------------------------
@@ -140,8 +140,8 @@ const char* const Server::MOUNT_POINT_Default = SD_MOUNT_POINT;
     //    ESP_LOGI(TAG, "Card unmounted");
     //------------------------------------------------------------------------------------------
 
-    // Unmount SD-card, that mounted onto "mountpath"
-    esp_err_t Server::unmount(SD::MMC::Device& device/*const char mountpath[]*/) // @suppress("Type cannot be resolved") // @suppress("Member declaration not found")
+    /// Unmount SD-card, that mounted onto "mountpath"
+    esp_err_t Cmd::unmount(SD::MMC::Device& device/*const char mountpath[]*/) // @suppress("Type cannot be resolved") // @suppress("Member declaration not found")
     {
 	if ((ret = device.unmount()) != ESP_OK) // @suppress("Method cannot be resolved")
 	    cout << TAG << ": "  << "Unmounting Error: " << ret
@@ -153,7 +153,7 @@ const char* const Server::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	}; /* if device.unmount() != ESP_OK */
 
 	return ret;
-    }; /* Server::unmount */
+    }; /* Cmd::unmount */
 
     //------------------------------------------------------------------------------------------
     //    // All done, unmount partition and disable SDMMC peripheral
@@ -178,8 +178,8 @@ const char* const Server::MOUNT_POINT_Default = SD_MOUNT_POINT;
 //    }; /* Server::unmount */
 
 
-    // print current directory name
-    esp_err_t Server::pwd(SD::MMC::Device& device)
+    /// print current working directory name
+    esp_err_t Cmd::pwd(SD::MMC::Device& device)
     {
 #if __cplusplus < 201703L
 
@@ -210,13 +210,13 @@ const char* const Server::MOUNT_POINT_Default = SD_MOUNT_POINT;
 
 	return ESP_OK;
 #endif	// __cplusplus < 201703L
-    }; /* Server::pwd */
+    }; /* Cmd::pwd */
 
 
 
 #define CMD_NM "mkdir"
-    // create a new directory
-    esp_err_t Server::mkdir(SD::MMC::Device& device, const std::string& dirname)
+    /// create a new directory
+    esp_err_t Cmd::mkdir(SD::MMC::Device& device, const std::string& dirname)
     {
 	if (!artificial_cwd.valid(dirname))
 	{
@@ -274,12 +274,13 @@ const char* const Server::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	return ESP_OK;
 
 #endif	// __cplusplus < 201703L
-    }; /* Server::mkdir */
+    }; /* Cmd::mkdir */
+
 
 #undef CMD_NM
 #define CMD_NM "rmdir"
-// delete empty directory
-    esp_err_t Server::rmdir(SD::MMC::Device& device, const std::string& dirname)
+    /// delete empty directory
+    esp_err_t Cmd::rmdir(SD::MMC::Device& device, const std::string& dirname)
     {
 	if (!artificial_cwd.valid(dirname.c_str()))
 	{
@@ -394,15 +395,15 @@ const char* const Server::MOUNT_POINT_Default = SD_MOUNT_POINT;
 
 #endif // __cplusplus < 201703L
 
-    }; /* Server::rmdir */
+    }; /* Cmd::rmdir */
 
 
 
 #undef CMD_NM
 #define CMD_NM "cd"
 
-    // change a current directory
-    esp_err_t Server::cd(SD::MMC::Device& device, const std::string& dirname)
+    /// change a current wirking directory
+    esp_err_t Cmd::cd(SD::MMC::Device& device, const std::string& dirname)
     {
 	    esp_err_t err;
 
@@ -449,27 +450,27 @@ const char* const Server::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	return err;
 
 #endif	// __cplusplus < 201703L
-    }; /* Server::cd */
+    }; /* Cmd::cd */
 
 
 
 #undef CMD_NM
 #define CMD_NM "ls"
 
-    //
-    // Listing the entries of the opened directory
-    // Parameters:
-    //	dir  - opened directory stream;
-    //	path - full path of this directory
-    // Return:
-    //	>=0 - listed entries counter;
-    //	<0  - error - -1*(ESP_ERR_xxx) or ESP_FAIL (-1) immediately
-    // C++ edition
+    ///
+    /// Listing the entries of the opened directory
+    /// Parameters:
+    ///	dir  - opened directory stream;
+    ///	path - full path of this directory
+    /// Return:
+    ///	>=0 - listed entries counter;
+    ///	<0  - error - -1*(ESP_ERR_xxx) or ESP_FAIL (-1) immediately
+    /// C++ edition
     static int listing_direntries_Cpp(DIR *dir, const std::string& path);
 
 
-    // print a list of files in the specified directory
-    esp_err_t Server::ls(SD::MMC::Device& device, const std::string& pattern)
+    /// print a list of files in the specified directory
+    esp_err_t Cmd::ls(SD::MMC::Device& device, const std::string& pattern)
     {
 	ESP_LOGD(CMD_TAG_PRFX, "%s: pattern is             : \"%s\"", __func__, pattern.c_str());
 	ESP_LOGD(CMD_TAG_PRFX, "%s: processed inner pattern: \"%s\"", __func__, artificial_cwd.compose(pattern).c_str());
@@ -543,21 +544,21 @@ const char* const Server::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	closedir(dir);
 	cout << endl;
 	return ret;
-    }; /* Server::ls */
+    }; /* Cmd::ls */
 
 
-    // Printout one entry of the dir, C++ edition
+    /// Printout one entry of the dir, C++ edition
     static void ls_entry_printout_Cpp(const char fullpath[], const char name[]);
 
 
-    // Listing the entries of the opened directory
-    // C++ edition
-    // Parameters:
-    //	dir  - opened directory stream;
-    //	path - full path of this directory
-    // Return:
-    //	>=0 - listed entries counter;
-    //	<0  - error - -1*(ESP_ERR_xxx) or ESP_FAIL (-1) immediately
+    /// Listing the entries of the opened directory
+    /// C++ edition
+    /// Parameters:
+    ///	dir  - opened directory stream;
+    ///	path - full path of this directory
+    /// Return:
+    ///	>=0 - listed entries counter;
+    ///	<0  - error - -1*(ESP_ERR_xxx) or ESP_FAIL (-1) immediately
     int listing_direntries_Cpp(DIR *dir, const std::string& path)
     {
 	    char pathbuf[PATH_MAX + 1]; // @suppress("Symbol is not resolved")
@@ -593,14 +594,14 @@ const char* const Server::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	stat(fullpath, &statbuf);
 	cout << fullpath << endl
 	    << aso::format("\t%s ") % name
-	    << aso::format((S_ISDIR(statbuf.st_mode))? "<DIR>":
+	    << aso::format(statmode2txt(statbuf) /* (S_ISDIR(statbuf.st_mode))? "<DIR>":
 			(S_ISREG(statbuf.st_mode))? "(file)": "[%s]",
 			(S_ISLNK(statbuf.st_mode))? "symlink":
 			(S_ISCHR(statbuf.st_mode))? "char dev":
 			(S_ISBLK(statbuf.st_mode))? "blk dev":
 			(S_ISFIFO(statbuf.st_mode))? "FIFO":
 			(S_ISSOCK(statbuf.st_mode))? "socket":
-				"unknown/other type") << endl;
+				"unknown/other type"*/) << endl;
     }; /* ls_entry_printout_Cpp */
 
 
@@ -610,8 +611,8 @@ const char* const Server::MOUNT_POINT_Default = SD_MOUNT_POINT;
 #define CMD_NM "cp"
 #define __CP_OVERWRITE_FILE__
 
-    // copy files according a pattern
-    esp_err_t Server::cp(SD::MMC::Device& device, const std::string& src_raw, const std::string& dest_raw)
+    /// copy files according a pattern
+    esp_err_t Cmd::cp(SD::MMC::Device& device, const std::string& src_raw, const std::string& dest_raw)
     {
 	if (astr::is_space(src_raw))
 	{
@@ -812,7 +813,7 @@ const char* const Server::MOUNT_POINT_Default = SD_MOUNT_POINT;
 
 	return ESP_OK;
 
-    }; /* Server::cp */
+    }; /* Cmd::cp */
 
 
 
@@ -821,8 +822,8 @@ const char* const Server::MOUNT_POINT_Default = SD_MOUNT_POINT;
 #undef CMD_NM
 #define CMD_NM "mv"
 
-    // move files according a pattern
-    esp_err_t Server::mv(SD::MMC::Device& device, const std::string& src_raw, const std::string& dest_raw)
+    /// move files according a pattern
+    esp_err_t Cmd::mv(SD::MMC::Device& device, const std::string& src_raw, const std::string& dest_raw)
     {
 
 	if (astr::is_space(src_raw))
@@ -1021,15 +1022,15 @@ const char* const Server::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	}; /* if rename(src.c_str(), dest.c_str()) != 0 */
 	return ESP_OK;
 
-    }; /* Server::mv */
+    }; /* Cmd::mv */
 
 
 
 #undef CMD_NM
 #define CMD_NM "rm"
 
-    // remove files according a pattern
-    esp_err_t Server::rm(SD::MMC::Device& device, const std::string& pattern)
+    /// remove files according a pattern
+    esp_err_t Cmd::rm(SD::MMC::Device& device, const std::string& pattern)
     {
 
 	if (!artificial_cwd.valid(pattern))
@@ -1106,15 +1107,15 @@ const char* const Server::MOUNT_POINT_Default = SD_MOUNT_POINT;
 
 #endif // __cplusplus < 201703L
 
-    }; /* Server::rm */
+    }; /* Cmd::rm */
 
 
 
 #undef CMD_NM
 #define CMD_NM "cat"
 
-    // type file contents
-    esp_err_t Server::cat(SD::MMC::Device& device, const std::string& fname)
+    /// type file contents
+    esp_err_t Cmd::cat(SD::MMC::Device& device, const std::string& fname)
     {
 
 	if (!artificial_cwd.valid(fname.c_str()))
@@ -1229,15 +1230,15 @@ const char* const Server::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	}; /* if errno */
 
 	return ESP_OK;
-    }; /* cat */
+    }; /* Cmd::cat */
 
 
 
 #undef CMD_NM
 #define CMD_NM "type"
 
-    // type text from keyboard to screen
-    esp_err_t Server::type()
+    /// type text from keyboard to screen
+    esp_err_t Cmd::type()
     {
 	cout << endl
 	     << "**** Type the text on keyboard to screen *****" << endl
@@ -1259,17 +1260,17 @@ const char* const Server::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	     << "**** End of typing the text on keyboard. *****" << endl
 	     << endl;
 	return ESP_OK;
-    }; /* type */
+    }; /* Cmd::type */
 
-    // Generates an error message if the struct stat
-    // refers to an object, other than a file.
-    // fname - the name of the object referenced by the struct stat.
-    //static esp_err_t err4existent(const char fname[], const struct stat* statbuf);
+
+    /// Generates an error message if the struct stat
+    /// refers to an object, other than a file.
+    /// fname - the name of the object referenced by the struct stat.
     static esp_err_t err4existent(const std::string& fname, const struct stat& statbuf);
 
 
-    // type text from keyboard to file and to screen
-    esp_err_t Server::type(SD::MMC::Device& device, const std::string& fname, size_t sector_size)
+    /// type text from keyboard to file and to screen
+    esp_err_t Cmd::type(SD::MMC::Device& device, const std::string& fname, size_t sector_size)
     {
 	if (!artificial_cwd.valid(fname))
 	{
@@ -1410,13 +1411,12 @@ const char* const Server::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	     << endl;
 	return ESP_OK;
 
-    }; /* Server::type <file> */
+    }; /* Cmd::type <file> */
 
 
-    // Generates an error message if the struct stat
-    // refers to an object, other than a file.
-    // fname - the name of the object referenced by the struct stat.
-    //esp_err_t err4existent(const char fname[], const struct stat* statbuf)
+    /// Generates an error message if the struct stat
+    /// refers to an object, other than a file.
+    /// fname - the name of the object referenced by the struct stat.
     esp_err_t err4existent(const std::string& fname, const struct stat& statbuf)
     {
 #define EXIST_FN_TAG "console::type exist chechk"
@@ -1429,7 +1429,7 @@ const char* const Server::MOUNT_POINT_Default = SD_MOUNT_POINT;
 
 #undef CMD_TAG_PRFX
 
-    const char* Server::TAG = "SD/MMC service";
+    const char* Cmd::TAG = "SD/MMC Exec Cmd service";
 
 }; //--[ namespace Exec ]----------------------------------------------------------------------------------------------
 
