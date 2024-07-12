@@ -102,25 +102,25 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 #define CMD_TAG_PRFX "SD/MMC CMD Exec server:"
 
 
-    /// Mount default SD-card slot onto path "mountpoint", default mountpoint is MOUNT_POINT_Default
-    esp_err_t Cmd::mount(SD::MMC::Device& device, SD::MMC::Card& card, const std::string& mountpoint) // @suppress("Type cannot be resolved") // @suppress("Member declaration not found")
+    /// Mount default SD-card slot onto path "mountid", or onto slot no ""mountid, if it's a number, default mountpoint is MOUNT_POINT_Default
+    esp_err_t Cmd::mount(SD::MMC::Device& device, SD::MMC::Card& card, /*const*/ std::string/*&*/ mountid)
     {
-	ESP_LOGI(TAG, "Mounting SD-Cart to a mountpoint %s", mountpoint.c_str());
+	ESP_LOGI(TAG, "Mounting SD-Cart to a mountpoint %s", mountid.c_str());
 
-	if (astr::is_digitex(mountpoint))
-	    return mount(device, card, atoi(mountpoint.c_str())); // @suppress("Invalid arguments")
+	if (astr::is_digitex(mountid))
+	    return mount(device, card, atoi(mountid.c_str())); // @suppress("Invalid arguments")
 
 	ESP_LOGI(TAG, "Mounting SD-Cart to a directory!!!");
-	ret = device.mount(card, mountpoint); // @suppress("Method cannot be resolved")
+	ret = device.mount(card, mountid); // @suppress("Method cannot be resolved")
 	if (ret == ESP_OK)
 	{
 #ifdef CONFIG_AUTO_CHDIR_BEHIND_MOUNTING
-	    artificial_cwd.change(mountpoint);
+	    artificial_cwd.change(mountid);
 	    ESP_LOGI(TAG, "Current directory autochanged to: %s", artificial_cwd.get().c_str());
 #else
 //	    change_currdir("/");
-	    fake_cwd.get(fake_cwd_path, sizeof(fake_cwd_path));	// set fake_cwd according system pwd (through get_cwd())
-	    ESP_LOGI(TAG, "Current directory set to: %s,  according system pwd", fake_cwd.current());
+	    artificial_cwd.get();	// set fake_cwd according system pwd (through get_cwd())
+	    ESP_LOGI(TAG, "Current directory set to: %s,  according system pwd", artificial_cwd.get().c_str());
 #endif
 	}; /* if ret == ESP_OK */
 	return ret;
@@ -128,7 +128,7 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 
 
     /// Mount SD-card slot "slot_no" onto specified mount path, default mountpoint is MOUNT_POINT_Default
-    esp_err_t Cmd::mount(SD::MMC::Device& device, SD::MMC::Card& card, int slot_no, const std::string& mountpoint) // @suppress("Member declaration not found") // @suppress("Type cannot be resolved")
+    esp_err_t Cmd::mount(SD::MMC::Device& device, SD::MMC::Card& card, int slot_no, /*const*/ std::string/*&*/ mountpoint)
     {
 	device.slot_no(slot_no); // @suppress("Method cannot be resolved")
 	return device.mount(card, mountpoint); // @suppress("Method cannot be resolved")
@@ -142,7 +142,7 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
     //------------------------------------------------------------------------------------------
 
     /// Unmount SD-card, that mounted onto "mountpath"
-    esp_err_t Cmd::unmount(SD::MMC::Device& device/*const char mountpath[]*/) // @suppress("Type cannot be resolved") // @suppress("Member declaration not found")
+    esp_err_t Cmd::unmount(SD::MMC::Device& device/*const char mountpath[]*/)
     {
 	if ((ret = device.unmount()) != ESP_OK) // @suppress("Method cannot be resolved")
 	    cout << TAG << ": "  << "Unmounting Error: " << ret
@@ -151,7 +151,7 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	{
 	    cout << TAG << ": " << "Card unmounted" << endl;
 	    artificial_cwd.clear();	// set fake cwd path to: ""
-	}; /* if device.unmount() != ESP_OK */
+	}; /* else if device.unmount() != ESP_OK */
 
 	return ret;
     }; /* Cmd::unmount */
@@ -180,80 +180,34 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 
 
     /// print current working directory name
-    esp_err_t Cmd::pwd(/*SD::MMC::Device& device*/)
+    esp_err_t Cmd::pwd()
     {
-#if __cplusplus < 201703L
-
-//	    const std::string buf = fake_cwd.get();
-//
-//	cout << endl
-//	    << "PWD is: \"" << buf << '"' << endl
-//	    << endl;
-
-	cout << endl
-	    << "PWD is: \"" << fake_cwd.get() << '"' << endl
-	    << endl;
-
-	return ESP_OK;
-#else	// __cplusplus < 201703L
-
-//	    const std::string buf = fake_cwd.get();
-//
-//	if (astr::is_space(buf))
-//	    return errno;
-//	cout << endl
-//	    << "PWD is: \"" << buf << '"' << endl
-//	    << endl;
-
 	cout << endl
 	    << "PWD is: \"" << artificial_cwd.get() << '"' << endl
 	    << endl;
-
 	return ESP_OK;
-#endif	// __cplusplus < 201703L
+
     }; /* Cmd::pwd */
 
 
 
 #define CMD_NM "mkdir"
     /// create a new directory
-    esp_err_t Cmd::mkdir(/*SD::MMC::Device& device,*/ const std::string& dirname)
+    esp_err_t Cmd::mkdir(/*const*/ std::string/*&*/ dirname)
     {
 	if (!artificial_cwd.valid(dirname))
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: the new directory name \"%s\" is invalid", __func__, dirname.c_str());
 	    return ESP_ERR_NOT_FOUND;
-	}; /* !device.valid_path(pattern) */
+	}; /* if !artificial_cwd.valid(dirname) */
 
 	if (astr::is_space(dirname))
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: invoke command \"%s\" without parameters.\n%s", __func__, CMD_NM,
 		    "This command required the creating directory name.");
 	    return ESP_ERR_INVALID_ARG;
-	}; /* if dirname == NULL || strcmp(dirname, "") */
+	}; /* if astr::is_space(dirname) */
 
-#if __cplusplus < 201703L
-
-	    struct stat statbuf;
-	    std::string path = fake_cwd.compose(dirname);
-
-	ESP_LOGI(CMD_TAG_PRFX, "%s: Create directory with name \"%s\", real path is %s", __func__, dirname.c_str(), path.c_str());
-
-	if (stat(path.c_str(), &statbuf) == 0)
-	{
-	    ESP_LOGE(CMD_TAG_PRFX, "%s: Invalid argument - requested path \"%s\" is exist; denied create duplication name\n", __func__, path.c_str());
-	    return ESP_ERR_INVALID_ARG;
-	}; /* if stat(tmpstr, &statbuf) == -1 */
-	errno = 0;
-	::mkdir(path.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
-	if (errno)
-	{
-	    ESP_LOGE(CMD_TAG_PRFX, "%s: Error creating directory \"%s\": %s", __func__, dirname.c_str(), strerror(errno));
-	    return ESP_FAIL;
-	}; /* if (errno) */
-	return ESP_OK;
-
-#else	// __cplusplus < 201703L
 
 	    struct stat statbuf;
 	    std::string path = artificial_cwd.compose(dirname);
@@ -274,20 +228,19 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	}; /* if (errno) */
 	return ESP_OK;
 
-#endif	// __cplusplus < 201703L
     }; /* Cmd::mkdir */
 
 
 #undef CMD_NM
 #define CMD_NM "rmdir"
     /// delete empty directory
-    esp_err_t Cmd::rmdir(/*SD::MMC::Device& device,*/ const std::string& dirname)
+    esp_err_t Cmd::rmdir(/*const*/ std::string/*&*/ dirname)
     {
 	if (!artificial_cwd.valid(dirname.c_str()))
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: the directory name \"%s\" is invalid", __func__, dirname.c_str());
 	    return ESP_ERR_NOT_FOUND;
-	}; /* !device.valid_path(pattern) */
+	}; /* if !artificial_cwd.valid(dirname.c_str()) */
 
 	if (astr::is_space(dirname))
 	{
@@ -295,57 +248,7 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 		     "This command required the name of the deleting directory.");
 	    return ESP_ERR_INVALID_ARG;
 	}; /* if dirname == NULL || strcmp(dirname, "") */
-#if __cplusplus < 201703L
 
-	    struct stat st;
-	    std::string path = fake_cwd.compose(dirname);
-
-	ESP_LOGI(CMD_TAG_PRFX, "%s: Delete directory <%s>, real path is %s", __func__, dirname.c_str(), path.c_str());
-
-	// Check if destination directory or file exists before deleting
-	if (stat(path.c_str(), &st) != 0)
-	{
-	    // deleting a non-exist directory is not possible
-	    ESP_LOGE(CMD_TAG_PRFX, "%s: Directory \"%s\" is not exist - deleting a non-existent catalogue is not possible.\n%s", __func__, dirname.c_str(), esp_err_to_name(ESP_ERR_NOT_FOUND));
-	    return ESP_ERR_NOT_FOUND;
-	}; /* if stat(file_foo, &st) != 0 */
-	if (!S_ISDIR(st.st_mode))
-	{
-	    ESP_LOGE(CMD_TAG_PRFX, "%s: The %s command delete directories, not the files.\n%s", __func__, CMD_NM, esp_err_to_name(ESP_ERR_NOT_SUPPORTED));
-	    return ESP_ERR_INVALID_ARG;
-	}; /* if (S_ISDIR(st.st_mode)) */
-
-	    DIR *dir = opendir(path.c_str());	// Directory descriptor
-
-	errno = 0;	// clear any possible errors
-
-	    struct dirent *entry = readdir(dir);
-
-	closedir(dir);
-	if (errno)
-	{
-	    ESP_LOGE(CMD_TAG_PRFX, "%s: Fail when closing directory \"%s\": %s", __func__, dirname.c_str(), strerror(errno));
-	    return ESP_FAIL;
-	}; /* if errno */
-	if (entry)
-	{
-	    ESP_LOGE(CMD_TAG_PRFX, "%s: Directory \"%s\" is not empty, deletung non-emty directories "
-		    "is not supported.", __func__, dirname.c_str());
-	    return ESP_ERR_NOT_SUPPORTED;
-	}; /* if (entry) */
-
-	errno = 0;
-	//cout << aso::format("[[[ unlink the path [%s] ]]]") % path << endl;
-	unlink(path.c_str());
-	if (errno)
-	{
-	    ESP_LOGE(CMD_TAG_PRFX, "%s: Fail when deleting \"%s\": %s", __func__, dirname.c_str(), strerror(errno));
-	    return ESP_FAIL;
-	}; /* if errno */
-
-	return ESP_OK;
-
-#else	// __cplusplus < 201703L
 	    struct stat st;
 	    std::string path = artificial_cwd.compose(dirname);
 
@@ -394,8 +297,6 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 
 	return ESP_OK;
 
-#endif // __cplusplus < 201703L
-
     }; /* Cmd::rmdir */
 
 
@@ -404,7 +305,7 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 #define CMD_NM "cd"
 
     /// change a current wirking directory
-    esp_err_t Cmd::cd(SD::MMC::Device& device, const std::string& dirname)
+    esp_err_t Cmd::cd(SD::MMC::Device& device, /*const*/ std::string/*&*/ dirname)
     {
 	    esp_err_t err;
 
@@ -412,27 +313,7 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: the directory name \"%s\" is invalid", __func__, dirname.c_str());
 	    return ESP_ERR_NOT_FOUND;
-	}; /* !device.valid_path(pattern) */
-
-#if __cplusplus < 201703L
-
-	if (!astr::is_space(dirname))
-	    ESP_LOGI(CMD_TAG_PRFX, "%s: Change current dir to %s", __func__, dirname.c_str());
-	else if (device.card != nullptr)
-	    ESP_LOGI(CMD_TAG_PRFX, "%s: Not specified directory for jump to, change current dir to %s, [mountpoint].", __func__, device.mountpath_c());
-	else
-	{
-    	    ESP_LOGW(CMD_TAG_PRFX, "%s: Card is not mounted, mountpoint is not valid, nothing to do", __func__);
-    	    return ESP_ERR_NOT_SUPPORTED;
-	}; /* else if device.card != nullptr */
-	// change cwd dir: chdir(dirname);
-	err = device.mounted()? fake_cwd.change((astr::is_space(dirname))? device.mountpath_c(): dirname.c_str()): ESP_FAIL;
-
-	if (err != 0)
-	    ESP_LOGE(CMD_TAG_PRFX, "%s: fail change directory to %s\n%s", __func__, dirname.c_str(), esp_err_to_name(err));
-	return err;
-
-#else	// __cplusplus < 201703L
+	}; /* if !artificial_cwd.valid(dirname) */
 
 	if (!astr::is_space(dirname))
 	    ESP_LOGI(CMD_TAG_PRFX, "%s: Change current dir to %s", __func__, dirname.c_str());
@@ -450,7 +331,6 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: fail change directory to %s\n%s", __func__, dirname.c_str(), esp_err_to_name(err));
 	return err;
 
-#endif	// __cplusplus < 201703L
     }; /* Cmd::cd */
 
 
@@ -467,11 +347,11 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
     ///	>=0 - listed entries counter;
     ///	<0  - error - -1*(ESP_ERR_xxx) or ESP_FAIL (-1) immediately
     /// C++ edition
-    static int listing_direntries_Cpp(DIR *dir, const std::string& path);
+    static int listing_direntries_Cpp(DIR *dir, /*const*/ std::string/*&*/ path);
 
 
     /// print a list of files in the specified directory
-    esp_err_t Cmd::ls(/*SD::MMC::Device& device,*/ const std::string& pattern)
+    esp_err_t Cmd::ls(/*const*/ std::string/*&*/ pattern)
     {
 	ESP_LOGD(CMD_TAG_PRFX, "%s: pattern is             : \"%s\"", __func__, pattern.c_str());
 	ESP_LOGD(CMD_TAG_PRFX, "%s: processed inner pattern: \"%s\"", __func__, artificial_cwd.compose(pattern).c_str());
@@ -479,7 +359,7 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: pattern \"%s\" is invalid", __func__, pattern.c_str());
 	    return ESP_ERR_NOT_FOUND;
-	}; /* !device.valid_path(pattern) */
+	}; /* if !artificial_cwd.valid(pattern.c_str()) */
 
     	    int entry_cnt = 0;
     	    DIR *dir;	// Directory descriptor
@@ -501,17 +381,8 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 		return ESP_ERR_INVALID_ARG;
 	    }; /* if pattern[strlen(pattern) - 1] == '/' */
 
-	    ESP_LOGI(__func__, "\n%s %s, file size %ld bytes\n", pattern.c_str(),
-			statmode2txt(statbuf),
-//			(S_ISLNK(statbuf.st_mode))? "[symlink]":
-//			(S_ISREG(statbuf.st_mode))? "(file)":
-//			(S_ISDIR(statbuf.st_mode))? "<DIR>":
-//			(S_ISCHR(statbuf.st_mode))? "[char dev]":
-//			(S_ISBLK(statbuf.st_mode))? "[blk dev]":
-//			(S_ISFIFO(statbuf.st_mode))? "[FIFO]":
-//			(S_ISSOCK(statbuf.st_mode))? "[socket]":
-//			"[unknown type]",
-			statbuf.st_size);
+	    ESP_LOGI(__func__, "\n%s %s, file size %ld bytes\n", pattern.c_str(), statmode2txt(statbuf),
+								statbuf.st_size);
 	    return ESP_OK;
 	}; /* if (!S_ISDIR(statbuf.st_mode)) */
 
@@ -562,7 +433,7 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
     /// Return:
     ///	>=0 - listed entries counter;
     ///	<0  - error - -1*(ESP_ERR_xxx) or ESP_FAIL (-1) immediately
-    int listing_direntries_Cpp(DIR *dir, const std::string& path)
+    int listing_direntries_Cpp(DIR *dir, /*const*/ std::string/*&*/ path)
     {
 	    char pathbuf[PATH_MAX + 1]; // @suppress("Symbol is not resolved")
 	    char * fnbuf;
@@ -607,7 +478,7 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 #define __CP_OVERWRITE_FILE__
 
     /// copy files according a pattern
-    esp_err_t Cmd::cp(/*SD::MMC::Device& device,*/ std::string src_raw, std::string dest_raw)
+    esp_err_t Cmd::cp(std::string src_raw, std::string dest_raw)
     {
 	if (astr::is_space(src_raw))
 	{
@@ -637,83 +508,6 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	}; /* if !fake_cwd.valid(dest_raw) */
 
 	    std::string src = artificial_cwd.compose(src_raw);
-
-#if __cplusplus < 201703L
-
-
-	    struct stat st;
-
-	// Check if source file is not exist
-	if (stat(src.c_str(), &st) != 0)
-	{
-	    // Source file must be exist
-	    ESP_LOGE(CMD_TAG_PRFX, "%s: file \"%s\" (%s) is not exist - copyng a non-existent file is not possible.\n%s",
-		    __func__, src_raw.c_str(), src.c_str(), esp_err_to_name(ESP_ERR_NOT_FOUND));
-	    return ESP_ERR_NOT_FOUND;
-	}; /* if stat(src.c_str(), &st) */
-	if (S_ISDIR(st.st_mode))
-	{
-	    ESP_LOGE(CMD_TAG_PRFX, "%s: copyng directories is unsupported.\n%s",
-		    __func__, esp_err_to_name(ESP_ERR_NOT_SUPPORTED));
-	    return ESP_ERR_NOT_SUPPORTED;
-	}; /* if (S_ISDIR(st.st_mode)) */
-
-	    std::string srcbase = basename(src.c_str());
-	    std::string dest = fake_cwd.compose(dest_raw/*.c_str()*/);
-
-	    // Check if destination file is exist
-	if (stat(dest.c_str(), &st) == 0)
-	{
-	    // Destination file is exist
-	    ESP_LOGI(CMD_TAG_PRFX, "%s: path \"%s\" (%s) is exist - copy is write to an existent file or directory.",
-		    __func__, dest_raw.c_str(), dest.c_str());
-	    // if destination - exist path, not a directory
-	    if (S_ISDIR(st.st_mode))
-		dest = dest + ((dest.back() != '/')? "/": "") + srcbase;	// create destination file full name
-	}; /* if stat(dest.c_str(), &st) == 0 */
-
-	// Re-check the modified version of the
-	// destination filename, that may be exist:
-	if (stat(dest.c_str(), &st) == 0)
-	{
-	    // the final name of the target file
-	    // must not be a existing directory name
-	    if (S_ISDIR(st.st_mode))
-	    {
-		ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite exist \"%s\" directory by the destination file is denied; aborting.",
-			__func__, dest.c_str());
-		return ESP_ERR_NOT_SUPPORTED;
-	    } /* if S_ISDIR(st.st_mode) */
-
-#if !defined(__NOT_OVERWRITE__) && defined(__CP_OVERWRITE_FILE__)
-	    ESP_LOGW(CMD_TAG_PRFX, "%s: overwrite an existing file \"%s\".", __func__, dest.c_str());
-#else
-	    ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite the existent file \"%s\" is denied; aborting.", __func__, dest.c_str());
-	    return ESP_ERR_NOT_SUPPORTED;
-#endif	// __CP_OVER_EXIST_FILE__
-	}; /* if stat(dest, &st) == 0 */
-
-	if (src == dest)
-	{
-	    ESP_LOGE(CMD_TAG_PRFX, "%s: source & destination file name are same: \"%s\";\n\t\t\t copying file to iself is unsupported",
-		    __func__, dest.c_str());
-	    return ESP_ERR_NOT_SUPPORTED;
-	}; /* if strcmp(src, dest) == 0 */
-
-	// destination file - OK, it's not exist or is may be overwrited
-	ESP_LOGI(CMD_TAG_PRFX ":" CMD_NM, "copy file %s to %s", src.c_str(), dest.c_str());
-
-	    FILE* srcfile = fopen(src.c_str(), "rb");
-	    FILE* destfile = fopen(dest.c_str(), "wb");
-
-	if (!destfile)
-	{
-	    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "failed creating file %s, aborting ", dest.c_str());
-	    fclose(srcfile);
-	    return ESP_ERR_NOT_FOUND;
-	}; /* if !destfile */
-
-#else
 
 	    struct stat st;
 
@@ -796,40 +590,8 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 		return ESP_ERR_NOT_SUPPORTED;
 	    }; /* if !destfile */
 
-#if 0
-	    FILE* srcfile = fopen(src.c_str(), "rb");
-	    FILE* destfile = fopen(dest.c_str(), "wb");
 
-	if (!destfile)
-	{
-	    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "failed creating file %s, aborting ", dest.c_str());
-	    fclose(srcfile);
-	    return ESP_ERR_NOT_FOUND;
-	}; /* if !destfile */
-#endif // 0
 
-#endif	// else __cplusplus < 201703L
-
-#if 0
-#define CP_BUFSIZE 512
-	    char buf[CP_BUFSIZE];
-	    size_t readcnt;
-
-	while (!feof(srcfile))
-	{
-	    readcnt = fread(buf, 1, CP_BUFSIZE, srcfile);
-	    if (readcnt == 0)
-		break;
-	    fwrite(buf, 1, readcnt, destfile);
-	}; /* while !feof(srcfile) */
-
-	//	fflush(destfile);
-	//	fsync(fileno(destfile));
-	//	fclose(destfile);
-	//	fclose(srcfile);
-#endif
-
-//#define CP_BUFSIZE 512
 	    constexpr size_t CP_BUFSIZE = 512;
 	    char buf[CP_BUFSIZE];
 	    std::streamsize cnt;
@@ -854,7 +616,7 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 #define CMD_NM "mv"
 
     /// move files according a pattern
-    esp_err_t Cmd::mv(/*SD::MMC::Device& device,*/ const std::string& src_raw, const std::string& dest_raw)
+    esp_err_t Cmd::mv(/*const*/ std::string/*&*/ src_raw, /*const*/ std::string/*&*/ dest_raw)
     {
 
 	if (astr::is_space(src_raw))
@@ -882,83 +644,6 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	    return ESP_ERR_NOT_FOUND;
 	}; /* if !fake_cwd.valid(dest_raw.c_str()) */
 
-
-
-#if __cplusplus < 201703L
-
-
-	    std::string src = fake_cwd.compose(src_raw/*.c_str()*/);
-	    struct stat st_src;
-
-	// Check if source file is not exist
-	if (stat(src.c_str(), &st_src) != 0)
-	{
-	    // Source file must be exist
-	    ESP_LOGE(CMD_TAG_PRFX, "%s: file \"%s\" (%s) is not exist - renaming a non-existent file is not possible.\n%s",
-		    __func__, src_raw.c_str(), src.c_str(), esp_err_to_name(ESP_ERR_NOT_FOUND));
-	    return ESP_ERR_NOT_FOUND;
-	}; /* if stat(src.c_str(), &st_src) != 0 */
-
-
-	    std::string dest = fake_cwd.compose(dest_raw/*.c_str()*/);
-	    struct stat st_dest;
-
-	cout << aso::format("Move file \"%s\" (%s) to \"%s\" (%s)") %src_raw %src
-			%dest_raw %dest << endl;
-
-	if (stat(dest.c_str(), &st_dest) == 0)
-	{
-	    // Target file exist
-	    ESP_LOGW(CMD_TAG_PRFX, "%s: target file name \"%s\" (%s) exist",
-		    __func__, dest_raw.c_str(), dest.c_str());
-	    // if destination is existing directory
-	    if (S_ISDIR(st_dest.st_mode))
-	    {
-		    std::string basenm = basename(src.c_str());
-
-		ESP_LOGD(CMD_TAG_PRFX, "%s: destination file is exist directory,\n\t\t\tbasename of src is: %s ", __func__,
-			basenm.c_str());
-		// Add trailing slash if it absent
-		if (dest.back() != '/')
-		    dest += '/';
-		ESP_LOGD(CMD_TAG_PRFX, "%s: adding trailing slash to a destination file: %s", __func__, dest.c_str());
-		dest += basenm;
-		ESP_LOGD(CMD_TAG_PRFX, "%s: adding src basename to a destination file: %s", __func__, dest.c_str());
-	    } /* if S_ISDIR(st.st_mode) */
-	} /* if stat(dest, &st) != 0 */
-
-	// Re-check the modified version of the
-	// destination filename, that may be exist:
-	if (stat(dest.c_str(), &st_dest) == 0)
-	{
-	    // the final name of the target file
-	    // must not be a existing directory name
-	    if (S_ISDIR(st_dest.st_mode))
-	    {
-		ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite exist directory \"%s\" by the destination file from the %s is not allowed; aborting.",
-			__func__, dest.c_str(), src.c_str());
-		return ESP_ERR_NOT_SUPPORTED;
-	    } /* if S_ISDIR(st.st_mode) */
-
-	    // if source - is dir, but destination - ordinary file
-	    if (S_ISDIR(st_src.st_mode))
-	    {
-		ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite exist file \"%s\" by renaming the source directory %s to it - is not allowed; aborting.",
-			__func__, dest.c_str(), src.c_str());
-		return ESP_ERR_NOT_SUPPORTED;
-	    }; /* if S_ISDIR(st.st_mode) */
-
-#if !defined(__NOT_OVERWRITE__) && defined(__CP_OVERWRITE_FILE__)
-	    ESP_LOGW(CMD_TAG_PRFX, "%s: overwrite an existing file \"%s\".", __func__, dest.c_str());
-#else
-	    ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite the existent file \"%s\" is denied; aborting.",
-		    __func__, dest.c_str());
-	    return ESP_ERR_NOT_SUPPORTED;
-#endif	// __CP_OVER_EXIST_FILE__
-	}; /*     if stat(dest.c_str(), &st_dest) == 0 */
-
-
-#else	// __cplusplus < 201703L
 
 	    std::string src = artificial_cwd.compose(src_raw/*.c_str()*/);
 	    struct stat st_src;
@@ -1030,8 +715,6 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 #endif	// __CP_OVER_EXIST_FILE__
 	}; /*     if stat(dest.c_str(), &st_dest) == 0 */
 
-#endif	// __cplusplus < 201703L
-
 	// Names of the moving/renaming file
 	ESP_LOGI(CMD_TAG_PRFX, "%s: Moving/renaming file %s (%s) to %s (%s)", __func__, src_raw.c_str(), src.c_str(), dest_raw.c_str(), dest.c_str());
 	// check the source and destination file are same
@@ -1061,14 +744,14 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 #define CMD_NM "rm"
 
     /// remove files according a pattern
-    esp_err_t Cmd::rm(/*SD::MMC::Device& device,*/ const std::string& pattern)
+    esp_err_t Cmd::rm(/*const*/ std::string/*&*/ pattern)
     {
 
 	if (!artificial_cwd.valid(pattern))
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: pattern \"%s\" is invalid", __func__, pattern.c_str());
 	    return ESP_ERR_NOT_FOUND;
-	}; /* !device.valid_path(pattern) */
+	}; /* if !artificial_cwd.valid(pattern) */
 
 	    struct stat st;
 	    std::string path = artificial_cwd.compose(pattern);
@@ -1081,7 +764,6 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	}; /* if astr::is_space(pattern) */
 
 	ESP_LOGI(CMD_TAG_PRFX, "%s: delete file \"%s\" (%s)", __func__,  pattern.c_str(), path.c_str());
-#if __cplusplus < 201703L
 
 	// Check if destination file exists before deleting
 	if (stat(path.c_str(), &st) != 0)
@@ -1108,35 +790,6 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	}; /* if errno */
 
 	return ESP_OK;
-
-#else
-	// Check if destination file exists before deleting
-	if (stat(path.c_str(), &st) != 0)
-	{
-	    // deleting a non-existent file is not possible
-	    ESP_LOGE(CMD_TAG_PRFX, "%s: file \"%s\" is not exist - deleting a non-existent file is not possible.\n%s",
-		    __func__, pattern.c_str(), esp_err_to_name(ESP_ERR_NOT_FOUND));
-	    return ESP_ERR_NOT_FOUND;
-	}; /* if stat(file_foo, &st) != 0 */
-	if (S_ISDIR(st.st_mode))
-	{
-	    ESP_LOGE(CMD_TAG_PRFX, "%s: deleting directories unsupported.\n%s",
-		    __func__, esp_err_to_name(ESP_ERR_NOT_SUPPORTED));
-	    return ESP_ERR_NOT_SUPPORTED;
-	}; /* if (S_ISDIR(st.st_mode)) */
-	errno = 0;
-	//cout << "Now exec: ===>> " << aso::format("unlink(%s)") % path << "<<===" << endl;
-	unlink(path.c_str());
-	if (errno)
-	{
-	    ESP_LOGE(CMD_TAG_PRFX, "%s: Fail when deleting \"%s\": %s", __func__, pattern.c_str(), strerror(errno));
-
-	    return ESP_FAIL;
-	}; /* if errno */
-
-	return ESP_OK;
-
-#endif // __cplusplus < 201703L
 
     }; /* Cmd::rm */
 
@@ -1146,14 +799,14 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 #define CMD_NM "cat"
 
     /// type file contents
-    esp_err_t Cmd::cat(/*SD::MMC::Device& device,*/ const std::string& fname)
+    esp_err_t Cmd::cat(/*const*/ std::string/*&*/ fname)
     {
 
 	if (!artificial_cwd.valid(fname.c_str()))
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: pattern \"%s\" is invalid", __func__, fname.c_str());
 	    return ESP_ERR_NOT_FOUND;
-	}; /* !device.valid_path(fname) */
+	}; /* if !artificial_cwd.valid(fname.c_str()) */
 
 	    struct stat st;
 	    std::string fullname = artificial_cwd.compose(fname/*.c_str()*/);
@@ -1175,8 +828,6 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	    << aso::format("*** Printing contents of the file <%s> (realname '%s'). ***") % fname % fullname  << endl
 	    << endl;
 
-#if __cplusplus < 201703L
-
 	// Check if destination file exists before typing
 	if (stat(fullname.c_str(), &st) != 0)
 	{
@@ -1210,43 +861,6 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	    fclose(text);
 	    return ESP_FAIL;
 	}; /* if errno */
-
-#else
-
-	// Check if destination file exists before typing
-	if (stat(fullname.c_str(), &st) != 0)
-	{
-	    // typing a non-exist file is not possible
-	    ESP_LOGE(CMD_TAG_PRFX, "%s: \"%s\" file does not exist - printing of the missing file is not possible.\n%s",
-		    __func__, fname.c_str(), esp_err_to_name(ESP_ERR_NOT_FOUND));
-	    return ESP_ERR_NOT_FOUND;
-	}; /* if stat(path, &st) != 0 */
-
-	if (S_ISDIR(st.st_mode))
-	{
-	    ESP_LOGE(CMD_TAG_PRFX, "%s: Typing directories unsupported, use the 'ls' command instead.\n%s",
-		    __func__, esp_err_to_name(ESP_ERR_NOT_SUPPORTED));
-	    return ESP_ERR_NOT_SUPPORTED;
-	}; /* if (S_ISDIR(st.st_mode)) */
-
-	errno = 0;	// clear possible errors
-	text = fopen(fullname.c_str(), "r"); // open the file for type to screen
-	if (!text)
-	{
-	    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Error opening file <%s> (%s), %s", fname.c_str(), fullname.c_str(), strerror(errno));
-	    return ESP_FAIL;
-	}; /* if !FILE */
-
-	for (char c = getc(text); !feof(text); c = getc(text))
-	    putchar(c);
-
-	if (errno)
-	{
-	    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Error during type the file %s (%s) to output, %s", fname.c_str(), fullname.c_str(), strerror(errno));
-	    fclose(text);
-	    return ESP_FAIL;
-	}; /* if errno */
-#endif	// __cplusplus < 201703L
 
 	cout << endl
 	    << "*** End of printing file " << fname << ". **************" << endl
@@ -1301,13 +915,13 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 
 
     /// type text from keyboard to file and to screen
-    esp_err_t Cmd::type(/*SD::MMC::Device& device,*/ const std::string& fname, size_t sector_size)
+    esp_err_t Cmd::type(/*const*/ std::string/*&*/ fname, size_t sector_size)
     {
 	if (!artificial_cwd.valid(fname))
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: pattern \"%s\" is invalid", __func__, fname.c_str());
 	    return ESP_ERR_NOT_FOUND;
-	}; /* !device.valid_path(fname) */
+	}; /* if !artificial_cwd.valid(fname) */
 
 	    struct stat st;
 	    std::string fullname = artificial_cwd.compose(fname);
