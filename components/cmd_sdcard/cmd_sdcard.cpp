@@ -162,7 +162,7 @@ Exec::Cmd exec_server;
 
 static int pwd_act(int argc, char **argv)
 {
-    return exec_server.pwd(device);
+    return exec_server.pwd(/*device*/);
 }; /* pwd_act */
 
 void register_pwd(void)
@@ -190,11 +190,11 @@ static int mkdir_act(int argc, char **argv)
     switch (argc)
     {
     case 1:
-	return exec_server.mkdir(device);
+	return exec_server.mkdir(/*device*/);
 	break;
 
     case 2:
-	return exec_server.mkdir(device, argv[1]);
+	return exec_server.mkdir(/*device,*/ argv[1]);
 	break;
 
     default:
@@ -233,11 +233,11 @@ static int rmdir_act(int argc, char **argv)
     switch (argc)
     {
     case 1:
-	return exec_server.rmdir(device);
+	return exec_server.rmdir(/*device*/);
 	break;
 
     case 2:
-	return exec_server.rmdir(device, argv[1]);
+	return exec_server.rmdir(/*device,*/ argv[1]);
 	break;
 
     default:
@@ -318,11 +318,11 @@ static int ls_act(int argc, char **argv)
     switch (argc)
     {
     case 1:
-	return exec_server.ls(device);
+	return exec_server.ls(/*device*/);
 	break;
 
     case 2:
-	return exec_server.ls(device, argv[1]);
+	return exec_server.ls(/*device,*/ argv[1]);
 	break;
 
     default:
@@ -360,15 +360,15 @@ static int cp_act(int argc, char **argv)
     switch (argc)
     {
     case 1:
-	return exec_server.cp(device);
+	return exec_server.cp(/*device*/);
 	break;
 
     case 2:
-	return exec_server.cp(device, argv[1]);
+	return exec_server.cp(/*device,*/ argv[1]);
 	break;
 
     case 3:
-	return exec_server.cp(device, argv[1], argv[2]);
+	return exec_server.cp(/*device,*/ argv[1], argv[2]);
 	break;
 
     default:
@@ -407,15 +407,15 @@ static int mv_act(int argc, char **argv)
     switch (argc)
     {
     case 1:
-	return exec_server.mv(device);
+	return exec_server.mv(/*device*/);
 	break;
 
     case 2:
-	return exec_server.mv(device, argv[1]);
+	return exec_server.mv(/*device,*/ argv[1]);
 	break;
 
     case 3:
-	return exec_server.mv(device, argv[1], argv[2]);
+	return exec_server.mv(/*device,*/ argv[1], argv[2]);
 	break;
 
     default:
@@ -456,12 +456,12 @@ static int rm_act(int argc, char **argv)
     switch (argc)
     {
     case 1:
-	return exec_server.rm(device);
+	return exec_server.rm(/*device*/);
 	break;
 
     case 2:
 	cout << "...with one parameter - OK, specified the filename to delete." << endl;
-	return exec_server.rm(device, argv[1]);
+	return exec_server.rm(/*device,*/ argv[1]);
 	break;
 
     default:
@@ -500,11 +500,11 @@ static int cat_act(int argc, char **argv)
     switch (argc)
     {
     case 1:
-	return exec_server.cat(device);
+	return exec_server.cat(/*device*/);
 	break;
 
     case 2:
-	return exec_server.cat(device, argv[1]);
+	return exec_server.cat(/*device,*/ argv[1]);
 	break;
 
     default:
@@ -548,7 +548,7 @@ static int type_act(int argc, char **argv)
 
     case 2:
 	cout << "...with one parameter - OK, save type output to file & output to screen." << endl;
-	return exec_server.type(device, argv[1]);
+	return exec_server.type(/*device,*/ argv[1]);
 	break;
 
     default:
@@ -903,7 +903,7 @@ esp_err_t SDctrl::act_info()
 // action for pwd command
 esp_err_t SDctrl::act_pwd()
 {
-    exec_server.pwd(device);
+    exec_server.pwd(/*device*/);
     return 0;
 }; /* SDctrl::act_pwd */
 
@@ -915,12 +915,12 @@ esp_err_t SDctrl::act_mkdir()
     switch (argc)
     {
     case 2:
-	return exec_server.mkdir(device);
+	return exec_server.mkdir(/*device*/);
 	break;
 
     case 3:
 	cout << "...with one parameter - specified the name of the new directory." << endl;
-	return exec_server.mkdir(device, argv[2]);
+	return exec_server.mkdir(/*device,*/ argv[2]);
 	break;
 
     default:
@@ -939,12 +939,12 @@ esp_err_t SDctrl::act_rmdir()
     switch (argc)
     {
     case 2:
-	return exec_server.rmdir(device);
+	return exec_server.rmdir(/*device*/);
 	break;
 
     case 3:
 	cout << "...with one parameter - specified the name directory to delete." << endl;
-	return exec_server.rmdir(device, argv[2]);
+	return exec_server.rmdir(/*device,*/ argv[2]);
 	break;
 
     default:
@@ -988,12 +988,12 @@ esp_err_t SDctrl::act_ls()
     {
     case 2:
 	cout << "...without parameters - use current dir." << endl;
-	return exec_server.ls(device);
+	return exec_server.ls(/*device*/);
 	break;
 
     case 3:
 	cout << "...with one parameter - use pattern or directory." << endl;
-	return exec_server.ls(device, argv[2]);
+	return exec_server.ls(/*device,*/ argv[2]);
 	break;
 
     default:
@@ -1013,17 +1013,17 @@ esp_err_t SDctrl::act_cp()
     {
     case 2:
 	cout << "...without parameters - error." << endl;
-	return exec_server.cp(device);
+	return exec_server.cp(/*device*/);
 	break;
 
     case 3:
 	cout << "...with one parameter - error." << endl;
-	return exec_server.cp(device, argv[2]);
+	return exec_server.cp(/*device,*/ argv[2]);
 	break;
 
     case 4:
 	cout << "...with two parameter - copy files." << endl;
-	return exec_server.cp(device, argv[2], argv[3]);
+	return exec_server.cp(/*device,*/ argv[2], argv[3]);
 	break;
 
     default:
@@ -1043,17 +1043,17 @@ esp_err_t SDctrl::act_mv()
     {
     case 2:
 	cout << "...without parameters - error." << endl;
-	return exec_server.mv(device);
+	return exec_server.mv(/*device*/);
 	break;
 
     case 3:
 	cout << "...with one parameter - error." << endl;
-	return exec_server.mv(device, argv[2]);
+	return exec_server.mv(/*device,*/ argv[2]);
 	break;
 
     case 4:
 	cout << "...with two parameter - move/rename files." << endl;
-	return exec_server.mv(device, argv[2], argv[3]);
+	return exec_server.mv(/*device,*/ argv[2], argv[3]);
 	break;
 
     default:
@@ -1073,12 +1073,12 @@ esp_err_t SDctrl::act_rm()
     {
     case 2:
 	cout << "...without parameters - error." << endl;
-	return exec_server.rm(device);
+	return exec_server.rm(/*device*/);
 	break;
 
     case 3:
 	cout << "...with one parameter - remove file." << endl;
-	return exec_server.rm(device, argv[2]);
+	return exec_server.rm(/*device,*/ argv[2]);
 	break;
 
     default:
@@ -1097,11 +1097,11 @@ esp_err_t SDctrl::act_cat()
     switch (argc)
     {
     case 2:
-	return exec_server.cat(device);
+	return exec_server.cat(/*device*/);
 	break;
 
     case 3:
-	return exec_server.cat(device, argv[2]);
+	return exec_server.cat(/*device,*/ argv[2]);
 	break;
 
     default:
@@ -1125,7 +1125,7 @@ esp_err_t SDctrl::act_type()
 
     case 3:
 	cout << "...with one parameter - save type output to file & screen." << endl;
-	return exec_server.type(device, argv[2], device.card->self->csd.sector_size); // @suppress("Invalid arguments") // @suppress("Field cannot be resolved")
+	return exec_server.type(/*device,*/ argv[2], device.card->self->csd.sector_size); // @suppress("Invalid arguments") // @suppress("Field cannot be resolved")
 	break;
 
     default:
@@ -1169,6 +1169,7 @@ SDctrl& SDctrl::Syntax::parent = SDctrl::cmd();
 SDctrl::Syntax& SDctrl::Syntax::get()
 {
 	static Syntax instance;
+
     return instance;
 }; /* SDctrl::Syntax::get */
 

@@ -15,6 +15,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <iomanip>
+#include <fstream>
 #include <cstdarg>
 
 #include <string>
@@ -179,7 +180,7 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 
 
     /// print current working directory name
-    esp_err_t Cmd::pwd(SD::MMC::Device& device)
+    esp_err_t Cmd::pwd(/*SD::MMC::Device& device*/)
     {
 #if __cplusplus < 201703L
 
@@ -216,7 +217,7 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 
 #define CMD_NM "mkdir"
     /// create a new directory
-    esp_err_t Cmd::mkdir(SD::MMC::Device& device, const std::string& dirname)
+    esp_err_t Cmd::mkdir(/*SD::MMC::Device& device,*/ const std::string& dirname)
     {
 	if (!artificial_cwd.valid(dirname))
 	{
@@ -280,7 +281,7 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 #undef CMD_NM
 #define CMD_NM "rmdir"
     /// delete empty directory
-    esp_err_t Cmd::rmdir(SD::MMC::Device& device, const std::string& dirname)
+    esp_err_t Cmd::rmdir(/*SD::MMC::Device& device,*/ const std::string& dirname)
     {
 	if (!artificial_cwd.valid(dirname.c_str()))
 	{
@@ -470,7 +471,7 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 
 
     /// print a list of files in the specified directory
-    esp_err_t Cmd::ls(SD::MMC::Device& device, const std::string& pattern)
+    esp_err_t Cmd::ls(/*SD::MMC::Device& device,*/ const std::string& pattern)
     {
 	ESP_LOGD(CMD_TAG_PRFX, "%s: pattern is             : \"%s\"", __func__, pattern.c_str());
 	ESP_LOGD(CMD_TAG_PRFX, "%s: processed inner pattern: \"%s\"", __func__, artificial_cwd.compose(pattern).c_str());
@@ -501,14 +502,16 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	    }; /* if pattern[strlen(pattern) - 1] == '/' */
 
 	    ESP_LOGI(__func__, "\n%s %s, file size %ld bytes\n", pattern.c_str(),
-			(S_ISLNK(statbuf.st_mode))? "[symlink]":
-			(S_ISREG(statbuf.st_mode))? "(file)":
-			(S_ISDIR(statbuf.st_mode))? "<DIR>":
-			(S_ISCHR(statbuf.st_mode))? "[char dev]":
-			(S_ISBLK(statbuf.st_mode))? "[blk dev]":
-			(S_ISFIFO(statbuf.st_mode))? "[FIFO]":
-			(S_ISSOCK(statbuf.st_mode))? "[socket]":
-			"[unknown type]", statbuf.st_size);
+			statmode2txt(statbuf),
+//			(S_ISLNK(statbuf.st_mode))? "[symlink]":
+//			(S_ISREG(statbuf.st_mode))? "(file)":
+//			(S_ISDIR(statbuf.st_mode))? "<DIR>":
+//			(S_ISCHR(statbuf.st_mode))? "[char dev]":
+//			(S_ISBLK(statbuf.st_mode))? "[blk dev]":
+//			(S_ISFIFO(statbuf.st_mode))? "[FIFO]":
+//			(S_ISSOCK(statbuf.st_mode))? "[socket]":
+//			"[unknown type]",
+			statbuf.st_size);
 	    return ESP_OK;
 	}; /* if (!S_ISDIR(statbuf.st_mode)) */
 
@@ -592,16 +595,8 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	    struct stat statbuf;
 
 	stat(fullpath, &statbuf);
-	cout << fullpath << endl
-	    << aso::format("\t%s ") % name
-	    << aso::format(statmode2txt(statbuf) /* (S_ISDIR(statbuf.st_mode))? "<DIR>":
-			(S_ISREG(statbuf.st_mode))? "(file)": "[%s]",
-			(S_ISLNK(statbuf.st_mode))? "symlink":
-			(S_ISCHR(statbuf.st_mode))? "char dev":
-			(S_ISBLK(statbuf.st_mode))? "blk dev":
-			(S_ISFIFO(statbuf.st_mode))? "FIFO":
-			(S_ISSOCK(statbuf.st_mode))? "socket":
-				"unknown/other type"*/) << endl;
+	cout << aso::format("\t%s\t%s") % name % statmode2txt(statbuf) << endl
+	     << fullpath << endl;
     }; /* ls_entry_printout_Cpp */
 
 
@@ -612,7 +607,7 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 #define __CP_OVERWRITE_FILE__
 
     /// copy files according a pattern
-    esp_err_t Cmd::cp(SD::MMC::Device& device, const std::string& src_raw, const std::string& dest_raw)
+    esp_err_t Cmd::cp(/*SD::MMC::Device& device,*/ std::string src_raw, std::string dest_raw)
     {
 	if (astr::is_space(src_raw))
 	{
@@ -748,7 +743,8 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 		    __func__, dest_raw.c_str(), dest.c_str());
 	    // if destination - exist path, not a directory
 	    if (S_ISDIR(st.st_mode))
-		dest = dest + ((dest.back() != '/')? "/": "") + srcbase;	// create destination file full name
+//		dest = dest + ((dest.back() != '/')? "/": "") + srcbase;	// create destination file full name
+		dest = dest + '/' + srcbase;	// create destination file full name
 	}; /* if stat(dest.c_str(), &st) == 0 */
 
 	// Re-check the modified version of the
@@ -782,6 +778,25 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	// destination file - OK, it's not exist or is may be overwrited
 	ESP_LOGI(CMD_TAG_PRFX ":" CMD_NM, "copy file %s to %s", src.c_str(), dest.c_str());
 
+	    std::ifstream ifs(src);
+
+	if(!ifs)
+	{
+	    // Error opening the source file
+	    ESP_LOGE(CMD_TAG_PRFX, "%s: Any Error opening the file \"%s\" (%s) is not exist - copyng from a not opened file is impossible.\n",
+		    __func__, src_raw.c_str(), src.c_str());
+	    return ESP_FAIL;
+	}; /* if!ifs */
+
+	    std::ofstream ofs(dest);
+
+	    if (!ofs)
+	    {
+		ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Failed creating file %s, aborting ", dest.c_str());
+		return ESP_ERR_NOT_SUPPORTED;
+	    }; /* if !destfile */
+
+#if 0
 	    FILE* srcfile = fopen(src.c_str(), "rb");
 	    FILE* destfile = fopen(dest.c_str(), "wb");
 
@@ -791,9 +806,11 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	    fclose(srcfile);
 	    return ESP_ERR_NOT_FOUND;
 	}; /* if !destfile */
+#endif // 0
 
 #endif	// else __cplusplus < 201703L
 
+#if 0
 #define CP_BUFSIZE 512
 	    char buf[CP_BUFSIZE];
 	    size_t readcnt;
@@ -806,10 +823,24 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	    fwrite(buf, 1, readcnt, destfile);
 	}; /* while !feof(srcfile) */
 
-	fflush(destfile);
-	fsync(fileno(destfile));
-	fclose(destfile);
-	fclose(srcfile);
+	//	fflush(destfile);
+	//	fsync(fileno(destfile));
+	//	fclose(destfile);
+	//	fclose(srcfile);
+#endif
+
+//#define CP_BUFSIZE 512
+	    constexpr size_t CP_BUFSIZE = 512;
+	    char buf[CP_BUFSIZE];
+	    std::streamsize cnt;
+
+	while (!ifs.eof())
+	{
+	    ifs.read(buf, CP_BUFSIZE);
+	    cnt = ifs.gcount();
+	    ofs.write(buf, cnt);
+	}; /* while !ifs.eof() */
+	ofs.flush();
 
 	return ESP_OK;
 
@@ -823,7 +854,7 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 #define CMD_NM "mv"
 
     /// move files according a pattern
-    esp_err_t Cmd::mv(SD::MMC::Device& device, const std::string& src_raw, const std::string& dest_raw)
+    esp_err_t Cmd::mv(/*SD::MMC::Device& device,*/ const std::string& src_raw, const std::string& dest_raw)
     {
 
 	if (astr::is_space(src_raw))
@@ -1030,7 +1061,7 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 #define CMD_NM "rm"
 
     /// remove files according a pattern
-    esp_err_t Cmd::rm(SD::MMC::Device& device, const std::string& pattern)
+    esp_err_t Cmd::rm(/*SD::MMC::Device& device,*/ const std::string& pattern)
     {
 
 	if (!artificial_cwd.valid(pattern))
@@ -1115,7 +1146,7 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 #define CMD_NM "cat"
 
     /// type file contents
-    esp_err_t Cmd::cat(SD::MMC::Device& device, const std::string& fname)
+    esp_err_t Cmd::cat(/*SD::MMC::Device& device,*/ const std::string& fname)
     {
 
 	if (!artificial_cwd.valid(fname.c_str()))
@@ -1270,7 +1301,7 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 
 
     /// type text from keyboard to file and to screen
-    esp_err_t Cmd::type(SD::MMC::Device& device, const std::string& fname, size_t sector_size)
+    esp_err_t Cmd::type(/*SD::MMC::Device& device,*/ const std::string& fname, size_t sector_size)
     {
 	if (!artificial_cwd.valid(fname))
 	{
@@ -1335,8 +1366,6 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 		storage = fopen(fullname.c_str(), "w");
 		break;
 
-//#pragma GCC diagnostic push
-//#pragma GCC diagnostic ignored "-Wimplicit-fallthrough="
 	    case '\n':
 		cout << "Enter char '\\n'" << endl; // @suppress("No break at end of case")
 		[[fallthrough]];
@@ -1344,7 +1373,6 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 		ESP_LOGW(CMD_TAG_PRFX ":" CMD_NM " <filename>", "User cancel opening file %s.", fname.c_str());
 		return ESP_ERR_NOT_FOUND;
 		break;
-//#pragma GCC diagnostic pop
 
 	    default:
 		ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Error: H.z. cho in input, input char value is: [%d]", (int)c);
