@@ -349,29 +349,48 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
     /// C++ edition
     static int listing_direntries_Cpp(DIR *dir, /*const*/ std::string/*&*/ path);
 
+//    /// Directory lister class
+//    class dirlister
+//    {
+//    public:
+//	dirlister(std::string path): dirname(path) {};
+//
+//	/* begin();*/
+//	/* end();*/
+//	/* operator ++() */
+//
+//    private:
+//	std::string dirname;
+//	DIR *dir;	//!< Directory descriptor
+//    }; /* class dirlister */
 
     /// print a list of files in the specified directory
-    esp_err_t Cmd::ls(/*const*/ std::string/*&*/ pattern)
+    esp_err_t Cmd::ls(std::string pattern)
     {
+	    //esp_log_level_set(CMD_TAG_PRFX, ESP_LOG_DEBUG);	/* for debug purposes */
 	ESP_LOGD(CMD_TAG_PRFX, "%s: pattern is             : \"%s\"", __func__, pattern.c_str());
-	ESP_LOGD(CMD_TAG_PRFX, "%s: processed inner pattern: \"%s\"", __func__, artificial_cwd.compose(pattern).c_str());
-	if (!artificial_cwd.valid(pattern.c_str()))
+	pattern = artificial_cwd / pattern;
+	ESP_LOGD(CMD_TAG_PRFX, "%s: processed inner pattern: \"%s\"", __func__, pattern.c_str());
+	if (!artificial_cwd.valid(pattern))
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: pattern \"%s\" is invalid", __func__, pattern.c_str());
 	    return ESP_ERR_NOT_FOUND;
 	}; /* if !artificial_cwd.valid(pattern.c_str()) */
 
-    	    int entry_cnt = 0;
-    	    DIR *dir;	// Directory descriptor
-    	    struct stat statbuf;	// buffer for stat
-    	    std::string in_pattern = artificial_cwd.compose(pattern/*.c_str()*/);
+//    	    int entry_cnt = 0;
+//    	    DIR *dir;	// Directory descriptor
+//    	    struct stat statbuf;	// buffer for stat
+//    	    std::string in_pattern = artificial_cwd.compose(pattern);
 
-	if (stat(in_pattern.c_str(), &statbuf) == -1)
+//	if (stat(in_pattern.c_str(), &statbuf) == -1)
+	if (CWD::last::exist())
 	{
-	    ESP_LOGE(CMD_TAG_PRFX, "%s: Listing dir is failed - pattern \"%s\" (%s) is not exist", __func__, pattern.c_str(), in_pattern.c_str());
+	    ESP_LOGE(CMD_TAG_PRFX, "%s: Listing dir is failed - pattern \"%s\" is not exist", __func__, pattern.c_str());
 	    return ESP_ERR_NOT_FOUND;
-	}; /* if stat(tmpstr, &statbuf) == -1 */
-	if (!S_ISDIR(statbuf.st_mode))
+	}; /* if CWD::last::exist() */
+//	}; /* if stat(tmpstr, &statbuf) == -1 */
+//	if (!S_ISDIR(statbuf.st_mode))
+	if (CWD::last::is_dir())
 	{
 	    if (pattern.back() == '/' || pattern.back() == '.')
 	    {
@@ -381,10 +400,28 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 		return ESP_ERR_INVALID_ARG;
 	    }; /* if pattern[strlen(pattern) - 1] == '/' */
 
-	    ESP_LOGI(__func__, "\n%s %s, file size %ld bytes\n", pattern.c_str(), statmode2txt(statbuf),
-								statbuf.st_size);
+	    ESP_LOGI(__func__, "\n%s %s, file size %ld bytes\n", pattern.c_str(), CWD::last::type()/*statmode2txt(statbuf)*/,
+								CWD::last::size()/*statbuf.st_size*/);
 	    return ESP_OK;
-	}; /* if (!S_ISDIR(statbuf.st_mode)) */
+	}; /* if CWD::last::is_dir() */
+//	}; /* if (!S_ISDIR(statbuf.st_mode)) */
+
+
+	    /// Directory lister class
+	    class dirlister
+	    {
+	    public:
+		dirlister(std::string path): dirname(path) {};
+		DIR *opendir() { dir = opendir(dirname.c_str()); return dir; };
+
+		struct dirent* begin();
+		struct dirent* end();
+		/* operator ++() */
+
+	    private:
+		std::string dirname;
+		DIR *dir;	//!< Directory descriptor
+	    }; /* class dirlister */
 
 
 	dir = opendir(in_pattern.c_str());
@@ -467,7 +504,7 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 
 	stat(fullpath, &statbuf);
 	cout << aso::format("\t%s\t%s") % name % statmode2txt(statbuf) << endl
-	     << fullpath << endl;
+	     /*<< fullpath << endl*/;
     }; /* ls_entry_printout_Cpp */
 
 
@@ -478,9 +515,9 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 #define __CP_OVERWRITE_FILE__
 
     /// copy files according a pattern
-    esp_err_t Cmd::cp(std::string src_raw, std::string dest_raw)
+    esp_err_t Cmd::cp(std::string src, std::string dest)
     {
-	if (astr::is_space(src_raw))
+	if (astr::is_space(src))
 	{
 
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: too few arguments: invoke command \"%s\" without parameters.\n%s", __func__, __func__,
@@ -488,71 +525,88 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	    return ESP_ERR_INVALID_ARG;
 	}; /* if astr::is_space(src_raw) */
 
-	if (astr::is_space(dest_raw))
+	ESP_LOGI(CMD_TAG_PRFX, "%s: copy source file \"%s\".",	__func__, src.c_str());
+	if (!artificial_cwd.valid(src))
+	{
+	    ESP_LOGE(CMD_TAG_PRFX, "%s: the source file name is invalid", __func__);
+	    return ESP_ERR_NOT_FOUND;
+	}; /* if !fake_cwd.valid(src_raw) */
+
+//	    std::string src = artificial_cwd.compose(src_raw);
+	src = artificial_cwd.compose(src);
+
+//	    struct stat st;
+
+	// Check if source file is not exist
+//	if (stat(src.c_str(), &st) != 0)
+	if (!CWD::last::exist())
+	{
+	    // Source file must be exist
+	    ESP_LOGE(CMD_TAG_PRFX, "%s: file \"%s\" is not exist - copyng a non-existent file is not possible.\n%s",
+		    __func__, src.c_str(), esp_err_to_name(ESP_ERR_NOT_FOUND));
+	    return ESP_ERR_NOT_FOUND;
+	}; /* if stat(src.c_str(), &st) */
+//	}; /* if !artificial_cwd::is_exist() */
+//	if (S_ISDIR(st.st_mode))
+	if (CWD::last::is_dir())
+	{
+	    ESP_LOGE(CMD_TAG_PRFX, "%s: copyng directories is unsupported.\n%s",
+		    __func__, esp_err_to_name(ESP_ERR_NOT_SUPPORTED));
+	    return ESP_ERR_NOT_SUPPORTED;
+	}; /* if if CWD::last::is_dir() */
+//	}; /* if (S_ISDIR(st.st_mode)) */
+
+
+	if (astr::is_space(dest))
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: too few arguments: invoke command \"%s\" with one parameters.\n%s", __func__, __func__,
 		    "Don't know where to copy.");
 	    return ESP_ERR_INVALID_ARG;
 	}; /* if astr::is_space(dest_raw) */
 
-	if (!artificial_cwd.valid(src_raw))
+	ESP_LOGI(CMD_TAG_PRFX, "%s: to destination \"%s\".", __func__, dest.c_str());
+	if (!artificial_cwd.valid(dest))
 	{
-	    ESP_LOGE(CMD_TAG_PRFX, "%s: the source file name \"%s\" is invalid", __func__, src_raw.c_str());
-	    return ESP_ERR_NOT_FOUND;
-	}; /* if !fake_cwd.valid(src_raw) */
-
-	if (!artificial_cwd.valid(dest_raw))
-	{
-	    ESP_LOGE(CMD_TAG_PRFX, "%s: the destination file name \"%s\" is invalid", __func__, dest_raw.c_str());
+	    ESP_LOGE(CMD_TAG_PRFX, "%s: destination file name \"%s\" is invalid\n%s", __func__, dest.c_str(), esp_err_to_name(ESP_ERR_NOT_FOUND));
 	    return ESP_ERR_NOT_FOUND;
 	}; /* if !fake_cwd.valid(dest_raw) */
 
-	    std::string src = artificial_cwd.compose(src_raw);
+//	    std::string srcbase = basename(src.c_str());
+//	    std::string dest = artificial_cwd.compose(dest_raw);
 
-	    struct stat st;
+//	dest = artificial_cwd.compose(dest);
+	dest = artificial_cwd / dest;
 
-	// Check if source file is not exist
-	if (stat(src.c_str(), &st) != 0)
-	{
-	    // Source file must be exist
-	    ESP_LOGE(CMD_TAG_PRFX, "%s: file \"%s\" (%s) is not exist - copyng a non-existent file is not possible.\n%s",
-		    __func__, src_raw.c_str(), src.c_str(), esp_err_to_name(ESP_ERR_NOT_FOUND));
-	    return ESP_ERR_NOT_FOUND;
-	}; /* if stat(src.c_str(), &st) */
-	if (S_ISDIR(st.st_mode))
-	{
-	    ESP_LOGE(CMD_TAG_PRFX, "%s: copyng directories is unsupported.\n%s",
-		    __func__, esp_err_to_name(ESP_ERR_NOT_SUPPORTED));
-	    return ESP_ERR_NOT_SUPPORTED;
-	}; /* if (S_ISDIR(st.st_mode)) */
-
-	    std::string srcbase = basename(src.c_str());
-	    std::string dest = artificial_cwd.compose(dest_raw);
-
-	    // Check if destination file is exist
-	if (stat(dest.c_str(), &st) == 0)
+	// Check if destination file is exist
+//	if (stat(dest.c_str(), &st) == 0)
+	if (CWD::last::exist())
 	{
 	    // Destination file is exist
-	    ESP_LOGI(CMD_TAG_PRFX, "%s: path \"%s\" (%s) is exist - copy is write to an existent file or directory.",
-		    __func__, dest_raw.c_str(), dest.c_str());
+	    ESP_LOGI(CMD_TAG_PRFX, "%s: file \"%s\" is exist - copy is write to an existent file or directory.",
+		    __func__, dest.c_str());
 	    // if destination - exist path, not a directory
-	    if (S_ISDIR(st.st_mode))
+	    if (CWD::last::is_dir())
 //		dest = dest + ((dest.back() != '/')? "/": "") + srcbase;	// create destination file full name
-		dest = dest + '/' + srcbase;	// create destination file full name
+//		dest = dest + '/' + srcbase;	// create destination file full name
+		dest = dest + "/" + basename(src.c_str());
 	}; /* if stat(dest.c_str(), &st) == 0 */
 
-	// Re-check the modified version of the
+	// Re-check final version of the
 	// destination filename, that may be exist:
-	if (stat(dest.c_str(), &st) == 0)
+//	if (stat(dest.c_str(), &st) == 0)
+	artificial_cwd.compose(dest);	// Check the dest file
+	if (CWD::last::exist())
 	{
 	    // the final name of the target file
 	    // must not be a existing directory name
-	    if (S_ISDIR(st.st_mode))
+//	    if (S_ISDIR(st.st_mode))
+	    if (CWD::last::is_dir())
 	    {
 		ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite exist \"%s\" directory by the destination file is denied; aborting.",
 			__func__, dest.c_str());
 		return ESP_ERR_NOT_SUPPORTED;
-	    } /* if S_ISDIR(st.st_mode) */
+	    } /* if CWD::last::is_dir() */
+//	    } /* if S_ISDIR(st.st_mode) */
 
 #if !defined(__NOT_OVERWRITE__) && defined(__CP_OVERWRITE_FILE__)
 	    ESP_LOGW(CMD_TAG_PRFX, "%s: overwrite an existing file \"%s\".", __func__, dest.c_str());
@@ -577,8 +631,8 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	if(!ifs)
 	{
 	    // Error opening the source file
-	    ESP_LOGE(CMD_TAG_PRFX, "%s: Any Error opening the file \"%s\" (%s) is not exist - copyng from a not opened file is impossible.\n",
-		    __func__, src_raw.c_str(), src.c_str());
+	    ESP_LOGE(CMD_TAG_PRFX, "%s: Any Error opening the file \"%s\" is not exist - copyng from a not opened file is impossible.\n",
+		    __func__, src.c_str());
 	    return ESP_FAIL;
 	}; /* if!ifs */
 
@@ -589,7 +643,6 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 		ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Failed creating file %s, aborting ", dest.c_str());
 		return ESP_ERR_NOT_SUPPORTED;
 	    }; /* if !destfile */
-
 
 
 	    constexpr size_t CP_BUFSIZE = 512;
