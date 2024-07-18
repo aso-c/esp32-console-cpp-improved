@@ -338,38 +338,15 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 #undef CMD_NM
 #define CMD_NM "ls"
 
-    ///
-    /// Listing the entries of the opened directory
-    /// Parameters:
-    ///	dir  - opened directory stream;
-    ///	path - full path of this directory
-    /// Return:
-    ///	>=0 - listed entries counter;
-    ///	<0  - error - -1*(ESP_ERR_xxx) or ESP_FAIL (-1) immediately
-    /// C++ edition
-    static int listing_direntries_Cpp(DIR *dir, /*const*/ std::string/*&*/ path);
-
-//    /// Directory lister class
-//    class dirlister
-//    {
-//    public:
-//	dirlister(std::string path): dirname(path) {};
-//
-//	/* begin();*/
-//	/* end();*/
-//	/* operator ++() */
-//
-//    private:
-//	std::string dirname;
-//	DIR *dir;	//!< Directory descriptor
-//    }; /* class dirlister */
 
     /// print a list of files in the specified directory
     esp_err_t Cmd::ls(std::string pattern)
     {
+	ESP_LOGI(CMD_TAG_PRFX, "Listing the %s\n", pattern.c_str());
 	    //esp_log_level_set(CMD_TAG_PRFX, ESP_LOG_DEBUG);	/* for debug purposes */
 	ESP_LOGD(CMD_TAG_PRFX, "%s: pattern is             : \"%s\"", __func__, pattern.c_str());
 	pattern = artificial_cwd / pattern;
+	ESP_LOGI(CMD_TAG_PRFX, "(Real path is: %s\n", pattern.c_str());
 	ESP_LOGD(CMD_TAG_PRFX, "%s: processed inner pattern: \"%s\"", __func__, pattern.c_str());
 	if (!artificial_cwd.valid(pattern))
 	{
@@ -377,19 +354,14 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	    return ESP_ERR_NOT_FOUND;
 	}; /* if !artificial_cwd.valid(pattern.c_str()) */
 
-//    	    int entry_cnt = 0;
-//    	    DIR *dir;	// Directory descriptor
-//    	    struct stat statbuf;	// buffer for stat
-//    	    std::string in_pattern = artificial_cwd.compose(pattern);
+	//printf("----------------\n");
+	cout << "----------------" << endl;
 
-//	if (stat(in_pattern.c_str(), &statbuf) == -1)
 	if (!CWD::last::exist())
 	{
-	    ESP_LOGE(CMD_TAG_PRFX, "%s: Listing dir is failed - pattern \"%s\" is not exist", __func__, pattern.c_str());
+	    ESP_LOGE(CMD_TAG_PRFX, "%s: Listing is failed - pattern \"%s\" is not exist", __func__, pattern.c_str());
 	    return ESP_ERR_NOT_FOUND;
 	}; /* if CWD::last::exist() */
-//	}; /* if stat(tmpstr, &statbuf) == -1 */
-//	if (!S_ISDIR(statbuf.st_mode))
 	if (!CWD::last::is_dir())
 	{
 	    if (pattern.back() == '/' || pattern.back() == '.')
@@ -398,147 +370,54 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 			"Name of the file or other similar entity that is not a directory",
 			"cannot end with a slash or a dot", pattern.c_str());
 		return ESP_ERR_INVALID_ARG;
-	    }; /* if pattern[strlen(pattern) - 1] == '/' */
+	    }; /* if pattern.back() == '/' || pattern.back() == '.' */
 
 	    ESP_LOGI(__func__, "\n%s %s, file size %ld bytes\n", pattern.c_str(), CWD::last::type()/*statmode2txt(statbuf)*/,
 								CWD::last::size()/*statbuf.st_size*/);
+	    cout << "----------------" << endl;
 	    return ESP_OK;
 	}; /* if CWD::last::is_dir() */
-//	}; /* if (!S_ISDIR(statbuf.st_mode)) */
-
-#if 0	// eclude class directory
-	    /// Directory reading class
-	    class directory
-	    {
-	    public:
-		directory(std::string path): dirname(path) {};
-		DIR *opendir() { dir = opendir(dirname.c_str()); return dir; };
-
-		struct dirent* begin();
-		struct dirent* end();
-//		/* operator ++() */
-
-		class entry
-		{
-		public:
-		    ;
-		    /* operator ++() */
-		    bool operator ==(const entry& other) { return data == other.data; };
-		    bool operator ==(nullptr_t nil) { return data == nil; };
-
-		private:
-		    dirent *data = nullptr;
-		}; /* directory::entry */
-
-	    private:
-		std::string dirname;
-		struct DIR *dir = nullptr;	//!< Directory descriptor
-	    }; /* class directory */
-#endif // 0 - eclude class directory
-
 
 	errno = 0;	// clear any possible errors
-//	dir = opendir(in_pattern.c_str());
     	    int entry_cnt = 0;
-	    fs::Directory dir(pattern);
-	dir.open();
-	if (!dir) {
-	    ESP_LOGE(CMD_TAG_PRFX, "%s: Error opening directory <%s>, %s", __func__, pattern.c_str(), strerror(errno));
-	    return ESP_FAIL;
-	}; /* if !dir */
+//	    fs::Directory dir(pattern);
+//	dir.open();
+//	if (!dir) {
+//	    ESP_LOGE(CMD_TAG_PRFX, "%s: Error opening directory <%s>, %s", __func__, pattern.c_str(), strerror(errno));
+//	    return ESP_FAIL;
+//	}; /* if !dir */
 
-	    esp_err_t ret = ESP_OK;
+//	    esp_err_t ret = ESP_OK;
 
-	ESP_LOGI(__func__, "Files in the directory <%s> (%s)",  pattern.c_str(), pattern.c_str());
-	printf("----------------\n");
+//	ESP_LOGI(__func__, "Files in the directory <%s> (%s)",  pattern.c_str(), pattern.c_str());
 
-//	entry_cnt = listing_direntries_Cpp(dir, in_pattern);
-	for (auto &&entry = dir.begin(); entry != dir.end(); ++entry)
+//	for (auto &&entry = dir.begin(); entry != dir.end(); ++entry)
+	for (auto &entry : fs::Directory(pattern))
 	{
 	    ++entry_cnt;
-//	    strcpy(fnbuf, entry->d_name);
-//	    ls_entry_printout_Cpp(pathbuf, entry->d_name);
 
-
-//	    struct stat statbuf;
-//
-//	stat(fullpath, &statbuf);
-//	cout << aso::format("\t%s\t%s") % name % statmode2txt(statbuf) << endl
-	    // check the filename
-	    ESP_LOGW(__func__, "Check the full name of current listed file: %s", artificial_cwd.compose(pattern + CWD::refine(entry.get().d_name)).c_str());
-	    cout << aso::format("\t%s\t%s") % entry.get().d_name % CWD::last::type() << endl;
+	    // check the current directoru item
+//	    ESP_LOGW(__func__, "Check the full name of current listed file: %s", artificial_cwd.compose(pattern + CWD::refine(entry.get().d_name)).c_str());
+	    artificial_cwd.compose(pattern + CWD::refine(entry.d_name));
+	    cout << aso::format("\t%s\t%s") % entry.d_name % CWD::last::type() << endl;
 
 	}; /* for auto &entry = dir.begin(); entry != dir.end(); dir++ */
-	if (entry_cnt)
-	{
-	    cout << "----------------" << endl;
-	    cout << aso::format("Total found %d files", entry_cnt) << endl;
-	} /* if entry_cnt */
-	else
+	if (entry_cnt == 0)
 	{
 	    ESP_LOGW(__func__, "Files or directory not found, directory is empty.");
-	    cout << "----------------" << endl;
-	}; /* else if entry_cnt */
+//	    cout << "----------------" << endl;
+	}; /* if entry_cnt == 0 */
+	cout << "----------------" << endl;
+	cout << aso::format("Total found %d files", entry_cnt) << endl;
 
 	if (errno != 0)
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: Error occured during reading of the directory <%s>, %s", __func__, pattern.c_str(), strerror(errno));
-	    ret = ESP_FAIL;
-	}; /* if errno != 0 */
-//	closedir(dir);
-	cout << endl;
-	return ret;
-    }; /* Cmd::ls */
-
-
-    /// Printout one entry of the dir, C++ edition
-    static void ls_entry_printout_Cpp(const char fullpath[], const char name[]);
-
-
-    /// Listing the entries of the opened directory
-    /// C++ edition
-    /// Parameters:
-    ///	dir  - opened directory stream;
-    ///	path - full path of this directory
-    /// Return:
-    ///	>=0 - listed entries counter;
-    ///	<0  - error - -1*(ESP_ERR_xxx) or ESP_FAIL (-1) immediately
-    int listing_direntries_Cpp(DIR *dir, /*const*/ std::string/*&*/ path)
-    {
-	    char pathbuf[PATH_MAX + 1]; // @suppress("Symbol is not resolved")
-	    char * fnbuf;
-	    int cnt = 0;
-
-	if (realpath(path.c_str(), pathbuf) == NULL)
-	{
-	    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Error canonicalizing path \"<%s>\", %s", path.c_str(), strerror(errno));
 	    return ESP_FAIL;
-	}; /* if realpath(pattern, pathbuf) == NULL */
-
-	errno = 0;	// clear any possible errors
-	fnbuf = pathbuf + strlen(pathbuf);
-	fnbuf[0] = '/';
-	fnbuf++;
-
-	for ( struct dirent *entry = readdir(dir); entry != NULL; entry = readdir(dir))
-	{
-	    cnt++;
-	    strcpy(fnbuf, entry->d_name);
-	    ls_entry_printout_Cpp(pathbuf, entry->d_name);
-	}; /* for entry = readdir(dir); entry != NULL; entry = readdir(dir) */
-	return cnt;
-    }; /* listing_direntries_Cpp */
-
-
-    // Printout one entry of the dir, C++ edition
-    void ls_entry_printout_Cpp(const char fullpath[], const char name[])
-    {
-	    struct stat statbuf;
-
-	stat(fullpath, &statbuf);
-	cout << aso::format("\t%s\t%s") % name % statmode2txt(statbuf) << endl
-	     /*<< fullpath << endl*/;
-    }; /* ls_entry_printout_Cpp */
+	}; /* if errno != 0 */
+	cout << endl;
+	return ESP_OK;
+    }; /* Cmd::ls */
 
 
 //#define __NOT_OVERWRITE__	// Deny overwrite cp & move destination files
