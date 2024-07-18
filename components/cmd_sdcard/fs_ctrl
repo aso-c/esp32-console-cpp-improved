@@ -53,7 +53,7 @@ namespace Exec	//---------------------------------------------------------------
 
 	esp_err_t pwd();	// print current directory name
 	esp_err_t mkdir(/*const*/ std::string/*&*/ dirname = "");   // create a new directory
-	esp_err_t cd(SD::MMC::Device&, /*const*/ std::string/*&*/ dirname = "");	// change a current directory
+	esp_err_t cd(SD::MMC::Device&, std::string dirname = "");   // change a current directory
 	esp_err_t ls(/*const*/ std::string/*&*/ pattern = ".");	// print a list of files in the specified directory
 	esp_err_t cp(std::string = "", std::string = "");	// copy files src to dest
 	esp_err_t mv(/*const*/ std::string/*&*/ = "", /*const*/ std::string/*&*/ = "");	// move files from src to dest
