@@ -342,11 +342,12 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
     /// print a list of files in the specified directory
     esp_err_t Cmd::ls(std::string pattern)
     {
-	ESP_LOGI(CMD_TAG_PRFX, "Listing the %s\n", pattern.c_str());
+	ESP_LOGI(CMD_TAG_PRFX, "Listing the %s", pattern.c_str());
+
 	    //esp_log_level_set(CMD_TAG_PRFX, ESP_LOG_DEBUG);	/* for debug purposes */
 	ESP_LOGD(CMD_TAG_PRFX, "%s: pattern is             : \"%s\"", __func__, pattern.c_str());
 	pattern = artificial_cwd / pattern;
-	ESP_LOGI(CMD_TAG_PRFX, "(Real path is: %s\n", pattern.c_str());
+	ESP_LOGI(CMD_TAG_PRFX, "(Real path is: %s)", pattern.c_str());
 	ESP_LOGD(CMD_TAG_PRFX, "%s: processed inner pattern: \"%s\"", __func__, pattern.c_str());
 	if (!artificial_cwd.valid(pattern))
 	{
@@ -354,7 +355,6 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	    return ESP_ERR_NOT_FOUND;
 	}; /* if !artificial_cwd.valid(pattern.c_str()) */
 
-	//printf("----------------\n");
 	cout << "----------------" << endl;
 
 	if (!CWD::last::exist())
@@ -372,49 +372,31 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 		return ESP_ERR_INVALID_ARG;
 	    }; /* if pattern.back() == '/' || pattern.back() == '.' */
 
-	    ESP_LOGI(__func__, "\n%s %s, file size %ld bytes\n", pattern.c_str(), CWD::last::type()/*statmode2txt(statbuf)*/,
-								CWD::last::size()/*statbuf.st_size*/);
+	    ESP_LOGI(__func__, "\n%s %s, file size %ld bytes\n", pattern.c_str(), CWD::last::type(), CWD::last::size());
 	    cout << "----------------" << endl;
 	    return ESP_OK;
 	}; /* if CWD::last::is_dir() */
 
-	errno = 0;	// clear any possible errors
     	    int entry_cnt = 0;
-//	    fs::Directory dir(pattern);
-//	dir.open();
-//	if (!dir) {
-//	    ESP_LOGE(CMD_TAG_PRFX, "%s: Error opening directory <%s>, %s", __func__, pattern.c_str(), strerror(errno));
-//	    return ESP_FAIL;
-//	}; /* if !dir */
-
-//	    esp_err_t ret = ESP_OK;
-
-//	ESP_LOGI(__func__, "Files in the directory <%s> (%s)",  pattern.c_str(), pattern.c_str());
-
-//	for (auto &&entry = dir.begin(); entry != dir.end(); ++entry)
+    	errno = 0;	// clear any possible errors
 	for (auto &entry : fs::Directory(pattern))
 	{
 	    ++entry_cnt;
-
-	    // check the current directoru item
-//	    ESP_LOGW(__func__, "Check the full name of current listed file: %s", artificial_cwd.compose(pattern + CWD::refine(entry.get().d_name)).c_str());
 	    artificial_cwd.compose(pattern + CWD::refine(entry.d_name));
-	    cout << aso::format("\t%s\t%s") % entry.d_name % CWD::last::type() << endl;
-
+	    cout << aso::format("  %-42s\t%s") % entry.d_name % CWD::last::type() << endl;
 	}; /* for auto &entry = dir.begin(); entry != dir.end(); dir++ */
-	if (entry_cnt == 0)
-	{
-	    ESP_LOGW(__func__, "Files or directory not found, directory is empty.");
-//	    cout << "----------------" << endl;
-	}; /* if entry_cnt == 0 */
-	cout << "----------------" << endl;
-	cout << aso::format("Total found %d files", entry_cnt) << endl;
 
 	if (errno != 0)
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: Error occured during reading of the directory <%s>, %s", __func__, pattern.c_str(), strerror(errno));
 	    return ESP_FAIL;
 	}; /* if errno != 0 */
+	if (entry_cnt == 0)
+	    ESP_LOGW(__func__, "Files or directory not found, directory is empty.");
+
+	cout << "----------------" << endl;
+	cout << aso::format("Total found %d files", entry_cnt) << endl;
+
 	cout << endl;
 	return ESP_OK;
     }; /* Cmd::ls */
