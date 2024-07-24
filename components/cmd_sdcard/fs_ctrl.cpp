@@ -346,14 +346,20 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 
 	    //esp_log_level_set(CMD_TAG_PRFX, ESP_LOG_DEBUG);	/* for debug purposes */
 	ESP_LOGD(CMD_TAG_PRFX, "%s: pattern is             : \"%s\"", __func__, pattern.c_str());
+
+	if (!artificial_cwd.valid(pattern))
+	{
+	    ESP_LOGE(CMD_TAG_PRFX, "%s: Listing is failed - pattern \"%s\" is invalid or impossible", __func__, pattern.c_str());
+	    return ESP_ERR_INVALID_ARG;
+	}; /* if !artificial_cwd.valid(pattern) */
 	pattern = artificial_cwd / pattern;
 	ESP_LOGI(CMD_TAG_PRFX, "(Real path is: %s)", pattern.c_str());
 	ESP_LOGD(CMD_TAG_PRFX, "%s: processed inner pattern: \"%s\"", __func__, pattern.c_str());
-	if (!artificial_cwd.valid(pattern))
-	{
-	    ESP_LOGE(CMD_TAG_PRFX, "%s: pattern \"%s\" is invalid", __func__, pattern.c_str());
-	    return ESP_ERR_NOT_FOUND;
-	}; /* if !artificial_cwd.valid(pattern.c_str()) */
+//	if (!artificial_cwd.valid(pattern))
+//	{
+//	    ESP_LOGE(CMD_TAG_PRFX, "%s: pattern \"%s\" is invalid", __func__, pattern.c_str());
+//	    return ESP_ERR_NOT_FOUND;
+//	}; /* if !artificial_cwd.valid(pattern.c_str()) */
 
 	cout << "----------------" << endl;
 
@@ -372,7 +378,7 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 		return ESP_ERR_INVALID_ARG;
 	    }; /* if pattern.back() == '/' || pattern.back() == '.' */
 
-	    ESP_LOGI(__func__, "\n%s %s, file size %ld bytes\n", pattern.c_str(), CWD::last::type(), CWD::last::size());
+	    ESP_LOGI(__func__, "\n%s %s, file size %ld bytes", pattern.c_str(), CWD::last::type(), CWD::last::size());
 	    cout << "----------------" << endl;
 	    return ESP_OK;
 	}; /* if CWD::last::is_dir() */
