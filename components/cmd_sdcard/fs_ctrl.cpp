@@ -103,7 +103,7 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 
 
     /// Mount default SD-card slot onto path "mountid", or onto slot no ""mountid, if it's a number, default mountpoint is MOUNT_POINT_Default
-    esp_err_t Cmd::mount(SD::MMC::Device& device, SD::MMC::Card& card, /*const*/ std::string/*&*/ mountid)
+    esp_err_t Cmd::mount(SD::MMC::Device& device, SD::MMC::Card& card, std::string mountid)
     {
 	ESP_LOGI(TAG, "Mounting SD-Cart to a mountpoint %s", mountid.c_str());
 
@@ -111,11 +111,11 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	    return mount(device, card, atoi(mountid.c_str())); // @suppress("Invalid arguments")
 
 	ESP_LOGI(TAG, "Mounting SD-Cart to a directory!!!");
-	ret = device.mount(card, mountid); // @suppress("Method cannot be resolved")
+	ret = device.mount(card, std::move(mountid)); // @suppress("Method cannot be resolved")
 	if (ret == ESP_OK)
 	{
 #ifdef CONFIG_AUTO_CHDIR_BEHIND_MOUNTING
-	    artificial_cwd.change(mountid);
+	    artificial_cwd.change(device.mountpath());
 	    ESP_LOGI(TAG, "Current directory autochanged to: %s", artificial_cwd.get().c_str());
 #else
 //	    change_currdir("/");
@@ -124,15 +124,15 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 #endif
 	}; /* if ret == ESP_OK */
 	return ret;
-    }; /* Cmd::mount */
+    }; /* Exec::Cmd::mount */
 
 
     /// Mount SD-card slot "slot_no" onto specified mount path, default mountpoint is MOUNT_POINT_Default
-    esp_err_t Cmd::mount(SD::MMC::Device& device, SD::MMC::Card& card, int slot_no, /*const*/ std::string/*&*/ mountpoint)
+    esp_err_t Cmd::mount(SD::MMC::Device& device, SD::MMC::Card& card, int slot_no, std::string mountpoint)
     {
 	device.slot_no(slot_no); // @suppress("Method cannot be resolved")
-	return device.mount(card, mountpoint); // @suppress("Method cannot be resolved")
-    }; /* Cmd::mount */
+	return device.mount(card, std::move(mountpoint)); // @suppress("Method cannot be resolved")
+    }; /* Exec::Cmd::mount */
 
 
     //------------------------------------------------------------------------------------------
@@ -154,7 +154,7 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	}; /* else if device.unmount() != ESP_OK */
 
 	return ret;
-    }; /* Cmd::unmount */
+    }; /* Exec::Cmd::unmount */
 
     //------------------------------------------------------------------------------------------
     //    // All done, unmount partition and disable SDMMC peripheral
@@ -187,13 +187,13 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	    << endl;
 	return ESP_OK;
 
-    }; /* Cmd::pwd */
+    }; /* Exec::Cmd::pwd */
 
 
 
 #define CMD_NM "mkdir"
     /// create a new directory
-    esp_err_t Cmd::mkdir(/*const*/ std::string/*&*/ dirname)
+    esp_err_t Cmd::mkdir(std::string dirname)
     {
 	if (!artificial_cwd.valid(dirname))
 	{
@@ -201,26 +201,35 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	    return ESP_ERR_NOT_FOUND;
 	}; /* if !artificial_cwd.valid(dirname) */
 
-	if (astr::is_space(dirname))
+	dirname = astr::trim(dirname);
+
+//	if (astr::is_space(dirname))
+	if (dirname.empty())
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: invoke command \"%s\" without parameters.\n%s", __func__, CMD_NM,
 		    "This command required the creating directory name.");
 	    return ESP_ERR_INVALID_ARG;
-	}; /* if astr::is_space(dirname) */
+	}; /* if dirname.empty() */
+//	}; /* if astr::is_space(dirname) */
 
 
-	    struct stat statbuf;
-	    std::string path = artificial_cwd.compose(dirname);
+//	    struct stat statbuf;
+//	    std::string path = artificial_cwd.compose(dirname);
 
-	    ESP_LOGI(CMD_TAG_PRFX, "%s: Create directory with name \"%s\", real path is %s", __func__, dirname.c_str(), path.c_str());
+	ESP_LOGI(CMD_TAG_PRFX, "%s: Create directory with name \"%s\"", __func__, dirname.c_str());
 
-	if (stat(path.c_str(), &statbuf) == 0)
+	dirname = artificial_cwd.compose(dirname);
+	ESP_LOGI(CMD_TAG_PRFX, "Real path is:\t%s", dirname.c_str());
+
+//	if (stat(path.c_str(), &statbuf) == 0)
+	if (CWD::last::exist())
 	{
-	    ESP_LOGE(CMD_TAG_PRFX, "%s: Invalid argument - requested path \"%s\" is exist; denied create duplication name\n", __func__, path.c_str());
+	    ESP_LOGE(CMD_TAG_PRFX, "%s: Invalid argument - requested path \"%s\" is exist; denied create duplication name\n", __func__, dirname.c_str());
 	    return ESP_ERR_INVALID_ARG;
-	}; /* if stat(tmpstr, &statbuf) == -1 */
+	}; /* if CWD::last::exist() */
+//	}; /* if stat(tmpstr, &statbuf) == -1 */
 	errno = 0;
-	::mkdir(path.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
+	::mkdir(dirname.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
 	if (errno)
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: Error creating directory \"%s\": %s", __func__, dirname.c_str(), strerror(errno));
@@ -228,46 +237,56 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	}; /* if (errno) */
 	return ESP_OK;
 
-    }; /* Cmd::mkdir */
+    }; /* Exec::Cmd::mkdir */
 
 
 #undef CMD_NM
 #define CMD_NM "rmdir"
     /// delete empty directory
-    esp_err_t Cmd::rmdir(/*const*/ std::string/*&*/ dirname)
+    esp_err_t Cmd::rmdir(std::string dirname)
     {
-	if (!artificial_cwd.valid(dirname.c_str()))
+	if (!artificial_cwd.valid(dirname))
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: the directory name \"%s\" is invalid", __func__, dirname.c_str());
 	    return ESP_ERR_NOT_FOUND;
 	}; /* if !artificial_cwd.valid(dirname.c_str()) */
 
-	if (astr::is_space(dirname))
+	dirname = astr::trim(dirname);
+
+//	if (astr::is_space(dirname))
+	if (dirname.empty())
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: invoke command \"%s\" without parameters.\n%s", __func__, CMD_NM,
 		     "This command required the name of the deleting directory.");
 	    return ESP_ERR_INVALID_ARG;
-	}; /* if dirname == NULL || strcmp(dirname, "") */
+	}; /* if dirname.empty() */
+//	}; /* if dirname == NULL || strcmp(dirname, "") */
 
-	    struct stat st;
-	    std::string path = artificial_cwd.compose(dirname);
+//	    struct stat st;
+//	    std::string path = artificial_cwd.compose(dirname);
 
-	ESP_LOGI(CMD_TAG_PRFX, "%s: Delete directory <%s>, real path is %s", __func__, dirname.c_str(), path.c_str());
+	ESP_LOGI(CMD_TAG_PRFX, "%s: Delete directory <%s>,", __func__, dirname.c_str());
+	dirname = artificial_cwd.compose(dirname);
+	ESP_LOGI(CMD_TAG_PRFX, "Real path is:\t%s", dirname.c_str());
 
 	// Check if destination directory or file exists before deleting
-	if (stat(path.c_str(), &st) != 0)
+//	if (stat(path.c_str(), &st) != 0)
+	if (!CWD::last::exist())
 	{
 	    // deleting a non-exist directory is not possible
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: Directory \"%s\" is not exist - deleting a non-existent catalogue is not possible.\n%s", __func__, dirname.c_str(), esp_err_to_name(ESP_ERR_NOT_FOUND));
 	    return ESP_ERR_NOT_FOUND;
-	}; /* if stat(file_foo, &st) != 0 */
-	if (!S_ISDIR(st.st_mode))
+	}; /* if !CWD::last::exist() */
+//	}; /* if stat(file_foo, &st) != 0 */
+//	if (!S_ISDIR(st.st_mode))
+	if (!CWD::last::is_dir())
 	{
-	ESP_LOGE(CMD_TAG_PRFX, "%s: The %s command delete directories, not the files.\n%s", __func__, CMD_NM, esp_err_to_name(ESP_ERR_NOT_SUPPORTED));
-	return ESP_ERR_INVALID_ARG;
-	}; /* if (S_ISDIR(st.st_mode)) */
+	    ESP_LOGE(CMD_TAG_PRFX, "%s: The %s command delete directories, not the files.\n%s", __func__, CMD_NM, esp_err_to_name(ESP_ERR_NOT_SUPPORTED));
+	    return ESP_ERR_INVALID_ARG;
+	}; /* if !CWD::last::is_dir() */
+//	}; /* if (S_ISDIR(st.st_mode)) */
 
-	    DIR *dir = opendir(path.c_str());	// Directory descriptor
+	    DIR *dir = opendir(dirname.c_str());	// Directory descriptor
 
 	errno = 0;	// clear any possible errors
 
@@ -288,7 +307,7 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 
 	errno = 0;
 	//cout << aso::format("[[[ unlink the path [%s] ]]]") % path << endl;
-	unlink(path.c_str());
+	unlink(dirname.c_str());
 	if (errno)
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: Fail when deleting \"%s\": %s", __func__, dirname.c_str(), strerror(errno));
@@ -353,13 +372,8 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	    return ESP_ERR_INVALID_ARG;
 	}; /* if !artificial_cwd.valid(pattern) */
 	pattern = artificial_cwd / pattern;
-	ESP_LOGI(CMD_TAG_PRFX, "(Real path is: %s)", pattern.c_str());
+	ESP_LOGI(CMD_TAG_PRFX, "(real path is: %s)", pattern.c_str());
 	ESP_LOGD(CMD_TAG_PRFX, "%s: processed inner pattern: \"%s\"", __func__, pattern.c_str());
-//	if (!artificial_cwd.valid(pattern))
-//	{
-//	    ESP_LOGE(CMD_TAG_PRFX, "%s: pattern \"%s\" is invalid", __func__, pattern.c_str());
-//	    return ESP_ERR_NOT_FOUND;
-//	}; /* if !artificial_cwd.valid(pattern.c_str()) */
 
 	cout << "----------------" << endl;
 
