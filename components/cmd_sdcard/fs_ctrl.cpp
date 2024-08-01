@@ -212,7 +212,6 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 
 	ESP_LOGI(CMD_TAG_PRFX, "%s: Create directory with name \"%s\"", __func__, dirname.c_str());
 
-//	dirname = artificial_cwd.compose(dirname);
 	dirname = artificial_cwd / dirname;
 	ESP_LOGI(CMD_TAG_PRFX, "Real path is:\t%s", dirname.c_str());
 
@@ -255,7 +254,6 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	}; /* if dirname.empty() */
 
 	ESP_LOGI(CMD_TAG_PRFX, "%s: Delete directory <%s>,", __func__, dirname.c_str());
-//	dirname = artificial_cwd.compose(dirname);
 	dirname = artificial_cwd / dirname;
 	ESP_LOGI(CMD_TAG_PRFX, "Real path is:\t%s", dirname.c_str());
 
@@ -292,7 +290,6 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	}; /* if (entry) */
 
 	errno = 0;
-	//cout << aso::format("[[[ unlink the path [%s] ]]]") % path << endl;
 	unlink(dirname.c_str());
 	if (errno)
 	{
@@ -322,35 +319,19 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	    return ESP_ERR_NOT_FOUND;
 	}; /* if !artificial_cwd.valid(dirname) */
 
-#if 0
-	if (!astr::is_space(dirname))
-	    ESP_LOGI(CMD_TAG_PRFX, "%s: Change current dir to %s", __func__, dirname.c_str());
-	else if (device.card != nullptr)
-	    ESP_LOGI(CMD_TAG_PRFX, "%s: Not specified directory for jump to, change current dir to %s, [mountpoint].", __func__, device.mountpath_c());
-	else
-	{
-    	    ESP_LOGW(CMD_TAG_PRFX, "%s: Card is not mounted, mountpoint is not valid, nothing to do", __func__);
-    	    return ESP_ERR_NOT_SUPPORTED;
-	}; /* else if device.card != nullptr */
-	// change cwd dir: chdir(dirname);
-	err = device.mounted()? artificial_cwd.change((astr::is_space(dirname))? device.mountpath_c(): dirname.c_str()): ESP_FAIL;
-#endif	// if 0
-
 	// change cwd dir: chdir(dirname);
 	if (device.mounted())
 	{
 	    if (dirname.empty())
 	    {
 		ESP_LOGI(CMD_TAG_PRFX, "%s: Not specified directory for jump to, change current dir to %s, [mountpoint].", __func__, device.mountpath_c());
-//		err = artificial_cwd.change(device.mountpath());
-		artificial_cwd /= device.mountpath();
+		artificial_cwd/= device.mountpath();
 		err = CWD::last::state();
 	    } /* if dirname.empty() */
 	    else
 	    {
 		ESP_LOGI(CMD_TAG_PRFX, "%s: Change current dir to %s", __func__, dirname.c_str());
-//		err = artificial_cwd.change(dirname);
-		artificial_cwd /= dirname;
+		artificial_cwd/= dirname;
 		err = CWD::last::state();
 	    }; /* else if dirname.empty() */
 	}
@@ -360,7 +341,6 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	    return ESP_ERR_NOT_SUPPORTED;
 	}; /* else if device.card != nullptr */
 	// change cwd dir: chdir(dirname);
-//	err = device.mounted()? artificial_cwd.change((astr::is_space(dirname))? device.mountpath_c(): dirname.c_str()): ESP_FAIL;
 
 	if (err != 0)
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: fail change directory to %s\n%s", __func__, dirname.c_str(), esp_err_to_name(err));
@@ -418,7 +398,6 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	for (auto &entry : fs::Directory(pattern))
 	{
 	    ++entry_cnt;
-//	    artificial_cwd.compose(pattern + CWD::refine(entry.d_name));
 	    artificial_cwd / (pattern + CWD::refine(entry.d_name));
 	    cout << aso::format("  %-42s\t%s") % entry.d_name % CWD::last::type() << endl;
 	}; /* for auto &entry = dir.begin(); entry != dir.end(); dir++ */
@@ -458,7 +437,6 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	}; /* if dest.empty() */
 
 	src = astr::trim(src);
-//	if (astr::is_space(src))    //
 	if (src.empty())    //
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: too few arguments: invoke command \"%s\" without src parameter.\n%s", __func__, __func__,
@@ -466,16 +444,14 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	    ret = ESP_ERR_INVALID_ARG;
 	    return ret;
 	}; /* if src.empty() */
-//	}; /* if astr::is_space(src_raw) */
 
 	ESP_LOGI(CMD_TAG_PRFX, "%s: copy source file \"%s\".",	__func__, src.c_str());
 	if (!artificial_cwd.valid(src))
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: the source file name is invalid", __func__);
 	    return ESP_ERR_NOT_FOUND;
-	}; /* if !fake_cwd.valid(src) */
+	}; /* if !artificial_cwd.valid(src) */
 
-//	src = artificial_cwd.compose(src);
 	src = artificial_cwd / src;
 
 	// Check if source file is not exist
@@ -487,7 +463,7 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 
 	    ret = ESP_ERR_NOT_FOUND;
 	    return ret;
-	}; /* if stat(src.c_str(), &st) */
+	}; /* if !CWD::last::exist() */
 	if (CWD::last::is_dir())
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: copyng directories is unsupported.\n%s",
@@ -496,22 +472,13 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	    return ret;
 	}; /* if if CWD::last::is_dir() */
 
-#if 0
-	if (astr::is_space(dest))
-	{
-	    ESP_LOGE(CMD_TAG_PRFX, "%s: too few arguments: invoke command \"%s\" with one parameters.\n%s", __func__, __func__,
-		    "Don't know where to copy.");
-	    return ESP_ERR_INVALID_ARG;
-	}; /* if astr::is_space(dest_raw) */
-#endif
-
 	ESP_LOGI(CMD_TAG_PRFX, "%s: to destination \"%s\".", __func__, dest.c_str());
 	if (!artificial_cwd.valid(dest))
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: destination file name \"%s\" is invalid\n%s", __func__, dest.c_str(), esp_err_to_name(ESP_ERR_NOT_FOUND));
 	    ret = ESP_ERR_NOT_FOUND;
 	    return ret;
-	}; /* if !fake_cwd.valid(dest_raw) */
+	}; /* if !artificial_cwd.valid(dest) */
 
 
 	dest = artificial_cwd / dest;
@@ -606,94 +573,121 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 #define CMD_NM "mv"
 
     /// move files according a pattern
-    esp_err_t Cmd::mv(/*const*/ std::string/*&*/ src_raw, /*const*/ std::string/*&*/ dest_raw)
+    esp_err_t Cmd::mv(std::string src, std::string dest)
     {
 
-	if (astr::is_space(src_raw))
+	src = astr::trim(src);
+//	if (astr::is_space(src_raw))
+	if (src.empty())
 	{
 	    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "too few arguments: invoke command \"%s\" with one parameters.\n%s", CMD_NM,
 		    "Don't know what to move?");
-	    return ESP_ERR_INVALID_ARG;
-	}; /* if astr::is_space(src_raw) */
+	    return (ret = ESP_ERR_INVALID_ARG);
+	}; /* if src.empty() */
+//	}; /* if astr::is_space(src_raw) */
 
-	if (astr::is_space(dest_raw))
+	dest = astr::trim(dest);
+//	if (astr::is_space(dest_raw))
+	if (dest.empty())
 	{
 	    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "too few arguments: invoke command \"%s\" without parameters.\n%s", CMD_NM,
 		    "Don't know where to move?");
-	    return ESP_ERR_INVALID_ARG;
-	}; /* if astr::is_space(dest_raw) */
+	    return (ret = ESP_ERR_INVALID_ARG);
+	}; /* if dest_raw.empty() */
+//	}; /* if astr::is_space(dest_raw) */
 
-	if (!artificial_cwd.valid(src_raw.c_str()))
+	cout << aso::format("Move file \"%s\" to \"%s\"") %src %dest << endl;
+
+	if (!artificial_cwd.valid(src))
 	{
-	    ESP_LOGE(CMD_TAG_PRFX, "%s: the souce file name \"%s\" is invalid", __func__, src_raw.c_str());
-	    return ESP_ERR_NOT_FOUND;
-	}; /* if !fake_cwd.valid(src_raw.c_str()) */
-	if (!artificial_cwd.valid(dest_raw.c_str()))
+	    ESP_LOGE(CMD_TAG_PRFX, "%s: the souce file name \"%s\" is invalid", __func__, src.c_str());
+	    return (ret = ESP_ERR_NOT_FOUND);
+	}; /* if !artificial_cwd.valid(src) */
+	if (!artificial_cwd.valid(dest))
 	{
-	    ESP_LOGE(CMD_TAG_PRFX, "%s: the destination file name \"%s\" is invalid", __func__, dest_raw.c_str());
-	    return ESP_ERR_NOT_FOUND;
-	}; /* if !fake_cwd.valid(dest_raw.c_str()) */
+	    ESP_LOGE(CMD_TAG_PRFX, "%s: the destination file name \"%s\" is invalid", __func__, dest.c_str());
+	    return (ret = ESP_ERR_NOT_FOUND);
+	}; /* if !artificial_cwd.valid(dest) */
 
 
-	    std::string src = artificial_cwd.compose(src_raw/*.c_str()*/);
-	    struct stat st_src;
+//	src = artificial_cwd.compose(src);
+	src = artificial_cwd / src;
+//	    struct stat st_src;
 
 	// Check if source file is not exist
-	if (stat(src.c_str(), &st_src) != 0)
+//	if (stat(src.c_str(), &st_src) != 0)
+	if (!CWD::last::exist())
 	{
 	    // Source file must be exist
-	    ESP_LOGE(CMD_TAG_PRFX, "%s: file \"%s\" (%s) is not exist - renaming a non-existent file is not possible.\n%s",
-		    __func__, src_raw.c_str(), src.c_str(), esp_err_to_name(ESP_ERR_NOT_FOUND));
-	    return ESP_ERR_NOT_FOUND;
+	    ESP_LOGE(CMD_TAG_PRFX, "%s: file [%s] is not exist - renaming a non-existent file is not possible.\n%s",
+		    __func__, src.c_str(), esp_err_to_name(ESP_ERR_NOT_FOUND));
+	    return (ret = ESP_ERR_NOT_FOUND);
 	}; /* if stat(src.c_str(), &st_src) != 0 */
+//	}; /* if stat(src.c_str(), &st_src) != 0 */
 
 
-	    std::string dest = artificial_cwd.compose(dest_raw/*.c_str()*/);
-	    struct stat st_dest;
+	dest = artificial_cwd / dest;
 
-	cout << aso::format("Move file \"%s\" (%s) to \"%s\" (%s)") %src_raw %src
-				%dest_raw %dest << endl;
+//	    std::string dest = artificial_cwd.compose(dest_raw/*.c_str()*/);
+//	    struct stat st_dest;
 
-	if (stat(dest.c_str(), &st_dest) == 0)
+//	cout << aso::format("Move file \"%s\" (%s) to \"%s\" (%s)") %src_raw %src
+//				%dest_raw %dest << endl;
+	cout << aso::format("\t(%s) to (%s)") %src %dest << endl;
+
+//	if (stat(dest.c_str(), &st_dest) == 0)
+	if (CWD::last::exist())
 	{
 	    // Target file exist
-	    ESP_LOGW(CMD_TAG_PRFX, "%s: target file name \"%s\" (%s) exist",
-		    __func__, dest_raw.c_str(), dest.c_str());
+	    ESP_LOGW(CMD_TAG_PRFX, "%s: target file name \"%s\" is exist",
+		    __func__, dest.c_str());
 	    // if destination is existing directory
-	    if (S_ISDIR(st_dest.st_mode))
+//	    if (S_ISDIR(st_dest.st_mode))
+	    if (CWD::last::is_dir())
 	    {
-		    std::string basenm = basename(src.c_str());
+//		    std::string basenm = basename(src.c_str());
 
+//		ESP_LOGD(CMD_TAG_PRFX, "%s: destination file is exist directory,\n\t\t\tbasename of src is: %s ", __func__,
+//			basenm.c_str());
 		ESP_LOGD(CMD_TAG_PRFX, "%s: destination file is exist directory,\n\t\t\tbasename of src is: %s ", __func__,
-			basenm.c_str());
-		// Add trailing slash if it absent
-		if (dest.back() != '/')
-		    dest += '/';
-		ESP_LOGD(CMD_TAG_PRFX, "%s: adding trailing slash to a destination file: %s", __func__, dest.c_str());
-		dest += basenm;
+			basename(src.c_str()));
+//		// Add trailing slash if it absent
+//		if (dest.back() != '/')
+//		    dest += '/';
+		ESP_LOGD(CMD_TAG_PRFX, "%s: adding trailing slash to a destination file: %s", __func__, (dest + '/').c_str());
+//		dest += basenm;
+		dest = dest + '/' + basename(src.c_str());
 		ESP_LOGD(CMD_TAG_PRFX, "%s: adding src basename to a destination file: %s", __func__, dest.c_str());
-	    } /* if S_ISDIR(st.st_mode) */
-	} /* if stat(dest, &st) != 0 */
+	    } /* if CWD::last::is_dir() */
+//	    } /* if S_ISDIR(st.st_mode) */
+	} /* if CWD::last::exist() */
+//	} /* if stat(dest, &st) != 0 */
 
 	// Re-check the modified version of the
 	// destination filename, that may be exist:
-	if (stat(dest.c_str(), &st_dest) == 0)
+	artificial_cwd.compose(dest);
+//	if (stat(dest.c_str(), &st_dest) == 0)
+	if (CWD::last::exist())
 	{
 	    // the final name of the target file
 	    // must not be a existing directory name
-	    if (S_ISDIR(st_dest.st_mode))
+//	    if (S_ISDIR(st_dest.st_mode))
+	    if (CWD::last::is_dir())
 	    {
 		ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite exist directory \"%s\" by the destination file from the %s is not allowed; aborting.",
 			__func__, dest.c_str(), src.c_str());
-		return ESP_ERR_NOT_SUPPORTED;
-	    } /* if S_ISDIR(st.st_mode) */
+		return (ret = ESP_ERR_NOT_SUPPORTED);
+	    } /* if CWD::last::is_dir() */
+//	    } /* if S_ISDIR(st.st_mode) */
 
 	    // if source - is dir, but destination - ordinary file
-	    if (S_ISDIR(st_src.st_mode))
+//	    if (S_ISDIR(st_src.st_mode))
+	    artificial_cwd.compose(src);
+	    if (CWD::last::is_dir())
 	    {
 		ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite exist file \"%s\" by renaming the source directory %s to it - is not allowed; aborting.",
 			__func__, dest.c_str(), src.c_str());
-		return ESP_ERR_NOT_SUPPORTED;
+		return (ret = ESP_ERR_NOT_SUPPORTED);
 	    }; /* if S_ISDIR(st.st_mode) */
 
 #if !defined(__NOT_OVERWRITE__) && defined(__CP_OVERWRITE_FILE__)
@@ -701,18 +695,19 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 #else
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite the existent file \"%s\" is denied; aborting.",
 		    __func__, dest.c_str());
-	    return ESP_ERR_NOT_SUPPORTED;
+	    return (ret = ESP_ERR_NOT_SUPPORTED);
 #endif	// __CP_OVER_EXIST_FILE__
 	}; /*     if stat(dest.c_str(), &st_dest) == 0 */
+//	}; /*     if stat(dest.c_str(), &st_dest) == 0 */
 
 	// Names of the moving/renaming file
-	ESP_LOGI(CMD_TAG_PRFX, "%s: Moving/renaming file %s (%s) to %s (%s)", __func__, src_raw.c_str(), src.c_str(), dest_raw.c_str(), dest.c_str());
+	ESP_LOGI(CMD_TAG_PRFX, "%s: Moving/renaming file [%s] to [%s]", __func__, src.c_str(), dest.c_str());
 	// check the source and destination file are same
 	if (src == dest)
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: source & destination file name are same: \"%s\";\n\t\t\t copying file to iself is unsupported",
 		    __func__, dest.c_str());
-	    return ESP_ERR_NOT_SUPPORTED;
+	    return (ret = ESP_ERR_NOT_SUPPORTED);
 	}; /* if src == dest */
 
 
@@ -722,11 +717,11 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	if (rename(src.c_str(), dest.c_str()) != 0)
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: Error %d: %s", __func__, errno, strerror(errno));
-	    return ESP_FAIL;
+	    return (ret = ESP_FAIL);
 	}; /* if rename(src.c_str(), dest.c_str()) != 0 */
-	return ESP_OK;
+	return (ret = ESP_OK);
 
-    }; /* Cmd::mv */
+    }; /* Exec::Cmd::mv() */
 
 
 
