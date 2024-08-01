@@ -577,24 +577,20 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
     {
 
 	src = astr::trim(src);
-//	if (astr::is_space(src_raw))
 	if (src.empty())
 	{
 	    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "too few arguments: invoke command \"%s\" with one parameters.\n%s", CMD_NM,
 		    "Don't know what to move?");
 	    return (ret = ESP_ERR_INVALID_ARG);
 	}; /* if src.empty() */
-//	}; /* if astr::is_space(src_raw) */
 
 	dest = astr::trim(dest);
-//	if (astr::is_space(dest_raw))
 	if (dest.empty())
 	{
 	    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "too few arguments: invoke command \"%s\" without parameters.\n%s", CMD_NM,
 		    "Don't know where to move?");
 	    return (ret = ESP_ERR_INVALID_ARG);
 	}; /* if dest_raw.empty() */
-//	}; /* if astr::is_space(dest_raw) */
 
 	cout << aso::format("Move file \"%s\" to \"%s\"") %src %dest << endl;
 
@@ -610,12 +606,9 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	}; /* if !artificial_cwd.valid(dest) */
 
 
-//	src = artificial_cwd.compose(src);
 	src = artificial_cwd / src;
-//	    struct stat st_src;
 
 	// Check if source file is not exist
-//	if (stat(src.c_str(), &st_src) != 0)
 	if (!CWD::last::exist())
 	{
 	    // Source file must be exist
@@ -623,72 +616,49 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 		    __func__, src.c_str(), esp_err_to_name(ESP_ERR_NOT_FOUND));
 	    return (ret = ESP_ERR_NOT_FOUND);
 	}; /* if stat(src.c_str(), &st_src) != 0 */
-//	}; /* if stat(src.c_str(), &st_src) != 0 */
-
 
 	dest = artificial_cwd / dest;
 
-//	    std::string dest = artificial_cwd.compose(dest_raw/*.c_str()*/);
-//	    struct stat st_dest;
-
-//	cout << aso::format("Move file \"%s\" (%s) to \"%s\" (%s)") %src_raw %src
-//				%dest_raw %dest << endl;
 	cout << aso::format("\t(%s) to (%s)") %src %dest << endl;
 
-//	if (stat(dest.c_str(), &st_dest) == 0)
 	if (CWD::last::exist())
 	{
 	    // Target file exist
 	    ESP_LOGW(CMD_TAG_PRFX, "%s: target file name \"%s\" is exist",
 		    __func__, dest.c_str());
 	    // if destination is existing directory
-//	    if (S_ISDIR(st_dest.st_mode))
 	    if (CWD::last::is_dir())
 	    {
-//		    std::string basenm = basename(src.c_str());
-
-//		ESP_LOGD(CMD_TAG_PRFX, "%s: destination file is exist directory,\n\t\t\tbasename of src is: %s ", __func__,
-//			basenm.c_str());
 		ESP_LOGD(CMD_TAG_PRFX, "%s: destination file is exist directory,\n\t\t\tbasename of src is: %s ", __func__,
 			basename(src.c_str()));
-//		// Add trailing slash if it absent
-//		if (dest.back() != '/')
-//		    dest += '/';
 		ESP_LOGD(CMD_TAG_PRFX, "%s: adding trailing slash to a destination file: %s", __func__, (dest + '/').c_str());
-//		dest += basenm;
 		dest = dest + '/' + basename(src.c_str());
 		ESP_LOGD(CMD_TAG_PRFX, "%s: adding src basename to a destination file: %s", __func__, dest.c_str());
 	    } /* if CWD::last::is_dir() */
-//	    } /* if S_ISDIR(st.st_mode) */
 	} /* if CWD::last::exist() */
-//	} /* if stat(dest, &st) != 0 */
 
 	// Re-check the modified version of the
 	// destination filename, that may be exist:
 	artificial_cwd.compose(dest);
-//	if (stat(dest.c_str(), &st_dest) == 0)
 	if (CWD::last::exist())
 	{
 	    // the final name of the target file
 	    // must not be a existing directory name
-//	    if (S_ISDIR(st_dest.st_mode))
 	    if (CWD::last::is_dir())
 	    {
 		ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite exist directory \"%s\" by the destination file from the %s is not allowed; aborting.",
 			__func__, dest.c_str(), src.c_str());
 		return (ret = ESP_ERR_NOT_SUPPORTED);
 	    } /* if CWD::last::is_dir() */
-//	    } /* if S_ISDIR(st.st_mode) */
 
 	    // if source - is dir, but destination - ordinary file
-//	    if (S_ISDIR(st_src.st_mode))
 	    artificial_cwd.compose(src);
 	    if (CWD::last::is_dir())
 	    {
 		ESP_LOGE(CMD_TAG_PRFX, "%s: overwrite exist file \"%s\" by renaming the source directory %s to it - is not allowed; aborting.",
 			__func__, dest.c_str(), src.c_str());
 		return (ret = ESP_ERR_NOT_SUPPORTED);
-	    }; /* if S_ISDIR(st.st_mode) */
+	    }; /* CWD::last::is_dir() */
 
 #if !defined(__NOT_OVERWRITE__) && defined(__CP_OVERWRITE_FILE__)
 	    ESP_LOGW(CMD_TAG_PRFX, "%s: overwrite an existing file \"%s\".", __func__, dest.c_str());
@@ -698,7 +668,6 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	    return (ret = ESP_ERR_NOT_SUPPORTED);
 #endif	// __CP_OVER_EXIST_FILE__
 	}; /*     if stat(dest.c_str(), &st_dest) == 0 */
-//	}; /*     if stat(dest.c_str(), &st_dest) == 0 */
 
 	// Names of the moving/renaming file
 	ESP_LOGI(CMD_TAG_PRFX, "%s: Moving/renaming file [%s] to [%s]", __func__, src.c_str(), dest.c_str());
@@ -711,9 +680,6 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	}; /* if src == dest */
 
 
-	//    // Rename original file
-	//    cout << aso::format("Move/rename file %s (%s) to %s (%s)") %src_raw %src
-	//			%dest_raw %dest << endl;
 	if (rename(src.c_str(), dest.c_str()) != 0)
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: Error %d: %s", __func__, errno, strerror(errno));
@@ -729,54 +695,63 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 #define CMD_NM "rm"
 
     /// remove files according a pattern
-    esp_err_t Cmd::rm(/*const*/ std::string/*&*/ pattern)
+    esp_err_t Cmd::rm(std::string pattern)
     {
+	pattern = astr::trim(pattern);
+//	if (astr::is_space(pattern))
+	if (pattern.empty())
+	{
+	    ESP_LOGE(CMD_TAG_PRFX, "%s: invoke command \"%s\" without parameters.\n%s", __func__, __func__,
+		    "Missing filename to remove.");
+	    return (ret = ESP_ERR_INVALID_ARG);
+	}; /* if pattern.empty() */
+//	}; /* if astr::is_space(pattern) */
 
 	if (!artificial_cwd.valid(pattern))
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: pattern \"%s\" is invalid", __func__, pattern.c_str());
-	    return ESP_ERR_NOT_FOUND;
+	    return (ret = ESP_ERR_NOT_FOUND);
 	}; /* if !artificial_cwd.valid(pattern) */
 
-	    struct stat st;
-	    std::string path = artificial_cwd.compose(pattern);
+	ESP_LOGI(CMD_TAG_PRFX, "%s: delete file \"%s\"", __func__,  pattern.c_str());
 
-	if (astr::is_space(pattern))
-	{
-	    ESP_LOGE(CMD_TAG_PRFX, "%s: invoke command \"%s\" without parameters.\n%s", __func__, __func__,
-		    "Missing filename to remove.");
-	    return ESP_ERR_INVALID_ARG;
-	}; /* if astr::is_space(pattern) */
+//	    struct stat st;
+//	    std::string path = artificial_cwd.compose(pattern);
 
-	ESP_LOGI(CMD_TAG_PRFX, "%s: delete file \"%s\" (%s)", __func__,  pattern.c_str(), path.c_str());
+	pattern = artificial_cwd / pattern;
+
+	ESP_LOGI(CMD_TAG_PRFX, "full name is: %s", pattern.c_str());
 
 	// Check if destination file exists before deleting
-	if (stat(path.c_str(), &st) != 0)
+//	if (stat(path.c_str(), &st) != 0)
+	if (!CWD::last::exist())
 	{
 	    // deleting a non-existent file is not possible
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: file \"%s\" is not exist - deleting a non-existent file is not possible.\n%s",
 		    __func__, pattern.c_str(), esp_err_to_name(ESP_ERR_NOT_FOUND));
-	    return ESP_ERR_NOT_FOUND;
-	}; /* if stat(file_foo, &st) != 0 */
-	if (S_ISDIR(st.st_mode))
+	    return (ret = ESP_ERR_NOT_FOUND);
+	}; /* if CWD::last::exist() */
+//	}; /* if stat(file_foo, &st) != 0 */
+//	if (S_ISDIR(st.st_mode))
+	if (CWD::last::is_dir())
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: deleting directories unsupported.\n%s",
 		    __func__, esp_err_to_name(ESP_ERR_NOT_SUPPORTED));
-	    return ESP_ERR_NOT_SUPPORTED;
-	}; /* if (S_ISDIR(st.st_mode)) */
+	    return (ret = ESP_ERR_NOT_SUPPORTED);
+	}; /* if CWD::last::is_dir() */
+//	}; /* if (S_ISDIR(st.st_mode)) */
 	errno = 0;
 	//cout << "Now exec: ===>> " << aso::format("unlink(%s)") % path << "<<===" << endl;
-	unlink(path.c_str());
+	unlink(pattern.c_str());
 	if (errno)
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: Fail when deleting \"%s\": %s", __func__, pattern.c_str(), strerror(errno));
-
-	    return ESP_FAIL;
+	    return (ret = ESP_FAIL);
 	}; /* if errno */
 
 	return ESP_OK;
 
-    }; /* Cmd::rm */
+    }; /* Exec::Cmd::rm() */
 
 
 
