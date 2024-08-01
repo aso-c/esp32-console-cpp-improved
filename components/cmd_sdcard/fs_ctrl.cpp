@@ -698,14 +698,12 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
     esp_err_t Cmd::rm(std::string pattern)
     {
 	pattern = astr::trim(pattern);
-//	if (astr::is_space(pattern))
 	if (pattern.empty())
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: invoke command \"%s\" without parameters.\n%s", __func__, __func__,
 		    "Missing filename to remove.");
 	    return (ret = ESP_ERR_INVALID_ARG);
 	}; /* if pattern.empty() */
-//	}; /* if astr::is_space(pattern) */
 
 	if (!artificial_cwd.valid(pattern))
 	{
@@ -715,15 +713,11 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 
 	ESP_LOGI(CMD_TAG_PRFX, "%s: delete file \"%s\"", __func__,  pattern.c_str());
 
-//	    struct stat st;
-//	    std::string path = artificial_cwd.compose(pattern);
-
 	pattern = artificial_cwd / pattern;
 
 	ESP_LOGI(CMD_TAG_PRFX, "full name is: %s", pattern.c_str());
 
 	// Check if destination file exists before deleting
-//	if (stat(path.c_str(), &st) != 0)
 	if (!CWD::last::exist())
 	{
 	    // deleting a non-existent file is not possible
@@ -731,17 +725,13 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 		    __func__, pattern.c_str(), esp_err_to_name(ESP_ERR_NOT_FOUND));
 	    return (ret = ESP_ERR_NOT_FOUND);
 	}; /* if CWD::last::exist() */
-//	}; /* if stat(file_foo, &st) != 0 */
-//	if (S_ISDIR(st.st_mode))
 	if (CWD::last::is_dir())
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: deleting directories unsupported.\n%s",
 		    __func__, esp_err_to_name(ESP_ERR_NOT_SUPPORTED));
 	    return (ret = ESP_ERR_NOT_SUPPORTED);
 	}; /* if CWD::last::is_dir() */
-//	}; /* if (S_ISDIR(st.st_mode)) */
 	errno = 0;
-	//cout << "Now exec: ===>> " << aso::format("unlink(%s)") % path << "<<===" << endl;
 	unlink(pattern.c_str());
 	if (errno)
 	{
@@ -759,19 +749,9 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 #define CMD_NM "cat"
 
     /// type file contents
-    esp_err_t Cmd::cat(/*const*/ std::string/*&*/ fname)
+    esp_err_t Cmd::cat(std::string fname)
     {
-
-	if (!artificial_cwd.valid(fname.c_str()))
-	{
-	    ESP_LOGE(CMD_TAG_PRFX, "%s: pattern \"%s\" is invalid", __func__, fname.c_str());
-	    return ESP_ERR_NOT_FOUND;
-	}; /* if !artificial_cwd.valid(fname.c_str()) */
-
-	    struct stat st;
-	    std::string fullname = artificial_cwd.compose(fname/*.c_str()*/);
-	    FILE *text = nullptr; // file for type to screen
-
+	fname = astr::trim(fname);
 	if (empty(fname))
 	{
 	    cout << endl
@@ -781,60 +761,92 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 		    "Missing filename for print to output.");
 
 	    cout << "*** End of printing file XXXX. ** ******************" << endl;
-	    return ESP_ERR_INVALID_ARG;
+	    return (ret = ESP_ERR_INVALID_ARG);
 	}; /* if empty(fname) */ /* if fname == NULL || strcmp(fname, "") */
 
+	if (!artificial_cwd.valid(fname))
+	{
+	    ESP_LOGE(CMD_TAG_PRFX, "%s: pattern \"%s\" is invalid", __func__, fname.c_str());
+	    return (ret = ESP_ERR_NOT_FOUND);
+	}; /* if !artificial_cwd.valid(fname) */
+
 	cout << endl
-	    << aso::format("*** Printing contents of the file <%s> (realname '%s'). ***") % fname % fullname  << endl
+	    << aso::format("*** Printing contents of the file <%s> ") % fname;
+
+//	    struct stat st;
+//	    std::string fullname = artificial_cwd.compose(fname/*.c_str()*/);
+//	    FILE *text = nullptr; // file for type to screen
+
+	fname = artificial_cwd / fname;
+
+	cout << aso::format("(realname '%s'). ***") % fname << endl
 	    << endl;
 
 	// Check if destination file exists before typing
-	if (stat(fullname.c_str(), &st) != 0)
+//	if (stat(fullname.c_str(), &st) != 0)
+	if (!CWD::last::exist())
 	{
 	    // typing a non-exist file is not possible
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: \"%s\" file does not exist - printing of the missing file is not possible.\n%s",
 		    __func__, fname.c_str(), esp_err_to_name(ESP_ERR_NOT_FOUND));
-	    return ESP_ERR_NOT_FOUND;
-	}; /* if stat(path, &st) != 0 */
+	    return (ret = ESP_ERR_NOT_FOUND);
+	}; /* if !CWD::last::exist() */
+//	}; /* if stat(path, &st) != 0 */
 
-	if (S_ISDIR(st.st_mode))
+//	if (S_ISDIR(st.st_mode))
+	if (CWD::last::is_dir())
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: Typing directories unsupported, use the 'ls' command instead.\n%s",
 		    __func__, esp_err_to_name(ESP_ERR_NOT_SUPPORTED));
-	    return ESP_ERR_NOT_SUPPORTED;
-	}; /* if (S_ISDIR(st.st_mode)) */
+	    return (ret = ESP_ERR_NOT_SUPPORTED);
+	}; /* if CWD::last::is_dir() */
+//	}; /* if (S_ISDIR(st.st_mode)) */
 
 	errno = 0;	// clear possible errors
-	text = fopen(fullname.c_str(), "r"); // open the file for type to screen
+//	text = fopen(fullname.c_str(), "r"); // open the file for type to screen
+	    ifstream text(fname, ios::in | ios::binary);
+
 	if (!text)
 	{
-	    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Error opening file <%s> (%s), %s", fname.c_str(), fullname.c_str(), strerror(errno));
-	    return ESP_FAIL;
+	    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Error opening file <%s>, %s", fname.c_str(), strerror(errno));
+	    return (ret = ESP_FAIL);
 	}; /* if !FILE */
 
-	for (char c = getc(text); !feof(text); c = getc(text))
-	    putchar(c);
+	    constexpr size_t CP_BUFSIZE = 512;
+	    char buf[CP_BUFSIZE];
+	    std::streamsize cnt;
 
-	if (errno)
+	while (!text.eof())
 	{
-	    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Error during type the file %s (%s) to output, %s", fname.c_str(), fullname.c_str(), strerror(errno));
-	    fclose(text);
-	    return ESP_FAIL;
+	    text.read(buf, CP_BUFSIZE);
+	    cnt = text.gcount();
+	    cout.write(buf, cnt);
+	}; /* while !text.eof() */
+
+//	for (char c = getc(text); !feof(text); c = getc(text))
+//	    putchar(c);
+
+//	if (text.fail())
+	if (text.bad())
+	{
+	    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "I/O Error during type the file [%s] to output, %s", fname.c_str(), strerror(errno));
+//	    fclose(text);
+	    return (ret = ESP_FAIL);
 	}; /* if errno */
 
 	cout << endl
 	    << "*** End of printing file " << fname << ". **************" << endl
 	    << endl;
 
-	fclose(text);
-	if (errno)
-	{
-	    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Error during closing the file %s (%s) to output, %s", fname.c_str(), fullname.c_str(), strerror(errno));
-	    fclose(text);
-	    return ESP_ERR_INVALID_STATE;
-	}; /* if errno */
+//	fclose(text);
+//	if (errno)
+//	{
+//	    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Error during closing the file %s (%s) to output, %s", fname.c_str(), fullname.c_str(), strerror(errno));
+//	    fclose(text);
+//	    return ESP_ERR_INVALID_STATE;
+//	}; /* if errno */
 
-	return ESP_OK;
+	return (ret = ESP_OK);
     }; /* Cmd::cat */
 
 
