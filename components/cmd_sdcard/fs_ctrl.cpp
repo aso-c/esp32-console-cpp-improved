@@ -870,13 +870,6 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
     }; /* Exec::Cmd::type() */
 
 
-    /// Generates an error message if the struct stat
-    /// refers to an object, other than a file.
-    /// fname - the name of the object referenced by the struct stat.
-    /// stat_nam - text name of the file class
-    static esp_err_t err4existent(const std::string& fname, const char stat_nm[]);
-
-
     /// type text from keyboard to file and to screen
     esp_err_t Cmd::type(std::string fname, const size_t sector_size)
     {
@@ -887,9 +880,6 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	    return (ret = ESP_ERR_NOT_FOUND);
 	}; /* if !artificial_cwd.valid(fname) */
 
-//	    struct stat st;
-//	    std::string fullname = artificial_cwd.compose(fname);
-//	    FILE *storage = NULL;
 	    ios::openmode mode = ios::out | ios::binary;
 	    ofstream storage;
 
@@ -900,9 +890,12 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 		char c;
 
 	    // fname exists, check that is a regular file
-	    //if (!stat(fullname.c_str(), &st) && !S_ISREG(st.st_mode)) // @suppress("Symbol is not resolved")
-	    if (!CWD::last::is_reg())
-		return (ret = err4existent(fname, CWD::last::type()));
+	    if (!CWD::last::is_file())
+	    {
+		ESP_LOGE("console::type exist chechk", "Error: path %s exist, and is not a file, but a %s.\nOperation is not permitted.",
+			fname.c_str(), CWD::last::type());
+		return (ret = ESP_ERR_NOT_SUPPORTED);
+	    }; /* if !CWD::last::is_file() */
 
 	    cout << aso::format("File %s is exist.\nDo you want use this file? [yes[append]/over(write)/No]: ") % fname;
 	    cin >> noskipws >> c;
@@ -919,7 +912,6 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 		ESP_LOGI(CMD_TAG_PRFX CMD_NM, "OK, open the file %s to add.", fname.c_str());
 		cout << aso::format("File %s is opened for add+write.") % fname << endl;
 		mode |= ios::app;
-//		storage = fopen(fullname.c_str(), "a");
 		storage.open(fname, mode);
 		break;
 
@@ -928,7 +920,6 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 		ESP_LOGW(CMD_TAG_PRFX CMD_NM, "OK, open the file %s to owerwrite.", fname.c_str());
 		cout << aso::format("File %s is opened to truncate+write (overwrite).") % fname << endl;
 		mode |= ios::trunc;
-//		storage = fopen(fullname.c_str(), "w");
 		storage.open(fname, mode);
 		break;
 
@@ -948,137 +939,16 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	} /* if CWD::last::exist() */
 	else
 	{
-#if 0
-	    if (errno == ENOENT)	// error "file does not exist"
-	    {
-
-		if (!stat(fullname.c_str(), &st))	// but if the fname still exists here, then it is a directory // @suppress("Symbol is not resolved")
-		    return err4existent(fname, st);
-		ESP_LOGI(CMD_TAG_PRFX CMD_NM, "OK, file \"%s\" does not exist, opening this file.", fname.c_str());
-		cout << aso::format("Open file %s for the write") % fullname << endl;
-		errno = 0;	// clear error state
-		storage = fopen(fullname.c_str(), "w");
-	    } /* if errno == ENOENT */
-	    else	// error other than "file does not exist"
-	    {
-		ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Error test existing file %s: %s", fullname.c_str() , strerror(errno));
-		return ESP_FAIL;
-	    } /* else if errno == ENOENT */
-	    ;
-#endif
 	    ESP_LOGI(CMD_TAG_PRFX CMD_NM, "OK, file \"%s\" does not exist, opening this file.", fname.c_str());
 	    cout << aso::format("Open file %s for the write") % fname << endl;
 	    storage.open(fname, mode);
 	}; /* else if CWD::last::exist() */
 
-#if 0
-	// Test file 'fname' for existing
-	errno = 0;	// clear all error state
-	if (access(fullname.c_str(), F_OK) == -1)
-	{
-	    if (errno == ENOENT)	// error "file does not exist"
-	    {
-
-		if (!stat(fullname.c_str(), &st))	// but if the fname still exists here, then it is a directory // @suppress("Symbol is not resolved")
-		    return err4existent(fname, st);
-		ESP_LOGI(CMD_TAG_PRFX CMD_NM, "OK, file \"%s\" does not exist, opening this file.", fname.c_str());
-		cout << aso::format("Open file %s for the write") % fullname << endl;
-		errno = 0;	// clear error state
-		storage = fopen(fullname.c_str(), "w");
-	    } /* if errno == ENOENT */
-	    else	// error other than "file does not exist"
-	    {
-		ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Error test existing file %s: %s", fullname.c_str() , strerror(errno));
-		return ESP_FAIL;
-	    } /* else if errno == ENOENT */
-	} /* if stat(fname, &statbuf) == -1 */
-	else
-	{	// Error - file fname is exist
-
-		char c;
-
-	    // fname exists, check that is a regular file
-	    if (!stat(fullname.c_str(), &st) && !S_ISREG(st.st_mode)) // @suppress("Symbol is not resolved")
-		return err4existent(fname, st);
-
-	    cout << aso::format("File %s is exist.\nDo you want use this file? [yes(add)/over(write)/No]: ") % fname;
-	    cin >> noskipws >> c;
-	    cout << c;
-
-	    if (c == '\n')
-	    cout << "<LF>";
-	    cout << endl;
-
-	    switch (tolower(c))
-	    {
-	    case 'a':
-	    case 'y':
-		ESP_LOGI(CMD_TAG_PRFX CMD_NM, "OK, open the file %s to add.", fname.c_str());
-		cout << aso::format("File %s is opened for add+write.") % fname << endl;
-		storage = fopen(fullname.c_str(), "a");
-		break;
-
-	    case 'o':
-	    case 'w':
-		ESP_LOGW(CMD_TAG_PRFX CMD_NM, "OK, open the file %s to owerwrite.", fname.c_str());
-		cout << aso::format("File %s is opened to truncate+write (overwrite).") % fname << endl;
-		storage = fopen(fullname.c_str(), "w");
-		break;
-
-	    case '\n':
-		cout << "Enter char '\\n'" << endl; // @suppress("No break at end of case")
-		[[fallthrough]];
-	    case 'n':
-		ESP_LOGW(CMD_TAG_PRFX ":" CMD_NM " <filename>", "User cancel opening file %s.", fname.c_str());
-		return ESP_ERR_NOT_FOUND;
-		break;
-
-	    default:
-		ESP_LOGW(CMD_TAG_PRFX CMD_NM, "Error: H.z. cho in input, input char value is: [%d]", (int)c);
-		return ESP_ERR_INVALID_ARG;
-	    }; /* switch tolower(c) */
-	}; /* else if stat(fname, &statbuf) == -1 */
-#endif	// 0
-
-//	if (storage == NULL)
 	if (!storage)
 	{
 	    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Any error occured when opening the file %s: %s.", fname.c_str(), strerror(errno));
 	    return ESP_ERR_NOT_FOUND;
 	}; /* if storage == NULL */
-
-//#define TYPEBUFSIZE (8 * 4*BUFSIZ)
-//#define TYPEBUFSIZE (4 * card->self->csd.sector_size)
-//#define TYPEBUFSIZE (4 * sector_size)
-	//    constexpr size_t TYPEBUFSIZE = (4 * sector_size);
-//	    char typebuf[TYPEBUFSIZE];
-//	    char *typebuf = (char*)malloc(TYPEBUFSIZE);
-	    //std::vector<char> typebuf(4 * sector_size);
-	    std::unique_ptr<char[]> typebuf (new char[4 * sector_size]);
-//	    char *typebuf = (char*)malloc( card->data->csd.sector_size);
-
-//	errno = 0;
-//	setvbuf(storage, typebuf, _IOFBF, TYPEBUFSIZE);
-	if (!storage.rdbuf())
-	{
-	    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Inner std::basic_filebuf is not exist in the ofstream \"storage\"");
-	    return (ret = ESP_FAIL);
-	}; /* if !storage.rdbuf() */
-	    ESP_LOGI(CMD_TAG_PRFX CMD_NM, "The ofstream \"storage\" contain the inner std::basic_filebuf, OK");
-
-	// Use std::unique_ptr for control the buffer for the "storage" stream
-	// Use std::unique_ptr::release() fot yhe transfer of ownering from the unique_ptr to the filebuf object of the stream "storage"
-	storage.rdbuf()->pubsetbuf(typebuf.release(),  4 * sector_size);
-
-
-#if 0
-	if (errno)
-	{
-	    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Error when setting buffering mode for file %s: %s.", fname.c_str(), strerror(errno));
-	    fclose(storage);
-	    return (ret = ESP_FAIL);
-	}; /* if (errno) */
-#endif
 
 	cout << endl
 	     << aso::format("**** Type the text on keyboard to screen and file [%s]. ****") % fname  << endl
@@ -1090,7 +960,6 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	    prevc = c;
 	    cin >> noskipws >> c;
 	    cout << c;
-//	    fputc(c, storage);
 	    storage << c;
 	} while (c != prevc || c != '\n');
 
@@ -1101,24 +970,13 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 
 	cout << aso::format("Flush&write cache buffer of the file %s.") % fname << endl;
 	storage << flush;
-	//storage.sync();
-#if 0	// Temporaryly - only for debug & development
-	fflush(storage);
-	fsync(fileno(storage));
-#endif	// End odf block for Debug & Developing exclude
 	cout << aso::format("Close the file %s.") % fname << endl;
 	storage.close();
-#if 0	// Temporaryly - only for debug & development
-	fclose(storage);
-	free(typebuf);
-#endif	// End odf block for Debug & Developing exclude
-//	if (errno)
 	if (!storage.good())
 	{
 	    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "Any error occured when closing the file %s: %s.", fname.c_str(), strerror(errno));
 	    return ESP_FAIL;
 	}; /* if errno */
-
 
 	cout << endl
 	     << aso::format("**** End of typing the text on keyboard for the screen and the file %s. ****") % fname << endl
@@ -1126,20 +984,6 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	return ESP_OK;
 
     }; /* Cmd::type <file> */
-
-
-    /// Generates an error message if the struct stat
-    /// refers to an object, other than a file.
-    /// fname - the name of the object referenced by the struct stat.
-    esp_err_t err4existent(const std::string& fname, const char stat_nm[])
-    {
-#define EXIST_FN_TAG "console::type exist chechk"
-	ESP_LOGE(EXIST_FN_TAG, "Error: path %s exist, and is not a file, but a %s.\nOperation is not permitted.",
-		fname.c_str(), stat_nm);
-	return ESP_ERR_NOT_SUPPORTED;
-#undef EXIST_FN_TAG
-    }; /* err4existent */
-
 
 #undef CMD_TAG_PRFX
 
