@@ -185,7 +185,7 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	cout << endl
 	    << "PWD is: \"" << artificial_cwd.get() << '"' << endl
 	    << endl;
-	return ESP_OK;
+	return (ret = ESP_OK);
 
     }; /* Exec::Cmd::pwd() */
 
@@ -200,14 +200,14 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	if (!artificial_cwd.valid(dirname))
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: the new directory name \"%s\" is invalid", __func__, dirname.c_str());
-	    return ESP_ERR_NOT_FOUND;
+	    return (ret = ESP_ERR_NOT_FOUND);
 	}; /* if !artificial_cwd.valid(dirname) */
 
 	if (dirname.empty())
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: invoke command \"%s\" without parameters.\n%s", __func__, CMD_NM,
 		    "This command required the creating directory name.");
-	    return ESP_ERR_INVALID_ARG;
+	    return (ret = ESP_ERR_INVALID_ARG);
 	}; /* if dirname.empty() */
 
 	ESP_LOGI(CMD_TAG_PRFX, "%s: Create directory with name \"%s\"", __func__, dirname.c_str());
@@ -218,7 +218,7 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	if (CWD::last::exist())
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: Invalid argument - requested path \"%s\" is exist; denied create duplication name\n", __func__, dirname.c_str());
-	    return ESP_ERR_INVALID_ARG;
+	    return (ret = ESP_ERR_INVALID_ARG);
 	}; /* if CWD::last::exist() */
 
 	errno = 0;
@@ -226,9 +226,9 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	if (errno)
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: Error creating directory \"%s\": %s", __func__, dirname.c_str(), strerror(errno));
-	    return ESP_FAIL;
+	    return (ret = ESP_FAIL);
 	}; /* if (errno) */
-	return ESP_OK;
+	return (ret = ESP_OK);
 
     }; /* Exec::Cmd::mkdir() */
 
@@ -243,14 +243,14 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	if (!artificial_cwd.valid(dirname))
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: the directory name \"%s\" is invalid", __func__, dirname.c_str());
-	    return ESP_ERR_NOT_FOUND;
+	    return (ret = ESP_ERR_NOT_FOUND);
 	}; /* if !artificial_cwd.valid(dirname.c_str()) */
 
 	if (dirname.empty())
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: invoke command \"%s\" without parameters.\n%s", __func__, CMD_NM,
 		     "This command required the name of the deleting directory.");
-	    return ESP_ERR_INVALID_ARG;
+	    return (ret = ESP_ERR_INVALID_ARG);
 	}; /* if dirname.empty() */
 
 	ESP_LOGI(CMD_TAG_PRFX, "%s: Delete directory <%s>,", __func__, dirname.c_str());
@@ -262,12 +262,12 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	{
 	    // deleting a non-exist directory is not possible
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: Directory \"%s\" is not exist - deleting a non-existent catalogue is not possible.\n%s", __func__, dirname.c_str(), esp_err_to_name(ESP_ERR_NOT_FOUND));
-	    return ESP_ERR_NOT_FOUND;
+	    return (ret = ESP_ERR_NOT_FOUND);
 	}; /* if !CWD::last::exist() */
 	if (!CWD::last::is_dir())
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: The %s command delete directories, not the files.\n%s", __func__, CMD_NM, esp_err_to_name(ESP_ERR_NOT_SUPPORTED));
-	    return ESP_ERR_INVALID_ARG;
+	    return (ret = ESP_ERR_INVALID_ARG);
 	}; /* if !CWD::last::is_dir() */
 
 	    DIR *dir = opendir(dirname.c_str());	// Directory descriptor
@@ -280,13 +280,13 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	if (errno)
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: Fail when closing directory \"%s\": %s", __func__, dirname.c_str(), strerror(errno));
-	    return ESP_FAIL;
+	    return (ret = ESP_FAIL);
 	}; /* if errno */
 	if (entry)
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: Directory \"%s\" is not empty, deletung non-emty directories "
 		    "is not supported.", __func__, dirname.c_str());
-	    return ESP_ERR_NOT_SUPPORTED;
+	    return (ret = ESP_ERR_NOT_SUPPORTED);
 	}; /* if (entry) */
 
 	errno = 0;
@@ -294,10 +294,10 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	if (errno)
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: Fail when deleting \"%s\": %s", __func__, dirname.c_str(), strerror(errno));
-	    return ESP_FAIL;
+	    return (ret = ESP_FAIL);
 	}; /* if errno */
 
-	return ESP_OK;
+	return (ret = ESP_OK);
 
     }; /* Exec::Cmd::rmdir() */
 
@@ -309,14 +309,12 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
     /// change a current wirking directory
     esp_err_t Cmd::cd(SD::MMC::Device& device, std::string dirname)
     {
-	    esp_err_t err;
-
 	dirname = astr::trim(dirname);
 
 	if (!artificial_cwd.valid(dirname))
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: the directory name \"%s\" is invalid", __func__, dirname.c_str());
-	    return ESP_ERR_NOT_FOUND;
+	    return (ret = ESP_ERR_NOT_FOUND);
 	}; /* if !artificial_cwd.valid(dirname) */
 
 	// change cwd dir: chdir(dirname);
@@ -326,25 +324,24 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	    {
 		ESP_LOGI(CMD_TAG_PRFX, "%s: Not specified directory for jump to, change current dir to %s, [mountpoint].", __func__, device.mountpath_c());
 		artificial_cwd/= device.mountpath();
-		err = CWD::last::state();
+		ret = CWD::last::state();
 	    } /* if dirname.empty() */
 	    else
 	    {
 		ESP_LOGI(CMD_TAG_PRFX, "%s: Change current dir to %s", __func__, dirname.c_str());
 		artificial_cwd/= dirname;
-		err = CWD::last::state();
+		ret = CWD::last::state();
 	    }; /* else if dirname.empty() */
 	}
 	else
 	{
 	    ESP_LOGW(CMD_TAG_PRFX, "%s: Card is not mounted, mountpoint is not valid, nothing to do", __func__);
-	    return ESP_ERR_NOT_SUPPORTED;
-	}; /* else if device.card != nullptr */
-	// change cwd dir: chdir(dirname);
+	    return (ret = ESP_ERR_NOT_SUPPORTED);
+	}; /* else if device.mounted() */
 
-	if (err != 0)
-	    ESP_LOGE(CMD_TAG_PRFX, "%s: fail change directory to %s\n%s", __func__, dirname.c_str(), esp_err_to_name(err));
-	return err;
+	if (ret != 0)
+	    ESP_LOGE(CMD_TAG_PRFX, "%s: fail change directory to %s\n%s", __func__, dirname.c_str(), esp_err_to_name(ret));
+	return ret;
 
     }; /* Exec::Cmd::cd() */
 
@@ -365,7 +362,7 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	if (!artificial_cwd.valid(pattern))
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: Listing is failed - pattern \"%s\" is invalid or impossible", __func__, pattern.c_str());
-	    return ESP_ERR_INVALID_ARG;
+	    return (ret = ESP_ERR_INVALID_ARG);
 	}; /* if !artificial_cwd.valid(pattern) */
 	pattern = artificial_cwd / pattern;
 	ESP_LOGI(CMD_TAG_PRFX, "(real path is: %s)", pattern.c_str());
@@ -376,21 +373,13 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	if (!CWD::last::exist())
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: Listing is failed - pattern \"%s\" is not exist", __func__, pattern.c_str());
-	    return ESP_ERR_NOT_FOUND;
+	    return (ret = ESP_ERR_NOT_FOUND);
 	}; /* if CWD::last::exist() */
 	if (!CWD::last::is_dir())
 	{
-	    if (pattern.back() == '/' || pattern.back() == '.')
-	    {
-		ESP_LOGE(CMD_TAG_PRFX, "%s: %s -\n\t\t\t\t%s; pattern \"%s\" is invalid", __func__,
-			"Name of the file or other similar entity that is not a directory",
-			"cannot end with a slash or a dot", pattern.c_str());
-		return ESP_ERR_INVALID_ARG;
-	    }; /* if pattern.back() == '/' || pattern.back() == '.' */
-
 	    ESP_LOGI(__func__, "\n%s %s, file size %ld bytes", pattern.c_str(), CWD::last::type(), CWD::last::size());
 	    cout << "----------------" << endl;
-	    return ESP_OK;
+	    return (ret = ESP_OK);
 	}; /* if CWD::last::is_dir() */
 
     	    int entry_cnt = 0;
@@ -399,13 +388,18 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	{
 	    ++entry_cnt;
 	    artificial_cwd / (pattern + CWD::refine(entry.d_name));
-	    cout << aso::format("  %-42s\t%s") % entry.d_name % CWD::last::type() << endl;
+//	    out << aso::format("  %-42s\t%s") % entry.d_name % CWD::last::type() << endl;
+	    cout << aso::format("  %-42s\t%6s") % entry.d_name % CWD::last::type();
+	    if (CWD::last::is_file())
+		cout << setw(8) << CWD::last::size() << " bytes";
+	    cout << endl;
+	    // |  aa                        X0xxx000 bytes	-file-|
 	}; /* for auto &entry = dir.begin(); entry != dir.end(); dir++ */
 
 	if (errno != 0)
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: Error occured during reading of the directory <%s>, %s", __func__, pattern.c_str(), strerror(errno));
-	    return ESP_FAIL;
+	    return (ret = ESP_FAIL);
 	}; /* if errno != 0 */
 	if (entry_cnt == 0)
 	    ESP_LOGW(__func__, "Files or directory not found, directory is empty.");
@@ -414,7 +408,7 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	cout << aso::format("Total found %d files", entry_cnt) << endl;
 
 	cout << endl;
-	return ESP_OK;
+	return (ret = ESP_OK);
     }; /* Exec::Cmd::ls() */
 
 
@@ -450,7 +444,7 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	{
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: the source file name is invalid", __func__);
 	    return (ret = ESP_ERR_NOT_FOUND);
-	}; /* if !artificial_cwd.valid(src) */
+	}; /* if !artificial_cwd.valid() */
 
 	src = artificial_cwd / src;
 
@@ -517,7 +511,7 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	    ret = ESP_ERR_NOT_SUPPORTED;
 	    return ret;
 #endif	// __CP_OVER_EXIST_FILE__
-	}; /* if stat(dest, &st) == 0 */
+	}; /* if CWD::last::exist() */
 
 	if (src == dest)
 	{
@@ -525,20 +519,20 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 		    __func__, dest.c_str());
 	    ret = ESP_ERR_NOT_SUPPORTED;
 	    return ret;
-	}; /* if strcmp(src, dest) == 0 */
+	}; /* if src == dest */
 
 	// destination file - OK, it's not exist or is may be overwrited
 	ESP_LOGI(CMD_TAG_PRFX ":" CMD_NM, "copy file %s to %s", src.c_str(), dest.c_str());
 
 	    std::ifstream ifs(src);
 
-	if(!ifs)
+	if (!ifs)
 	{
 	    // Error opening the source file
 	    ESP_LOGE(CMD_TAG_PRFX, "%s: Any Error opening the file \"%s\" is not exist - copyng from a not opened file is impossible.\n",
 		    __func__, src.c_str());
 	    return (ret = ESP_FAIL);
-	}; /* if!ifs */
+	}; /* if !ifs */
 
 	    std::ofstream ofs(dest);
 
@@ -551,22 +545,19 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 
 	    constexpr size_t CP_BUFSIZE = 512;
 	    std::vector<char> buf(CP_BUFSIZE);
-//	    char buf[CP_BUFSIZE];
-//	    std::streamsize cnt;
 
 	while (!ifs.eof())
 	{
 	    ifs.read(buf.data(), CP_BUFSIZE);
-//	    cnt = ifs.gcount();
 	    ofs.write(buf.data(), /*cnt*/ifs.gcount());
 	}; /* while !ifs.eof() */
-	ofs.flush();
+	ofs << flush;
 
 	if (!ifs.good())
 	{
 	    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "I/O Error during reading from the file [%s] to output"/*, %s"*/, src.c_str()/*, strerror(errno)*/);
 	    return (ret = ESP_FAIL);
-	}; /* if errno */
+	}; /* if !ifs.good() */
 	if (!ofs.good())
 	{
 	    ESP_LOGE(CMD_TAG_PRFX CMD_NM, "I/O Error during writing to file [%s]"/*, %s"*/, dest.c_str()/*, strerror(errno)*/);
