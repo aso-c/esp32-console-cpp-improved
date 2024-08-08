@@ -3,11 +3,9 @@
  * Implementation file
  * 	@file: fs_ctrl.cpp
  *	@author: Solomatov A.A. aso
- *	@date 14.07.2022 - 27.04.2024
- *	@version: 0.7
+ *	@date 14.07.2022 - 07.08.2024
+ *	@version: 0.9
  */
-
-//#define __PURE_C__
 
 
 #include <limits>
@@ -130,7 +128,7 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
     /// Mount SD-card slot "slot_no" onto specified mount path, default mountpoint is MOUNT_POINT_Default
     esp_err_t Cmd::mount(SD::MMC::Device& device, SD::MMC::Card& card, int slot_no, std::string mountpoint)
     {
-	device.slot_no(slot_no); // @suppress("Method cannot be resolved")
+	device.slot_no(slot_no);
 	return device.mount(card, std::move(mountpoint)); // @suppress("Method cannot be resolved")
     }; /* Exec::Cmd::mount() */
 
@@ -142,7 +140,7 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
     //------------------------------------------------------------------------------------------
 
     /// Unmount SD-card, that mounted onto "mountpath"
-    esp_err_t Cmd::unmount(SD::MMC::Device& device/*const char mountpath[]*/)
+    esp_err_t Cmd::unmount(SD::MMC::Device& device)
     {
 	if ((ret = device.unmount()) != ESP_OK) // @suppress("Method cannot be resolved")
 	    cout << TAG << ": "  << "Unmounting Error: " << ret
@@ -171,7 +169,7 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 //    }; /* Server::unmount */
 //
 //    // Unmount mounted SD-card "card", mounted onto mountpath
-//    esp_err_t Server::unmount(const char *base_path, sdmmc_card_t *card)
+//    esp_err_t Server::unmount(const std::string& base_path, sdmmc_card_t *card)
 //    {
 //	cout << TAG << ": " << "Procedure \"Unmount(<mountpath, ><card>)\" is not yet released now" << endl;
 //	cout << "Exit..." << endl;
@@ -804,14 +802,11 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	}; /* if !FILE */
 
 	    constexpr size_t CAT_BUFSIZE = 512;
-//	    char buf[CP_BUFSIZE];
 	    std::vector<char> buf(CAT_BUFSIZE);
-//	    std::streamsize cnt;
 
 	while (!text.eof())
 	{
 	    text.read(buf.data(), CAT_BUFSIZE);
-//	    cnt = text.gcount();
 	    cout.write(buf.data(), /*cnt*/text.gcount());
 	}; /* while !text.eof() */
 
