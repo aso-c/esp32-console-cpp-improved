@@ -388,12 +388,10 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	{
 	    ++entry_cnt;
 	    artificial_cwd / (pattern + CWD::refine(entry.d_name));
-//	    out << aso::format("  %-42s\t%s") % entry.d_name % CWD::last::type() << endl;
 	    cout << aso::format("  %-42s\t%6s") % entry.d_name % CWD::last::type();
 	    if (CWD::last::is_file())
 		cout << setw(8) << CWD::last::size() << " bytes";
 	    cout << endl;
-	    // |  aa                        X0xxx000 bytes	-file-|
 	}; /* for auto &entry = dir.begin(); entry != dir.end(); dir++ */
 
 	if (errno != 0)
