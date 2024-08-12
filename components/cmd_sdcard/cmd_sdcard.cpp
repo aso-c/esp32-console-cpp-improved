@@ -832,7 +832,7 @@ esp_err_t SDctrl::act_mnt()
 
     if (res == ESP_OK)
     {
-	device.host().io_int_enable();
+	device.host().io.interrupt.enable();
 	sdmmc_card.io.enable_int();
 	device.card->info(); // @suppress("Field cannot be resolved") // @suppress("Method cannot be resolved")
     }

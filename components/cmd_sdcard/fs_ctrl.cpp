@@ -3,8 +3,8 @@
  * Implementation file
  * 	@file: fs_ctrl.cpp
  *	@author: Solomatov A.A. aso
- *	@date 14.07.2022 - 27.04.2024
- *	@version: 0.7
+ *	@date 14.07.2022 - 07.08.2024
+ *	@version: 0.9
  */
 
 //#define __PURE_C__
@@ -17,6 +17,7 @@
 #include <iomanip>
 #include <fstream>
 #include <cstdarg>
+#include <filesystem>
 
 #include <string>
 #include <cstring>
@@ -32,18 +33,8 @@
 #include <sys/types.h>
 //#include <unistd.h>
 #include <regex>
-//#ifdef __PURE_C__
-////#include <fcntl.h>
-//#include <dirent.h>
-//#else
-  //#if __cplusplus < 201703L
-#ifndef __PURE_C__
 #include <fcntl.h>
-#endif // ifndef __PURE_C__
 #include <dirent.h>
-  //#else
-  //#endif // __cplusplus < 201703L
-//#endif // ifdef __PURE_C__
 
 #include <esp_vfs_fat.h>
 #include "sdkconfig.h"
@@ -115,7 +106,8 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	if (ret == ESP_OK)
 	{
 #ifdef CONFIG_AUTO_CHDIR_BEHIND_MOUNTING
-	    artificial_cwd.change(device.mountpath());
+//	    artificial_cwd.change(device.mountpath());
+	    artificial_cwd/= device.mountpath();
 	    ESP_LOGI(TAG, "Current directory autochanged to: %s", artificial_cwd.get().c_str());
 #else
 //	    change_currdir("/");
@@ -185,6 +177,8 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 	cout << endl
 	    << "PWD is: \"" << artificial_cwd.get() << '"' << endl
 	    << endl;
+
+	//cout << "###!! C++ PWD is: [" << std::filesystem::current_path() << ']' << endl;
 	return (ret = ESP_OK);
 
     }; /* Exec::Cmd::pwd() */

@@ -3,16 +3,12 @@
  * Header Including file
  * 	@file: fs_ctrl.cpp
  *	@author: Solomatov A.A. aso
- *	@date 28.04.2022 - 27.04.2024
+ *	@date 28.04.2022 - 07.08.2024
  *	@version: 0.9
  */
 
 
 #pragma once
-
-//// is string 'str' is empty or NULL?
-//inline bool empty(const char* const str) {
-//    return str == NULL || str[0] == '\0'; }
 
 
 /*
@@ -43,27 +39,27 @@ namespace Exec	//---------------------------------------------------------------
     public:
 	Cmd() {};
 	/// Mount default SD-card slot onto path "mountpoint"
-	esp_err_t mount(SD::MMC::Device&, SD::MMC::Card&, /*const*/ std::string/*&*/ mounting_id = MOUNT_POINT_Default);
+	esp_err_t mount(SD::MMC::Device&, SD::MMC::Card&, std::string mounting_id = MOUNT_POINT_Default);
 	/// Mount SD-card slot "slot_no" onto desired mount path, default mount path is MOUNT_POINT_Default
-	esp_err_t mount(SD::MMC::Device&, SD::MMC::Card&, int slot_no, /*const*/ std::string/*&*/ mountpoint = MOUNT_POINT_Default);
+	esp_err_t mount(SD::MMC::Device&, SD::MMC::Card&, int slot_no, std::string mountpoint = MOUNT_POINT_Default);
 
-	esp_err_t unmount(SD::MMC::Device&/*, const char mountpath[] = NULL*/);	// Unmount SD-card from Device
+	esp_err_t unmount(SD::MMC::Device&);	// Unmount SD-card from Device
 //	esp_err_t unmount(sdmmc_card_t *card);	// Unmount SD-card "card", mounted onto default mountpath
-//	esp_err_t unmount(const char *base_path, sdmmc_card_t *card);	// Unmount mounted SD-card "card", mounted onto mountpath
+//	esp_err_t unmount(const std::string& base_path, sdmmc_card_t *card);	// Unmount mounted SD-card "card", mounted onto mountpath
 
 	esp_err_t pwd();	// print current directory name
-	esp_err_t mkdir(/*const*/ std::string/*&*/ dirname = "");   // create a new directory
+	esp_err_t mkdir(std::string dirname = "");   // create a new directory
 	esp_err_t cd(SD::MMC::Device&, std::string dirname = "");   // change a current directory
-	esp_err_t ls(/*const*/ std::string/*&*/ pattern = ".");	// print a list of files in the specified directory
+	esp_err_t ls(std::string pattern = ".");	// print a list of files in the specified directory
 	esp_err_t cp(std::string = "", std::string = "");	// copy files src to dest
-	esp_err_t mv(/*const*/ std::string/*&*/ = "", /*const*/ std::string/*&*/ = "");	// move files from src to dest
-	esp_err_t rm(/*const*/ std::string/*&*/ pattern = "");	// remove files according a pattern
-	esp_err_t rmdir(/*const*/ std::string/*&*/ dirname = "");   // remove an empty existing directory
+	esp_err_t mv(std::string = "", std::string = "");	// move files from src to dest
+	esp_err_t rm(std::string pattern = "");	// remove files according a pattern
+	esp_err_t rmdir(std::string dirname = "");   // remove an empty existing directory
 
-	esp_err_t cat(/*const*/ std::string/*&*/ fname = "");	// type file contents
+	esp_err_t cat(std::string fname = "");	// type file contents
 
 	esp_err_t type();	// type text from keyboard to screen
-	esp_err_t type(/*const*/ std::string/*&*/ fname, size_t = 512);	// type text from keyboard to file and to screen
+	esp_err_t type(std::string fname, size_t = 512);	// type text from keyboard to file and to screen
 
 
     private:
