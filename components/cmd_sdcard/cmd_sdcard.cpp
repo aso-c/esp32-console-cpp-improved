@@ -894,7 +894,7 @@ esp_err_t SDctrl::act_info()
     cout << "###############################################" << endl;
 
 	esp_err_t err;
-    err = device.card->cis_info(stdout);
+    err = device.card->print_cis(/*stdout*/);
     ESP_LOGE("sdcard info command", "Error %i in the get or print CIS data: %s", err, esp_err_to_name(err));
     return err;
 }; /* SDctrl::act_info */
