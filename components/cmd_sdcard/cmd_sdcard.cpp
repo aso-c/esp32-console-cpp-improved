@@ -145,7 +145,7 @@ bool isempty(const char *str)
 }; /* isempty */
 
 
-SD::MMC::Card sdmmc_card; // @suppress("Type cannot be resolved")
+SD::Card sdmmc_card; // @suppress("Type cannot be resolved")
 SD::MMC::Device device(SD::MMC::bus::width_4, SD::MMC::Host::pullup); // @suppress("Type cannot be resolved")
 Exec::Cmd exec_server;
 
@@ -833,7 +833,7 @@ esp_err_t SDctrl::act_mnt()
     if (res == ESP_OK)
     {
 	device.host().io.interrupt.enable();
-	sdmmc_card.io.enable_int();
+	sdmmc_card.io.interrupt.enable();
 	device.card->info(); // @suppress("Field cannot be resolved") // @suppress("Method cannot be resolved")
     }
 

@@ -94,7 +94,7 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 
 
     /// Mount default SD-card slot onto path "mountid", or onto slot no ""mountid, if it's a number, default mountpoint is MOUNT_POINT_Default
-    esp_err_t Cmd::mount(SD::MMC::Device& device, SD::MMC::Card& card, std::string mountid)
+    esp_err_t Cmd::mount(SD::MMC::Device& device, SD::Card& card, std::string mountid)
     {
 	ESP_LOGI(TAG, "Mounting SD-Cart to a mountpoint %s", mountid.c_str());
 
@@ -120,7 +120,7 @@ const char* const Cmd::MOUNT_POINT_Default = SD_MOUNT_POINT;
 
 
     /// Mount SD-card slot "slot_no" onto specified mount path, default mountpoint is MOUNT_POINT_Default
-    esp_err_t Cmd::mount(SD::MMC::Device& device, SD::MMC::Card& card, int slot_no, std::string mountpoint)
+    esp_err_t Cmd::mount(SD::MMC::Device& device, SD::Card& card, int slot_no, std::string mountpoint)
     {
 	device.slot_no(slot_no); // @suppress("Method cannot be resolved")
 	return device.mount(card, std::move(mountpoint)); // @suppress("Method cannot be resolved")
