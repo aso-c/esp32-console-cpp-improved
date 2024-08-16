@@ -10,9 +10,10 @@
 #include <cstdlib>
 #include <iostream>
 #include <iomanip>
+#include <string>
 #include <stdarg.h>
 
-#include <string.h>
+#include <cstring>
 //#include <sys/unistd.h>
 #include <esp_log.h>
 #include <esp_console.h>
@@ -36,7 +37,8 @@
 #include <functional>
 #include <tuple>
 
-#include "extrstream"
+#include <extrstream>
+#include <astring.h>
 
 
 
@@ -132,21 +134,8 @@ static void register_cmd(const esp_console_cmd_t* cmd)
 
 
 
-
-// Check if a string is empty
-bool isempty(const char *str)
-{
-    if (str == NULL || !str[0])
-	return true;
-    for (int i = 0; i < strlen(str); i++)
-	if (!isspace(str[i]))
-	    return false;
-    return true;
-}; /* isempty */
-
-
-SD::Card sdmmc_card; // @suppress("Type cannot be resolved")
-SD::MMC::Device device(SD::MMC::bus::width_4, SD::MMC::Host::pullup); // @suppress("Type cannot be resolved")
+SD::Card sdmmc_card;
+SD::MMC::Device device(SD::MMC::bus::width_4, SD::MMC::Host::pullup);
 Exec::Cmd exec_server;
 
 
@@ -162,7 +151,7 @@ Exec::Cmd exec_server;
 
 static int pwd_act(int argc, char **argv)
 {
-    return exec_server.pwd(/*device*/);
+    return exec_server.pwd();
 }; /* pwd_act */
 
 void register_pwd(void)
@@ -190,11 +179,11 @@ static int mkdir_act(int argc, char **argv)
     switch (argc)
     {
     case 1:
-	return exec_server.mkdir(/*device*/);
+	return exec_server.mkdir();
 	break;
 
     case 2:
-	return exec_server.mkdir(/*device,*/ argv[1]);
+	return exec_server.mkdir(argv[1]);
 	break;
 
     default:
@@ -208,7 +197,7 @@ static int mkdir_act(int argc, char **argv)
 void register_mkdir(void)
 {
     static void* mkdargs[] = {
-	    arg_str1(NULL, NULL, "<dir>", NULL/*"creating directory name"*/),
+	    arg_str1(NULL, NULL, "<dir>", NULL),
 	    arg_end(1)
     };
 
@@ -233,11 +222,11 @@ static int rmdir_act(int argc, char **argv)
     switch (argc)
     {
     case 1:
-	return exec_server.rmdir(/*device*/);
+	return exec_server.rmdir();
 	break;
 
     case 2:
-	return exec_server.rmdir(/*device,*/ argv[1]);
+	return exec_server.rmdir(argv[1]);
 	break;
 
     default:
@@ -251,7 +240,7 @@ static int rmdir_act(int argc, char **argv)
 void register_rmdir(void)
 {
     static void* rmdargs[] = {
-	    arg_str1(NULL, NULL, "<dir>", NULL/*"name of deleting directory"*/),
+	    arg_str1(NULL, NULL, "<dir>", NULL),
 	    arg_end(1)
     };
 
@@ -294,7 +283,7 @@ static int cd_act(int argc, char **argv)
 void register_cd(void)
 {
     static void* cdargs[] = {
-	    arg_str1(NULL, NULL, "<dir>", NULL/*"directory name to change"*/),
+	    arg_str1(NULL, NULL, "<dir>", NULL),
 	    arg_end(1)
     };
 
@@ -318,11 +307,11 @@ static int ls_act(int argc, char **argv)
     switch (argc)
     {
     case 1:
-	return exec_server.ls(/*device*/);
+	return exec_server.ls();
 	break;
 
     case 2:
-	return exec_server.ls(/*device,*/ argv[1]);
+	return exec_server.ls(argv[1]);
 	break;
 
     default:
@@ -336,7 +325,7 @@ static int ls_act(int argc, char **argv)
 void register_ls(void)
 {
     static void* lsargs[] = {
-	    arg_str0(NULL, NULL, "<pattern>", NULL/*"pattern of the file for listing"*/),
+	    arg_str0(NULL, NULL, "<pattern>", NULL),
 	    arg_end(1)
     };
 
@@ -360,15 +349,15 @@ static int cp_act(int argc, char **argv)
     switch (argc)
     {
     case 1:
-	return exec_server.cp(/*device*/);
+	return exec_server.cp();
 	break;
 
     case 2:
-	return exec_server.cp(/*device,*/ argv[1]);
+	return exec_server.cp(argv[1]);
 	break;
 
     case 3:
-	return exec_server.cp(/*device,*/ argv[1], argv[2]);
+	return exec_server.cp(argv[1], argv[2]);
 	break;
 
     default:
@@ -382,8 +371,8 @@ static int cp_act(int argc, char **argv)
 void register_cp(void)
 {
     static void* cpargs[] = {
-	    arg_str1(NULL, NULL, "<src>", NULL/*"source filename to copy"*/),
-	    arg_str1(NULL, NULL, "<dest>", NULL/*"where to copy file"*/),
+	    arg_str1(NULL, NULL, "<src>", NULL),
+	    arg_str1(NULL, NULL, "<dest>", NULL),
 	    arg_end(2)
     };
 
@@ -407,15 +396,15 @@ static int mv_act(int argc, char **argv)
     switch (argc)
     {
     case 1:
-	return exec_server.mv(/*device*/);
+	return exec_server.mv();
 	break;
 
     case 2:
-	return exec_server.mv(/*device,*/ argv[1]);
+	return exec_server.mv(argv[1]);
 	break;
 
     case 3:
-	return exec_server.mv(/*device,*/ argv[1], argv[2]);
+	return exec_server.mv(argv[1], argv[2]);
 	break;
 
     default:
@@ -430,8 +419,8 @@ static int mv_act(int argc, char **argv)
 void register_mv(void)
 {
     static void* cpargs[] = {
-	    arg_str1(NULL, NULL, "<src>", NULL/*"source filename to rename/move"*/),
-	    arg_str1(NULL, NULL, "<dest>", NULL/*"where to copy file"*/),
+	    arg_str1(NULL, NULL, "<src>", NULL),
+	    arg_str1(NULL, NULL, "<dest>", NULL),
 	    arg_end(2)
     };
 
@@ -456,12 +445,12 @@ static int rm_act(int argc, char **argv)
     switch (argc)
     {
     case 1:
-	return exec_server.rm(/*device*/);
+	return exec_server.rm();
 	break;
 
     case 2:
 	cout << "...with one parameter - OK, specified the filename to delete." << endl;
-	return exec_server.rm(/*device,*/ argv[1]);
+	return exec_server.rm(argv[1]);
 	break;
 
     default:
@@ -475,7 +464,7 @@ static int rm_act(int argc, char **argv)
 void register_rm(void)
 {
     static void* rmargs[] = {
-	    arg_str1(NULL, NULL, "<filename>", NULL/*"name of the file to delete"*/),
+	    arg_str1(NULL, NULL, "<filename>", NULL),
 	    arg_end(1)
     };
 
@@ -500,11 +489,11 @@ static int cat_act(int argc, char **argv)
     switch (argc)
     {
     case 1:
-	return exec_server.cat(/*device*/);
+	return exec_server.cat();
 	break;
 
     case 2:
-	return exec_server.cat(/*device,*/ argv[1]);
+	return exec_server.cat(argv[1]);
 	break;
 
     default:
@@ -518,7 +507,7 @@ static int cat_act(int argc, char **argv)
 void register_cat(void)
 {
     static void* catargs[] = {
-	    arg_str1(NULL, NULL, "<filename>", NULL/*"name of the files for type to output"*/),
+	    arg_str1(NULL, NULL, "<filename>", NULL),
 	    arg_end(1)
     };
 
@@ -548,7 +537,7 @@ static int type_act(int argc, char **argv)
 
     case 2:
 	cout << "...with one parameter - OK, save type output to file & output to screen." << endl;
-	return exec_server.type(/*device,*/ argv[1]);
+	return exec_server.type(argv[1]);
 	break;
 
     default:
@@ -563,7 +552,7 @@ static int type_act(int argc, char **argv)
 void register_type(void)
 {
     static void* typeargs[] = {
-	    arg_str0(NULL, NULL, "<filename>", NULL/*"filename for storage keyboard type output"*/),
+	    arg_str0(NULL, NULL, "<filename>", NULL),
 	    arg_end(1)
     };
 
@@ -680,18 +669,16 @@ static int sdcard_cmd(int argc, char **argv)
     cout << "argc is   : " << argc << endl;
     for (int i = 0; i < argc; i++)
 	cout << "argv[" << i << "] is: " << argv[i] << endl;
-    cout << "..............................................." /*<< endl*/
+    cout << "..............................................."
 	 << endl;
 
-//    SDctrl::cmd().store(argc, argv);
     return SDctrl::exec(argc, argv);
 
-}; /* sd_cmd */
-//}
+}; /* sdcard_cmd */
 
 
 
-//--[ class SDcmd ]-------------------------------------------------------------
+//--[ class SDctrl ]------------------------------------------------------------
 
 
 // Default constructor
@@ -869,13 +856,12 @@ esp_err_t SDctrl::act_umnt()
 // print info about the mounted SD-card
 esp_err_t SDctrl::act_info()
 {
-    if (!device.card) // @suppress("Field cannot be resolved")
+    if (!device.card)
     {
 	ESP_LOGW("sdcard info command", "SD-card now is not mounted!!!");
 	return ESP_ERR_NOT_FOUND;
-//    }; //* if device.card == nullptr */
     }; //* if !device.card */
-    device.card->info(); // @suppress("Field cannot be resolved") // @suppress("Method cannot be resolved")
+    device.card->info();
     cout << "Pullup is: " << ((device.host().slot().pullup_state())? "Enabled": "Absent") << endl;
     cout << "###############################################" << endl;
 
@@ -894,7 +880,7 @@ esp_err_t SDctrl::act_info()
     cout << "###############################################" << endl;
 
 	esp_err_t err;
-    err = device.card->print_cis(/*stdout*/);
+    err = device.card->print_cis();
     ESP_LOGE("sdcard info command", "Error %i in the get or print CIS data: %s", err, esp_err_to_name(err));
     return err;
 }; /* SDctrl::act_info */
@@ -903,7 +889,7 @@ esp_err_t SDctrl::act_info()
 // action for pwd command
 esp_err_t SDctrl::act_pwd()
 {
-    exec_server.pwd(/*device*/);
+    exec_server.pwd();
     return 0;
 }; /* SDctrl::act_pwd */
 
@@ -915,12 +901,12 @@ esp_err_t SDctrl::act_mkdir()
     switch (argc)
     {
     case 2:
-	return exec_server.mkdir(/*device*/);
+	return exec_server.mkdir();
 	break;
 
     case 3:
 	cout << "...with one parameter - specified the name of the new directory." << endl;
-	return exec_server.mkdir(/*device,*/ argv[2]);
+	return exec_server.mkdir(argv[2]);
 	break;
 
     default:
@@ -939,12 +925,12 @@ esp_err_t SDctrl::act_rmdir()
     switch (argc)
     {
     case 2:
-	return exec_server.rmdir(/*device*/);
+	return exec_server.rmdir();
 	break;
 
     case 3:
 	cout << "...with one parameter - specified the name directory to delete." << endl;
-	return exec_server.rmdir(/*device,*/ argv[2]);
+	return exec_server.rmdir(argv[2]);
 	break;
 
     default:
@@ -988,12 +974,12 @@ esp_err_t SDctrl::act_ls()
     {
     case 2:
 	cout << "...without parameters - use current dir." << endl;
-	return exec_server.ls(/*device*/);
+	return exec_server.ls();
 	break;
 
     case 3:
 	cout << "...with one parameter - use pattern or directory." << endl;
-	return exec_server.ls(/*device,*/ argv[2]);
+	return exec_server.ls(argv[2]);
 	break;
 
     default:
@@ -1013,17 +999,17 @@ esp_err_t SDctrl::act_cp()
     {
     case 2:
 	cout << "...without parameters - error." << endl;
-	return exec_server.cp(/*device*/);
+	return exec_server.cp();
 	break;
 
     case 3:
 	cout << "...with one parameter - error." << endl;
-	return exec_server.cp(/*device,*/ argv[2]);
+	return exec_server.cp(argv[2]);
 	break;
 
     case 4:
 	cout << "...with two parameter - copy files." << endl;
-	return exec_server.cp(/*device,*/ argv[2], argv[3]);
+	return exec_server.cp(argv[2], argv[3]);
 	break;
 
     default:
@@ -1043,17 +1029,17 @@ esp_err_t SDctrl::act_mv()
     {
     case 2:
 	cout << "...without parameters - error." << endl;
-	return exec_server.mv(/*device*/);
+	return exec_server.mv();
 	break;
 
     case 3:
 	cout << "...with one parameter - error." << endl;
-	return exec_server.mv(/*device,*/ argv[2]);
+	return exec_server.mv(argv[2]);
 	break;
 
     case 4:
 	cout << "...with two parameter - move/rename files." << endl;
-	return exec_server.mv(/*device,*/ argv[2], argv[3]);
+	return exec_server.mv(argv[2], argv[3]);
 	break;
 
     default:
@@ -1073,12 +1059,12 @@ esp_err_t SDctrl::act_rm()
     {
     case 2:
 	cout << "...without parameters - error." << endl;
-	return exec_server.rm(/*device*/);
+	return exec_server.rm();
 	break;
 
     case 3:
 	cout << "...with one parameter - remove file." << endl;
-	return exec_server.rm(/*device,*/ argv[2]);
+	return exec_server.rm(argv[2]);
 	break;
 
     default:
@@ -1097,11 +1083,11 @@ esp_err_t SDctrl::act_cat()
     switch (argc)
     {
     case 2:
-	return exec_server.cat(/*device*/);
+	return exec_server.cat();
 	break;
 
     case 3:
-	return exec_server.cat(/*device,*/ argv[2]);
+	return exec_server.cat(argv[2]);
 	break;
 
     default:
@@ -1125,7 +1111,7 @@ esp_err_t SDctrl::act_type()
 
     case 3:
 	cout << "...with one parameter - save type output to file & screen." << endl;
-	return exec_server.type(/*device,*/ argv[2], device.card->self->csd.sector_size); // @suppress("Invalid arguments") // @suppress("Field cannot be resolved")
+	return exec_server.type(argv[2], device.card->self->csd.sector_size);
 	break;
 
     default:
@@ -1321,25 +1307,28 @@ SDctrl::Syntax::id()
 {
     if (parent.argc < 2)
 	return none;
-    if (isempty(parent.argv[1]))
+
+	    std::string idstr = parent.argv[1];
+
+    if (astr::is_space(idstr))
 	return none;
-    if (strcmp(parent.argv[1], "help") == 0 || strcmp(parent.argv[1], "h") == 0)
+    if (idstr == "help" || idstr == "h")
     	return helping;
-    if (strcmp(parent.argv[1], "mount") == 0 || strcmp(parent.argv[1], "m") == 0)
+    if (idstr ==  "mount" || idstr == "m")
     	return mount;
-    if (strcmp(parent.argv[1], "umount") == 0 || strcmp(parent.argv[1], "u") == 0)
+    if (idstr == "umount" || idstr == "u")
 	return unmount;
-    if (strcmp(parent.argv[1], "info") == 0 || strcmp(parent.argv[1], "i") == 0)
+    if (idstr == "info" || idstr == "i")
 	return info;
-    if (strcmp(parent.argv[1], "pwd") == 0 || strcmp(parent.argv[1], "p") == 0)
+    if (idstr == "pwd" || idstr == "p")
 	return pwd;
-    if (strcmp(parent.argv[1], "cd") == 0)
+    if (idstr == "cd")
 	return cd;
-    if (strcmp(parent.argv[1], "ls") == 0 || strcmp(parent.argv[1], "dir") == 0)
+    if (idstr == "ls" || idstr == "dir")
 	return ls;
-    if (strcmp(parent.argv[1], "cat") == 0 || strcmp(parent.argv[1], "c") == 0)
+    if (idstr == "cat" || idstr == "c")
     	return cat;
-    if (strcmp(parent.argv[1], "type") == 0 || strcmp(parent.argv[1], "t") == 0)
+    if (idstr == "type" || idstr == "t")
     	return type;
 
     return unknown;
