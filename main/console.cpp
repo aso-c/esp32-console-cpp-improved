@@ -347,15 +347,15 @@ extern "C" void app_main(void)
 
     // Check astr::trim() procedures --------------------------------------------------------------------------
     cout << "======== Check astr::trim(std::string) procedure ======================" << endl;
-    std::string tststr = "    \t    Lmblda Detta     \n   \t     ";
+    std::string_view tststr = "    \t    Lmblda Detta     \n   \t     ";
     cout << "Original string: ========[" << tststr << "]========" << endl;
-    cout << "Trimmed string: ========[" << astr::trimmed(tststr) << "]========" << endl;
+    cout << "Trimmed string: ========[" << astr::trimmed(std::string_view(tststr)) << "]========" << endl;
     cout << "Non-trimable string: ===[ \""<< "RTQ ftpa DDT" << "\" ]===" << endl;
-    cout << "Trimmed non-trimable string: ===[ \""<< astr::trimmed("RTQ ftpa DDT") << "\" ]===" << endl;
+    cout << "Trimmed non-trimable string: ===[ \""<< astr::trimmed(std::string_view("RTQ ftpa DDT")) << "\" ]===" << endl;
     cout << "Space string: ===[ \""<< "   \t   \n     " << " \"]===" << endl;
-    cout << "Trimmed space string: ===[ \"" << astr::trimmed("   \t   \n     ") << "\" ]===" << endl;
+    cout << "Trimmed space string: ===[ \"" << astr::trimmed(std::string_view("   \t   \n     ")) << "\" ]===" << endl;
     cout << "Empty string: ===[ \""<< "" << "\" ]===" << endl;
-    cout << "Trimmed empty string: ===[ \""<< astr::trimmed("") << "\" ]===" << endl;
+    cout << "Trimmed empty string: ===[ \""<< astr::trimmed(std::string_view("")) << "\" ]===" << endl;
     cout << "=======================================================================" << endl;
     // End of check astr::trim() procedures -------------------------------------------------------------------
 

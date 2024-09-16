@@ -137,7 +137,7 @@ static void register_cmd(const esp_console_cmd_t* cmd)
 
 
 SD::Card sdmmc_card;
-SD::MMC::Device device(SD::MMC::bus::width_4, SD::MMC::Host::pullup);
+SD::MMC::Device device(SD::MMC::bus::width::_4, SD::MMC::Host::pullup::yes);
 Exec::Cmd exec_server;
 
 
