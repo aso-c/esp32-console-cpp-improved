@@ -72,6 +72,15 @@ using namespace std;
 namespace act
 {
 
+    /// action for 'rename/move' command
+    esp_err_t mv(std::vector<char*> args);
+
+    /// action for 'rm' command
+    esp_err_t rm(std::vector<char*> args);
+
+    /// action for 'cat' command
+    esp_err_t cat(std::vector<char*> args);
+
     /// action for 'type' command
     esp_err_t type(std::vector<char*> args);
 
@@ -402,31 +411,9 @@ void register_cp(void)
 }; /* register_cp */
 
 
-// 'mv' command -----------------------------------------------------------------------------------
-static int mv_act(int argc, char **argv)
-{
-    cout << "\"mv\" command execution" << endl;
-    switch (argc)
-    {
-    case 1:
-	return exec_server.mv();
-	break;
-
-    case 2:
-	return exec_server.mv(argv[1]);
-	break;
-
-    case 3:
-	return exec_server.mv(argv[1], argv[2]);
-	break;
-
-    default:
-	ESP_LOGE("mv command", "too many parameters (%d) for move/renaming file, don't know to do.", argc);
-    }; /* switch argc */
-
-    cout << endl;
-
-    return ESP_ERR_INVALID_ARG;
+// 'mv' command, pure C wrapper -----------------------------------------------------------------------------
+static int mv_act(int argc, char **argv) {
+    return act::mv(astr::makestor<std::vector<char*>>(argc, argv));
 }; /* mv_act */
 
 void register_mv(void)
@@ -450,28 +437,10 @@ void register_mv(void)
 }; /* register_mv */
 
 
-// 'rm' command -----------------------------------------------------------------------------------
+// 'rm' command, pure C wrapper -----------------------------------------------------------------------------
 
-static int rm_act(int argc, char **argv)
-{
-    cout << "\"rm\" command execution" << endl;
-    switch (argc)
-    {
-    case 1:
-	return exec_server.rm();
-	break;
-
-    case 2:
-	cout << "...with one parameter - OK, specified the filename to delete." << endl;
-	return exec_server.rm(argv[1]);
-	break;
-
-    default:
-	ESP_LOGE("rm command", "too many parameters (%d), unable select file to remove.", argc);
-    }; /* switch argc */
-    cout << endl;
-
-    return ESP_ERR_INVALID_ARG;
+static int rm_act(int argc, char **argv) {
+    return act::rm(astr::makestor<std::vector<char*>>(argc, argv));
 }; /* rm_act */
 
 void register_rm(void)
@@ -494,27 +463,9 @@ void register_rm(void)
 }; /* register_rm */
 
 
-// 'cat' command -----------------------------------------------------------------------------------
-
-static int cat_act(int argc, char **argv)
-{
-    cout << "\"cat\" command execution" << endl;
-    switch (argc)
-    {
-    case 1:
-	return exec_server.cat();
-	break;
-
-    case 2:
-	return exec_server.cat(argv[1]);
-	break;
-
-    default:
-	ESP_LOGE("cat command", "too many parameters (%d), unable select file to print.", argc);
-    }; /* switch argc */
-    cout << endl;
-
-    return ESP_ERR_INVALID_ARG;
+// 'cat' command, pure C wrapper ----------------------------------------------------------------------------
+static int cat_act(int argc, char **argv) {
+    return act::cat(astr::makestor<std::vector<char*>>(argc, argv));
 }; /* cat_act */
 
 void register_cat(void)
@@ -538,31 +489,8 @@ void register_cat(void)
 
 
 //! 'type' command, pure C wrapper --------------------------------------------------------------------------
-static int type_act(int argc, char **argv)
-{
-#if 0	// original source
-    cout << "\"type\" command execution" << endl;
-    switch (argc)
-    {
-    case 1:
-	return exec_server.type();
-	break;
-
-    case 2:
-	cout << "...with one parameter - OK, save type output to file & output to screen." << endl;
-	return exec_server.type(argv[1]);
-	break;
-
-    default:
-//	cout << "more than one parameter - unknown set of parameters." << endl;
-	ESP_LOGE("type command", "too many parameters (%d), in which file the output to be saved?", argc);
-    }; /* switch argc */
-    cout << endl;
-
-    return ESP_ERR_INVALID_ARG;
-#endif	// original source
+static int type_act(int argc, char **argv) {
     return act::type(astr::makestor<std::vector<char*>>(argc, argv));
-
 }; /* type_act */
 
 void register_type(void)
@@ -1037,161 +965,161 @@ esp_err_t SDctrl::act_cp()
 }; /* SDctrl::act_cp */
 
 
-// action for 'rename/move' command
+/// action for 'rename/move' command
 esp_err_t SDctrl::act_mv()
 {
-    cout << "\"mv\" command execution" << endl;
-    switch (argc)
-    {
-    case 2:
-	cout << "...without parameters - error." << endl;
-	return exec_server.mv();
-	break;
+    if (!(argc > 4))
+	// offset for one item - drop the first "sd" command
+	return act::mv(astr::makestor<std::vector<char*>>(argc - 1, argv + 1));
 
-    case 3:
-	cout << "...with one parameter - error." << endl;
-	return exec_server.mv(argv[2]);
-	break;
-
-    case 4:
-	cout << "...with two parameter - move/rename files." << endl;
-	return exec_server.mv(argv[2], argv[3]);
-	break;
-
-    default:
-	ESP_LOGE("sdcard mv command", "more than two parameters (%d) - don't know what to rename/move", argc - 2);
-    }; /* switch argc */
-    cout << endl;
+    //    default: if !(argc > 4), e.g. sd type abc defg... - error parameters counting
+    ESP_LOGE("sdcard mv command", "more than two parameters (%d) - don't know what to rename/move", argc - 2);
 
     return ESP_ERR_INVALID_ARG;
 }; /* SDctrl::act_mv */
 
 
-// action for list/dir command
+// action for rm command
 esp_err_t SDctrl::act_rm()
 {
-    cout << "\"rm\" command execution" << endl;
-    switch (argc)
-    {
-    case 2:
-	cout << "...without parameters - error." << endl;
-	return exec_server.rm();
-	break;
+    if (!(argc > 3))
+	// offset for one item - drop the first "sd" command
+	return act::rm(astr::makestor<std::vector<char*>>(argc - 1, argv + 1));
 
-    case 3:
-	cout << "...with one parameter - remove file." << endl;
-	return exec_server.rm(argv[2]);
-	break;
-
-    default:
-	ESP_LOGE("sdcard rm command", "more than one parameters (%d) - don't know what to remove", argc - 2);
-    }; /* switch argc */
-    cout << endl;
+    //    default: if !(argc > 3), e.g. sd type abc defg... - error parameters counting
+    ESP_LOGE("sdcard rm command", "more than one parameters (%d) - don't know what to remove", argc - 2);
 
     return ESP_ERR_INVALID_ARG;
-}; /* SDctrl::act_ls */
+}; /* SDctrl::act_rm */
 
 
 // action for 'cat' command
 esp_err_t SDctrl::act_cat()
 {
-    cout << "\"cat\" command execution" << endl;
-    switch (argc)
-    {
-    case 2:
-	return exec_server.cat();
-	break;
+    if (!(argc > 3))
+	// offset for one item - drop the first "sd" command
+	return act::cat(astr::makestor<std::vector<char*>>(argc - 1, argv + 1));
 
-    case 3:
-	return exec_server.cat(argv[2]);
-	break;
-
-    default:
-	ESP_LOGE("sdcard cat command", "more than one parameters (%d) - what file is to be printed?", argc - 2);
-    }; /* switch argc */
-    cout << endl;
-
-    return 0;
+    //    default: if !(argc > 3), e.g. sd type abc defg... - error parameters counting
+    ESP_LOGE("sdcard cat command", "more than one parameters (%d) - what file is to be printed?", argc - 2);
+    return ESP_ERR_INVALID_ARG;
 }; /* SDctrl::act_cat */
 
 
 // action for 'type' command
 esp_err_t SDctrl::act_type()
 {
-//    cout << "\"type\" command execution" << endl;
-//    switch (argc)
-//    {
-//    case 2:
-//	return exec_server.type();
-//	break;
-//
-//    case 3:
-//	cout << "...with one parameter - save type output to file & screen." << endl;
-//	return exec_server.type(argv[2], device.card->self->csd.sector_size);
-//	break;
-//
-//    default:
-//	ESP_LOGE("sdcard type command", "more than one parameters (%d) - what file save the type output?", argc - 2);
-//    }; /* switch argc */
-//    cout << endl;
+    if (!(argc > 3))
+	    // offset for one item - drop the first "sd" command
+	    return act::type(astr::makestor<std::vector<char*>>(argc - 1, argv + 1));
 
-    // offset for one item - drop the first "sd" command
-    return act::type(astr::makestor<std::vector<char*>>(argc - 1, argv + 1));
+    //    default: if !(argc > 3), e.g. sd type abc defg... - error parameters counting
+    ESP_LOGE("sdcard type command", "more than one parameters (%d) - what file save the type output?", argc - 2);
+    return ESP_ERR_INVALID_ARG;
 }; /* SDctrl::act_type */
 
 
 
 namespace act
 {
+}; /* namespace act */
 
-    /// action for 'type' command
-    esp_err_t type(std::vector<char*> args)
+
+/// action for 'rename/move' command
+esp_err_t act::mv(std::vector<char*> args)
+{
+    cout << "\"mv\" command execution" << endl;
+    switch (args.size())
     {
-#if 0	// variant for the " sd type" command
-//	    std::vector<int> svi(10);
-//	    std::vector<int>::value_type svival = 10;
+    case 1:
+	return exec_server.mv();
+	break;
 
-        cout << "\"type\" command execution" << endl;
-        switch (args.size())
-        {
-        case 2:
-    	return exec_server.type();
+    case 2:
+	return exec_server.mv(args[1]);
+	break;
+
+    case 3:
+	return exec_server.mv(args[1], args[2]);
+	break;
+
+    default:
+	ESP_LOGE("mv command", "too many parameters (%d) for move/renaming file, don't know to do.", args.size());
+    }; /* switch argc */
+
+    cout << endl;
+    return ESP_ERR_INVALID_ARG;
+}; /* act::mv() */
+
+
+/// action for 'rm' command
+esp_err_t act::rm(std::vector<char*> args)
+{
+    cout << "\"rm\" command execution" << endl;
+    switch (args.size())
+    {
+    case 1:
+	return exec_server.rm();
+	break;
+
+    case 2:
+	cout << "...with one parameter - OK, specified the filename to delete." << endl;
+	return exec_server.rm(args[1]);
+	break;
+
+    default:
+	ESP_LOGE("rm command", "too many parameters (%d), unable select file to remove.", args.size());
+    }; /* switch args.size() */
+    cout << endl;
+
+    return ESP_ERR_INVALID_ARG;
+}; /* act::rm() */
+
+
+/// action for 'cat' command
+esp_err_t act::cat(std::vector<char*> args)
+{
+    cout << "\"cat\" command execution" << endl;
+    switch (args.size())
+    {
+    case 1:
+	return exec_server.cat();
+	break;
+
+    case 2:
+	return exec_server.cat(args[1]);
+	break;
+
+    default:
+	ESP_LOGE("cat command", "too many parameters (%d), unable select file to print.", args.size());
+    }; /* switch argc */
+    cout << endl;
+    return ESP_ERR_INVALID_ARG;
+}; /* act::cat() */
+
+
+/// action for 'type' command
+esp_err_t act::type(std::vector<char*> args)
+{
+    cout << "\"type\" command execution" << endl;
+    switch (args.size())
+    {
+    case 1:
+	return exec_server.type();
     	break;
 
-        case 3:
-    	cout << "...with one parameter - save type output to file & screen." << endl;
-    	return exec_server.type(args[2], device.card->self->csd.sector_size);
-    	break;
-
-        default:
-    	ESP_LOGE("sdcard type command", "more than one parameters (%d) - what file save the type output?", args.size() - 2);
-        }; /* switch argc */
-        cout << endl;
-#endif	// variant for the " sd type" command
-
-        cout << "\"type\" command execution" << endl;
-        switch (args.size())
-        {
-        case 1:
-    	return exec_server.type();
-    	break;
-
-        case 2:
-    	cout << "...with one parameter - OK, save type output to file & output to screen." << endl;
+    case 2:
+	cout << "...with one parameter - OK, save type output to file & output to screen." << endl;
     	return exec_server.type(args[1]);
     	break;
 
-        default:
+    default:
     //	cout << "more than one parameter - unknown set of parameters." << endl;
-    	ESP_LOGE("type command", "too many parameters (%d), in which file the output to be saved?", args.size());
-        }; /* switch argc */
-        cout << endl;
-
-        return ESP_ERR_INVALID_ARG;
-
-    }; /* act::type() */
-
-}; /* namespace act */
+	ESP_LOGE("type command", "too many parameters (%d), in which file the output to be saved?", args.size());
+    }; /* switch args.size() */
+    cout << endl;
+    return ESP_ERR_INVALID_ARG;
+}; /* act::type() */
 
 
 
