@@ -4,7 +4,8 @@
  * 	@file	cmd_sdcard.cpp
  *	@author	Solomatov A.A. (aso)
  *	@date	Created 04.04.2022
- *	@version: 0.5
+ *		Modified 19.09.2024
+ *	@version: 0.7
  */
 
 #include <cstdlib>
@@ -71,6 +72,21 @@ using namespace std;
 /// namespace for cmd-actions
 namespace act
 {
+
+    /// action for 'mkdir' command
+    esp_err_t mkdir(std::vector<char*> args);
+
+    /// action for 'rmdir' command
+    esp_err_t rmdir(std::vector<char*> args);
+
+    /// action for 'cd' command
+    esp_err_t cd(std::vector<char*> args);
+
+    /// action for list/dir command
+    esp_err_t ls(std::vector<char*> args);
+
+    /// action for 'copy' command
+    esp_err_t cp(std::vector<char*> args);
 
     /// action for 'rename/move' command
     esp_err_t mv(std::vector<char*> args);
@@ -193,28 +209,11 @@ void register_pwd(void)
 }; /* register_pwd */
 
 
-// mkdir command ----------------------------------------------------------------------------------
+/// mkdir command, pure C wrapper ---------------------------------------------------------------------------
 
-static int mkdir_act(int argc, char **argv)
-{
-    cout << "\"mkdir\" command execution" << endl;
-    switch (argc)
-    {
-    case 1:
-	return exec_server.mkdir();
-	break;
-
-    case 2:
-	return exec_server.mkdir(argv[1]);
-	break;
-
-    default:
-	ESP_LOGE("mkdir command", "too many parameters (%d), don't know what directory to create", argc);
-    }; /* switch argc */
-    cout << endl;
-
-    return ESP_ERR_INVALID_ARG;
-}; /* mkdir_act */
+static int mkdir_act(int argc, char **argv) {
+    return act::mkdir(astr::makestor<std::vector<char*>>(argc, argv));
+}; /* mkdir_act() */
 
 void register_mkdir(void)
 {
@@ -236,27 +235,10 @@ void register_mkdir(void)
 }; /* register_mkdir */
 
 
-// rmdir command ----------------------------------------------------------------------------------
+/// rmdir command, pure C wrapper ---------------------------------------------------------------------------
 
-static int rmdir_act(int argc, char **argv)
-{
-    cout << "\"rmdir\" command execution" << endl;
-    switch (argc)
-    {
-    case 1:
-	return exec_server.rmdir();
-	break;
-
-    case 2:
-	return exec_server.rmdir(argv[1]);
-	break;
-
-    default:
-	ESP_LOGE("rmdir command", "too many parameters (%d), deleting multiple directories at once is not allowed", argc);
-    }; /* switch argc */
-    cout << endl;
-
-    return ESP_ERR_INVALID_ARG;
+static int rmdir_act(int argc, char **argv) {
+    return act::rmdir(astr::makestor<std::vector<char*>>(argc, argv));
 }; /* rmdir_act */
 
 void register_rmdir(void)
@@ -276,30 +258,13 @@ void register_rmdir(void)
 
     register_cmd(&cmd);
 
-}; /* register_mkdir */
+}; /* register_rmdir */
 
 
-// 'cd' command -----------------------------------------------------------------------------------
+/// 'cd' command, pure C wrapper ----------------------------------------------------------------------------
 
-static int cd_act(int argc, char **argv)
-{
-    cout << "\"cd\" command execution" << endl;
-    switch (argc)
-    {
-    case 1:
-	return exec_server.cd(device);
-	break;
-
-    case 2:
-	return exec_server.cd(device, argv[1]);
-	break;
-
-    default:
-	ESP_LOGE("cd command", "too many parameters (%d), where to go?", argc);
-    }; /* switch argc */
-    cout << endl;
-
-    return ESP_ERR_INVALID_ARG;
+static int cd_act(int argc, char **argv) {
+    return act::cd(astr::makestor<std::vector<char*>>(argc, argv));
 }; /* cd_act */
 
 void register_cd(void)
@@ -322,27 +287,10 @@ void register_cd(void)
 }; /* register_cd */
 
 
-// 'ls' command -----------------------------------------------------------------------------------
-static int ls_act(int argc, char **argv)
-{
-    cout << "\"ls\" command execution" << endl;
-    switch (argc)
-    {
-    case 1:
-	return exec_server.ls();
-	break;
-
-    case 2:
-	return exec_server.ls(argv[1]);
-	break;
-
-    default:
-	ESP_LOGE("ls command", "too many parameters (%d), which directory is to be printed?", argc);
-
-    }; /* switch argc */
-    cout << endl;
-    return ESP_ERR_INVALID_ARG;
-}; /* ls_act */
+/// 'ls' command, pure C wrapper ----------------------------------------------------------------------------
+static int ls_act(int argc, char **argv) {
+    return act::ls(astr::makestor<std::vector<char*>>(argc, argv));
+}; /* ls_act() */
 
 void register_ls(void)
 {
@@ -364,30 +312,9 @@ void register_ls(void)
 }; /* register_ls */
 
 
-// 'cp' command -----------------------------------------------------------------------------------
-static int cp_act(int argc, char **argv)
-{
-    cout << "\"cp\" command execution" << endl;
-    switch (argc)
-    {
-    case 1:
-	return exec_server.cp();
-	break;
-
-    case 2:
-	return exec_server.cp(argv[1]);
-	break;
-
-    case 3:
-	return exec_server.cp(argv[1], argv[2]);
-	break;
-
-    default:
-	ESP_LOGE("cp command", "too many parameters (%d) for copy file(s), don't know to do.", argc);
-    }; /* switch argc */
-
-    cout << endl;
-    return ESP_ERR_INVALID_ARG;
+/// 'cp' command, pure C wrapper ----------------------------------------------------------------------------
+static int cp_act(int argc, char **argv) {
+    return act::cp(astr::makestor<std::vector<char*>>(argc, argv));
 }; /* cp_act */
 
 void register_cp(void)
@@ -411,7 +338,7 @@ void register_cp(void)
 }; /* register_cp */
 
 
-// 'mv' command, pure C wrapper -----------------------------------------------------------------------------
+/// 'mv' command, pure C wrapper ----------------------------------------------------------------------------
 static int mv_act(int argc, char **argv) {
     return act::mv(astr::makestor<std::vector<char*>>(argc, argv));
 }; /* mv_act */
@@ -437,7 +364,7 @@ void register_mv(void)
 }; /* register_mv */
 
 
-// 'rm' command, pure C wrapper -----------------------------------------------------------------------------
+/// 'rm' command, pure C wrapper ----------------------------------------------------------------------------
 
 static int rm_act(int argc, char **argv) {
     return act::rm(astr::makestor<std::vector<char*>>(argc, argv));
@@ -463,7 +390,7 @@ void register_rm(void)
 }; /* register_rm */
 
 
-// 'cat' command, pure C wrapper ----------------------------------------------------------------------------
+/// 'cat' command, pure C wrapper ---------------------------------------------------------------------------
 static int cat_act(int argc, char **argv) {
     return act::cat(astr::makestor<std::vector<char*>>(argc, argv));
 }; /* cat_act */
@@ -838,127 +765,71 @@ esp_err_t SDctrl::act_pwd()
 }; /* SDctrl::act_pwd */
 
 
-// action for 'mkdir' command
+/// action for 'mkdir' command
 esp_err_t SDctrl::act_mkdir()
 {
-    cout << "\"mkdir\" command execution" << endl;
-    switch (argc)
-    {
-    case 2:
-	return exec_server.mkdir();
-	break;
+    if (!(argc > 3))
+	// offset for one item - drop the first "sd" command
+	return act::mkdir(astr::makestor<std::vector<char*>>(argc - 1, argv + 1));
 
-    case 3:
-	cout << "...with one parameter - specified the name of the new directory." << endl;
-	return exec_server.mkdir(argv[2]);
-	break;
-
-    default:
-	ESP_LOGE("sdcard mkdir command", "more than one parameters (%d) - don't know what directory to create.", argc - 2);
-    }; /* switch argc */
-    cout << endl;
+    //    default: if !(argc > 3), e.g. sd type abc defg... - error parameters counting
+    ESP_LOGE("sdcard mkdir command", "more than one parameters (%d) - don't know what directory to create.\n", argc - 2);
 
     return ESP_ERR_INVALID_ARG;
 }; /* SDctrl::act_mkdir */
 
 
-// action for 'rmdir' command
+/// action for 'rmdir' command
 esp_err_t SDctrl::act_rmdir()
 {
-    cout << "\"rmdir\" command execution" << endl;
-    switch (argc)
-    {
-    case 2:
-	return exec_server.rmdir();
-	break;
+    if (!(argc > 3))
+	// offset for one item - drop the first "sd" command
+	return act::rmdir(astr::makestor<std::vector<char*>>(argc - 1, argv + 1));
 
-    case 3:
-	cout << "...with one parameter - specified the name directory to delete." << endl;
-	return exec_server.rmdir(argv[2]);
-	break;
-
-    default:
-	ESP_LOGE("sdcard rmdir command", "more than one parameters (%d) - deleting multiple directories at once is not allowed", argc - 2);
-    }; /* switch argc */
-    cout << endl;
+    //    default: if !(argc > 3), e.g. sd type abc defg... - error parameters counting
+    ESP_LOGE("sdcard rmdir command", "more than one parameters (%d) - deleting multiple directories at once is not allowed\n", argc - 2);
 
     return ESP_ERR_INVALID_ARG;
 }; /* SDctrl::act_mkdir */
 
 
-// action for 'cd' command
+/// action for 'cd' command
 esp_err_t SDctrl::act_cd()
 {
-    cout << "\"cd\" command execution" << endl;
-    switch (argc)
-    {
-    case 2:
-	return exec_server.cd(device);
-	break;
+    if (!(argc > 3))
+	// offset for one item - drop the first "sd" command
+	return act::cd(astr::makestor<std::vector<char*>>(argc - 1, argv + 1));
 
-    case 3:
-	cout << "...with one parameter - specified the path name to change." << endl;
-	return exec_server.cd(device, argv[2]);
-	break;
-
-    default:
-	ESP_LOGE("sdcard cd command", "more than one parameters (%d) - where to go?", argc - 2);
-    }; /* switch argc */
-    cout << endl;
+    //    default: if !(argc > 3), e.g. sd type abc defg... - error parameters counting
+    ESP_LOGE("sdcard cd command", "more than one parameters (%d) - where to go?\n", argc - 2);
 
     return ESP_ERR_INVALID_ARG;
 }; /* SDctrl::act_cd */
 
 
-// action for list/dir command
+/// action for list/dir command
 esp_err_t SDctrl::act_ls()
 {
-    cout << "\"ls\" command execution" << endl;
-    switch (argc)
-    {
-    case 2:
-	cout << "...without parameters - use current dir." << endl;
-	return exec_server.ls();
-	break;
+    if (!(argc > 3))
+	// offset for one item - drop the first "sd" command
+	return act::ls(astr::makestor<std::vector<char*>>(argc - 1, argv + 1));
 
-    case 3:
-	cout << "...with one parameter - use pattern or directory." << endl;
-	return exec_server.ls(argv[2]);
-	break;
-
-    default:
-	ESP_LOGE("sdcard ls command", "more than one parameters (%d) - what directory to listing?", argc - 2);
-    }; /* switch argc */
-    cout << endl;
+    //    default: if !(argc > 3), e.g. sd type abc defg... - error parameters counting
+    ESP_LOGE("sdcard ls command", "more than one parameters (%d) - what directory to listing?\n", argc - 2);
 
     return ESP_ERR_INVALID_ARG;
-}; /* SDctrl::act_ls */
+}; /* SDctrl::act_ls() */
 
 
-// action for 'copy' command
+/// action for 'copy' command
 esp_err_t SDctrl::act_cp()
 {
-    cout << "\"cp\" command execution" << endl;
-    switch (argc)
-    {
-    case 2:
-	cout << "...without parameters - error." << endl;
-	return exec_server.cp();
-	break;
+    if (!(argc > 4))
+	// offset for one item - drop the first "sd" command
+	return act::cp(astr::makestor<std::vector<char*>>(argc - 1, argv + 1));
 
-    case 3:
-	cout << "...with one parameter - error." << endl;
-	return exec_server.cp(argv[2]);
-	break;
-
-    case 4:
-	cout << "...with two parameter - copy files." << endl;
-	return exec_server.cp(argv[2], argv[3]);
-	break;
-
-    default:
-	ESP_LOGE("sdcard ls command", "more than two parameters (%d) - don't know what to copy", argc - 2);
-    }; /* switch argc */
+    //    default: if !(argc > 4), e.g. sd type abc defg... - error parameters counting
+    ESP_LOGE("sdcard ls command", "more than two parameters (%d) - don't know what to copy\n", argc - 2);
     cout << endl;
 
     return ESP_ERR_INVALID_ARG;
@@ -973,7 +844,7 @@ esp_err_t SDctrl::act_mv()
 	return act::mv(astr::makestor<std::vector<char*>>(argc - 1, argv + 1));
 
     //    default: if !(argc > 4), e.g. sd type abc defg... - error parameters counting
-    ESP_LOGE("sdcard mv command", "more than two parameters (%d) - don't know what to rename/move", argc - 2);
+    ESP_LOGE("sdcard mv command", "more than two parameters (%d) - don't know what to rename/move\n", argc - 2);
 
     return ESP_ERR_INVALID_ARG;
 }; /* SDctrl::act_mv */
@@ -987,7 +858,7 @@ esp_err_t SDctrl::act_rm()
 	return act::rm(astr::makestor<std::vector<char*>>(argc - 1, argv + 1));
 
     //    default: if !(argc > 3), e.g. sd type abc defg... - error parameters counting
-    ESP_LOGE("sdcard rm command", "more than one parameters (%d) - don't know what to remove", argc - 2);
+    ESP_LOGE("sdcard rm command", "more than one parameters (%d) - don't know what to remove\n", argc - 2);
 
     return ESP_ERR_INVALID_ARG;
 }; /* SDctrl::act_rm */
@@ -1001,7 +872,7 @@ esp_err_t SDctrl::act_cat()
 	return act::cat(astr::makestor<std::vector<char*>>(argc - 1, argv + 1));
 
     //    default: if !(argc > 3), e.g. sd type abc defg... - error parameters counting
-    ESP_LOGE("sdcard cat command", "more than one parameters (%d) - what file is to be printed?", argc - 2);
+    ESP_LOGE("sdcard cat command", "more than one parameters (%d) - what file is to be printed?\n", argc - 2);
     return ESP_ERR_INVALID_ARG;
 }; /* SDctrl::act_cat */
 
@@ -1014,7 +885,7 @@ esp_err_t SDctrl::act_type()
 	    return act::type(astr::makestor<std::vector<char*>>(argc - 1, argv + 1));
 
     //    default: if !(argc > 3), e.g. sd type abc defg... - error parameters counting
-    ESP_LOGE("sdcard type command", "more than one parameters (%d) - what file save the type output?", argc - 2);
+    ESP_LOGE("sdcard type command", "more than one parameters (%d) - what file save the type output?\n", argc - 2);
     return ESP_ERR_INVALID_ARG;
 }; /* SDctrl::act_type */
 
@@ -1022,7 +893,128 @@ esp_err_t SDctrl::act_type()
 
 namespace act
 {
+
 }; /* namespace act */
+
+
+
+/// action for 'mkdir' command
+esp_err_t act::mkdir(std::vector<char*> args)
+{
+    cout << "\"mkdir\" command execution" << endl;
+    switch (args.size())
+    {
+    case 1:
+	return exec_server.mkdir();
+	break;
+
+    case 2:
+	return exec_server.mkdir(args[1]);
+	break;
+
+    default:
+	ESP_LOGE("mkdir command", "too many parameters (%d), don't know what directory to create", args.size());
+    }; /* switch argc */
+    cout << endl;
+
+    return ESP_ERR_INVALID_ARG;
+}; /* act::mkdir() */
+
+
+/// action for 'rmdir' command
+esp_err_t act::rmdir(std::vector<char*> args)
+{
+    cout << "\"rmdir\" command execution" << endl;
+    switch (args.size())
+    {
+    case 1:
+	return exec_server.rmdir();
+	break;
+
+    case 2:
+	return exec_server.rmdir(args[1]);
+	break;
+
+    default:
+	ESP_LOGE("rmdir command", "too many parameters (%d), deleting multiple directories at once is not allowed", args.size());
+    }; /* switch argc */
+    cout << endl;
+
+    return ESP_ERR_INVALID_ARG;
+}; /* act::rmdir() */
+
+
+/// action for 'cd' command
+esp_err_t act::cd(std::vector<char*> args)
+{
+    cout << "\"cd\" command execution" << endl;
+    switch (args.size())
+    {
+    case 1:
+	return exec_server.cd(device);
+	break;
+
+    case 2:
+	return exec_server.cd(device, args[1]);
+	break;
+
+    default:
+	ESP_LOGE("cd command", "too many parameters (%d), where to go?", args.size());
+    }; /* switch argc */
+    cout << endl;
+
+    return ESP_ERR_INVALID_ARG;
+}; /* act::cd() */
+
+
+/// action for list/dir command
+esp_err_t act::ls(std::vector<char*> args)
+{
+    cout << "\"ls\" command execution" << endl;
+    switch (args.size())
+    {
+    case 1:
+	return exec_server.ls();
+	break;
+
+    case 2:
+	return exec_server.ls(args[1]);
+	break;
+
+    default:
+	ESP_LOGE("ls command", "too many parameters (%d), which directory is to be printed?", args.size());
+
+    }; /* switch argc */
+    cout << endl;
+    return ESP_ERR_INVALID_ARG;
+}; /* act::ls() */
+
+
+// action for 'copy' command
+esp_err_t act::cp(std::vector<char*> args)
+{
+    cout << "\"cp\" command execution" << endl;
+    switch (args.size())
+    {
+    case 1:
+	return exec_server.cp();
+	break;
+
+    case 2:
+	return exec_server.cp(args[1]);
+	break;
+
+    case 3:
+	return exec_server.cp(args[1], args[2]);
+	break;
+
+    default:
+	ESP_LOGE("cp command", "too many parameters (%d) for copy file(s), don't know to do.", args.size());
+    }; /* switch argc */
+
+    cout << endl;
+    return ESP_ERR_INVALID_ARG;
+}; /* act::cp() */
 
 
 /// action for 'rename/move' command
