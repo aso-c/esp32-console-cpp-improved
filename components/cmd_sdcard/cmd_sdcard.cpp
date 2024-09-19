@@ -68,6 +68,17 @@ using namespace std;
  */
 
 
+/// namespace for cmd-actions
+namespace act
+{
+
+    /// action for 'type' command
+    esp_err_t type(std::vector<char*> args);
+
+}; /* namespace act */
+
+
+
 
 
 // Register command procedure
@@ -526,10 +537,10 @@ void register_cat(void)
 }; /* register_cat */
 
 
-// 'type' command -----------------------------------------------------------------------------------
-
+//! 'type' command, pure C wrapper --------------------------------------------------------------------------
 static int type_act(int argc, char **argv)
 {
+#if 0	// original source
     cout << "\"type\" command execution" << endl;
     switch (argc)
     {
@@ -549,6 +560,9 @@ static int type_act(int argc, char **argv)
     cout << endl;
 
     return ESP_ERR_INVALID_ARG;
+#endif	// original source
+    return act::type(astr::makestor<std::vector<char*>>(argc, argv));
+
 }; /* type_act */
 
 void register_type(void)
@@ -1104,25 +1118,80 @@ esp_err_t SDctrl::act_cat()
 // action for 'type' command
 esp_err_t SDctrl::act_type()
 {
-    cout << "\"type\" command execution" << endl;
-    switch (argc)
-    {
-    case 2:
-	return exec_server.type();
-	break;
+//    cout << "\"type\" command execution" << endl;
+//    switch (argc)
+//    {
+//    case 2:
+//	return exec_server.type();
+//	break;
+//
+//    case 3:
+//	cout << "...with one parameter - save type output to file & screen." << endl;
+//	return exec_server.type(argv[2], device.card->self->csd.sector_size);
+//	break;
+//
+//    default:
+//	ESP_LOGE("sdcard type command", "more than one parameters (%d) - what file save the type output?", argc - 2);
+//    }; /* switch argc */
+//    cout << endl;
 
-    case 3:
-	cout << "...with one parameter - save type output to file & screen." << endl;
-	return exec_server.type(argv[2], device.card->self->csd.sector_size);
-	break;
-
-    default:
-	ESP_LOGE("sdcard type command", "more than one parameters (%d) - what file save the type output?", argc - 2);
-    }; /* switch argc */
-    cout << endl;
-
-    return 0;
+    // offset for one item - drop the first "sd" command
+    return act::type(astr::makestor<std::vector<char*>>(argc - 1, argv + 1));
 }; /* SDctrl::act_type */
+
+
+
+namespace act
+{
+
+    /// action for 'type' command
+    esp_err_t type(std::vector<char*> args)
+    {
+#if 0	// variant for the " sd type" command
+//	    std::vector<int> svi(10);
+//	    std::vector<int>::value_type svival = 10;
+
+        cout << "\"type\" command execution" << endl;
+        switch (args.size())
+        {
+        case 2:
+    	return exec_server.type();
+    	break;
+
+        case 3:
+    	cout << "...with one parameter - save type output to file & screen." << endl;
+    	return exec_server.type(args[2], device.card->self->csd.sector_size);
+    	break;
+
+        default:
+    	ESP_LOGE("sdcard type command", "more than one parameters (%d) - what file save the type output?", args.size() - 2);
+        }; /* switch argc */
+        cout << endl;
+#endif	// variant for the " sd type" command
+
+        cout << "\"type\" command execution" << endl;
+        switch (args.size())
+        {
+        case 1:
+    	return exec_server.type();
+    	break;
+
+        case 2:
+    	cout << "...with one parameter - OK, save type output to file & output to screen." << endl;
+    	return exec_server.type(args[1]);
+    	break;
+
+        default:
+    //	cout << "more than one parameter - unknown set of parameters." << endl;
+    	ESP_LOGE("type command", "too many parameters (%d), in which file the output to be saved?", args.size());
+        }; /* switch argc */
+        cout << endl;
+
+        return ESP_ERR_INVALID_ARG;
+
+    }; /* act::type() */
+
+}; /* namespace act */
 
 
 
