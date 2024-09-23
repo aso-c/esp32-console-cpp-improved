@@ -74,7 +74,7 @@ namespace act
 {
 
     /// Handler for "subcommand missing" error of the sd-command.
-    esp_err_t none();
+    esp_err_t none(std::string_view argv0);
 
     /// Handler for "subcommand unknown" error of the sd-command.
     esp_err_t unknown(std::vector<char*> args);
@@ -665,65 +665,29 @@ void SDctrl::store(int argcnt, char *argvalue[])
 // Handler for "subcommand missing" error.
 esp_err_t SDctrl::err_none()
 {
+#if 0
     ESP_LOGE("sdcard command", "subcommand missing, what to run?");
     cout << syntax.hint << endl;
     return ESP_OK;
-#if 0
-    return act::none();
 #endif
+    return act::none(argv[0]);
 }; /* SDcmd::err_none */
 
 // Handler for "subcommand unknown" error.
 esp_err_t SDctrl::err_unknown()
 {
+#if 0
     ESP_LOGE("sdcard command", "Unknown options: \"%s\".", argv[1]);
     cout << syntax.hint << endl;
     return ESP_OK;
-#if 0
-    return act::unknown(astr::makestor<std::vector<char*>>(argc, argv));
 #endif
+    return act::unknown(astr::makestor<std::vector<char*>>(argc, argv));
 }; /* SDcmd::err_unknown */
 
 
 // action for 'mount' command
 esp_err_t SDctrl::act_mnt()
 {
-#if 0
-    esp_err_t res;
-
-    //device.host().set_card_clk(40000);	// test for low speed
-
-    switch (argc)
-    {
-    case 2:
-	res = exec_server.mount(device, sdmmc_card); // @suppress("Invalid arguments")
-	break;
-
-    case 3:
-	cout << "...with one parameter - use device or mount point." << endl;
-	res = exec_server.mount(device, sdmmc_card, argv[2]); // @suppress("Invalid arguments")
-	break;
-
-    case 4:
-	cout << "...with two parameters - use device & mount point." << endl;
-	res = exec_server.mount(device, sdmmc_card, atoi(argv[2]), argv[3]); // @suppress("Invalid arguments")
-	break;
-
-    default:
-	ESP_LOGE("sdcard mount command", "more than two parameters (%d) is not allowed", argc - 2);
-	res = ESP_FAIL;
-    }; /* switch argc */
-    cout << endl;
-
-    if (res == ESP_OK)
-    {
-	device.host().io.interrupt.enable();
-	sdmmc_card.io.interrupt.enable();
-	device.card->info(); // @suppress("Field cannot be resolved") // @suppress("Method cannot be resolved")
-    }
-
-    return res;
-#endif
     return act::mnt(astr::makestor<std::vector<char*>>(argc, argv));
 }; /* SDctrl::act_mnt() */
 
@@ -731,27 +695,6 @@ esp_err_t SDctrl::act_mnt()
 // action for 'unmount' command
 esp_err_t SDctrl::act_umnt()
 {
-#if 0
-    cout << "\"unmount\" command execution" << endl;
-    switch (argc)
-    {
-    case 2:
-	cout << "...without parameters - use default values." << endl;
-	return exec_server.unmount(device); // @suppress("Invalid arguments")
-	break;
-
-//    case 3:
-//	cout << "...with one parameter - use device or mount point." << endl;
-//	return exec_server.unmount(argv[2]);
-//	break;
-
-    default:
-	ESP_LOGE("sdcard umount command", "more than one parameters (%d) - is not allowed", argc - 2);
-    }; /* switch argc */
-    cout << endl;
-
-    return 0;
-#endif
     return act::umnt(astr::makestor<std::vector<char*>>(argc, argv));
 }; /* SDctrl::act_umnt() */
 
@@ -759,35 +702,6 @@ esp_err_t SDctrl::act_umnt()
 /// print info about the mounted SD-card
 esp_err_t SDctrl::act_info()
 {
-#if 0
-    if (!device.card)
-    {
-	ESP_LOGW("sdcard info command", "SD-card now is not mounted!!!");
-	return ESP_ERR_NOT_FOUND;
-    }; //* if !device.card */
-    device.card->info();
-    cout << "Pullup is: " << ((device.host().slot().pullup_state())? "Enabled": "Absent") << endl;
-    cout << "###############################################" << endl;
-
-#define TAG "SD Command Service"
-
-    ESP_LOGI(TAG, "SD card info:");
-        ESP_LOGI(TAG, "\tBus width (log2): %d", sdmmc_card.self->log_bus_width);
-        ESP_LOGI(TAG, "\tFreq (kHz): %'d", sdmmc_card.self->max_freq_khz);
-        ESP_LOGI(TAG, "\tDDR: %d", sdmmc_card.self->is_ddr);
-        ESP_LOGI(TAG, "\tCID: Date %d, MFG_ID %d, Name %s, OEM ID %d, Rev %d, Serial %d", sdmmc_card.self->cid.date, sdmmc_card.self->cid.mfg_id, sdmmc_card.self->cid.name, sdmmc_card.self->cid.oem_id, sdmmc_card.self->cid.revision, sdmmc_card.self->cid.serial);
-        ESP_LOGI(TAG, "\tCSD: Capacity %'d, Card Common Class %d, CSD version %d, MMC version %d, read block len %d, sector size %d, tr speed %'d", sdmmc_card.self->csd.capacity, sdmmc_card.self->csd.card_command_class, sdmmc_card.self->csd.csd_ver, sdmmc_card.self->csd.mmc_ver, sdmmc_card.self->csd.read_block_len, sdmmc_card.self->csd.sector_size, sdmmc_card.self->csd.tr_speed);
-        ESP_LOGI(TAG, "\tCSD: Ease mem state <undef>%d, Power class %d, Revision <undef>%d, Sec feature <undef>%d", /*sdmmc_card.self->ext_csd.erase_mem_state*/-1, sdmmc_card.self->ext_csd.power_class, /*sdmmc_card.self->ext_csd.rev*/-1, /*sdmmc_card.self->ext_csd.sec_feature*/-1);
-        ESP_LOGI(TAG, "\tSCR: bus width %d, erase mem state <undef%d>, reserved <undef%d>, rsvd_mnf <undef%d>, sd_spec %d", sdmmc_card.self->scr.bus_width, /*sdmmc_card.self->scr.erase_mem_state*/-1, /*sdmmc_card.self->scr.reserved*/-1, /*sdmmc_card.self->scr.rsvd_mnf*/-1, sdmmc_card.self->scr.sd_spec);
-        //ESP_LOGI(TAG, "\tSSR: cur_bus_width %d, discard_support %d, fule_support %d, reserved %d", sdmmc_card.self->ssr.cur_bus_width, sdmmc_card.self->ssr.discard_support, sdmmc_card.self->ssr.fule_support, sdmmc_card.self->ssr.reserved);
-
-    cout << "###############################################" << endl;
-
-	esp_err_t err;
-    err = device.card->print_cis();
-    ESP_LOGE("sdcard info command", "Error %i in the get or print CIS data: %s", err, esp_err_to_name(err));
-    return err;
-#endif
     return act::info(device);
 }; /* SDctrl::act_info() */
 
@@ -930,25 +844,6 @@ esp_err_t SDctrl::act_type()
 namespace act
 {
 
-//    /// action for pwd command
-//    esp_err_t pwd();
-
-//    /// print info about the mounted SD-card
-//    esp_err_t info();
-
-//    /// action for 'unmount' command
-//    esp_err_t umnt(std::vector<char*> args);
-
-//    /// action for 'mount' command
-//    esp_err_t mnt(std::vector<char*> args);
-
-//    /// Handler for "subcommand missing" error.
-//    esp_err_t none();
-//
-//    /// Handler for "subcommand unknown" error.
-//    esp_err_t unknown(std::vector<char*> args);
-
-#if 0
     /// hint for the command - suggest to see help
 //    ostream& act::hint(ostream& out);
     class hint
@@ -956,30 +851,38 @@ namespace act
     public:
 	hint(std::string_view argin): arg(argin) {};
 
+	ostream& msg(ostream& ostr) const;
+
 	std::string_view arg;
 
-	ostream& operator << (ostream& out, hint& ht);
     };
-#endif
 
 }; /* namespace act */
 
 
+ostream& operator << (ostream& out, const act::hint& ht) { return ht.msg(out); };
+
+inline ostream& act::hint::msg(ostream& ostr) const   {
+    ostr << "Try \"" << arg << " help\" for more information.";
+    return ostr;
+}; /* act::hint::msg() */
+
 #if 0
 /// hint for the command - suggest to see help
-ostream& act::hint(ostream& out)
+ostream& act::hint(ostream& out, std::string_view strv)
 {
     out << "Try \"" << parent.argv[0] << " help\" for more information.";
     return out;
 }; /* act::hint */
+#endif
 
 
 
 // Handler for "subcommand missing" error.
-esp_err_t act::none()
+esp_err_t act::none(std::string_view argv0)
 {
     ESP_LOGE("sdcard command", "subcommand missing, what to run?");
-    cout << syntax.hint << endl;
+    cout /*<< syntax.hint*/ << act::hint(argv0) << endl;
     return ESP_OK;
 }; /* act::none */
 
@@ -987,11 +890,10 @@ esp_err_t act::none()
 // Handler for "subcommand unknown" error.
 esp_err_t act::unknown(std::vector<char*> args)
 {
-    ESP_LOGE("sdcard command", "Unknown options: \"%s\".", args[2]);
-    cout << syntax.hint << endl;
+    ESP_LOGE("sdcard command", "Unknown options: \"%s\".", args[1]);
+    cout /*<< syntax.hint*/ << act::hint(args[0]) << endl;
     return ESP_OK;
 }; /* act::unknown */
-#endif
 
 
 /// action for 'mount' command
