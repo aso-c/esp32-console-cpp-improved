@@ -665,22 +665,12 @@ void SDctrl::store(int argcnt, char *argvalue[])
 // Handler for "subcommand missing" error.
 esp_err_t SDctrl::err_none()
 {
-#if 0
-    ESP_LOGE("sdcard command", "subcommand missing, what to run?");
-    cout << syntax.hint << endl;
-    return ESP_OK;
-#endif
     return act::none(argv[0]);
 }; /* SDcmd::err_none */
 
 // Handler for "subcommand unknown" error.
 esp_err_t SDctrl::err_unknown()
 {
-#if 0
-    ESP_LOGE("sdcard command", "Unknown options: \"%s\".", argv[1]);
-    cout << syntax.hint << endl;
-    return ESP_OK;
-#endif
     return act::unknown(astr::makestor<std::vector<char*>>(argc, argv));
 }; /* SDcmd::err_unknown */
 
@@ -866,15 +856,6 @@ inline ostream& act::hint::msg(ostream& ostr) const   {
     ostr << "Try \"" << arg << " help\" for more information.";
     return ostr;
 }; /* act::hint::msg() */
-
-#if 0
-/// hint for the command - suggest to see help
-ostream& act::hint(ostream& out, std::string_view strv)
-{
-    out << "Try \"" << parent.argv[0] << " help\" for more information.";
-    return out;
-}; /* act::hint */
-#endif
 
 
 
