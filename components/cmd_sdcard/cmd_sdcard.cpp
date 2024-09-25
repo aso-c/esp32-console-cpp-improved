@@ -74,7 +74,7 @@ namespace act
 {
 
     /// Handler for "subcommand missing" error of the sd-command.
-    esp_err_t none(std::string_view argv0);
+    esp_err_t none(std::vector<char*> args);
 
     /// Handler for "subcommand unknown" error of the sd-command.
     esp_err_t unknown(std::vector<char*> args);
@@ -89,7 +89,7 @@ namespace act
     esp_err_t info(SD::MMC::Device&);
 
     /// action for pwd command
-    esp_err_t pwd();
+    esp_err_t pwd(std::vector<char*> args);
 
     /// action for 'mkdir' command
     esp_err_t mkdir(std::vector<char*> args);
@@ -208,7 +208,7 @@ Exec::Cmd exec_server;
 static int pwd_act(int argc, char **argv)
 {
 //    return exec_server.pwd();
-    return act::pwd();
+    return act::pwd(astr::makestor<std::vector<char*>>(argc, argv));
 
 }; /* pwd_act */
 
@@ -482,6 +482,103 @@ void register_fs_cmd_all(void)
 
 
 
+//--[ command action wrapper class ]----------------------------------------------------------------
+
+// standart subcommand action wrapper
+class act_cmd
+{
+public:
+    act_cmd(std::string_view cmd_name, esp_err_t (*exec_action)(std::vector<char*> args)):
+	name(cmd_name),
+	action(exec_action)
+    {};
+
+    // compare inner name of command with extname
+    virtual bool cmp(std::string_view extname) const;
+    virtual bool cmp(const act_cmd& extcmd) const;
+
+    // exec stored command
+    virtual esp_err_t exec(int argc, char* argv[]);
+
+    std::string_view title() const { return name; };
+
+protected:
+    std::string_view name;
+    // execution action pointer
+    esp_err_t (*action)(std::vector<char*> args);
+
+}; /* class act_cmd */
+
+
+// subcommand action wrapper for subcommand is absent
+class act_none: public act_cmd
+{
+public:
+    act_none(): act_cmd("", act::none) {};
+
+    esp_err_t exec(int argc, char* argv[]) override {
+	    // exec operated command, specialization for the class act_none
+		ESP_LOGW("act_none::exec()", "None of subcommand action execution, command is: \"%s\"", argv[0]);
+    return action(astr::makestor<std::vector<char*>>(argc, argv)); }
+
+}; /* class act_none */
+
+
+// subcommand action wrapper for subcommand is absent
+class act_unknown: public act_cmd
+{
+public:
+    act_unknown(): act_cmd("*", act::unknown) {};
+
+    // compare specialization for class act_unknown, always 'true'
+    bool cmp(std::string_view extname) const override { return true; };
+    bool cmp(const act_cmd& extcmd) const override  { return true; };
+
+    // exec operated command, specialization for the class act_none
+    esp_err_t exec(int argc, char* argv[]) override {
+	ESP_LOGW("act_unknown::exec()", "Unknown subcommand is present, command is: \"%s\", subcommand: \"%s\"", argv[0], argv[1]);
+    return action(astr::makestor<std::vector<char*>>(argc, argv)); }
+
+}; /* class act_none */
+
+
+
+
+inline bool operator == (const act_cmd& lf, const act_cmd& rt) {
+    return lf.cmp(rt); };
+
+inline bool operator == (const act_cmd& lf, const std::string_view extnm) {
+    return lf.cmp(extnm); };
+
+inline bool operator == (const std::string_view extnm, const act_cmd& rt) {
+    return rt.cmp(extnm); };
+
+inline bool operator != (const act_cmd& lf, const act_cmd& rt) {
+    return !lf.cmp(rt); };
+
+inline bool operator != (const act_cmd& lf, const std::string_view extnm) {
+    return !lf.cmp(extnm); };
+
+inline bool operator != (const std::string_view extnm, const act_cmd& rt) {
+    return !rt.cmp(extnm); };
+
+
+inline bool act_cmd::cmp(std::string_view str) const {
+    return (name == str);
+}; /* act_cmd::cmp() */
+
+inline bool act_cmd::cmp(const act_cmd& extcmd) const {
+    return (name == extcmd.name);
+}
+
+// standard execution of the operated command in class act_cmd
+esp_err_t act_cmd::exec(int argc, char* argv[])
+{
+    return action(astr::makestor<std::vector<char*>>(argc - 1, argv + 1));
+}; /* act_cmd::exec() */
+
+
+
 //--[ SD card control commands]--------------------------------------------------------------------
 
 // classs of the SD control command implementation
@@ -489,9 +586,17 @@ class SDctrl
 {
 public:
 
-    void store(int argc, char *argv[]);	// Initializing current command environment
-    static SDctrl& cmd();// get unigue single instance of the SDcmd object
-    static esp_err_t exec(int argc, char **argv);	// execute the 'SD' command
+    void store(int argc, char *argv[]);	/// Initializing current command environment
+    static SDctrl& cmd();	/// get unigue single instance of the SDcmd object
+    static esp_err_t exec(int argc, char **argv);    /// execute the 'SD' command
+
+    esp_err_t register_sub(act_cmd& subcmd);	/// register sub-command aka options of the 'SD' command
+
+
+    static act_none err_none_act;
+    static act_unknown err_unknown_act;
+
+
 
     esp_err_t err_none();	// Handler for "subcommand missing" error.
     esp_err_t err_unknown();	// Handler for "subcommand unknown" error.
@@ -514,6 +619,7 @@ private:
     int argc;
     char **argv;
 
+    std::list<act_cmd*> syntax2;
 
     SDctrl();		// Default constructor - private for singleton
     SDctrl(SDctrl&) = delete;	// copy constructor forbidden for singleton
@@ -576,15 +682,22 @@ static int sdcard_cmd(int argc, char **argv)
 SDctrl::SDctrl():
 	argc(0),
 	argv(nullptr)
-{ /*InitSyntaxs();*/ };
+{
+    /*InitSyntaxs();*/
+    // Initialize list of subcommand with terminal cmd obj:
+    // error_none & error_unknown subcommand ojects
+    syntax2.push_back(&SDctrl::err_none_act);
+    syntax2.push_back(&SDctrl::err_unknown_act);
+}; /* SDctrl::SDctrl() */
 
 
 // get unigue single instance of the SDcmd object
 SDctrl& SDctrl::cmd()
 {
 	static SDctrl instance;
+
     return instance;
-}
+}; /* SDctrl::cmd() */
 
 // Unique single instance of the SDcmd object
 SDctrl& SDctrl::instance = SDctrl::cmd();
@@ -597,7 +710,18 @@ esp_err_t SDctrl::exec(int argc, char **argv)
     instance.store(argc, argv);
 
     if (argc == 1)
-	return instance.err_none();
+//	return instance.err_none();
+	return SDctrl::err_none_act.exec(argc, argv);
+
+    ESP_LOGW("=== Iterating syntax2 ===", "Subcommand is: %s", argv[1]);
+    for (auto& cmd: instance.syntax2)
+	if (*cmd == argv[1])
+	{
+	    ESP_LOGW("Iterate syntax2", "Current subcommand is: [%s]", cmd->title().data());
+	    /*return*/ cmd->exec(argc, argv);
+	    break;
+	}; /* if cmd == argc[1] */
+
 
     switch (syntax.id())
     {
@@ -659,33 +783,53 @@ void SDctrl::store(int argcnt, char *argvalue[])
 {
     argc = argcnt;
     argv = argvalue;
-}; /* SDcmd::store */
+}; /* SDctrl::store */
+
+
+act_none SDctrl::err_none_act;
+act_unknown SDctrl::err_unknown_act;
+
 
 
 // Handler for "subcommand missing" error.
 esp_err_t SDctrl::err_none()
 {
-    return act::none(argv[0]);
-}; /* SDcmd::err_none */
+    return act::none(astr::makestor<std::vector<char*>>(argc, argv));
+}; /* SDctrl::err_none() */
 
 // Handler for "subcommand unknown" error.
 esp_err_t SDctrl::err_unknown()
 {
     return act::unknown(astr::makestor<std::vector<char*>>(argc, argv));
-}; /* SDcmd::err_unknown */
+}; /* SDctrl::err_unknown() */
 
 
 // action for 'mount' command
 esp_err_t SDctrl::act_mnt()
 {
-    return act::mnt(astr::makestor<std::vector<char*>>(argc, argv));
+    if (!(argc > 4))
+	// offset for one item - drop the first "sd" command
+	return act::mnt(astr::makestor<std::vector<char*>>(argc - 1, argv + 1));
+
+    //    default: if !(argc > 3), e.g. sd type abc defg... - error parameters counting
+    ESP_LOGE("sdcard mount command", "more than two parameters (%d) is not allowed", argc - 2);
+
+    return ESP_ERR_INVALID_ARG;
 }; /* SDctrl::act_mnt() */
 
 
 // action for 'unmount' command
 esp_err_t SDctrl::act_umnt()
 {
-    return act::umnt(astr::makestor<std::vector<char*>>(argc, argv));
+    if (!(argc > 3))
+	// offset for one item - drop the first "sd" command
+	return act::umnt(astr::makestor<std::vector<char*>>(argc - 1, argv + 1));
+
+    //    default: if !(argc > 3), e.g. sd type abc defg... - error parameters counting
+    ESP_LOGE("sdcard umount command", "more than one parameters (%d) - is not allowed", argc - 2);
+
+    return ESP_ERR_INVALID_ARG;
+
 }; /* SDctrl::act_umnt() */
 
 
@@ -701,7 +845,7 @@ esp_err_t SDctrl::act_pwd()
 {
 //    exec_server.pwd();
 //    return 0;
-    return act::pwd();
+    return act::pwd(astr::makestor<std::vector<char*>>(argc - 1, argv + 1));
 }; /* SDctrl::act_pwd() */
 
 
@@ -860,10 +1004,11 @@ inline ostream& act::hint::msg(ostream& ostr) const   {
 
 
 // Handler for "subcommand missing" error.
-esp_err_t act::none(std::string_view argv0)
+//esp_err_t act::none(std::string_view argv0)
+esp_err_t act::none(std::vector<char*> args)
 {
     ESP_LOGE("sdcard command", "subcommand missing, what to run?");
-    cout /*<< syntax.hint*/ << act::hint(argv0) << endl;
+    cout << act::hint(args[0]) << endl;
     return ESP_OK;
 }; /* act::none */
 
@@ -872,7 +1017,7 @@ esp_err_t act::none(std::string_view argv0)
 esp_err_t act::unknown(std::vector<char*> args)
 {
     ESP_LOGE("sdcard command", "Unknown options: \"%s\".", args[1]);
-    cout /*<< syntax.hint*/ << act::hint(args[0]) << endl;
+    cout << act::hint(args[0]) << endl;
     return ESP_OK;
 }; /* act::unknown */
 
@@ -886,22 +1031,22 @@ esp_err_t act::mnt(std::vector<char*> args)
 
     switch (args.size())
     {
-    case 2:
+    case 1/*2*/:
 	res = exec_server.mount(device, sdmmc_card); // @suppress("Invalid arguments")
 	break;
 
-    case 3:
+    case 2/*3*/:
 	cout << "...with one parameter - use device or mount point." << endl;
-	res = exec_server.mount(device, sdmmc_card, args[2]); // @suppress("Invalid arguments")
+	res = exec_server.mount(device, sdmmc_card, args[1/*2*/]); // @suppress("Invalid arguments")
 	break;
 
-    case 4:
+    case 3/*4*/:
 	cout << "...with two parameters - use device & mount point." << endl;
-	res = exec_server.mount(device, sdmmc_card, atoi(args[2]), args[3]); // @suppress("Invalid arguments")
+	res = exec_server.mount(device, sdmmc_card, atoi(args[1/*2*/]), args[2/*3*/]); // @suppress("Invalid arguments")
 	break;
 
     default:
-	ESP_LOGE("sdcard mount command", "more than two parameters (%d) is not allowed", args.size() - 2);
+	ESP_LOGE("sdcard mount command", "more than two parameters (%d) is not allowed", args.size() - 1/*2*/);
 	res = ESP_FAIL;
     }; /* switch argc */
     cout << endl;
@@ -923,18 +1068,18 @@ esp_err_t act::umnt(std::vector<char*> args)
     cout << "\"unmount\" command execution" << endl;
     switch (args.size())
     {
-    case 2:
+    case 1/*2*/:
 	cout << "...without parameters - use default values." << endl;
 	return exec_server.unmount(device); // @suppress("Invalid arguments")
 	break;
 
-//    case 3:
+//    case 2/*3*/:
 //	cout << "...with one parameter - use device or mount point." << endl;
-//	return exec_server.unmount(argv[2]);
+//	return exec_server.unmount(args[1/*2*/]);
 //	break;
 
     default:
-	ESP_LOGE("sdcard umount command", "more than one parameters (%d) - is not allowed", args.size() - 2);
+	ESP_LOGE("sdcard umount command", "more than one parameters (%d) - is not allowed", args.size() - 1/*2*/);
     }; /* switch args.size() */
     cout << endl;
 
@@ -976,7 +1121,7 @@ esp_err_t act::info(SD::MMC::Device& dev)
 
 
 /// action for pwd command
-esp_err_t act::pwd()
+esp_err_t act::pwd(std::vector<char*> args)
 {
     exec_server.pwd();
     return ESP_OK;
