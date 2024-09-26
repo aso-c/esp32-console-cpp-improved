@@ -122,13 +122,6 @@ namespace act
 
 
 
-
-
-//// Register command procedure
-//static void register_cmd(const esp_console_cmd_t*);
-
-
-
 // Register command procedure
 static void register_cmd(const esp_console_cmd_t* cmd)
 {
@@ -435,7 +428,7 @@ void register_fs_cmd_all(void)
 class act_cmd
 {
 public:
-    act_cmd(std::string_view cmd_name, esp_err_t (*exec_action)(std::vector<char*> args)):
+    act_cmd(/*std::string_view*/const char cmd_name[], esp_err_t (*exec_action)(std::vector<char*> args)):
 	name(cmd_name),
 	action(exec_action)
     {};
@@ -443,16 +436,17 @@ public:
     virtual ~act_cmd() {};
 
     // compare inner name of command with extname
+    virtual bool cmp(const char extname[]) const;
     virtual bool cmp(std::string_view extname) const;
     virtual bool cmp(const act_cmd& extcmd) const;
 
     // exec stored command
-    virtual esp_err_t exec(int argc, char* argv[]);
+    virtual esp_err_t exec(int argc, char* argv[]) const;
 
     std::string_view title() const { return name; };
 
 protected:
-    std::string_view name;
+    /*std::string_view*/const char* name;
     // execution action pointer
     esp_err_t (*action)(std::vector<char*> args);
 
@@ -466,7 +460,7 @@ public:
     act_none(): act_cmd("", act::none) {};
     ~act_none() override {};
 
-    esp_err_t exec(int argc, char* argv[]) override {
+    esp_err_t exec(int argc, char* argv[]) const override {
 	    // exec operated command, specialization for the class act_none
 		ESP_LOGW("act_none::exec()", "None of subcommand action execution, command is: \"%s\"", argv[0]);
     return action(astr::makestor<std::vector<char*>>(argc, argv)); }
@@ -487,7 +481,7 @@ public:
     bool cmp(const act_cmd& extcmd) const override  { return true; };
 
     // exec operated command, specialization for the class act_none
-    esp_err_t exec(int argc, char* argv[]) override {
+    esp_err_t exec(int argc, char* argv[]) const override {
 	ESP_LOGW("act_unknown::exec()", "Unknown subcommand is present, command is: \"%s\", subcommand: \"%s\"", argv[0], argv[1]);
     return action(astr::makestor<std::vector<char*>>(argc, argv)); }
 
@@ -515,6 +509,10 @@ inline bool operator != (const std::string_view extnm, const act_cmd& rt) {
     return !rt.cmp(extnm); };
 
 
+inline bool act_cmd::cmp(const char str[]) const {
+    return (std::string_view(name) == str);
+}; /* act_cmd::cmp() */
+
 inline bool act_cmd::cmp(std::string_view str) const {
     return (name == str);
 }; /* act_cmd::cmp() */
@@ -524,7 +522,7 @@ inline bool act_cmd::cmp(const act_cmd& extcmd) const {
 }
 
 // standard execution of the operated command in class act_cmd
-esp_err_t act_cmd::exec(int argc, char* argv[])
+esp_err_t act_cmd::exec(int argc, char* argv[]) const
 {
     return action(astr::makestor<std::vector<char*>>(argc - 1, argv + 1));
 }; /* act_cmd::exec() */
@@ -546,22 +544,22 @@ public:
     static esp_err_t exec(int argc, char **argv);
 
     /// register sub-command aka options of the 'SD' command
-    esp_err_t enroll(act_cmd& subcmd);
+    esp_err_t enroll(const act_cmd& subcmd);
 
 
-    static act_none err_none_act;
-    static act_unknown err_unknown_act;
+    static act_none const err_none_act;
+    static act_unknown const err_unknown_act;
 
 
     /// Storage wrapper for reference to class act_cmd
     class act_ref
     {
     public:
-        act_ref(act_cmd& cmd): hold(cmd) {};
-        act_cmd& get() { return hold;}
-        operator act_cmd&() { return get();}
+        act_ref(const act_cmd& cmd): hold(cmd) {};
+        const act_cmd& get() const { return hold;}
+        operator const act_cmd&() const { return get();}
 
-        act_cmd& hold;
+        const act_cmd& hold;
     }; /* class act_ref */
 
 
@@ -657,7 +655,7 @@ static int sdcard_cmd(int argc, char **argv)
 void register_sdcard_cmd(void)
 {
 
-    static act_cmd ls_cmd("ls", act::ls);
+    static const act_cmd ls_cmd("ls", act::ls);
     SDctrl::cmd().enroll(ls_cmd);
 
     static void *args[] = {
@@ -732,8 +730,10 @@ esp_err_t SDctrl::exec(int argc, char **argv)
 	return SDctrl::err_none_act.exec(argc, argv);
 
     ESP_LOGW("=== Iterating syntax2 ===", "Subcommand is: %s", argv[1]);
+    ESP_LOGW("== [Iterating syntax2] ==", "First stored subcommand is: %s", instance.syntax2.begin()->hold.title().data());
+    ESP_LOGW("== [Iterating syntax2] ==", "Second stored subcommand is: %s", (++instance.syntax2.begin())->hold.title().data());
     for (auto& cmd: instance.syntax2)
-	if (cmd == argv[1])
+	if (cmd == (const char*)argv[1])
 	{
 	    ESP_LOGW("Iterate syntax2", "Current subcommand is: [%s]", cmd.hold.title().data());
 	    /*return*/ cmd.hold.exec(argc, argv);
@@ -798,7 +798,7 @@ esp_err_t SDctrl::exec(int argc, char **argv)
 
 
 /// register sub-command aka options of the 'SD' command
-esp_err_t SDctrl::enroll(act_cmd& subcmd)
+esp_err_t SDctrl::enroll(const act_cmd& subcmd)
 {
     syntax2.insert(--(--syntax2.end()) , subcmd);
     return ESP_OK;
@@ -813,8 +813,8 @@ void SDctrl::store(int argcnt, char *argvalue[])
 }; /* SDctrl::store */
 
 
-act_none SDctrl::err_none_act;
-act_unknown SDctrl::err_unknown_act;
+act_none const SDctrl::err_none_act;
+act_unknown const SDctrl::err_unknown_act;
 
 
 
