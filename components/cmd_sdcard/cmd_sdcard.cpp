@@ -4,8 +4,8 @@
  * 	@file	cmd_sdcard.cpp
  *	@author	Solomatov A.A. (aso)
  *	@date	Created 04.04.2022
- *		Modified 19.09.2024
- *	@version: 0.7
+ *		Modified 25.09.2024
+ *	@version: 0.72
  */
 
 #include <cstdlib>
@@ -124,62 +124,9 @@ namespace act
 
 
 
-// Register command procedure
-static void register_cmd(const esp_console_cmd_t*);
+//// Register command procedure
+//static void register_cmd(const esp_console_cmd_t*);
 
-extern "C" {
-// Procedure of the 'sd' command
-static int sdcard_cmd(int argc, char **argv);
-}
-
-
-// Register all SD-card commands
-void register_sdcard_cmd(void)
-{
-
-    static void *args[] = {
-	    arg_rex1(NULL, NULL, "h|help", "h | help", 0/*REG_ICASE*/, "help for command 'sdcard'"),
-	    arg_rem ("|", NULL),
-	    arg_rex1(NULL, NULL, "<subcommand>", NULL, 0/*REG_ICASE*/, "other subcommand of command 'sdcard'"),
-	    arg_strn(NULL, NULL, "<options>", 0, 2, "subcommand options"),
-	    arg_end(2),
-    };
-
-    const esp_console_cmd_t cmd = {
-	    .command = "sdcard",
-	    .help = "SD card manipulating main command",
-	    //        .hint = "enter subcommand for Sd card operations",
-	    .hint = NULL,
-	    .func = &sdcard_cmd,
-	    .argtable = &args
-    };
-    register_cmd(&cmd);
-
-
-    const esp_console_cmd_t cmd2 = {
-	    .command = "sd",
-	    .help = "shortcut for 'sdcard' command",
-	    //        .hint = "enter subcommand for Sd card operations",
-	    .hint = NULL,
-	    .func = &sdcard_cmd,
-	    .argtable = NULL
-    };
-    register_cmd(&cmd2);
-
-}; /* register_sdcard_all */
-
-
-class esp_console_cmd
-{
-public:
-
-    esp_console_cmd (const esp_console_cmd_t&& cmd_def): cmd(&cmd_def) {};
-
-    void registrate() {ESP_ERROR_CHECK(esp_console_cmd_register(cmd));};
-
-private:
-    const esp_console_cmd_t* cmd;
-}; /* esp_console_cmd */
 
 
 // Register command procedure
@@ -493,6 +440,8 @@ public:
 	action(exec_action)
     {};
 
+    virtual ~act_cmd() {};
+
     // compare inner name of command with extname
     virtual bool cmp(std::string_view extname) const;
     virtual bool cmp(const act_cmd& extcmd) const;
@@ -515,11 +464,13 @@ class act_none: public act_cmd
 {
 public:
     act_none(): act_cmd("", act::none) {};
+    ~act_none() override {};
 
     esp_err_t exec(int argc, char* argv[]) override {
 	    // exec operated command, specialization for the class act_none
 		ESP_LOGW("act_none::exec()", "None of subcommand action execution, command is: \"%s\"", argv[0]);
     return action(astr::makestor<std::vector<char*>>(argc, argv)); }
+
 
 }; /* class act_none */
 
@@ -529,6 +480,7 @@ class act_unknown: public act_cmd
 {
 public:
     act_unknown(): act_cmd("*", act::unknown) {};
+    ~act_unknown() override {};
 
     // compare specialization for class act_unknown, always 'true'
     bool cmp(std::string_view extname) const override { return true; };
@@ -586,15 +538,32 @@ class SDctrl
 {
 public:
 
-    void store(int argc, char *argv[]);	/// Initializing current command environment
-    static SDctrl& cmd();	/// get unigue single instance of the SDcmd object
-    static esp_err_t exec(int argc, char **argv);    /// execute the 'SD' command
+    /// Initializing current command environment
+    void store(int argc, char *argv[]);
+    /// get unigue single instance of the SDcmd object
+    static SDctrl& cmd();
+    /// execute the 'SD' command
+    static esp_err_t exec(int argc, char **argv);
 
-    esp_err_t register_sub(act_cmd& subcmd);	/// register sub-command aka options of the 'SD' command
+    /// register sub-command aka options of the 'SD' command
+    esp_err_t enroll(act_cmd& subcmd);
 
 
     static act_none err_none_act;
     static act_unknown err_unknown_act;
+
+
+    /// Storage wrapper for reference to class act_cmd
+    class act_ref
+    {
+    public:
+        act_ref(act_cmd& cmd): hold(cmd) {};
+        act_cmd& get() { return hold;}
+        operator act_cmd&() { return get();}
+
+        act_cmd& hold;
+    }; /* class act_ref */
+
 
 
 
@@ -619,7 +588,8 @@ private:
     int argc;
     char **argv;
 
-    std::list<act_cmd*> syntax2;
+//    std::list<act_cmd*> syntax2;
+    std::list<act_ref> syntax2;
 
     SDctrl();		// Default constructor - private for singleton
     SDctrl(SDctrl&) = delete;	// copy constructor forbidden for singleton
@@ -657,7 +627,15 @@ private:
 
 
 
+//--[ 'sd' command ]-------------------------------------------------------------------------------
+
+
 //extern "C" {
+//// Procedure of the 'sd' command
+//static int sdcard_cmd(int argc, char **argv);
+//}
+
+extern "C" {
 // Procedure of the 'sd' command
 static int sdcard_cmd(int argc, char **argv)
 {
@@ -672,6 +650,46 @@ static int sdcard_cmd(int argc, char **argv)
     return SDctrl::exec(argc, argv);
 
 }; /* sdcard_cmd */
+}; /* extern "C" */
+
+
+// Register all SD-card commands
+void register_sdcard_cmd(void)
+{
+
+    static act_cmd ls_cmd("ls", act::ls);
+    SDctrl::cmd().enroll(ls_cmd);
+
+    static void *args[] = {
+	    arg_rex1(NULL, NULL, "h|help", "h | help", 0/*REG_ICASE*/, "help for command 'sdcard'"),
+	    arg_rem ("|", NULL),
+	    arg_rex1(NULL, NULL, "<subcommand>", NULL, 0/*REG_ICASE*/, "other subcommand of command 'sdcard'"),
+	    arg_strn(NULL, NULL, "<options>", 0, 2, "subcommand options"),
+	    arg_end(2),
+    };
+
+    const esp_console_cmd_t cmd = {
+	    .command = "sdcard",
+	    .help = "SD card manipulating main command",
+	    //        .hint = "enter subcommand for Sd card operations",
+	    .hint = NULL,
+	    .func = &sdcard_cmd,
+	    .argtable = &args
+    };
+    register_cmd(&cmd);
+
+
+    const esp_console_cmd_t cmd2 = {
+	    .command = "sd",
+	    .help = "shortcut for 'sdcard' command",
+	    //        .hint = "enter subcommand for Sd card operations",
+	    .hint = NULL,
+	    .func = &sdcard_cmd,
+	    .argtable = NULL
+    };
+    register_cmd(&cmd2);
+
+}; /* register_sdcard_all */
 
 
 
@@ -686,8 +704,8 @@ SDctrl::SDctrl():
     /*InitSyntaxs();*/
     // Initialize list of subcommand with terminal cmd obj:
     // error_none & error_unknown subcommand ojects
-    syntax2.push_back(&SDctrl::err_none_act);
-    syntax2.push_back(&SDctrl::err_unknown_act);
+    syntax2.push_back(SDctrl::err_none_act);
+    syntax2.push_back(SDctrl::err_unknown_act);
 }; /* SDctrl::SDctrl() */
 
 
@@ -715,12 +733,13 @@ esp_err_t SDctrl::exec(int argc, char **argv)
 
     ESP_LOGW("=== Iterating syntax2 ===", "Subcommand is: %s", argv[1]);
     for (auto& cmd: instance.syntax2)
-	if (*cmd == argv[1])
+	if (cmd == argv[1])
 	{
-	    ESP_LOGW("Iterate syntax2", "Current subcommand is: [%s]", cmd->title().data());
-	    /*return*/ cmd->exec(argc, argv);
+	    ESP_LOGW("Iterate syntax2", "Current subcommand is: [%s]", cmd.hold.title().data());
+	    /*return*/ cmd.hold.exec(argc, argv);
 	    break;
 	}; /* if cmd == argc[1] */
+    //auto it = std::find(l.begin(), l.end(), 16);
 
 
     switch (syntax.id())
@@ -747,7 +766,8 @@ esp_err_t SDctrl::exec(int argc, char **argv)
 	return instance.act_cd();
 
     case Syntax::ls:
-	return instance.act_ls();
+//	return instance.act_ls();
+	break;
 
     case Syntax::cp:
 	return instance.act_cp();
@@ -777,6 +797,13 @@ esp_err_t SDctrl::exec(int argc, char **argv)
 }; /* SDctrl::exec */
 
 
+/// register sub-command aka options of the 'SD' command
+esp_err_t SDctrl::enroll(act_cmd& subcmd)
+{
+    syntax2.insert(--(--syntax2.end()) , subcmd);
+    return ESP_OK;
+}; /* SDctrl::enroll() */
+
 
 // Initializing current command environment
 void SDctrl::store(int argcnt, char *argvalue[])
@@ -788,6 +815,9 @@ void SDctrl::store(int argcnt, char *argvalue[])
 
 act_none SDctrl::err_none_act;
 act_unknown SDctrl::err_unknown_act;
+
+
+
 
 
 
