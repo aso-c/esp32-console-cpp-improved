@@ -428,14 +428,18 @@ void register_fs_cmd_all(void)
 class act_cmd
 {
 public:
-    act_cmd(/*std::string_view*/const char cmd_name[], esp_err_t (*exec_action)(std::vector<char*> args)):
+    act_cmd(/*std::string_view*//*const char cmd_name[]*/ std::function<bool(std::string_view)> cmp_def,
+	    esp_err_t (*exec_action)(std::vector<char*> args),
+	    const char cmd_name[] = "<spared>"):
 	name(cmd_name),
+	cmp_core(cmp_def),
 	action(exec_action)
     {};
 
     virtual ~act_cmd() {};
 
     // compare inner name of command with extname
+    virtual bool cmp(char extname[]) const;
     virtual bool cmp(const char extname[]) const;
     virtual bool cmp(std::string_view extname) const;
     virtual bool cmp(const act_cmd& extcmd) const;
@@ -447,7 +451,10 @@ public:
 
 protected:
     /*std::string_view*/const char* name;
-    // execution action pointer
+
+    std::function<bool(std::string_view)> cmp_core;
+
+    /// execute action pointer
     esp_err_t (*action)(std::vector<char*> args);
 
 }; /* class act_cmd */
@@ -457,7 +464,7 @@ protected:
 class act_none: public act_cmd
 {
 public:
-    act_none(): act_cmd("", act::none) {};
+    act_none(): act_cmd(/*""*/[](std::string_view str) {return str == "";}, act::none, "") {};
     ~act_none() override {};
 
     esp_err_t exec(int argc, char* argv[]) const override {
@@ -473,7 +480,7 @@ public:
 class act_unknown: public act_cmd
 {
 public:
-    act_unknown(): act_cmd("*", act::unknown) {};
+    act_unknown(): act_cmd(/*"*"*/[](std::string_view str) {return true; }, act::unknown, "*") {};
     ~act_unknown() override {};
 
     // compare specialization for class act_unknown, always 'true'
@@ -509,16 +516,20 @@ inline bool operator != (const std::string_view extnm, const act_cmd& rt) {
     return !rt.cmp(extnm); };
 
 
+inline bool act_cmd::cmp(char str[]) const {
+    return cmp_core(str);
+}; /* act_cmd::cmp() */
+
 inline bool act_cmd::cmp(const char str[]) const {
-    return (std::string_view(name) == str);
+    return /*(std::string_view(name) == str)*/ cmp_core(str);
 }; /* act_cmd::cmp() */
 
 inline bool act_cmd::cmp(std::string_view str) const {
-    return (name == str);
+    return /*(name == str)*/ cmp_core(str);
 }; /* act_cmd::cmp() */
 
 inline bool act_cmd::cmp(const act_cmd& extcmd) const {
-    return (name == extcmd.name);
+    return /*(name == extcmd.name)*/ cmp_core(extcmd.title());
 }
 
 // standard execution of the operated command in class act_cmd
@@ -690,6 +701,7 @@ void register_sdcard_cmd(void)
     	return type;
 #endif
 
+#if 0
 //    static const act_cmd help_cmd("help", act::help);
     static const act_cmd  mnt_cmd("mount", act::mnt);
     static const act_cmd umnt_cmd("umount",act::umnt);
@@ -704,7 +716,9 @@ void register_sdcard_cmd(void)
     static const act_cmd   rm_cmd("rm", act::rm);
     static const act_cmd  cat_cmd("cat", act::cat);
     static const act_cmd type_cmd("type", act::type);
+#endif
 
+    static const act_cmd   ls_cmd([](std::string_view str) {return str == "dir" || str == "ls";}, act::ls, "ls");
 
 
     SDctrl::cmd().enroll(ls_cmd);
@@ -784,7 +798,7 @@ esp_err_t SDctrl::exec(int argc, char **argv)
     ESP_LOGW("== [Iterating syntax2] ==", "First stored subcommand is: %s", instance.syntax2.begin()->hold.title().data());
     ESP_LOGW("== [Iterating syntax2] ==", "Second stored subcommand is: %s", (++instance.syntax2.begin())->hold.title().data());
     for (auto& cmd: instance.syntax2)
-	if (cmd == (const char*)argv[1])
+	if (cmd == /*(const char*)*/argv[1])
 	{
 	    ESP_LOGW("Iterate syntax2", "Current subcommand is: [%s]", cmd.hold.title().data());
 	    /*return*/ cmd.hold.exec(argc, argv);
