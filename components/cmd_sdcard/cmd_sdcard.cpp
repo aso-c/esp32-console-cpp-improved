@@ -586,7 +586,6 @@ private:
     int argc;
     char **argv;
 
-//    std::list<act_cmd*> syntax2;
     std::list<act_ref> syntax2;
 
     SDctrl();		// Default constructor - private for singleton
@@ -654,8 +653,60 @@ static int sdcard_cmd(int argc, char **argv)
 // Register all SD-card commands
 void register_sdcard_cmd(void)
 {
+#if 0
+    esp_err_t act_mnt();	// action for 'mount' command
+    esp_err_t act_umnt();	// action for 'unmount' command
+    esp_err_t act_info();	// action for 'info' command
+    esp_err_t act_pwd();	// action for 'pwd' command
+    esp_err_t act_mkdir();	// action for mkdir command
+    esp_err_t act_rmdir();	// action for rmdir command
+    esp_err_t act_cd();		// action for 'cd' command
+    esp_err_t act_ls();		// action for list/dir command
+    esp_err_t act_cp();		// action for 'copy file' command
+    esp_err_t act_mv();		// action for rename/move file command
+    esp_err_t act_rm();		// action for remove/delete file command
+    esp_err_t act_cat();	// action for 'cat' command
+    esp_err_t act_type();	// action for 'type' command
 
-    static const act_cmd ls_cmd("ls", act::ls);
+    if (astr::is_space(idstr))
+	return none;
+    if (idstr == "help" || idstr == "h")
+    	return helping;
+    if (idstr ==  "mount" || idstr == "m")
+    	return mount;
+    if (idstr == "umount" || idstr == "u")
+	return unmount;
+    if (idstr == "info" || idstr == "i")
+	return info;
+    if (idstr == "pwd" || idstr == "p")
+	return pwd;
+    if (idstr == "cd")
+	return cd;
+    if (idstr == "ls" || idstr == "dir")
+	return ls;
+    if (idstr == "cat" || idstr == "c")
+    	return cat;
+    if (idstr == "type" || idstr == "t")
+    	return type;
+#endif
+
+//    static const act_cmd help_cmd("help", act::help);
+    static const act_cmd  mnt_cmd("mount", act::mnt);
+    static const act_cmd umnt_cmd("umount",act::umnt);
+    static const act_cmd info_cmd("info",  act::info);
+    static const act_cmd  pwd_cmd("pwd",   act::pwd);
+    static const act_cmd  mkd_cmd("mkdir", act::mkdir);
+    static const act_cmd  rmd_cmd("rmdir", act::rmdir);
+    static const act_cmd   cd_cmd("cd", act::cd);
+    static const act_cmd   ls_cmd("ls", act::ls);
+    static const act_cmd   cp_cmd("cp", act::cp);
+    static const act_cmd   mv_cmd("mv", act::mv);
+    static const act_cmd   rm_cmd("rm", act::rm);
+    static const act_cmd  cat_cmd("cat", act::cat);
+    static const act_cmd type_cmd("type", act::type);
+
+
+
     SDctrl::cmd().enroll(ls_cmd);
 
     static void *args[] = {
