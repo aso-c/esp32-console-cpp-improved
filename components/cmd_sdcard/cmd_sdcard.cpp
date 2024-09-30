@@ -578,7 +578,7 @@ public:
 
     esp_err_t err_none();	// Handler for "subcommand missing" error.
     esp_err_t err_unknown();	// Handler for "subcommand unknown" error.
-
+#if 0
     esp_err_t act_mnt();	// action for 'mount' command
     esp_err_t act_umnt();	// action for 'unmount' command
     esp_err_t act_info();	// action for 'info' command
@@ -592,6 +592,7 @@ public:
     esp_err_t act_rm();		// action for remove/delete file command
     esp_err_t act_cat();	// action for 'cat' command
     esp_err_t act_type();	// action for 'type' command
+#endif
 
 private:
     int argc;
@@ -609,10 +610,10 @@ private:
     public:
 
 	// sucommand id
-	enum cmd_id { none, mount, unmount, info, pwd, mkdir, rmdir, cd, ls, cp, mv, rm, cat, type, helping, unknown = -1 };
+//	enum cmd_id { none, mount, unmount, info, pwd, mkdir, rmdir, cd, ls, cp, mv, rm, cat, type, helping, unknown = -1 };
 
 	static Syntax& get();
-	cmd_id id();	// Return subcommand id
+//	cmd_id id();	// Return subcommand id
 	int help();
 	static void** tables();
 	static ostream& hint(ostream&);	// hint for the command - suggest to see help
@@ -701,27 +702,39 @@ void register_sdcard_cmd(void)
     	return type;
 #endif
 
-#if 0
-//    static const act_cmd help_cmd("help", act::help);
-    static const act_cmd  mnt_cmd("mount", act::mnt);
-    static const act_cmd umnt_cmd("umount",act::umnt);
-    static const act_cmd info_cmd("info",  act::info);
-    static const act_cmd  pwd_cmd("pwd",   act::pwd);
-    static const act_cmd  mkd_cmd("mkdir", act::mkdir);
-    static const act_cmd  rmd_cmd("rmdir", act::rmdir);
-    static const act_cmd   cd_cmd("cd", act::cd);
-    static const act_cmd   ls_cmd("ls", act::ls);
-    static const act_cmd   cp_cmd("cp", act::cp);
-    static const act_cmd   mv_cmd("mv", act::mv);
-    static const act_cmd   rm_cmd("rm", act::rm);
-    static const act_cmd  cat_cmd("cat", act::cat);
-    static const act_cmd type_cmd("type", act::type);
-#endif
+    /// command action definitions
+    //static const act_cmd help_cmd([](std::string_view str) {return str == "help"|| str == "h";}, act::help, "help");
+    static const act_cmd  mnt_cmd([](std::string_view str) {return str == "mount" || str == "m";}, act::mnt, "mount");
+    static const act_cmd umnt_cmd([](std::string_view str) {return str == "umount"|| str == "u";},act::umnt, "umount");
+								/* esp_err_t act::umnt(std::vector<char*> args) */
+//    static const act_cmd info_cmd([](std::string_view str) {return str == "info"  || str == "i";}, act::info, "info");
+    static const act_cmd info_cmd([](std::string_view str) {return str == "info"  || str == "i";},
+	    [](std::vector<char*>) -> esp_err_t { return act::info(device);}, "info");
+    static const act_cmd  pwd_cmd([](std::string_view str) {return str == "pwd"   || str == "p";}, act::pwd, "pwd");
+    static const act_cmd  mkd_cmd([](std::string_view str) {return str == "mkdir";}, act::mkdir, "mkdir");
+    static const act_cmd  rmd_cmd([](std::string_view str) {return str == "rmdir";}, act::rmdir, "rmdir");
+    static const act_cmd   cd_cmd([](std::string_view str) {return str == "cd";}, act::cd, "cd");
+    static const act_cmd   ls_cmd([](std::string_view str) {return str == "ls" || str == "dir";}, act::ls, "ls");
+    static const act_cmd   cp_cmd([](std::string_view str) {return str == "cp" || str == "copy";}, act::cp, "cp");
+    static const act_cmd   mv_cmd([](std::string_view str) {return str == "mv" || str == "move";}, act::mv, "mv");
+    static const act_cmd   rm_cmd([](std::string_view str) {return str == "rm" || str == "del";}, act::rm, "rm");
+    static const act_cmd  cat_cmd([](std::string_view str) {return str == "cat" || str == "c";}, act::cat, "cat");
+    static const act_cmd type_cmd([](std::string_view str) {return str == "type"|| str == "t";}, act::type, "type");
 
-    static const act_cmd   ls_cmd([](std::string_view str) {return str == "dir" || str == "ls";}, act::ls, "ls");
 
-
+    SDctrl::cmd().enroll(mnt_cmd);
+    SDctrl::cmd().enroll(umnt_cmd);
+    SDctrl::cmd().enroll(info_cmd);
+    SDctrl::cmd().enroll(pwd_cmd);
+    SDctrl::cmd().enroll(mkd_cmd);
+    SDctrl::cmd().enroll(rmd_cmd);
+    SDctrl::cmd().enroll(cd_cmd);
     SDctrl::cmd().enroll(ls_cmd);
+    SDctrl::cmd().enroll(cp_cmd);
+    SDctrl::cmd().enroll(mv_cmd);
+    SDctrl::cmd().enroll(rm_cmd);
+    SDctrl::cmd().enroll(cat_cmd);
+    SDctrl::cmd().enroll(type_cmd);
 
     static void *args[] = {
 	    arg_rex1(NULL, NULL, "h|help", "h | help", 0/*REG_ICASE*/, "help for command 'sdcard'"),
@@ -798,7 +811,7 @@ esp_err_t SDctrl::exec(int argc, char **argv)
     ESP_LOGW("== [Iterating syntax2] ==", "First stored subcommand is: %s", instance.syntax2.begin()->hold.title().data());
     ESP_LOGW("== [Iterating syntax2] ==", "Second stored subcommand is: %s", (++instance.syntax2.begin())->hold.title().data());
     for (auto& cmd: instance.syntax2)
-	if (cmd == /*(const char*)*/argv[1])
+	if (cmd == argv[1])
 	{
 	    ESP_LOGW("Iterate syntax2", "Current subcommand is: [%s]", cmd.hold.title().data());
 	    /*return*/ cmd.hold.exec(argc, argv);
@@ -806,48 +819,60 @@ esp_err_t SDctrl::exec(int argc, char **argv)
 	}; /* if cmd == argc[1] */
     //auto it = std::find(l.begin(), l.end(), 16);
 
-
+#if 0
     switch (syntax.id())
     {
     case Syntax::mount:
-	return instance.act_mnt();
+//	return instance.act_mnt();
+	break;
 
     case Syntax::unmount:
-	return instance.act_umnt();
+//	return instance.act_umnt();
+	break;
 
     case Syntax::info:
-	return instance.act_info();
+//	return instance.act_info();
+	break;
 
     case Syntax::pwd:
-	return instance.act_pwd();
+//	return instance.act_pwd();
+	break;
 
     case Syntax::mkdir:
-	return instance.act_mkdir();
+//	return instance.act_mkdir();
+	break;
 
     case Syntax::rmdir:
-	return instance.act_rmdir();
+//	return instance.act_rmdir();
+	break;
 
     case Syntax::cd:
-	return instance.act_cd();
+//	return instance.act_cd();
+	break;
 
     case Syntax::ls:
 //	return instance.act_ls();
 	break;
 
     case Syntax::cp:
-	return instance.act_cp();
+//	return instance.act_cp();
+	break;
 
     case Syntax::mv:
-	return instance.act_mv();
+//	return instance.act_mv();
+	break;
 
     case Syntax::rm:
-	return instance.act_rm();
+//	return instance.act_rm();
+	break;
 
     case Syntax::cat:
-	return instance.act_cat();
+//	return instance.act_cat();
+	break;
 
     case Syntax::type:
-	return instance.act_type();
+//	return instance.act_type();
+	break;
 
     case Syntax::helping:
 	return syntax.help();
@@ -856,6 +881,7 @@ esp_err_t SDctrl::exec(int argc, char **argv)
     default:
 	return instance.err_unknown();
     }; /* switch instance.id() */
+#endif
 
     cout << endl;
     return ESP_OK;
@@ -898,7 +924,7 @@ esp_err_t SDctrl::err_unknown()
     return act::unknown(astr::makestor<std::vector<char*>>(argc, argv));
 }; /* SDctrl::err_unknown() */
 
-
+#if 0
 // action for 'mount' command
 esp_err_t SDctrl::act_mnt()
 {
@@ -1067,6 +1093,7 @@ esp_err_t SDctrl::act_type()
     ESP_LOGE("sdcard type command", "more than one parameters (%d) - what file save the type output?\n", argc - 2);
     return ESP_ERR_INVALID_ARG;
 }; /* SDctrl::act_type */
+#endif
 
 
 
@@ -1617,6 +1644,7 @@ void** SDctrl::Syntax::tables()
 
 }; /* SDctrl::Syntax::tables */
 
+#if 0
 // Return subcommand id
 SDctrl::Syntax::cmd_id
 SDctrl::Syntax::id()
@@ -1649,6 +1677,7 @@ SDctrl::Syntax::id()
 
     return unknown;
 }; /* SDctrl::Syntax::id */
+#endif
 
 
 
