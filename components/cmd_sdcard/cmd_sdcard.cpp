@@ -557,6 +557,9 @@ public:
     /// register sub-command aka options of the 'SD' command
     esp_err_t enroll(const act_cmd& subcmd);
 
+    /// the help action static wrapper procedure for singleton object
+    static esp_err_t help_act(/*int argc, char* argv[]*/std::vector<char*> args);
+
 
     static act_none const err_none_act;
     static act_unknown const err_unknown_act;
@@ -574,30 +577,14 @@ public:
     }; /* class act_ref */
 
 
-
-
-    esp_err_t err_none();	// Handler for "subcommand missing" error.
-    esp_err_t err_unknown();	// Handler for "subcommand unknown" error.
-#if 0
-    esp_err_t act_mnt();	// action for 'mount' command
-    esp_err_t act_umnt();	// action for 'unmount' command
-    esp_err_t act_info();	// action for 'info' command
-    esp_err_t act_pwd();	// action for 'pwd' command
-    esp_err_t act_mkdir();	// action for mkdir command
-    esp_err_t act_rmdir();	// action for rmdir command
-    esp_err_t act_cd();		// action for 'cd' command
-    esp_err_t act_ls();		// action for list/dir command
-    esp_err_t act_cp();		// action for 'copy file' command
-    esp_err_t act_mv();		// action for rename/move file command
-    esp_err_t act_rm();		// action for remove/delete file command
-    esp_err_t act_cat();	// action for 'cat' command
-    esp_err_t act_type();	// action for 'type' command
-#endif
-
 private:
     int argc;
     char **argv;
 
+    /// object "help" execution procedure
+    esp_err_t help(/*int argc, char* argv[]*/ std::vector<char*> args);
+
+    /// list of the defined commands
     std::list<act_ref> syntax2;
 
     SDctrl();		// Default constructor - private for singleton
@@ -609,12 +596,8 @@ private:
     {
     public:
 
-	// sucommand id
-//	enum cmd_id { none, mount, unmount, info, pwd, mkdir, rmdir, cd, ls, cp, mv, rm, cat, type, helping, unknown = -1 };
-
 	static Syntax& get();
-//	cmd_id id();	// Return subcommand id
-	int help();
+	int help(int argc, char **argv);
 	static void** tables();
 	static ostream& hint(ostream&);	// hint for the command - suggest to see help
 
@@ -665,49 +648,10 @@ static int sdcard_cmd(int argc, char **argv)
 // Register all SD-card commands
 void register_sdcard_cmd(void)
 {
-#if 0
-    esp_err_t act_mnt();	// action for 'mount' command
-    esp_err_t act_umnt();	// action for 'unmount' command
-    esp_err_t act_info();	// action for 'info' command
-    esp_err_t act_pwd();	// action for 'pwd' command
-    esp_err_t act_mkdir();	// action for mkdir command
-    esp_err_t act_rmdir();	// action for rmdir command
-    esp_err_t act_cd();		// action for 'cd' command
-    esp_err_t act_ls();		// action for list/dir command
-    esp_err_t act_cp();		// action for 'copy file' command
-    esp_err_t act_mv();		// action for rename/move file command
-    esp_err_t act_rm();		// action for remove/delete file command
-    esp_err_t act_cat();	// action for 'cat' command
-    esp_err_t act_type();	// action for 'type' command
-
-    if (astr::is_space(idstr))
-	return none;
-    if (idstr == "help" || idstr == "h")
-    	return helping;
-    if (idstr ==  "mount" || idstr == "m")
-    	return mount;
-    if (idstr == "umount" || idstr == "u")
-	return unmount;
-    if (idstr == "info" || idstr == "i")
-	return info;
-    if (idstr == "pwd" || idstr == "p")
-	return pwd;
-    if (idstr == "cd")
-	return cd;
-    if (idstr == "ls" || idstr == "dir")
-	return ls;
-    if (idstr == "cat" || idstr == "c")
-    	return cat;
-    if (idstr == "type" || idstr == "t")
-    	return type;
-#endif
-
     /// command action definitions
-    //static const act_cmd help_cmd([](std::string_view str) {return str == "help"|| str == "h";}, act::help, "help");
+    static const act_cmd help_cmd([](std::string_view str) {return str == "help"|| str == "h";}, SDctrl::help_act, "help");
     static const act_cmd  mnt_cmd([](std::string_view str) {return str == "mount" || str == "m";}, act::mnt, "mount");
     static const act_cmd umnt_cmd([](std::string_view str) {return str == "umount"|| str == "u";},act::umnt, "umount");
-								/* esp_err_t act::umnt(std::vector<char*> args) */
-//    static const act_cmd info_cmd([](std::string_view str) {return str == "info"  || str == "i";}, act::info, "info");
     static const act_cmd info_cmd([](std::string_view str) {return str == "info"  || str == "i";},
 	    [](std::vector<char*>) -> esp_err_t { return act::info(device);}, "info");
     static const act_cmd  pwd_cmd([](std::string_view str) {return str == "pwd"   || str == "p";}, act::pwd, "pwd");
@@ -735,6 +679,7 @@ void register_sdcard_cmd(void)
     SDctrl::cmd().enroll(rm_cmd);
     SDctrl::cmd().enroll(cat_cmd);
     SDctrl::cmd().enroll(type_cmd);
+    SDctrl::cmd().enroll(help_cmd);
 
     static void *args[] = {
 	    arg_rex1(NULL, NULL, "h|help", "h | help", 0/*REG_ICASE*/, "help for command 'sdcard'"),
@@ -785,6 +730,22 @@ SDctrl::SDctrl():
 }; /* SDctrl::SDctrl() */
 
 
+/// object "help" execution procedure
+inline esp_err_t SDctrl::help(std::vector<char*> args)
+{
+    ESP_LOGW("SDctrl::help", "Help wrapper call: exec syntax.help");
+    return syntax.help(args.size(), args.data());
+}; /* SDctrl::help() */
+
+
+/// the help action static wrapper procedure for singleton object
+esp_err_t SDctrl::help_act(std::vector<char*> args)
+{
+    ESP_LOGW(__PRETTY_FUNCTION__, "Help action execution");
+    return instance.help(args);
+}; /* SDctrl::help_act() */
+
+
 // get unigue single instance of the SDcmd object
 SDctrl& SDctrl::cmd()
 {
@@ -801,10 +762,9 @@ SDctrl& SDctrl::instance = SDctrl::cmd();
 esp_err_t SDctrl::exec(int argc, char **argv)
 {
 
-    instance.store(argc, argv);
+//    instance.store(argc, argv);
 
     if (argc == 1)
-//	return instance.err_none();
 	return SDctrl::err_none_act.exec(argc, argv);
 
     ESP_LOGW("=== Iterating syntax2 ===", "Subcommand is: %s", argv[1]);
@@ -819,69 +779,6 @@ esp_err_t SDctrl::exec(int argc, char **argv)
 	}; /* if cmd == argc[1] */
     //auto it = std::find(l.begin(), l.end(), 16);
 
-#if 0
-    switch (syntax.id())
-    {
-    case Syntax::mount:
-//	return instance.act_mnt();
-	break;
-
-    case Syntax::unmount:
-//	return instance.act_umnt();
-	break;
-
-    case Syntax::info:
-//	return instance.act_info();
-	break;
-
-    case Syntax::pwd:
-//	return instance.act_pwd();
-	break;
-
-    case Syntax::mkdir:
-//	return instance.act_mkdir();
-	break;
-
-    case Syntax::rmdir:
-//	return instance.act_rmdir();
-	break;
-
-    case Syntax::cd:
-//	return instance.act_cd();
-	break;
-
-    case Syntax::ls:
-//	return instance.act_ls();
-	break;
-
-    case Syntax::cp:
-//	return instance.act_cp();
-	break;
-
-    case Syntax::mv:
-//	return instance.act_mv();
-	break;
-
-    case Syntax::rm:
-//	return instance.act_rm();
-	break;
-
-    case Syntax::cat:
-//	return instance.act_cat();
-	break;
-
-    case Syntax::type:
-//	return instance.act_type();
-	break;
-
-    case Syntax::helping:
-	return syntax.help();
-
-    case Syntax::unknown:
-    default:
-	return instance.err_unknown();
-    }; /* switch instance.id() */
-#endif
 
     cout << endl;
     return ESP_OK;
@@ -908,192 +805,6 @@ act_none const SDctrl::err_none_act;
 act_unknown const SDctrl::err_unknown_act;
 
 
-
-
-
-
-// Handler for "subcommand missing" error.
-esp_err_t SDctrl::err_none()
-{
-    return act::none(astr::makestor<std::vector<char*>>(argc, argv));
-}; /* SDctrl::err_none() */
-
-// Handler for "subcommand unknown" error.
-esp_err_t SDctrl::err_unknown()
-{
-    return act::unknown(astr::makestor<std::vector<char*>>(argc, argv));
-}; /* SDctrl::err_unknown() */
-
-#if 0
-// action for 'mount' command
-esp_err_t SDctrl::act_mnt()
-{
-    if (!(argc > 4))
-	// offset for one item - drop the first "sd" command
-	return act::mnt(astr::makestor<std::vector<char*>>(argc - 1, argv + 1));
-
-    //    default: if !(argc > 3), e.g. sd type abc defg... - error parameters counting
-    ESP_LOGE("sdcard mount command", "more than two parameters (%d) is not allowed", argc - 2);
-
-    return ESP_ERR_INVALID_ARG;
-}; /* SDctrl::act_mnt() */
-
-
-// action for 'unmount' command
-esp_err_t SDctrl::act_umnt()
-{
-    if (!(argc > 3))
-	// offset for one item - drop the first "sd" command
-	return act::umnt(astr::makestor<std::vector<char*>>(argc - 1, argv + 1));
-
-    //    default: if !(argc > 3), e.g. sd type abc defg... - error parameters counting
-    ESP_LOGE("sdcard umount command", "more than one parameters (%d) - is not allowed", argc - 2);
-
-    return ESP_ERR_INVALID_ARG;
-
-}; /* SDctrl::act_umnt() */
-
-
-/// print info about the mounted SD-card
-esp_err_t SDctrl::act_info()
-{
-    return act::info(device);
-}; /* SDctrl::act_info() */
-
-
-/// action for pwd command
-esp_err_t SDctrl::act_pwd()
-{
-//    exec_server.pwd();
-//    return 0;
-    return act::pwd(astr::makestor<std::vector<char*>>(argc - 1, argv + 1));
-}; /* SDctrl::act_pwd() */
-
-
-/// action for 'mkdir' command
-esp_err_t SDctrl::act_mkdir()
-{
-    if (!(argc > 3))
-	// offset for one item - drop the first "sd" command
-	return act::mkdir(astr::makestor<std::vector<char*>>(argc - 1, argv + 1));
-
-    //    default: if !(argc > 3), e.g. sd type abc defg... - error parameters counting
-    ESP_LOGE("sdcard mkdir command", "more than one parameters (%d) - don't know what directory to create.\n", argc - 2);
-
-    return ESP_ERR_INVALID_ARG;
-}; /* SDctrl::act_mkdir() */
-
-
-/// action for 'rmdir' command
-esp_err_t SDctrl::act_rmdir()
-{
-    if (!(argc > 3))
-	// offset for one item - drop the first "sd" command
-	return act::rmdir(astr::makestor<std::vector<char*>>(argc - 1, argv + 1));
-
-    //    default: if !(argc > 3), e.g. sd type abc defg... - error parameters counting
-    ESP_LOGE("sdcard rmdir command", "more than one parameters (%d) - deleting multiple directories at once is not allowed\n", argc - 2);
-
-    return ESP_ERR_INVALID_ARG;
-}; /* SDctrl::act_mkdir() */
-
-
-/// action for 'cd' command
-esp_err_t SDctrl::act_cd()
-{
-    if (!(argc > 3))
-	// offset for one item - drop the first "sd" command
-	return act::cd(astr::makestor<std::vector<char*>>(argc - 1, argv + 1));
-
-    //    default: if !(argc > 3), e.g. sd type abc defg... - error parameters counting
-    ESP_LOGE("sdcard cd command", "more than one parameters (%d) - where to go?\n", argc - 2);
-
-    return ESP_ERR_INVALID_ARG;
-}; /* SDctrl::act_cd() */
-
-
-/// action for list/dir command
-esp_err_t SDctrl::act_ls()
-{
-    if (!(argc > 3))
-	// offset for one item - drop the first "sd" command
-	return act::ls(astr::makestor<std::vector<char*>>(argc - 1, argv + 1));
-
-    //    default: if !(argc > 3), e.g. sd type abc defg... - error parameters counting
-    ESP_LOGE("sdcard ls command", "more than one parameters (%d) - what directory to listing?\n", argc - 2);
-
-    return ESP_ERR_INVALID_ARG;
-}; /* SDctrl::act_ls() */
-
-
-/// action for 'copy' command
-esp_err_t SDctrl::act_cp()
-{
-    if (!(argc > 4))
-	// offset for one item - drop the first "sd" command
-	return act::cp(astr::makestor<std::vector<char*>>(argc - 1, argv + 1));
-
-    //    default: if !(argc > 4), e.g. sd type abc defg... - error parameters counting
-    ESP_LOGE("sdcard ls command", "more than two parameters (%d) - don't know what to copy\n", argc - 2);
-    cout << endl;
-
-    return ESP_ERR_INVALID_ARG;
-}; /* SDctrl::act_cp */
-
-
-/// action for 'rename/move' command
-esp_err_t SDctrl::act_mv()
-{
-    if (!(argc > 4))
-	// offset for one item - drop the first "sd" command
-	return act::mv(astr::makestor<std::vector<char*>>(argc - 1, argv + 1));
-
-    //    default: if !(argc > 4), e.g. sd type abc defg... - error parameters counting
-    ESP_LOGE("sdcard mv command", "more than two parameters (%d) - don't know what to rename/move\n", argc - 2);
-
-    return ESP_ERR_INVALID_ARG;
-}; /* SDctrl::act_mv */
-
-
-// action for rm command
-esp_err_t SDctrl::act_rm()
-{
-    if (!(argc > 3))
-	// offset for one item - drop the first "sd" command
-	return act::rm(astr::makestor<std::vector<char*>>(argc - 1, argv + 1));
-
-    //    default: if !(argc > 3), e.g. sd type abc defg... - error parameters counting
-    ESP_LOGE("sdcard rm command", "more than one parameters (%d) - don't know what to remove\n", argc - 2);
-
-    return ESP_ERR_INVALID_ARG;
-}; /* SDctrl::act_rm */
-
-
-// action for 'cat' command
-esp_err_t SDctrl::act_cat()
-{
-    if (!(argc > 3))
-	// offset for one item - drop the first "sd" command
-	return act::cat(astr::makestor<std::vector<char*>>(argc - 1, argv + 1));
-
-    //    default: if !(argc > 3), e.g. sd type abc defg... - error parameters counting
-    ESP_LOGE("sdcard cat command", "more than one parameters (%d) - what file is to be printed?\n", argc - 2);
-    return ESP_ERR_INVALID_ARG;
-}; /* SDctrl::act_cat */
-
-
-// action for 'type' command
-esp_err_t SDctrl::act_type()
-{
-    if (!(argc > 3))
-	    // offset for one item - drop the first "sd" command
-	    return act::type(astr::makestor<std::vector<char*>>(argc - 1, argv + 1));
-
-    //    default: if !(argc > 3), e.g. sd type abc defg... - error parameters counting
-    ESP_LOGE("sdcard type command", "more than one parameters (%d) - what file save the type output?\n", argc - 2);
-    return ESP_ERR_INVALID_ARG;
-}; /* SDctrl::act_type */
-#endif
 
 
 
@@ -1681,7 +1392,7 @@ SDctrl::Syntax::id()
 
 
 
-int SDctrl::Syntax::help()
+int SDctrl::Syntax::help(int argc, char **argv)
 {
     cout << "#### Help action, implemented in the SDcmd::Syntax class, method help(). ####" << endl;
 
@@ -1699,16 +1410,16 @@ int SDctrl::Syntax::help()
 	return -1;
     }; /* if !tables()[0] */
 
-    cout << "Usage: " << parent.argv[0];
+    cout << "Usage: " << /*parent.*/argv[0];
     arg_print_syntax(stdout, (void**)alltables[0], "\n");
 
     for (void **currcmd = tables() + 1; *currcmd != NULL; currcmd++)
     {
-	cout << "       " << parent.argv[0];
+	cout << "       " << /*parent.*/argv[0];
 	arg_print_syntax(stdout, (void**)*currcmd, "\n");
     }; /* for void **currcmd */
 
-    cout << "Command \"" << parent.argv[0] << "\" supports the ESP32 operation with an SD card." << endl;
+    cout << "Command \"" << /*parent.*/argv[0] << "\" supports the ESP32 operation with an SD card." << endl;
     cout << "Use subcommands to invoke individual operations; operation are: mount, unmount, ls, cat, type, help." << endl;
 
     for (void **currcmd = tables(); *currcmd != NULL; currcmd++)
@@ -1716,7 +1427,7 @@ int SDctrl::Syntax::help()
 
     return 0;
 
-}; /* SDctrl::Syntax::help */
+}; /* SDctrl::Syntax::help() */
 
 
 // for initializing singleton at the initial phase of programm
