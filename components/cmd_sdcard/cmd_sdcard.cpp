@@ -556,31 +556,60 @@ public:
     esp_err_t enroll(const act_cmd& subcmd);
 
     /// the help action static wrapper procedure for singleton object
-    static esp_err_t help_act(/*int argc, char* argv[]*/std::vector<char*> args);
+    static esp_err_t help_act(std::vector<char*> args);
 
 
-#if 0
-    static const act_none err_none;
-    static const act_unknown err_unknown;
-#endif
-
+    /// error handler action if subcommand is absent
     static esp_err_t err_none(std::vector<char*> args)
+#if 0
     {
 	    // exec operated command, specialization for the class act_none
 //	ESP_LOGW("act_none::exec()", "None of subcommand action execution, command is: \"%s\"", argv[0]);
-	return act::none(args);
+//	return act::none(args);
+	return err_none(args.size(), args.data());
+
     }; /* err_none() */
+#endif
+    ;
 
-    static esp_err_t err_none(int argc, char* argv[]) {
-	return act::none(astr::makestor<std::vector<char*>>(argc, argv)); };
+    /// error handler action if subcommand is absent, argc/argv version
+    static esp_err_t err_none(int argc, char* argv[])
+#if 0
+    {
 
-    /// error handler action if subcommand is absent
+//	inline ostream& act::hint::msg(ostream& ostr) const   {
+//	    ostr << "Try \"" << arg << " help\" for more information.";
+//	    return ostr;
+//	}; /* act::hint::msg() */
+//
+//
+//
+//	// Handler for "subcommand missing" error.
+//	//esp_err_t act::none(std::string_view argv0)
+//	esp_err_t act::none(std::vector<char*> args)
+//	{
+//	    ESP_LOGE("sdcard command", "subcommand missing, what to run?");
+//	    cout << act::hint(args[0]) << endl;
+//	    return ESP_OK;
+
+	    ESP_LOGE("sdcard command", "subcommand missing, what to run?");
+	    cout << "Try \"" << argv[0] << " help\" for more information." ;
+	    return ESP_OK;
+
+//	return act::none(astr::makestor<std::vector<char*>>(argc, argv));
+    };
+#endif
+    ;
+
+    /// error handler action if subcommand unknown
     static esp_err_t err_unknown(std::vector<char*> args)
+#if 0
     {
 //    	ESP_LOGW("act_unknown::exec()", "Unknown subcommand is present, command is: \"%s\", subcommand: \"%s\"", argv[0], argv[1]);
         return act::unknown(args);
     }; /* err_unknown() */
-
+#endif
+;
 
 
     class act_shft: public act_cmd
@@ -754,13 +783,9 @@ SDctrl::SDctrl()
     // Initialize base part of subcommand list with terminal cmd obj:
     // error_none & error_unknown subcommand ojects
 	static const act_cmd none_cmd([](std::string_view str) {return str == "";}, SDctrl::err_none, "none");
-//	static const act_cmd none_cmd([](std::string_view str) {return str == "";}, act::none, "none");
 	static const act_cmd unknown_cmd([](std::string_view str) {return true;}, SDctrl::err_unknown, "unknown");
-//	static const act_cmd unknown_cmd([](std::string_view str) {return true;}, act::unknown, "unknown");
 
-//    syntax.push_back(SDctrl::err_none);
     syntax.push_back(none_cmd);
-//    syntax.push_back(SDctrl::err_unknown);
     syntax.push_back(unknown_cmd);
 }; /* SDctrl::SDctrl() */
 
@@ -779,6 +804,34 @@ esp_err_t SDctrl::help_act(std::vector<char*> args)
     ESP_LOGW(__PRETTY_FUNCTION__, "Help action execution");
     return instance.help(args.size(), args.data());
 }; /* SDctrl::help_act() */
+
+
+/// error handler action if subcommand is absent
+inline esp_err_t SDctrl::err_none(std::vector<char*> args)
+{
+	    // exec operated command, specialization for the class act_none
+//	ESP_LOGW("act_none::exec()", "None of subcommand action execution, command is: \"%s\"", argv[0]);
+	return err_none(args.size(), args.data());
+}; /* SDctrl::err_none() */
+
+/// error handler action if subcommand is absent, argc/argv version
+esp_err_t SDctrl::err_none(int argc, char* argv[])
+{
+    ESP_LOGE("sdcard command", "subcommand missing, what to run?");
+    cout << "Try \"" << argv[0] << " help\" for more information." ;
+    return ESP_OK;
+}; /* SDctrl::err_none() */
+
+
+/// error handler action if subcommand unknown
+esp_err_t SDctrl::err_unknown(std::vector<char*> args)
+{
+//    	ESP_LOGW("act_unknown::exec()", "Unknown subcommand is present, command is: \"%s\", subcommand: \"%s\"", argv[0], argv[1]);
+    return act::unknown(args);
+    ESP_LOGE("sdcard command", "Unknown options: \"%s\".", args[1]);
+    cout << "Try \"" << args[0] << " help\" for more information." ;
+    return ESP_OK;
+}; /* SDctrl::err_unknown() */
 
 
 // get unigue single instance of the SDcmd object
@@ -835,11 +888,6 @@ esp_err_t SDctrl::enroll(const act_cmd& subcmd)
     return ESP_OK;
 }; /* SDctrl::enroll() */
 
-
-#if 0
-const act_none SDctrl::err_none;
-const act_unknown SDctrl::err_unknown;
-#endif
 
 
 
