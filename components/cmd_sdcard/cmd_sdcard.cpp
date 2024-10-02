@@ -428,7 +428,7 @@ void register_fs_cmd_all(void)
 class act_cmd
 {
 public:
-    act_cmd(/*std::string_view*//*const char cmd_name[]*/ std::function<bool(std::string_view)> cmp_def,
+    act_cmd(std::function<bool(std::string_view)> cmp_def,
 	    esp_err_t (*exec_action)(std::vector<char*> args),
 	    const char cmd_name[] = "<spared>"):
 	name(cmd_name),
@@ -459,18 +459,18 @@ protected:
 
 }; /* class act_cmd */
 
-
+#if 0
 // subcommand action wrapper for subcommand is absent
 class act_none: public act_cmd
 {
 public:
-    act_none(): act_cmd(/*""*/[](std::string_view str) {return str == "";}, act::none, "") {};
+    act_none(): act_cmd([](std::string_view str) {return str == "";}, act::none, "") {};
     ~act_none() override {};
 
     esp_err_t exec(int argc, char* argv[]) const override {
 	    // exec operated command, specialization for the class act_none
 		ESP_LOGW("act_none::exec()", "None of subcommand action execution, command is: \"%s\"", argv[0]);
-    return action(astr::makestor<std::vector<char*>>(argc, argv)); }
+    return act_cmd::exec(argc, argv)/*action(astr::makestor<std::vector<char*>>(argc, argv))*/; }
 
 
 }; /* class act_none */
@@ -490,9 +490,10 @@ public:
     // exec operated command, specialization for the class act_none
     esp_err_t exec(int argc, char* argv[]) const override {
 	ESP_LOGW("act_unknown::exec()", "Unknown subcommand is present, command is: \"%s\", subcommand: \"%s\"", argv[0], argv[1]);
-    return action(astr::makestor<std::vector<char*>>(argc, argv)); }
+    return act_cmd::exec(argc, argv)/*action(astr::makestor<std::vector<char*>>(argc, argv))*/; }
 
-}; /* class act_none */
+}; /* class act_unknown */
+#endif
 
 
 
@@ -525,17 +526,17 @@ inline bool act_cmd::cmp(const char str[]) const {
 }; /* act_cmd::cmp() */
 
 inline bool act_cmd::cmp(std::string_view str) const {
-    return /*(name == str)*/ cmp_core(str);
+    return cmp_core(str);
 }; /* act_cmd::cmp() */
 
 inline bool act_cmd::cmp(const act_cmd& extcmd) const {
-    return /*(name == extcmd.name)*/ cmp_core(extcmd.title());
+    return cmp_core(extcmd.title());
 }
 
-// standard execution of the operated command in class act_cmd
+// standard execution (non-shifted) of the operated command in class act_cmd
 esp_err_t act_cmd::exec(int argc, char* argv[]) const
 {
-    return action(astr::makestor<std::vector<char*>>(argc - 1, argv + 1));
+    return action(astr::makestor<std::vector<char*>>(argc, argv));
 }; /* act_cmd::exec() */
 
 
@@ -558,8 +559,43 @@ public:
     static esp_err_t help_act(/*int argc, char* argv[]*/std::vector<char*> args);
 
 
+#if 0
     static const act_none err_none;
     static const act_unknown err_unknown;
+#endif
+
+    static esp_err_t err_none(std::vector<char*> args)
+    {
+	    // exec operated command, specialization for the class act_none
+//	ESP_LOGW("act_none::exec()", "None of subcommand action execution, command is: \"%s\"", argv[0]);
+	return act::none(args);
+    }; /* err_none() */
+
+    static esp_err_t err_none(int argc, char* argv[]) {
+	return act::none(astr::makestor<std::vector<char*>>(argc, argv)); };
+
+    /// error handler action if subcommand is absent
+    static esp_err_t err_unknown(std::vector<char*> args)
+    {
+//    	ESP_LOGW("act_unknown::exec()", "Unknown subcommand is present, command is: \"%s\", subcommand: \"%s\"", argv[0], argv[1]);
+        return act::unknown(args);
+    }; /* err_unknown() */
+
+
+
+    class act_shft: public act_cmd
+    {
+    public:
+        act_shft(std::function<bool(std::string_view)> accept,
+    	    esp_err_t (*exec_act)(std::vector<char*>),
+    	    const char cmd_name[] = "<spared>"):
+    	act_cmd(accept, exec_act, cmd_name)
+        {};
+
+        // exec stored command
+        esp_err_t exec(int argc, char* argv[]) const override;
+
+    }; /* class act_shft */
 
 
     /// Storage wrapper for reference to class act_cmd
@@ -577,7 +613,7 @@ public:
 private:
 
     /// object help for object execution procedure
-    esp_err_t help(/*int argc, char* argv[]*/std::vector<char*> args);
+    esp_err_t help(int argc, char* argv[] /*std::vector<char*> args*/);
 
     /// list of the defined commands
     std::list<act_ref> syntax;
@@ -642,22 +678,22 @@ static int sdcard_cmd(int argc, char **argv)
 // Register all SD-card commands
 void register_sdcard_cmd(void)
 {
-    /// command action definitions
-    static const act_cmd help_cmd([](std::string_view str) {return str == "help"|| str == "h";}, SDctrl::help_act, "help");
-    static const act_cmd  mnt_cmd([](std::string_view str) {return str == "mount" || str == "m";}, act::mnt, "mount");
-    static const act_cmd umnt_cmd([](std::string_view str) {return str == "umount"|| str == "u";},act::umnt, "umount");
-    static const act_cmd info_cmd([](std::string_view str) {return str == "info"  || str == "i";},
-	    [](std::vector<char*>) -> esp_err_t { return act::info(device);}, "info");
-    static const act_cmd  pwd_cmd([](std::string_view str) {return str == "pwd"   || str == "p";}, act::pwd, "pwd");
-    static const act_cmd  mkd_cmd([](std::string_view str) {return str == "mkdir";}, act::mkdir, "mkdir");
-    static const act_cmd  rmd_cmd([](std::string_view str) {return str == "rmdir";}, act::rmdir, "rmdir");
-    static const act_cmd   cd_cmd([](std::string_view str) {return str == "cd";}, act::cd, "cd");
-    static const act_cmd   ls_cmd([](std::string_view str) {return str == "ls" || str == "dir";}, act::ls, "ls");
-    static const act_cmd   cp_cmd([](std::string_view str) {return str == "cp" || str == "copy";}, act::cp, "cp");
-    static const act_cmd   mv_cmd([](std::string_view str) {return str == "mv" || str == "move";}, act::mv, "mv");
-    static const act_cmd   rm_cmd([](std::string_view str) {return str == "rm" || str == "del";}, act::rm, "rm");
-    static const act_cmd  cat_cmd([](std::string_view str) {return str == "cat" || str == "c";}, act::cat, "cat");
-    static const act_cmd type_cmd([](std::string_view str) {return str == "type"|| str == "t";}, act::type, "type");
+	/// command action definitions
+	static const act_cmd help_cmd([](std::string_view str) {return str == "help"|| str == "h";}, SDctrl::help_act, "help");
+	static const SDctrl::act_shft  mnt_cmd([](std::string_view str) {return str == "mount" || str == "m";}, act::mnt, "mount");
+	static const SDctrl::act_shft umnt_cmd([](std::string_view str) {return str == "umount"|| str == "u";},act::umnt, "umount");
+	static const SDctrl::act_shft info_cmd([](std::string_view str) {return str == "info"  || str == "i";},
+					[](std::vector<char*>) -> esp_err_t { return act::info(device);}, "info");
+	static const SDctrl::act_shft  pwd_cmd([](std::string_view str) {return str == "pwd"   || str == "p";}, act::pwd, "pwd");
+	static const SDctrl::act_shft  mkd_cmd([](std::string_view str) {return str == "mkdir";}, act::mkdir, "mkdir");
+	static const SDctrl::act_shft  rmd_cmd([](std::string_view str) {return str == "rmdir";}, act::rmdir, "rmdir");
+	static const SDctrl::act_shft   cd_cmd([](std::string_view str) {return str == "cd";}, act::cd, "cd");
+	static const SDctrl::act_shft   ls_cmd([](std::string_view str) {return str == "ls" || str == "dir";}, act::ls, "ls");
+	static const SDctrl::act_shft   cp_cmd([](std::string_view str) {return str == "cp" || str == "copy";}, act::cp, "cp");
+	static const SDctrl::act_shft   mv_cmd([](std::string_view str) {return str == "mv" || str == "move";}, act::mv, "mv");
+	static const SDctrl::act_shft   rm_cmd([](std::string_view str) {return str == "rm" || str == "del";}, act::rm, "rm");
+	static const SDctrl::act_shft  cat_cmd([](std::string_view str) {return str == "cat" || str == "c";}, act::cat, "cat");
+	static const SDctrl::act_shft type_cmd([](std::string_view str) {return str == "type"|| str == "t";}, act::type, "type");
 
 
     SDctrl::cmd().enroll(mnt_cmd);
@@ -700,7 +736,7 @@ void register_sdcard_cmd(void)
 	    //        .hint = "enter subcommand for Sd card operations",
 	    .hint = NULL,
 	    .func = &sdcard_cmd,
-	    .argtable = NULL
+	    .argtable = &args/*NULL*/
     };
     register_cmd(&cmd2);
 
@@ -715,18 +751,25 @@ void register_sdcard_cmd(void)
 SDctrl::SDctrl()
 {
     /*InitSyntax();*/
-    // Initialize list of subcommand with terminal cmd obj:
+    // Initialize base part of subcommand list with terminal cmd obj:
     // error_none & error_unknown subcommand ojects
-    syntax.push_back(SDctrl::err_none);
-    syntax.push_back(SDctrl::err_unknown);
+	static const act_cmd none_cmd([](std::string_view str) {return str == "";}, SDctrl::err_none, "none");
+//	static const act_cmd none_cmd([](std::string_view str) {return str == "";}, act::none, "none");
+	static const act_cmd unknown_cmd([](std::string_view str) {return true;}, SDctrl::err_unknown, "unknown");
+//	static const act_cmd unknown_cmd([](std::string_view str) {return true;}, act::unknown, "unknown");
+
+//    syntax.push_back(SDctrl::err_none);
+    syntax.push_back(none_cmd);
+//    syntax.push_back(SDctrl::err_unknown);
+    syntax.push_back(unknown_cmd);
 }; /* SDctrl::SDctrl() */
 
 
 /// object "help" execution procedure
-inline esp_err_t SDctrl::help(std::vector<char*> args)
+inline esp_err_t SDctrl::help(int argc, char* argv[] /*std::vector<char*> args*/)
 {
     ESP_LOGW("SDctrl::help", "Help wrapper call: exec syntax.help");
-    return syntax_old.help(args.size(), args.data());
+    return syntax_old.help(argc, argv);
 }; /* SDctrl::help() */
 
 
@@ -734,7 +777,7 @@ inline esp_err_t SDctrl::help(std::vector<char*> args)
 esp_err_t SDctrl::help_act(std::vector<char*> args)
 {
     ESP_LOGW(__PRETTY_FUNCTION__, "Help action execution");
-    return instance.help(args);
+    return instance.help(args.size(), args.data());
 }; /* SDctrl::help_act() */
 
 
@@ -750,6 +793,14 @@ SDctrl& SDctrl::cmd()
 SDctrl& SDctrl::instance = SDctrl::cmd();
 
 
+// shifted execution - drop the first argument of the calling command
+esp_err_t SDctrl::act_shft::exec(int argc, char* argv[]) const
+{
+    return action(astr::makestor<std::vector<char*>>(argc - 1, argv + 1));
+}; /* act_cmd::exec() */
+
+
+
 // execute the 'SD' command
 esp_err_t SDctrl::exec(int argc, char **argv)
 {
@@ -757,7 +808,7 @@ esp_err_t SDctrl::exec(int argc, char **argv)
 //    instance.store(argc, argv);
 
     if (argc == 1)
-	return SDctrl::err_none.exec(argc, argv);
+	return err_none(argc, argv);
 
     ESP_LOGW("=== Iterating syntax2 ===", "Subcommand is: %s", argv[1]);
     ESP_LOGW("== [Iterating syntax2] ==", "First stored subcommand is: %s", instance.syntax.begin()->hold.title().data());
@@ -766,7 +817,7 @@ esp_err_t SDctrl::exec(int argc, char **argv)
 	if (cmd == argv[1])
 	{
 	    ESP_LOGW("Iterate syntax2", "Current subcommand is: [%s]", cmd.hold.title().data());
-	    /*return*/ cmd.hold.exec(argc, argv);
+	    cmd.hold.exec(argc, argv);
 	    break;
 	}; /* if cmd == argc[1] */
     //auto it = std::find(l.begin(), l.end(), 16);
@@ -785,8 +836,10 @@ esp_err_t SDctrl::enroll(const act_cmd& subcmd)
 }; /* SDctrl::enroll() */
 
 
+#if 0
 const act_none SDctrl::err_none;
 const act_unknown SDctrl::err_unknown;
+#endif
 
 
 
