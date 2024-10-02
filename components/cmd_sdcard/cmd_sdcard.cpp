@@ -546,9 +546,6 @@ esp_err_t act_cmd::exec(int argc, char* argv[]) const
 class SDctrl
 {
 public:
-
-    /// Initializing current command environment
-    void store(int argc, char *argv[]);
     /// get unigue single instance of the SDcmd object
     static SDctrl& cmd();
     /// execute the 'SD' command
@@ -561,8 +558,8 @@ public:
     static esp_err_t help_act(/*int argc, char* argv[]*/std::vector<char*> args);
 
 
-    static act_none const err_none_act;
-    static act_unknown const err_unknown_act;
+    static const act_none err_none;
+    static const act_unknown err_unknown;
 
 
     /// Storage wrapper for reference to class act_cmd
@@ -578,14 +575,12 @@ public:
 
 
 private:
-    int argc;
-    char **argv;
 
-    /// object "help" execution procedure
-    esp_err_t help(/*int argc, char* argv[]*/ std::vector<char*> args);
+    /// object help for object execution procedure
+    esp_err_t help(/*int argc, char* argv[]*/std::vector<char*> args);
 
     /// list of the defined commands
-    std::list<act_ref> syntax2;
+    std::list<act_ref> syntax;
 
     SDctrl();		// Default constructor - private for singleton
     SDctrl(SDctrl&) = delete;	// copy constructor forbidden for singleton
@@ -599,7 +594,6 @@ private:
 	static Syntax& get();
 	int help(int argc, char **argv);
 	static void** tables();
-	static ostream& hint(ostream&);	// hint for the command - suggest to see help
 
     private:
 	Syntax();
@@ -613,7 +607,7 @@ private:
     };
 
     static SDctrl& instance;    // Unique single instance of the SDcmd object
-    static Syntax& syntax;	// reference to inner 'syntax' object, contain`s all syntax tables
+    static Syntax& syntax_old;	// reference to inner 'syntax' object, contain`s all syntax tables, old versions
 
 }; /* SDctrl */
 
@@ -718,15 +712,13 @@ void register_sdcard_cmd(void)
 
 
 // Default constructor
-SDctrl::SDctrl():
-	argc(0),
-	argv(nullptr)
+SDctrl::SDctrl()
 {
-    /*InitSyntaxs();*/
+    /*InitSyntax();*/
     // Initialize list of subcommand with terminal cmd obj:
     // error_none & error_unknown subcommand ojects
-    syntax2.push_back(SDctrl::err_none_act);
-    syntax2.push_back(SDctrl::err_unknown_act);
+    syntax.push_back(SDctrl::err_none);
+    syntax.push_back(SDctrl::err_unknown);
 }; /* SDctrl::SDctrl() */
 
 
@@ -734,7 +726,7 @@ SDctrl::SDctrl():
 inline esp_err_t SDctrl::help(std::vector<char*> args)
 {
     ESP_LOGW("SDctrl::help", "Help wrapper call: exec syntax.help");
-    return syntax.help(args.size(), args.data());
+    return syntax_old.help(args.size(), args.data());
 }; /* SDctrl::help() */
 
 
@@ -765,12 +757,12 @@ esp_err_t SDctrl::exec(int argc, char **argv)
 //    instance.store(argc, argv);
 
     if (argc == 1)
-	return SDctrl::err_none_act.exec(argc, argv);
+	return SDctrl::err_none.exec(argc, argv);
 
     ESP_LOGW("=== Iterating syntax2 ===", "Subcommand is: %s", argv[1]);
-    ESP_LOGW("== [Iterating syntax2] ==", "First stored subcommand is: %s", instance.syntax2.begin()->hold.title().data());
-    ESP_LOGW("== [Iterating syntax2] ==", "Second stored subcommand is: %s", (++instance.syntax2.begin())->hold.title().data());
-    for (auto& cmd: instance.syntax2)
+    ESP_LOGW("== [Iterating syntax2] ==", "First stored subcommand is: %s", instance.syntax.begin()->hold.title().data());
+    ESP_LOGW("== [Iterating syntax2] ==", "Second stored subcommand is: %s", (++instance.syntax.begin())->hold.title().data());
+    for (auto& cmd: instance.syntax)
 	if (cmd == argv[1])
 	{
 	    ESP_LOGW("Iterate syntax2", "Current subcommand is: [%s]", cmd.hold.title().data());
@@ -788,23 +780,13 @@ esp_err_t SDctrl::exec(int argc, char **argv)
 /// register sub-command aka options of the 'SD' command
 esp_err_t SDctrl::enroll(const act_cmd& subcmd)
 {
-    syntax2.insert(--(--syntax2.end()) , subcmd);
+    syntax.insert(--(--syntax.end()) , subcmd);
     return ESP_OK;
 }; /* SDctrl::enroll() */
 
 
-// Initializing current command environment
-void SDctrl::store(int argcnt, char *argvalue[])
-{
-    argc = argcnt;
-    argv = argvalue;
-}; /* SDctrl::store */
-
-
-act_none const SDctrl::err_none_act;
-act_unknown const SDctrl::err_unknown_act;
-
-
+const act_none SDctrl::err_none;
+const act_unknown SDctrl::err_unknown;
 
 
 
@@ -1180,7 +1162,7 @@ esp_err_t act::type(std::vector<char*> args)
 
 
 // syntax table storage
-SDctrl::Syntax& SDctrl::syntax = SDctrl::Syntax::get();
+SDctrl::Syntax& SDctrl::syntax_old = SDctrl::Syntax::get();
 
 
 //--[ Inner class of the Syntax Contains Syntax tables for subcommand for 'sdcard' command ]---
@@ -1212,14 +1194,6 @@ SDctrl::Syntax& SDctrl::Syntax::get()
 
     return instance;
 }; /* SDctrl::Syntax::get */
-
-
-// hint for the command - suggest to see help
-ostream& SDctrl::Syntax::hint(ostream& out)
-{
-    out << "Try \"" << parent.argv[0] << " help\" for more information.";
-    return out;
-}; /* SDctrl::Syntax::hint */
 
 
 
@@ -1354,41 +1328,6 @@ void** SDctrl::Syntax::tables()
     return syntaxes;
 
 }; /* SDctrl::Syntax::tables */
-
-#if 0
-// Return subcommand id
-SDctrl::Syntax::cmd_id
-SDctrl::Syntax::id()
-{
-    if (parent.argc < 2)
-	return none;
-
-	    std::string idstr = parent.argv[1];
-
-    if (astr::is_space(idstr))
-	return none;
-    if (idstr == "help" || idstr == "h")
-    	return helping;
-    if (idstr ==  "mount" || idstr == "m")
-    	return mount;
-    if (idstr == "umount" || idstr == "u")
-	return unmount;
-    if (idstr == "info" || idstr == "i")
-	return info;
-    if (idstr == "pwd" || idstr == "p")
-	return pwd;
-    if (idstr == "cd")
-	return cd;
-    if (idstr == "ls" || idstr == "dir")
-	return ls;
-    if (idstr == "cat" || idstr == "c")
-    	return cat;
-    if (idstr == "type" || idstr == "t")
-    	return type;
-
-    return unknown;
-}; /* SDctrl::Syntax::id */
-#endif
 
 
 
