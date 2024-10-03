@@ -459,41 +459,6 @@ protected:
 
 }; /* class act_cmd */
 
-#if 0
-// subcommand action wrapper for subcommand is absent
-class act_none: public act_cmd
-{
-public:
-    act_none(): act_cmd([](std::string_view str) {return str == "";}, act::none, "") {};
-    ~act_none() override {};
-
-    esp_err_t exec(int argc, char* argv[]) const override {
-	    // exec operated command, specialization for the class act_none
-		ESP_LOGW("act_none::exec()", "None of subcommand action execution, command is: \"%s\"", argv[0]);
-    return act_cmd::exec(argc, argv)/*action(astr::makestor<std::vector<char*>>(argc, argv))*/; }
-
-
-}; /* class act_none */
-
-
-// subcommand action wrapper for subcommand is absent
-class act_unknown: public act_cmd
-{
-public:
-    act_unknown(): act_cmd(/*"*"*/[](std::string_view str) {return true; }, act::unknown, "*") {};
-    ~act_unknown() override {};
-
-    // compare specialization for class act_unknown, always 'true'
-    bool cmp(std::string_view extname) const override { return true; };
-    bool cmp(const act_cmd& extcmd) const override  { return true; };
-
-    // exec operated command, specialization for the class act_none
-    esp_err_t exec(int argc, char* argv[]) const override {
-	ESP_LOGW("act_unknown::exec()", "Unknown subcommand is present, command is: \"%s\", subcommand: \"%s\"", argv[0], argv[1]);
-    return act_cmd::exec(argc, argv)/*action(astr::makestor<std::vector<char*>>(argc, argv))*/; }
-
-}; /* class act_unknown */
-#endif
 
 
 
@@ -559,57 +524,16 @@ public:
     static esp_err_t help_act(std::vector<char*> args);
 
 
-    /// error handler action if subcommand is absent
-    static esp_err_t err_none(std::vector<char*> args)
-#if 0
-    {
-	    // exec operated command, specialization for the class act_none
-//	ESP_LOGW("act_none::exec()", "None of subcommand action execution, command is: \"%s\"", argv[0]);
-//	return act::none(args);
-	return err_none(args.size(), args.data());
-
-    }; /* err_none() */
-#endif
-    ;
-
     /// error handler action if subcommand is absent, argc/argv version
-    static esp_err_t err_none(int argc, char* argv[])
-#if 0
-    {
-
-//	inline ostream& act::hint::msg(ostream& ostr) const   {
-//	    ostr << "Try \"" << arg << " help\" for more information.";
-//	    return ostr;
-//	}; /* act::hint::msg() */
-//
-//
-//
-//	// Handler for "subcommand missing" error.
-//	//esp_err_t act::none(std::string_view argv0)
-//	esp_err_t act::none(std::vector<char*> args)
-//	{
-//	    ESP_LOGE("sdcard command", "subcommand missing, what to run?");
-//	    cout << act::hint(args[0]) << endl;
-//	    return ESP_OK;
-
-	    ESP_LOGE("sdcard command", "subcommand missing, what to run?");
-	    cout << "Try \"" << argv[0] << " help\" for more information." ;
-	    return ESP_OK;
-
-//	return act::none(astr::makestor<std::vector<char*>>(argc, argv));
-    };
-#endif
-    ;
+    static esp_err_t err_none(int argc, char* argv[]);
+    /// error handler action if subcommand is absent
+    static esp_err_t err_none(std::vector<char*> args) {
+	//	ESP_LOGW("act_none::exec()", "None of subcommand action execution, command is: \"%s\"", argv[0]);
+    	return err_none(args.size(), args.data());
+    }; /* SDctrl::err_none() */
 
     /// error handler action if subcommand unknown
-    static esp_err_t err_unknown(std::vector<char*> args)
-#if 0
-    {
-//    	ESP_LOGW("act_unknown::exec()", "Unknown subcommand is present, command is: \"%s\", subcommand: \"%s\"", argv[0], argv[1]);
-        return act::unknown(args);
-    }; /* err_unknown() */
-#endif
-;
+    static esp_err_t err_unknown(std::vector<char*> args);
 
 
     class act_shft: public act_cmd
@@ -642,7 +566,7 @@ public:
 private:
 
     /// object help for object execution procedure
-    esp_err_t help(int argc, char* argv[] /*std::vector<char*> args*/);
+    esp_err_t help(int argc, char* argv[]);
 
     /// list of the defined commands
     std::list<act_ref> syntax;
@@ -651,6 +575,7 @@ private:
     SDctrl(SDctrl&) = delete;	// copy constructor forbidden for singleton
     SDctrl& operator =(const SDctrl&) = delete;	// operator "=" - forbidden for singleton
 
+#if 0
     // Contains Syntax tables for subcommand for 'sdcard' command
     class Syntax
     {
@@ -669,12 +594,19 @@ private:
 
 	static SDctrl& parent;
 	static void** alltables;	// for initializing singleton at the initial phase of programm
-    };
+    }; /* Syntax */
+#endif
+
+    //-- temporary - only for development time -----------
+    static void** alltables;	// for initializing singleton at the initial phase of programm
+    static void** tables();
 
     static SDctrl& instance;    // Unique single instance of the SDcmd object
+#if 0
     static Syntax& syntax_old;	// reference to inner 'syntax' object, contain`s all syntax tables, old versions
+#endif
 
-}; /* SDctrl */
+}; /* class SDctrl */
 
 
 
@@ -779,7 +711,6 @@ void register_sdcard_cmd(void)
 // Default constructor
 SDctrl::SDctrl()
 {
-    /*InitSyntax();*/
     // Initialize base part of subcommand list with terminal cmd obj:
     // error_none & error_unknown subcommand ojects
 	static const act_cmd none_cmd([](std::string_view str) {return str == "";}, SDctrl::err_none, "none");
@@ -787,14 +718,50 @@ SDctrl::SDctrl()
 
     syntax.push_back(none_cmd);
     syntax.push_back(unknown_cmd);
+
+    // temporary - only for development time of moving help subsysten into SDctrl class
+    alltables = tables();
+
 }; /* SDctrl::SDctrl() */
 
 
 /// object "help" execution procedure
-inline esp_err_t SDctrl::help(int argc, char* argv[] /*std::vector<char*> args*/)
+inline esp_err_t SDctrl::help(int argc, char* argv[])
 {
-    ESP_LOGW("SDctrl::help", "Help wrapper call: exec syntax.help");
-    return syntax_old.help(argc, argv);
+    //ESP_LOGW("SDctrl::help", "Help wrapper call: exec syntax.help");
+    cout << "#### Help action, implemented in the SDctrl class, method help(int argc, char* argv[]). ####" << endl;
+
+    if (!tables())
+    {
+	cout << "!!! Error: syntax tables is undefined. !!!" << endl;
+	cout << "Abort command" << endl;
+	return ESP_ERR_INVALID_SIZE;
+    }; /* if !hlp_arg */
+
+    if (!tables()[0])
+    {
+	cout << "!!! Error: syntax tables for 1'st command is undefined. !!!" << endl;
+	cout << "Abort command" << endl;
+	return ESP_ERR_INVALID_ARG;
+    }; /* if !tables()[0] */
+
+    cout << "Usage: " << argv[0];
+    arg_print_syntax(stdout, (void**)alltables[0], "\n");
+
+    for (void **currcmd = tables() + 1; *currcmd != NULL; currcmd++)
+    {
+	cout << "       " << /*parent.*/argv[0];
+	arg_print_syntax(stdout, (void**)*currcmd, "\n");
+    }; /* for void **currcmd */
+
+    cout << "Command \"" << /*parent.*/argv[0] << "\" supports the ESP32 operation with an SD card." << endl;
+    cout << "Use subcommands to invoke individual operations; operation are: mount, unmount, ls, cat, type, help." << endl;
+
+    for (void **currcmd = tables(); *currcmd != NULL; currcmd++)
+	arg_print_glossary(stdout, (void**)*currcmd, "      %-20s %s\n");
+
+    return ESP_OK;
+
 }; /* SDctrl::help() */
 
 
@@ -806,13 +773,6 @@ esp_err_t SDctrl::help_act(std::vector<char*> args)
 }; /* SDctrl::help_act() */
 
 
-/// error handler action if subcommand is absent
-inline esp_err_t SDctrl::err_none(std::vector<char*> args)
-{
-	    // exec operated command, specialization for the class act_none
-//	ESP_LOGW("act_none::exec()", "None of subcommand action execution, command is: \"%s\"", argv[0]);
-	return err_none(args.size(), args.data());
-}; /* SDctrl::err_none() */
 
 /// error handler action if subcommand is absent, argc/argv version
 esp_err_t SDctrl::err_none(int argc, char* argv[])
@@ -827,7 +787,6 @@ esp_err_t SDctrl::err_none(int argc, char* argv[])
 esp_err_t SDctrl::err_unknown(std::vector<char*> args)
 {
 //    	ESP_LOGW("act_unknown::exec()", "Unknown subcommand is present, command is: \"%s\", subcommand: \"%s\"", argv[0], argv[1]);
-    return act::unknown(args);
     ESP_LOGE("sdcard command", "Unknown options: \"%s\".", args[1]);
     cout << "Try \"" << args[0] << " help\" for more information." ;
     return ESP_OK;
@@ -890,52 +849,7 @@ esp_err_t SDctrl::enroll(const act_cmd& subcmd)
 
 
 
-
-namespace act
-{
-
-    /// hint for the command - suggest to see help
-//    ostream& act::hint(ostream& out);
-    class hint
-    {
-    public:
-	hint(std::string_view argin): arg(argin) {};
-
-	ostream& msg(ostream& ostr) const;
-
-	std::string_view arg;
-
-    };
-
-}; /* namespace act */
-
-
-ostream& operator << (ostream& out, const act::hint& ht) { return ht.msg(out); };
-
-inline ostream& act::hint::msg(ostream& ostr) const   {
-    ostr << "Try \"" << arg << " help\" for more information.";
-    return ostr;
-}; /* act::hint::msg() */
-
-
-
-// Handler for "subcommand missing" error.
-//esp_err_t act::none(std::string_view argv0)
-esp_err_t act::none(std::vector<char*> args)
-{
-    ESP_LOGE("sdcard command", "subcommand missing, what to run?");
-    cout << act::hint(args[0]) << endl;
-    return ESP_OK;
-}; /* act::none */
-
-
-// Handler for "subcommand unknown" error.
-esp_err_t act::unknown(std::vector<char*> args)
-{
-    ESP_LOGE("sdcard command", "Unknown options: \"%s\".", args[1]);
-    cout << act::hint(args[0]) << endl;
-    return ESP_OK;
-}; /* act::unknown */
+//--[ namespace act ]------------------------------------------------------------------------------
 
 
 /// action for 'mount' command
@@ -1262,6 +1176,7 @@ esp_err_t act::type(std::vector<char*> args)
 
 
 
+#if 0
 // syntax table storage
 SDctrl::Syntax& SDctrl::syntax_old = SDctrl::Syntax::get();
 
@@ -1300,6 +1215,13 @@ SDctrl::Syntax& SDctrl::Syntax::get()
 
 
 void** SDctrl::Syntax::tables()
+{
+    return NULL;
+}; /* SDctrl::Syntax::tables() */
+#endif
+
+
+void** SDctrl::tables()
 {
     if (!alltables)
     {
@@ -1431,7 +1353,7 @@ void** SDctrl::Syntax::tables()
 }; /* SDctrl::Syntax::tables */
 
 
-
+#if 0
 int SDctrl::Syntax::help(int argc, char **argv)
 {
     cout << "#### Help action, implemented in the SDcmd::Syntax class, method help(). ####" << endl;
@@ -1468,10 +1390,16 @@ int SDctrl::Syntax::help(int argc, char **argv)
     return 0;
 
 }; /* SDctrl::Syntax::help() */
+#endif
 
 
+#if 0
 // for initializing singleton at the initial phase of programm
 void** SDctrl::Syntax::alltables = nullptr;
+#endif
+
+// test variant while full SDctrl singleton object help initialization
+void** SDctrl::alltables = nullptr;
 
 
 //--[ cmd_sdcard.cpp ]-----------------------------------------------------------------------------
