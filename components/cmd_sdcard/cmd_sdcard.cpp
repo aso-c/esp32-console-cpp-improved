@@ -583,7 +583,7 @@ private:
     SDctrl(SDctrl&) = delete;	// copy constructor forbidden for singleton
     SDctrl& operator =(const SDctrl&) = delete;	// operator "=" - forbidden for singleton
 
-    Argtable argtable;
+    Arg::table argtable;
 
 
     //-- temporary - only for development time -----------
@@ -713,7 +713,7 @@ SDctrl::SDctrl()
     for (void **p = alltables; *p != NULL; p++)
     {
 	cout << "--- Add arg item " << ++i << endl;
-	argtable.addoption(*p);
+	argtable.add(*p);
     }; /* for (void *p = alltables;; alltables != NULL; alltables++) */
 
 }; /* SDctrl::SDctrl() */
@@ -748,7 +748,7 @@ inline esp_err_t SDctrl::help(int argc, char* argv[])
 //	cout << "       " << argv[0];
 //	arg_print_syntax(stdout, (void**)*currcmd, "\n");
 //    }; /* for void **currcmd */
-    arg_print_syntax(stdout, argtable.data(), "\n");
+    arg_print_syntax(stdout, argtable.data().data(), "\n");
 
     cout << "Command \"" << argv[0] << "\" supports the ESP32 operation with an SD card." << endl;
     cout << "Use subcommands to invoke individual operations; operation are: mount, unmount, ls, cat, type, help." << endl;
