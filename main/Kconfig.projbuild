@@ -2,7 +2,7 @@ menu "Improved ESP32 Console"
 
     config STORE_HISTORY
         bool "Store command history in flash"
-        default y
+        default n
         help
             Linenoise line editing library provides functions to save and load
             command history. If this option is enabled, initalizes a FAT filesystem
