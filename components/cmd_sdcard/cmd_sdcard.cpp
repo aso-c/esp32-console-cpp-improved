@@ -44,8 +44,6 @@
 #include <extrstream>
 #include <astring.h>
 
-
-
 //using namespace idf;
 using namespace std;
 
@@ -583,6 +581,9 @@ private:
     SDctrl(SDctrl&) = delete;	// copy constructor forbidden for singleton
     SDctrl& operator =(const SDctrl&) = delete;	// operator "=" - forbidden for singleton
 
+    /// Initialization the Help subsystem
+    void InitHelp();
+
     Arg::table argtable;
 
 
@@ -709,14 +710,159 @@ SDctrl::SDctrl()
     alltables = tables();
 
     // Static help subsystem initialization
-    int i = 0;
-    for (void **p = alltables; *p != NULL; p++)
-    {
-	cout << "--- Add arg item " << ++i << endl;
-	argtable.add(*p);
-    }; /* for (void *p = alltables;; alltables != NULL; alltables++) */
+//    int i = 0;
+//    for (void **p = alltables; *p != NULL; p++)
+//    {
+//	cout << "--- Add arg item " << ++i << endl;
+//	argtable.add(*p);
+//    }; /* for (void *p = alltables;; alltables != NULL; alltables++) */
+    InitHelp();
 
 }; /* SDctrl::SDctrl() */
+
+
+/// Initialization the Help subsystem (Temporariliy, only for devel?)
+void SDctrl::InitHelp()
+{
+    cout << "***********************************************************************" << endl;
+    cout << "*** Initializing Syntax Tables for the Help at the Start            ***" << endl;
+    cout << "***********************************************************************" << endl;
+
+
+    cout << "***                                                                 ***" << endl
+	 << "*** Start Initializing the Help subsystem.                          ***" << endl
+	 << "***                                                                 ***" << endl;
+
+    // syntax0: h | help
+    argtable.add(arg_rex1(NULL, NULL, "h|help", "h|help", 0/*REG_ICASE*/, "help by subcommand of command 'sdcard'"));
+//	static void* arg_help[] = {
+//		arg_rex1(NULL, NULL, "h|help", "h|help", 0/*REG_ICASE*/, "help by subcommand of command 'sdcard'"),
+//		arg_end(2),
+//	};
+
+#define innerqte(a) #a
+#define qte(a) innerqte(a)
+    // syntax1: m | mount [<device>] [<mountpoint>] "m|mount", NULL, 0, "mount SD-card <device> to <mountpoint>, parameters are optional"
+    // syntax1: corrected m | mount [<slot>] [<mountpoint>] "m|mount", NULL, 0, "mount SD-card <device> to <mountpoint>, parameters are optional"
+    argtable.add(arg_rex1(NULL, NULL, "m|mount", NULL, 0, "mount SD-card [<device>] to [<mountpoint>], parameters are optional"));
+//	static void* arg_mnt[] = {
+//		arg_rex1(NULL, NULL, "m|mount", NULL, 0, "mount SD-card [<device>] to [<mountpoint>], parameters are optional"),
+//		arg_str0(NULL, NULL, "<slot>", "SD card slot (device) number, used slot #"  qte(SDMMC_HOST_SLOT_1)  " default value if omitted"),
+//		arg_str0(NULL, NULL, "<mountpoint>", "path to mountpoint SD card, used path \"" SD_MOUNT_POINT "\" if omitted"),
+//		arg_end(2),
+//	};
+    // syntax2: u | umount [ <device> | <mountpoint> ] "unmount SD-card <device> or that was mounted to <path>; if all parameters omitted - use default values - ..."
+    // syntax2 corrected: u | umount [<mountpoint>] "unmount SD-card <device> or that was mounted to <path>; if all parameters omitted - use default values - ..."
+    argtable.add(arg_rex1(NULL, NULL, "u|umount", NULL, 0, "unmount SD-card [<path>] where the SD card is mounted; if parameters omitted - use \"" SD_MOUNT_POINT "\"" ));
+//	static void* arg_umnt[] = {
+//		arg_rex1(NULL, NULL, "u|umount", NULL, 0, "unmount SD-card [<path>] where the SD card is mounted; if parameters omitted - use \"" SD_MOUNT_POINT "\"" ),
+//		arg_str0(NULL, NULL, "<mountpoint>", NULL),
+//		arg_end(2),
+//	};
+//----------------------------------------------------------------------------------------------------------------------
+    // syntax3: info "information about mounted SD-card"
+    argtable.add(arg_rex1(NULL, NULL, "i|info", NULL, 0, "information about mounted SD-card"));
+//	static void* arg_info[] = {
+//		arg_rex1(NULL, NULL, "i|info", NULL, 0, "information about mounted SD-card"),
+////		arg_str0(NULL, NULL, "<pattern>", "file pattern or path"),
+//		arg_end(2),
+//	};
+    // syntax4: pwd "current directory name"
+    argtable.add(arg_rex1(NULL, NULL, "p|pwd", NULL, 0, "current directory name"));
+//	static void* arg_pwd[] = {
+//		arg_rex1(NULL, NULL, "p|pwd", NULL, 0, "current directory name"),
+////		arg_str0(NULL, NULL, "<pattern>", "file pattern or path"),
+//		arg_end(2),
+//	};
+    // syntax5: mkdir [<path>] "make new directory with name <path>"
+    argtable.add(arg_rex1(NULL, NULL, "mkdir", NULL, 0, "make new directory with name \"<path>\""));
+//	static void* arg_mkdir[] = {
+//		arg_rex1(NULL, NULL, "mkdir", NULL, 0, "make new directory with name \"<path>\""),
+//		arg_str0(NULL, NULL, "<path>", NULL/*"name of the new directory"*/),
+//		arg_end(2),
+//	};
+	// syntax6: rmdir [<path>] "delete existing empty directory with name <path>"
+    argtable.add(arg_rex1(NULL, NULL, "rmdir", NULL, 0, "delete existing empty directory with name \"<path>\""));
+//	static void* arg_rmdir[] = {
+//		arg_rex1(NULL, NULL, "rmdir", NULL, 0, "delete existing empty directory with name \"<path>\""),
+//		arg_str0(NULL, NULL, "<path>", NULL/*"name of the new directory"*/),
+//		arg_end(2),
+//		};
+    // syntax7: cd [<path>] "change current directory to <path>"
+    argtable.add(arg_rex1(NULL, NULL, "cd", NULL, 0, "change current directory to a <path>"));
+//	static void* arg_cd[] = {
+//		arg_rex1(NULL, NULL, "cd", NULL, 0, "change current directory to a <path>"),
+//		arg_str0(NULL, NULL, "<path>", NULL/*"path to which the current directory is changed"*/),
+//		arg_end(2),
+//	};
+//----------------------------------------------------------------------------------------------------------------------
+    // syntax8: cp <src> <dest> "copy file <src> to <dest>"
+    argtable.add(arg_rex1(NULL, NULL, "cp|copy", NULL, 0, "copy file <src> to <dest>"));
+//	static void* arg_cp[] = {
+//		arg_rex1(NULL, NULL, "cp|copy", NULL, 0, "copy file <src> to <dest>"),
+//		arg_str1(NULL, NULL, "<src>", NULL/*"file name to copy"*/),
+//		arg_str1(NULL, NULL, "<dest>", NULL/*"where file to copy"*/),
+//		arg_end(3),
+//	};
+    // syntax9: mv <src> <dest> "rename/move file <src> to <dest>"
+    argtable.add(arg_rex1(NULL, NULL, "mv|ren", NULL, 0, "rename/move file <src> to <dest>"));
+//	static void* arg_mv[] = {
+//		arg_rex1(NULL, NULL, "mv|ren", NULL, 0, "rename/move file <src> to <dest>"),
+//		arg_str1(NULL, NULL, "<src>", NULL/*"source file name to copy or rename/move"*/),
+
+    //		arg_str1(NULL, NULL, "<dest>", NULL/*"where file to copy or rename/move"*/),
+//		arg_end(3),
+//		};
+    // syntax10: rm [<pattern>] "delete file <pattern>"
+    argtable.add(arg_rex1(NULL, NULL, "rm", NULL, 0, "delete file according <pattern>"));
+//	static void* arg_rm[] = {
+//		arg_rex1(NULL, NULL, "rm", NULL, 0, "delete file according <pattern>"),
+//		arg_str1(NULL, NULL, "<pattern>", NULL/*"file name to delete"*/),
+//		arg_end(2),
+//	};
+    // syntax11: ls | dir [<pattern>] "print directory contents on SD-card"
+    argtable.add(arg_rex1(NULL, NULL, "ls|dir", NULL, 0, "print directory contents on SD-card according <pattern>"));
+//	static void* arg_ls[] = {
+//		arg_rex1(NULL, NULL, "ls|dir", NULL, 0, "print directory contents on SD-card according <pattern>"),
+//		arg_str0(NULL, NULL, "<pattern>", NULL/*"file pattern or path for lising"*/),
+//		arg_end(2),
+//	};
+    // syntax12: cat <filename> "print file to stdout (console output)"
+    argtable.add(arg_rex1(NULL, NULL, "cat", NULL, 0, "print content of the file \"<filename>\" to screen"));
+//	static void* arg_cat[] = {
+//		arg_rex1(NULL, NULL, "cat", NULL, 0, "print content of the file \"<filename>\" to screen"),
+//		arg_str1(NULL, NULL, "<filename>", NULL),
+//		arg_end(2),
+//	};
+    // syntax  : type [filename] "type from the keyboard to file & screen or screen only; <file name> - name of the file is to be printed; if omitted - print to screen only"
+    argtable.add(arg_rex1(NULL, NULL, "type", NULL, 0, "type from the keyboard to a file & screen or screen only if the file omitted"));
+//	static void* arg_type[] = {
+//		arg_rex1(NULL, NULL, "type", NULL, 0, "type from the keyboard to a file & screen or screen only if the file omitted"),
+////		"Type from a keyboard to standard output (default - to screen) and storing keyboard typing to the file <filename> (if specified)"		arg_str0(NULL, NULL, "<file>", "file name to be printed or the name of where the typed text is saved"),
+//		arg_end(2),
+//	};
+
+#if 0
+	static void* syntaxes[] = {
+		arg_mnt,
+		arg_umnt,
+		arg_info,
+		arg_pwd,
+		arg_mkdir,
+		arg_rmdir,
+		arg_cd,
+		arg_cp,
+		arg_mv,
+		arg_rm,
+		arg_ls,
+		arg_cat,
+		arg_type,
+		arg_help,
+		NULL
+	};
+#endif
+    ;
+}; /* SDctrl::InitHelp() */
 
 
 /// object "help" execution procedure
@@ -748,13 +894,18 @@ inline esp_err_t SDctrl::help(int argc, char* argv[])
 //	cout << "       " << argv[0];
 //	arg_print_syntax(stdout, (void**)*currcmd, "\n");
 //    }; /* for void **currcmd */
-    arg_print_syntax(stdout, argtable.data().data(), "\n");
+    arg_print_syntax(stdout, argtable.syntax().data(), "\n");
 
     cout << "Command \"" << argv[0] << "\" supports the ESP32 operation with an SD card." << endl;
     cout << "Use subcommands to invoke individual operations; operation are: mount, unmount, ls, cat, type, help." << endl;
 
     for (void **currcmd = tables(); *currcmd != NULL; currcmd++)
 	arg_print_glossary(stdout, (void**)*currcmd, "      %-20s %s\n");
+
+    ESP_LOGI("The new Help()", "------------------------------------------------");
+
+	arg_print_glossary(stdout, (void**)argtable.syntax().data(), "      %-20s %s\n");
+
 
     return ESP_OK;
 
