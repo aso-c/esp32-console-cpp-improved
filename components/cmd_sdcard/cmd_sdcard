@@ -2,10 +2,10 @@
  * @brief Implementation of SD-card manipulations commands
  * Header include file
  *
- * 	@file	cmd_sdcard.h
- *	@author	aso (Solomatov A.A.)
+ * 	@file	cmd_sdcard
+ *	@author	Solomatov A.A. (aso)
  *	@date	Created: 04.04.2022
- *	@version: 0.2
+ *	@version: 0.73
  */
 
 

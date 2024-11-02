@@ -4,8 +4,8 @@
  * 	@file	cmd_sdcard.cpp
  *	@author	Solomatov A.A. (aso)
  *	@date	Created 04.04.2022
- *		Modified 25.09.2024
- *	@version: 0.72
+ *		Modified 01.10.2024
+ *	@version: 0.73
  */
 
 #include <cstdlib>
