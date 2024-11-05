@@ -12,11 +12,6 @@
 //#include <thread>
 //#include "gpio_cxx.hpp"
 
-//#include <boost/format.hpp>
-
-//#define __WITH_STDIO__
-//#define __WITH_BOOST__
-#define __MAX_UNFOLDED_OUTPUT__
 
 //#include <cstdio>
 //#include <cstring>
@@ -27,19 +22,34 @@
 #include "driver/uart.h"
 #include "linenoise/linenoise.h"
 #include "argtable3/argtable3.h"
-#include "cmd_decl.h"
 #include "esp_vfs_fat.h"
 #include "nvs.h"
 #include "nvs_flash.h"
 
+#include "cmd_decl.h"
 #include <astring.h>
 
 //using namespace idf;
 using namespace std;
 
+/*
+ * We warn if a secondary serial console is enabled. A secondary serial console is always output-only and
+ * hence not very useful for interactive console applications. If you encounter this warning, consider disabling
+ * the secondary serial console in menuconfig unless you know what you are doing.
+ */
+#if SOC_USB_SERIAL_JTAG_SUPPORTED
+#if !CONFIG_ESP_CONSOLE_SECONDARY_NONE
+#warning "A secondary serial console is not useful when using the console component. Please disable it in menuconfig."
+#endif
+#endif
+
 #ifdef CONFIG_ESP_CONSOLE_USB_CDC
 #error This example is incompatible with USB CDC console. Please try "console_usb" example instead.
 #endif // CONFIG_ESP_CONSOLE_USB_CDC
+
+#ifdef CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG
+#error This example is incompatible with USB serial JTAG console.
+#endif // CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG
 
 
 #define __INN_STR__(str) #str
@@ -68,7 +78,6 @@ void initialize_hardware(void)
 #define MOUNT_PATH "/data"
 #define HISTORY_PATH MOUNT_PATH "/history.txt"
 
-
 static void initialize_filesystem(void)
 {
     static wl_handle_t wl_handle;
@@ -79,7 +88,7 @@ static void initialize_filesystem(void)
             .max_files = 4,
     };
 #pragma GCC diagnostic pop
-    esp_err_t err = esp_vfs_fat_spiflash_mount(MOUNT_PATH, "storage", &mount_config, &wl_handle);
+    esp_err_t err = esp_vfs_fat_spiflash_mount_rw_wl(MOUNT_PATH, "storage", &mount_config, &wl_handle);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Failed to mount FATFS (%s)", esp_err_to_name(err));
         return;
@@ -121,17 +130,19 @@ static void initialize_console(void)
             .data_bits = UART_DATA_8_BITS,
             .parity = UART_PARITY_DISABLE,
             .stop_bits = UART_STOP_BITS_1,
-#if CONFIG_IDF_TARGET_ESP32 || CONFIG_IDF_TARGET_ESP32S2
+//#if CONFIG_IDF_TARGET_ESP32 || CONFIG_IDF_TARGET_ESP32S2
+#if SOC_UART_SUPPORT_REF_TICK
         .source_clk = UART_SCLK_REF_TICK,
-#else
+//#else
+#elif SOC_UART_SUPPORT_XTAL_CLK
         .source_clk = UART_SCLK_XTAL,
 #endif
     };
 #pragma GCC diagnostic pop
     /* Install UART driver for interrupt-driven reads and writes */
-    ESP_ERROR_CHECK( uart_driver_install(CONFIG_ESP_CONSOLE_UART_NUM,
+    ESP_ERROR_CHECK( uart_driver_install(static_cast<uart_port_t>(CONFIG_ESP_CONSOLE_UART_NUM),
             256, 0, 0, NULL, 0) );
-    ESP_ERROR_CHECK( uart_param_config(CONFIG_ESP_CONSOLE_UART_NUM, &uart_config) );
+    ESP_ERROR_CHECK( uart_param_config(static_cast<uart_port_t>(CONFIG_ESP_CONSOLE_UART_NUM), &uart_config) );
 
     /* Tell VFS to use UART driver */
     esp_vfs_dev_uart_use_driver(CONFIG_ESP_CONSOLE_UART_NUM);
@@ -191,15 +202,8 @@ static void initialize_console(void)
 extern "C" {
 static int get_info(int argc, char **argv)
 {
-#ifdef __WITH_STDIO__
-//    printf("ESP Console Example Project, Version: %s of %s\r\n", CONFIG_APP_PROJECT_VER "-" CONFIG_APP_PROJECT_FLAVOUR, CONFIG_APP_PROJECT_DATE);
-    printf("ESP Console Example Project, Version: %s-%s of %s\r\n", CONFIG_APP_PROJECT_VER, CONFIG_APP_PROJECT_FLAVOUR, CONFIG_APP_PROJECT_DATE);
-#elif defined(__WITH_BOOST__)
-    printf("ESP Console Example Project, Version: %s-%s of %s\r\n", CONFIG_APP_PROJECT_VER, CONFIG_APP_PROJECT_FLAVOUR, CONFIG_APP_PROJECT_DATE);
-#else
     cout << "ESP Console Example Project, Version: " CONFIG_APP_PROJECT_VER "-" CONFIG_APP_PROJECT_FLAVOUR " of " CONFIG_APP_PROJECT_DATE
 	    << ", builded with C++ version " << __cplusplus  << endl;
-#endif
     return ESP_OK;
 }; /* get_info */
 }; /* extern C */
@@ -270,8 +274,12 @@ extern "C" void app_main(void)
     /* Register commands */
     //esp_console_register_help_command();
     console_register_help_command();
-    register_system();
+//    register_system();
+    register_system_common();
+    register_system_sleep();
+#if SOC_WIFI_SUPPORTED
     register_wifi();
+#endif
     register_nvs();
     register_fs_cmd_all();
     register_sdcard_cmd();
@@ -283,29 +291,6 @@ extern "C" void app_main(void)
      */
     const char* prompt = LOG_COLOR_I PROMPT_STR "> " LOG_RESET_COLOR;
 
-#ifdef __WITH_STDIO__
-    printf("\n"
-           "This is an example of ESP-IDF console component.\n"
-	   "Version %s-%s of %s, modified by %s.\n"
-  	   "Builded %s %s\n"
-           "Type 'help' to get the list of commands.\n"
-           "Use UP/DOWN arrows to navigate through command history.\n"
-           "Press TAB when typing command name to auto-complete.\n"
-	   "Press Enter or Ctrl+C will terminate the console environment.\n",
-	   CONFIG_APP_PROJECT_VER, CONFIG_APP_PROJECT_FLAVOUR,
-	   CONFIG_APP_PROJECT_DATE, CONFIG_APP_PROJECT_MODIFICATOR,
-	   __DATE__, __TIME__);
-#elif defined(__WITH_BOOST__)
-    printf("\n"
-           "This is an example of ESP-IDF console component.\n"
-	   "%s\n"
-           "Type 'help' to get the list of commands.\n"
-           "Use UP/DOWN arrows to navigate through command history.\n"
-           "Press TAB when typing command name to auto-complete.\n"
-	   "Press Enter or Ctrl+C will terminate the console environment.\n",
-	   version_str());
-#else
-#ifdef __MAX_UNFOLDED_OUTPUT__
     cout << endl
 	<< "This is an example of ESP-IDF console component." << endl
 	<<   "Version " << CONFIG_APP_PROJECT_VER << '-' << CONFIG_APP_PROJECT_FLAVOUR
@@ -316,17 +301,6 @@ extern "C" void app_main(void)
 	<< "Use UP/DOWN arrows to navigate through command history." << endl
 	<< "Press TAB when typing command name to auto-complete." << endl
 	<< "Press Enter or Ctrl+C will terminate the console environment." << endl;
-#else
-    cout << endl
-	<< "This is an example of ESP-IDF console component." << endl
-	<< version_str() << endl
-	<< "Builded " << __DATE__ << " " << __TIME__ << endl
-	<< "Type 'help' to get the list of commands." << endl
-	<< "Use UP/DOWN arrows to navigate through command history." << endl
-	<< "Press TAB when typing command name to auto-complete." << endl
-	<< "Press Enter or Ctrl+C will terminate the console environment." << endl;
-#endif
-#endif
 
     /* Figure out if the terminal supports escape sequences */
     int probe_status = linenoiseProbe();

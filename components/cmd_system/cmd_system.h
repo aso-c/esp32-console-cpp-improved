@@ -31,6 +31,3 @@ const char* version_str(void);
 }
 #endif
 
-// Enclose an argument in quotas
-//#define str(a) quote(a)
-//#define quote(a) #a
