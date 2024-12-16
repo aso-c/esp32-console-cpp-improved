@@ -16,6 +16,8 @@ extern "C" {
 #include "cmd_wifi.h"
 #include "cmd_nvs.h"
 
+#include "cmd_bt.h"
+
 #ifdef __cplusplus
 }
 #endif
