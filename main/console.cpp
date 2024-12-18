@@ -117,12 +117,8 @@ static void initialize_console(void)
     setvbuf(stdin, NULL, _IONBF, 0);
 
     /* Minicom, screen, idf_monitor send CR when ENTER key is pressed */
-// FIXME Remove line below
-//    esp_vfs_dev_uart_port_set_rx_line_endings(CONFIG_ESP_CONSOLE_UART_NUM, ESP_LINE_ENDINGS_CR);
     uart_vfs_dev_port_set_rx_line_endings(CONFIG_ESP_CONSOLE_UART_NUM, ESP_LINE_ENDINGS_CR);
     /* Move the caret to the beginning of the next line on '\n' */
-// FIXME Remove line below
-//    esp_vfs_dev_uart_port_set_tx_line_endings(CONFIG_ESP_CONSOLE_UART_NUM, ESP_LINE_ENDINGS_CRLF);
     uart_vfs_dev_port_set_tx_line_endings(CONFIG_ESP_CONSOLE_UART_NUM, ESP_LINE_ENDINGS_CRLF);
 
 #pragma GCC diagnostic push
@@ -150,8 +146,6 @@ static void initialize_console(void)
     ESP_ERROR_CHECK( uart_param_config(static_cast<uart_port_t>(CONFIG_ESP_CONSOLE_UART_NUM), &uart_config) );
 
     /* Tell VFS to use UART driver */
-// FIXME Remove line below
-//    esp_vfs_dev_uart_use_driver(CONFIG_ESP_CONSOLE_UART_NUM);
     uart_vfs_dev_use_driver(CONFIG_ESP_CONSOLE_UART_NUM);
 
 #pragma GCC diagnostic push

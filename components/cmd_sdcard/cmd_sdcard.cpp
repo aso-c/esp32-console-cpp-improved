@@ -187,7 +187,9 @@ void register_mkdir(void)
 	    .help = "Create new directory with name <dir>",
 	    .hint = NULL,
 	    .func = mkdir_act,
-	    .argtable = mkdargs
+	    .argtable = mkdargs,
+	    .func_w_context = nullptr,
+	    .context = nullptr,
     };
 
     register_cmd(&cmd);
@@ -213,7 +215,9 @@ void register_rmdir(void)
 	    .help = "Delete empty existing directory <dir>",
 	    .hint = NULL,
 	    .func = rmdir_act,
-	    .argtable = rmdargs
+	    .argtable = rmdargs,
+	    .func_w_context = nullptr,
+	    .context = nullptr,
     };
 
     register_cmd(&cmd);
@@ -239,7 +243,9 @@ void register_cd(void)
 	    .help = "Change current directory to <dir>",
 	    .hint = NULL,
 	    .func = cd_act,
-	    .argtable = cdargs
+	    .argtable = cdargs,
+	    .func_w_context = nullptr,
+	    .context = nullptr,
     };
 
     register_cmd(&cmd);
@@ -264,7 +270,9 @@ void register_ls(void)
 	    .help = "List contents of a directory according <pattern>, list non-directory files  is not available now. ((( Sorry.",
 	    .hint = NULL,
 	    .func = ls_act,
-	    .argtable = lsargs
+	    .argtable = lsargs,
+	    .func_w_context = nullptr,
+	    .context = nullptr,
     };
 
     register_cmd(&cmd);
@@ -290,7 +298,9 @@ void register_cp(void)
 	    .help = "Copy a file \"<src>\" to \"<dest>\".",
 	    .hint = NULL,
 	    .func = cp_act,
-	    .argtable = cpargs
+	    .argtable = cpargs,
+	    .func_w_context = nullptr,
+	    .context = nullptr,
     };
 
     register_cmd(&cmd);
@@ -316,7 +326,9 @@ void register_mv(void)
 	    .help = "Rename/move a file \"<src>\" to \"<dest>\".",
 	    .hint = NULL,
 	    .func = mv_act,
-	    .argtable = cpargs
+	    .argtable = cpargs,
+	    .func_w_context = nullptr,
+	    .context = nullptr,
     };
 
     register_cmd(&cmd);
@@ -342,7 +354,9 @@ void register_rm(void)
 	    .help = "Delete a file or fileset matching the pattern <filename>",
 	    .hint = NULL,
 	    .func = rm_act,
-	    .argtable = rmargs
+	    .argtable = rmargs,
+	    .func_w_context = nullptr,
+	    .context = nullptr,
     };
 
     register_cmd(&cmd);
@@ -367,7 +381,9 @@ void register_cat(void)
 	    .help = "Type contents of the file <filename> to standard output (default - to screen)",
 	    .hint = NULL,
 	    .func = cat_act,
-	    .argtable = catargs
+	    .argtable = catargs,
+	    .func_w_context = nullptr,
+	    .context = nullptr,
     };
 
     register_cmd(&cmd);
@@ -392,7 +408,9 @@ void register_type(void)
 	    .help = "Type from a keyboard to standard output (default - to screen) and storing keyboard typing to the file <filename> (if specified)",
 	    .hint = NULL,
 	    .func = type_act,
-	    .argtable = typeargs
+	    .argtable = typeargs,
+	    .func_w_context = nullptr,
+	    .context = nullptr,
     };
 
     register_cmd(&cmd);
@@ -674,7 +692,9 @@ void register_sdcard_cmd(void)
 	    //        .hint = "enter subcommand for Sd card operations",
 	    .hint = NULL,
 	    .func = &sdcard_cmd,
-	    .argtable = &args
+	    .argtable = &args,
+	    .func_w_context = nullptr,
+	    .context = nullptr,
     };
     register_cmd(&cmd);
 
@@ -685,7 +705,9 @@ void register_sdcard_cmd(void)
 	    //        .hint = "enter subcommand for Sd card operations",
 	    .hint = NULL,
 	    .func = &sdcard_cmd,
-	    .argtable = &args/*NULL*/
+	    .argtable = &args,/*NULL*/
+	    .func_w_context = nullptr,
+	    .context = nullptr,
     };
     register_cmd(&cmd2);
 

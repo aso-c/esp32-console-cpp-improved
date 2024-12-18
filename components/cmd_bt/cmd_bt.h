@@ -1,12 +1,3 @@
-/* Console example — declarations of command registration functions.
-
-   This example code is in the Public Domain (or CC0 licensed, at your option.)
-
-   Unless required by applicable law or agreed to in writing, this
-   software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-   CONDITIONS OF ANY KIND, either express or implied.
-*/
-
 /*!
  * @file cmd_bt.h
  *
@@ -24,9 +15,9 @@
  * CONDITIONS OF ANY KIND, either express or implied.
  *
  * @author: Solomatov A.A. (aso)
- * @version 0.0.1
- * @date Created on: 11 дек. 2023 г.
- *	Updated   .  .   4
+ * @version 0.0.2
+ * @date Created on: 11 дек. 2024 г.
+ *	Updated 14.12.2024
  */
 
 
