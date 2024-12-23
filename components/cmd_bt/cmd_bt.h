@@ -38,4 +38,14 @@ void register_bt_cmd(void);
 #endif
 
 
+namespace bt
+{
+
+    /// Bluetooth subsystem initialization (one-time on the boot)
+    esp_err_t init(void);
+
+}; /* namespace bt */
+
+
+
 #endif // __CMD_BT__

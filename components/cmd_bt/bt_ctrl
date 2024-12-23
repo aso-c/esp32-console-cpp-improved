@@ -1,0 +1,83 @@
+/*!
+ * @file bt_ctrl.h
+ *
+ * @brief bluetooth control code, header file
+ *
+ * @detail Declaration of the bluetooth control procedures
+ * Header file.
+ *
+ * @section LICENCE
+ *
+ * This code is in the Public Domain (or CC0 licensed, at your option.)
+ *
+ * Unless required by applicable law or agreed to in writing, this
+ * software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied.
+ *
+ * @author: Solomatov A.A. (aso)
+ * @version 0.0.1
+ * @date Created on: 16 дек. 2024 г.
+ *	Updated   .  .  24
+ */
+
+
+
+#ifndef __BT_CTRL__
+#define __BT_CTRL__
+
+
+#ifndef __cplusplus
+#error "The sdcard_ctrl file usable in C++ projects only."
+#endif
+
+
+namespace esp
+{
+    namespace bt
+    {
+
+	struct Controller: esp_bt_controller_config_t
+	{
+	    esp_err_t mem_release(esp_bt_mode_t btmode)/* { return (res = esp_bt_controller_mem_release(btmode));}*/;
+	    esp_err_t init()/* { ret = esp_bt_controller_init(&bt_cfg); }*/;
+	    esp_err_t enable(esp_bt_mode_t mode)/* (ret = esp_bt_controller_enable(ESP_BT_MODE_CLASSIC_BT))  {*/;
+
+	    esp_err_t err() { return res; };
+
+	private:
+
+	    static esp_err_t res;
+	}; /* Controller */
+
+	namespace droid
+	{
+	    struct config_t: public ::esp_bluedroid_config_t
+	    {
+		esp_err_t init()   /*{ return (res = esp_bluedroid_init_with_cfg(this)); }*/;
+		esp_err_t deinit() /*{ return (res = esp_bluedroid_deinit());  }*/;
+
+		esp_err_t enable() /*{ return (res = esp_bluedroid_enable());  }*/;
+		esp_err_t disable()/*{ return (res = esp_bluedroid_disable()); }*/;
+
+		esp_bluedroid_status_t status() /*{ return esp_bluedroid_get_status(); }*/;
+		esp_err_t err() { return res; };
+
+	    private:
+
+		friend esp_err_t init();
+
+		static esp_err_t res;
+
+	    }; /* struct esp::bt::droid::config_t */
+
+	    esp_err_t init();
+
+	}; /* bt::droid */
+
+    }; /* namespace esp::bt */
+
+}; /* namespace esp */
+
+
+
+#endif // __BT_CTRL__
