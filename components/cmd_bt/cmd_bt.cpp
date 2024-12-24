@@ -76,15 +76,57 @@ esp_err_t bt_exec(int argc, char* argv[])
 
 
 
+// Desired syntax:
+// variant 0: regexp's
+// [bt | bluetooth] [-h | --help] | [classic] | [le] [spp] [start | stop | status]
+//
+//   - variant 1: Multisyntax w/options
+// [bt | bluetooth] [-h | --help]
+// [bt | bluetooth] [--start | --stop | --status] [classic]|[le]
+//    extended variant:
+//    [bt | bluetooth] [--start | --stop | --status] [classic] | [le] | [ble] spp
+//
+//   - variant 2: Single syntax w/options
+// [bt | bluetooth] []
+// [bt | bluetooth] [-h | --help | --start | --stop | --status] [classic] | [le] [spp]
+//    extended variant:
+//    [bt | bluetooth] [-h | --help | --start | --stop | --status] [classic]|[le]|[ble] [spp]
+// (flags -h | --help with command - help about selected command)
+//
+
+
+namespace bt
+{
+
+void* syntax[] = {
+//	help    = arg_litn(NULL, "help", 0, 1, "display this help and exit"),
+	arg_lit1("hH", "help,start,stop,status", /*nullptr*/ "help or start or stop or status"),
+//	arg_litn(NULL, "help,start,stop", 1, 1, "help or start or stop or status"),
+	arg_lit0(nullptr, "classic,ble,le", /*nullptr*/ "classic bluetooth or Low Energy BT (BLE)"),
+//	/*version = */arg_litn(NULL, "version", 0, 1, "display version info and exit"),
+//	/*level   = */arg_intn(NULL, "level", "<n>", 0, 1, "foo value"),
+//	/*verb    = */arg_litn("v", "verbose", 0, 1, "verbose output"),
+//	/*o       = */arg_filen("o", NULL, "myfile", 0, 1, "output file"),
+//	/*file    = */arg_filen(NULL, NULL, "<file>", 1, 100, "input files"),
+	/*end     = */arg_end(20),
+}; /* void* bt_syntax */
+
+}; /* namespace bt */
+
+
 const esp_console_cmd_t bt_cmd = {
-	.command = "bt",
-        .help = "Main Bluetooth command",
-        .hint = "Bluetooth command execution",
+	.command = "bt"/* | bluetooth"*/,
+        .help = "General Bluetooth command",
+        .hint = nullptr/*"Bluetooth command exec"*/,
         .func = &bt_exec,
-	.argtable = nullptr,
+//	.argtable = nullptr,
+	.argtable = bt::syntax,
 	.func_w_context = nullptr,
 	.context = nullptr
 }; /* bt_cmd */
+
+
+
 
 /// Register bluetooth command
 void register_bt_cmd(void)
@@ -95,48 +137,6 @@ void register_bt_cmd(void)
 
 namespace bt
 {
-    //------------------------------------------------------------------------------
-#if 0
-
-    struct base_data
-    {
-	long  id;
-	const char* name;
-	uint16_t qty;
-    }; /* struct base_data */
-
-
-    base_data exmpl1 = {
-	    .id = 101,
-	    .name = "First Test Item",
-	    .qty = 10
-    };
-
-
-    struct x_data: public base_data
-    {
-	x_data(const base_data&);
-//	x_data(base_data&&);
-//	x_data(long id, const char* name, uint16_t qty);
-	const char* description() {return name; };
-
-    }; /* struct x_data */
-
-    x_data exmpl2  ( {
-	    .id = 102,
-	    .name = "Second Test Item",
-	    .qty = 101
-    });
-
-    x_data exmpl3 = base_data{
-	    .id = 103,
-	    .name = "Ершкв Test Item",
-	    .qty = 151
-    };
-#endif
-
-
-    //------------------------------------------------------------------------------
 
     // TODO esp_bt_controller_config_t bt_cfg - must be parameter?
 //    esp_bt_controller_config_t cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
@@ -192,10 +192,12 @@ namespace bt
 //	        ESP_LOGE(SPP_TAG, "%s initialize controller failed: %s", __func__, esp_err_to_name(ret));
 //	        return ret;
 //	    }
-	    if (controller.init() != ESP_OK) {
+	    controller.init();
+	    if (controller.err() != ESP_OK)
+	    {
 	        ESP_LOGE(SPP_TAG, "%s initialize controller failed: %s", __func__, esp_err_to_name(controller.err()));
 	        return controller.err();
-	    }
+	    }; /* if controller.err() != ESP_OK */
 
 	    // TODO ESP_BT_MODE_CLASSIC_BT - must be parameter?
 	    // enable the BT controller; mode This mode must match the mode specified in the cfg of esp_bt_controller_init()
@@ -204,12 +206,12 @@ namespace bt
 //	        ESP_LOGE(SPP_TAG, "%s enable controller failed: %s", __func__, esp_err_to_name(ret));
 //	        return ret;
 //	    }
-	    if (controller.enable(ESP_BT_MODE_CLASSIC_BT) != ESP_OK) {
+	    controller.enable(ESP_BT_MODE_CLASSIC_BT);
+	    if (controller.err() != ESP_OK)
+	    {
 	        ESP_LOGE(SPP_TAG, "%s enable controller failed: %s", __func__, esp_err_to_name(controller.err()));
 	        return controller.err();
-	    }
-
-
+	    }; /* if controller.err() != ESP_OK */
 
 	return ESP_OK;
 
@@ -220,6 +222,20 @@ namespace bt
     esp_err_t stop()
     {
 	ESP_LOGI(SPP_TAG, "--->> Stop the ***Bluetooth subsystem***");
+
+	controller.disable();
+	if (controller.err() != ESP_OK)
+	{
+	    ESP_LOGE(SPP_TAG, "%s disable controller failed: %s", __func__, esp_err_to_name(controller.err()));
+	    return controller.err();
+	}; /* if controller.err() != ESP_OK */
+
+	controller.deinit();
+	if (controller.err() != ESP_OK)
+	{
+	    ESP_LOGE(SPP_TAG, "%s deinitialize controller failed: %s", __func__, esp_err_to_name(controller.err()));
+	    return controller.err();
+	}; /* if controller.err() != ESP_OK */
 
 	return ESP_OK;
 

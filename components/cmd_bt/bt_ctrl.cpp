@@ -304,6 +304,16 @@ namespace esp {
 	    return (res = esp_bt_controller_enable(mode));
 	}; /* esp::bt::Controller::enable() */
 
+	esp_err_t Controller::deinit()
+	{
+	    return (res = esp_bt_controller_deinit());
+	}; /* esp::bt::Controller::deinit() */
+
+	esp_err_t Controller::disable()
+	{
+	    return (res = esp_bt_controller_disable());
+	}; /* esp::bt::Controller::disable() */
+
 
 
 	esp_err_t Controller::res = ESP_OK;
