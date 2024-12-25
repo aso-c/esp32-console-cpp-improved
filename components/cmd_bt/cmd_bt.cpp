@@ -15,9 +15,9 @@
  * CONDITIONS OF ANY KIND, either express or implied.
  *
  * @author: Solomatov A.A. (aso)
- * @version 0.0.2
+ * @version 0.0.5
  * @date Created on: 11 дек. 2024 г.
- *	Updated 14.12.2024
+ *	Updated 25.12.2024
  */
 
 #if 0
@@ -78,7 +78,7 @@ esp_err_t bt_exec(int argc, char* argv[])
 
 // Desired syntax:
 // variant 0: regexp's
-// [bt | bluetooth] [-h | --help] | [classic] | [le] [spp] [start | stop | status]
+// [bt | bluetooth] [-h | --help] [help] { [classic] | [le] | lowenergy } [spp] [start | stop | status]
 //
 //   - variant 1: Multisyntax w/options
 // [bt | bluetooth] [-h | --help]
@@ -94,21 +94,33 @@ esp_err_t bt_exec(int argc, char* argv[])
 // (flags -h | --help with command - help about selected command)
 //
 
+// defined if argtable3.c: #define TREX_ICASE ARG_REX_ICASE : flag for regexp, ignore casing for the matches
+//	must be defined in my header argtable? As below??? :
+// #define TREX_ICASE ARG_REX_ICASE
+
+// And in argtable3.h - defined this:
+// #define ARG_REX_ICASE 1
+//
+//
+// or my must define:
+// #define REG_EXTENDED 1
+// #define REG_ICASE (REG_EXTENDED << 1)
+// ???
+
 
 namespace bt
 {
 
 void* syntax[] = {
 //	help    = arg_litn(NULL, "help", 0, 1, "display this help and exit"),
-	arg_lit1("hH", "help,start,stop,status", /*nullptr*/ "help or start or stop or status"),
+    // origin->>	arg_lit0("hH", "help", /*nullptr*/ "help options for command or subcommand"),
+	arg_rex0("hH", "Help", "classic|le|lowenergy", "<stack>", ARG_REX_ICASE/*Arg::Rex::ICase*/, "help options for command or subcommand"),
 //	arg_litn(NULL, "help,start,stop", 1, 1, "help or start or stop or status"),
-	arg_lit0(nullptr, "classic,ble,le", /*nullptr*/ "classic bluetooth or Low Energy BT (BLE)"),
-//	/*version = */arg_litn(NULL, "version", 0, 1, "display version info and exit"),
-//	/*level   = */arg_intn(NULL, "level", "<n>", 0, 1, "foo value"),
-//	/*verb    = */arg_litn("v", "verbose", 0, 1, "verbose output"),
-//	/*o       = */arg_filen("o", NULL, "myfile", 0, 1, "output file"),
-//	/*file    = */arg_filen(NULL, NULL, "<file>", 1, 100, "input files"),
-	/*end     = */arg_end(20),
+	//arg_reg0(nullptr, "classic,ble,le", /*nullptr*/ "classic bluetooth or Low Energy BT (BLE)"),
+//	arg_lit0(nullptr, "classic,ble,le", /*nullptr*/ "classic bluetooth or Low Energy BT (BLE)"),
+	arg_rex0("sS", "stack,Stack", "classic|ble|le|lowenergy", "<stack_type>", ARG_REX_ICASE/*Arg::Rex::ICase*/, "kind of bluetooth stack for operating"),
+	arg_rex0("cC", "command,Command,cmd,Cmd", "start|stop|status", "<command_string>", ARG_REX_ICASE/*Arg::Rex::ICase*/, "command for operating with desired bluetooth stack"),
+	arg_end(20),
 }; /* void* bt_syntax */
 
 }; /* namespace bt */
@@ -119,19 +131,29 @@ const esp_console_cmd_t bt_cmd = {
         .help = "General Bluetooth command",
         .hint = nullptr/*"Bluetooth command exec"*/,
         .func = &bt_exec,
-//	.argtable = nullptr,
 	.argtable = bt::syntax,
+	.func_w_context = nullptr,
+	.context = nullptr
+}; /* bt_cmd */
+
+// full name alias for the bluetooth command
+const esp_console_cmd_t bluetooth_cmd = {
+	.command = "bluetooth",
+        .help = nullptr,
+        .hint = nullptr,
+        .func = &bt_exec,
+	.argtable = nullptr,
 	.func_w_context = nullptr,
 	.context = nullptr
 }; /* bt_cmd */
 
 
 
-
 /// Register bluetooth command
 void register_bt_cmd(void)
 {
-    ESP_ERROR_CHECK( esp_console_cmd_register(&bt_cmd) );
+    ESP_ERROR_CHECK(esp_console_cmd_register(&bt_cmd));
+    ESP_ERROR_CHECK(esp_console_cmd_register(&bluetooth_cmd));
 }; /* register_bt() */
 
 
