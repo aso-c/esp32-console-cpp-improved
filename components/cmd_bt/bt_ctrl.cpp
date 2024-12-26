@@ -3,8 +3,8 @@
  *
  * @brief bluetooth control code, implementation file
  *
- * @detail Declaration of the bluetooth control procedures
- * Header file.
+ * @detail Definition of the bluetooth control procedures
+ * Implementation file.
  *
  * @section LICENCE
  *
@@ -17,13 +17,12 @@
  * @author: Solomatov A.A. (aso)
  * @version 0.0.1
  * @date Created on: 16 дек. 2023 г.
- *	Updated   .  .  24
+ *	    Updated: 25.12.2024
  */
 
 #if 0
 #include <errno.h>
 #include <stdlib.h>
-#include <inttypes.h>
 #endif	// if 0
 
 #include <stdint.h>

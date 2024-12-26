@@ -23,14 +23,17 @@
 #if 0
 #include <errno.h>
 #include <stdlib.h>
-#include <inttypes.h>
 #endif	// if 0
 
-#include <stdint.h>
-#include <string.h>
+#include <iostream>
+#include <iomanip>
+
+#include <cstdint>
+#include <cstring>
 #include <stdbool.h>
-#include <stdio.h>
-#include <inttypes.h>
+#include <cstdio>
+#include <cinttypes>
+
 #include <nvs.h>
 #include <nvs_flash.h>
 
@@ -48,9 +51,12 @@
 //#include <esp_bt_device.h>
 //#include <esp_spp_api.h>
 
-#include <time.h>
+//#include <time.h>
+#include <ctime>
 #include <sys/time.h>
 
+#include <argtable>
+#include <console>
 
 #include "bt_ctrl"
 #include "cmd_bt.h"
@@ -71,10 +77,39 @@
 esp_err_t bt_exec(int argc, char* argv[])
 {
     ESP_LOGI(SPP_TAG, "===>> The Bluetooth command execution!!!");
+    std::clog << "Passed " << argc << " arguments" << std::endl;
+    std::clog << "Args is:" << std::endl;
+    for (int i = 0; i < argc; i++)
+	std::clog << '\t' << argv[i] << std::endl;
+
+#if 0
+    int nerrors = arg_parse(argc, argv, argtable);
+    if (nerrors == 0)
+    {
+        int i;
+        printf("-a = %d\n", a->count);
+        printf("-b = %d\n", b->count);
+        printf("-c = %d\n", c->count);
+        printf("--verbose = %d\n", verb->count);
+
+        if (scal->count > 0)
+            printf("--scalar=%d\n", scal->ival[0]);
+
+        if (o->count > 0)
+            printf("-o %s\n", o->filename[0]);
+
+        for (i = 0; i < file->count; i++)
+            printf("file[%d]=%s\n", i, file->filename[i]);
+    }
+    else
+//    If (nerrors > 0)
+	arg_print_errors(stdout, end, "myprog");
+#endif
     return ESP_OK;
 }; /* bt_exec() */
 
 
+auto global_lambda = [](int argc, char* argv[]) -> esp_err_t { return  bt_exec(argc, argv);};
 
 // Desired syntax:
 // variant 0: regexp's
@@ -126,34 +161,38 @@ void* syntax[] = {
 }; /* namespace bt */
 
 
-const esp_console_cmd_t bt_cmd = {
+//const esp_console_cmd_t bt_cmd = {
+const esp::console::cmd bt_cmd ({
 	.command = "bt"/* | bluetooth"*/,
         .help = "General Bluetooth command",
         .hint = nullptr/*"Bluetooth command exec"*/,
-        .func = &bt_exec,
+        .func = /*&bt_exec*/global_lambda,
 	.argtable = bt::syntax,
 	.func_w_context = nullptr,
 	.context = nullptr
-}; /* bt_cmd */
+}); /* bt_cmd */
 
 // full name alias for the bluetooth command
-const esp_console_cmd_t bluetooth_cmd = {
+//const esp_console_cmd_t bluetooth_cmd = {
+const esp::console::cmd bluetooth_cmd ({
 	.command = "bluetooth",
         .help = nullptr,
         .hint = nullptr,
-        .func = &bt_exec,
+        .func = global_lambda,
 	.argtable = nullptr,
 	.func_w_context = nullptr,
 	.context = nullptr
-}; /* bt_cmd */
+}); /* bluetooth_cmd */
 
 
 
 /// Register bluetooth command
 void register_bt_cmd(void)
 {
-    ESP_ERROR_CHECK(esp_console_cmd_register(&bt_cmd));
-    ESP_ERROR_CHECK(esp_console_cmd_register(&bluetooth_cmd));
+//    ESP_ERROR_CHECK(esp_console_cmd_register(&bt_cmd));
+    ESP_ERROR_CHECK(bt_cmd.enreg());
+//    ESP_ERROR_CHECK(esp_console_cmd_register(&bluetooth_cmd));
+    ESP_ERROR_CHECK(bluetooth_cmd.enreg());
 }; /* register_bt() */
 
 
