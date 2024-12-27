@@ -166,7 +166,7 @@ const esp::console::cmd bt_cmd ({
 	.command = "bt"/* | bluetooth"*/,
         .help = "General Bluetooth command",
         .hint = nullptr/*"Bluetooth command exec"*/,
-        .func = /*&bt_exec*/global_lambda,
+        .func = global_lambda,
 	.argtable = bt::syntax,
 	.func_w_context = nullptr,
 	.context = nullptr
