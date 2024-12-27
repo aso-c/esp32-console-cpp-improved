@@ -72,80 +72,108 @@
 
 
 
-
-// Execute the bt command
-esp_err_t bt_exec(int argc, char* argv[], const esp::console::cmd* cmd_cntxt)
+namespace bt
 {
-    ESP_LOGI(SPP_TAG, "===>> The Bluetooth command execution!!!");
-    std::clog << "Passed " << argc << " arguments" << std::endl;
-    std::clog << "Args is:" << std::endl;
-    for (int i = 0; i < argc; i++)
-	std::clog << '\t' << argv[i] << std::endl;
-
-#if 0
-    int nerrors = arg_parse(argc, argv, argtable);
-    if (nerrors == 0)
-    {
-        int i;
-        printf("-a = %d\n", a->count);
-        printf("-b = %d\n", b->count);
-        printf("-c = %d\n", c->count);
-        printf("--verbose = %d\n", verb->count);
-
-        if (scal->count > 0)
-            printf("--scalar=%d\n", scal->ival[0]);
-
-        if (o->count > 0)
-            printf("-o %s\n", o->filename[0]);
-
-        for (i = 0; i < file->count; i++)
-            printf("file[%d]=%s\n", i, file->filename[i]);
-    }
-    else
-//    If (nerrors > 0)
-	arg_print_errors(stdout, end, "myprog");
-#endif
-    return ESP_OK;
-}; /* bt_exec() */
+    extern const esp::console::cmd cmd;
+    extern const esp::console::cmd longcmd;
+}; /* namespace bt */
 
 
+/// Register bluetooth command
+void register_bt_cmd(void)
+{
+//    ESP_ERROR_CHECK(esp_console_cmd_register(&bt_cmd));
+    ESP_ERROR_CHECK(bt::cmd.enreg());
+//    ESP_ERROR_CHECK(esp_console_cmd_register(&bluetooth_cmd));
+    ESP_ERROR_CHECK(bt::longcmd.enreg());
+}; /* register_bt() */
 
-// Desired syntax:
-// variant 0: regexp's
-// [bt | bluetooth] [-h | --help] [help] { [classic] | [le] | lowenergy } [spp] [start | stop | status]
-//
-//   - variant 1: Multisyntax w/options
-// [bt | bluetooth] [-h | --help]
-// [bt | bluetooth] [--start | --stop | --status] [classic]|[le]
-//    extended variant:
-//    [bt | bluetooth] [--start | --stop | --status] [classic] | [le] | [ble] spp
-//
-//   - variant 2: Single syntax w/options
-// [bt | bluetooth] []
-// [bt | bluetooth] [-h | --help | --start | --stop | --status] [classic] | [le] [spp]
-//    extended variant:
-//    [bt | bluetooth] [-h | --help | --start | --stop | --status] [classic]|[le]|[ble] [spp]
-// (flags -h | --help with command - help about selected command)
-//
 
-// defined if argtable3.c: #define TREX_ICASE ARG_REX_ICASE : flag for regexp, ignore casing for the matches
-//	must be defined in my header argtable? As below??? :
-// #define TREX_ICASE ARG_REX_ICASE
-
-// And in argtable3.h - defined this:
-// #define ARG_REX_ICASE 1
-//
-//
-// or my must define:
-// #define REG_EXTENDED 1
-// #define REG_ICASE (REG_EXTENDED << 1)
-// ???
 
 
 namespace bt
 {
 
-void* syntax[] = {
+
+    // Execute the bt command
+    esp_err_t exec(int argc, char* argv[], const esp::console::cmd* cmd_cntxt)
+    {
+	ESP_LOGI(SPP_TAG, "===>> The Bluetooth command execution!!!");
+	std::clog << "Passed " << argc << " arguments" << std::endl;
+	std::clog << "Args is:" << std::endl;
+	for (int i = 0; i < argc; i++)
+	    std::clog << '\t' << argv[i] << std::endl;
+
+#if 0
+    int nerrors = arg_parse(argc, argv, argtable);
+    if (nerrors == 0)
+#endif
+	cmd_cntxt->parse(argc, argv);
+	if (cmd_cntxt->errors() == 0)
+	{
+		for (int i = 0; i < argc; i++)
+		    std::clog << '\t' << argv[i] << std::endl;
+
+#if 0
+		int i;
+	    printf("-a = %d\n", a->count);
+	    printf("-b = %d\n", b->count);
+	    printf("-c = %d\n", c->count);
+	    printf("--verbose = %d\n", verb->count);
+
+	    if (scal->count > 0)
+		printf("--scalar=%d\n", scal->ival[0]);
+
+	    if (o->count > 0)
+		printf("-o %s\n", o->filename[0]);
+
+	    for (i = 0; i < file->count; i++)
+		printf("file[%d]=%s\n", i, file->filename[i]);
+#endif
+	}
+#if 0
+    else
+//    If (nerrors > 0)
+	arg_print_errors(stdout, end, "myprog");
+#endif
+	return ESP_OK;
+    }; /* bt::exec() */
+
+
+
+    // Desired syntax:
+    // variant 0: regexp's
+    // [bt | bluetooth] [-h | --help] [help] { [classic] | [le] | lowenergy } [spp] [start | stop | status]
+    //
+    //   - variant 1: Multisyntax w/options
+    // [bt | bluetooth] [-h | --help]
+    // [bt | bluetooth] [--start | --stop | --status] [classic]|[le]
+    //    extended variant:
+    //    [bt | bluetooth] [--start | --stop | --status] [classic] | [le] | [ble] spp
+    //
+    //   - variant 2: Single syntax w/options
+    // [bt | bluetooth] []
+    // [bt | bluetooth] [-h | --help | --start | --stop | --status] [classic] | [le] [spp]
+    //    extended variant:
+    //    [bt | bluetooth] [-h | --help | --start | --stop | --status] [classic]|[le]|[ble] [spp]
+    // (flags -h | --help with command - help about selected command)
+    //
+
+    // defined if argtable3.c: #define TREX_ICASE ARG_REX_ICASE : flag for regexp, ignore casing for the matches
+    //	must be defined in my header argtable? As below??? :
+    // #define TREX_ICASE ARG_REX_ICASE
+
+    // And in argtable3.h - defined this:
+    // #define ARG_REX_ICASE 1
+    //
+    //
+    // or my must define:
+    // #define REG_EXTENDED 1
+    // #define REG_ICASE (REG_EXTENDED << 1)
+    // ???
+
+
+    void* syntax[] = {
 //	help    = arg_litn(NULL, "help", 0, 1, "display this help and exit"),
     // origin->>	arg_lit0("hH", "help", /*nullptr*/ "help options for command or subcommand"),
 	arg_rex0("hH", "Help", "classic|le|lowenergy", "<stack>", ARG_REX_ICASE/*Arg::Rex::ICase*/, "help options for command or subcommand"),
@@ -155,71 +183,46 @@ void* syntax[] = {
 	arg_rex0("sS", "stack,Stack", "classic|ble|le|lowenergy", "<stack_type>", ARG_REX_ICASE/*Arg::Rex::ICase*/, "kind of bluetooth stack for operating"),
 	arg_rex0("cC", "command,Command,cmd,Cmd", "start|stop|status", "<command_string>", ARG_REX_ICASE/*Arg::Rex::ICase*/, "command for operating with desired bluetooth stack"),
 	arg_end(20),
-}; /* void* bt_syntax */
-
-}; /* namespace bt */
+    }; /* void* bt::syntax */
 
 
-extern const esp::console::cmd bt_cmd;
+
+    auto lambda = [](int argc, char* argv[]) -> esp_err_t { return exec(argc, argv, &cmd); };
 
 
-auto bt_lambda = [](int argc, char* argv[]) -> esp_err_t { return  bt_exec(argc, argv, &bt_cmd);};
+    //const esp_console_cmd_t bt_cmd = {
+    const esp::console::cmd cmd ("bt", lambda, bt::syntax,  "General Bluetooth command");
+    //const esp::console::cmd bt_cmd ({
+    //	.command = "bt"/* | bluetooth"*/,
+    //        .help = "General Bluetooth command",
+    //        .hint = nullptr/*"Bluetooth command exec"*/,
+    //        .func = global_lambda,
+    //	.argtable = bt::syntax,
+    //	.func_w_context = nullptr,
+    //	.context = nullptr
+    //}); /* bt_cmd */
 
+    auto long_lambda = [](int argc, char* argv[]) -> esp_err_t { return  exec(argc, argv, &longcmd);};
 
-//const esp_console_cmd_t bt_cmd = {
-const esp::console::cmd bt_cmd ("bt",
-        bt_lambda,
-	bt::syntax,
-        "General Bluetooth command"
-); /* bt_cmd */
-//const esp::console::cmd bt_cmd ({
-//	.command = "bt"/* | bluetooth"*/,
-//        .help = "General Bluetooth command",
-//        .hint = nullptr/*"Bluetooth command exec"*/,
-//        .func = global_lambda,
-//	.argtable = bt::syntax,
-//	.func_w_context = nullptr,
-//	.context = nullptr
-//}); /* bt_cmd */
-
-extern const esp::console::cmd bluetooth_cmd;
-
-auto bluet_lambda = [](int argc, char* argv[]) -> esp_err_t { return  bt_exec(argc, argv, &bluetooth_cmd);};
-
-// full name alias for the bluetooth command
-//const esp_console_cmd_t bluetooth_cmd = {
-const esp::console::cmd bluetooth_cmd (
+    // full name alias for the bluetooth command
+    //const esp_console_cmd_t bluetooth_cmd = {
+    const esp::console::cmd longcmd (
 	"bluetooth",
-        bluet_lambda
-); /* bluetooth_cmd */
-//const esp::console::cmd bluetooth_cmd ({
-//	.command = "bluetooth",
-//        .help = nullptr,
-//        .hint = nullptr,
-//        .func = global_lambda,
-//	.argtable = nullptr,
-//	.func_w_context = nullptr,
-//	.context = nullptr
-//}); /* bluetooth_cmd */
+        long_lambda
+    ); /* bt::longcmd */
+    //const esp::console::cmd bluetooth_cmd ({
+    //	.command = "bluetooth",
+    //        .help = nullptr,
+    //        .hint = nullptr,
+    //        .func = global_lambda,
+    //	.argtable = nullptr,
+    //	.func_w_context = nullptr,
+    //	.context = nullptr
+    //}); /* bluetooth_cmd */
 
-
-
-/// Register bluetooth command
-void register_bt_cmd(void)
-{
-//    ESP_ERROR_CHECK(esp_console_cmd_register(&bt_cmd));
-    ESP_ERROR_CHECK(bt_cmd.enreg());
-//    ESP_ERROR_CHECK(esp_console_cmd_register(&bluetooth_cmd));
-    ESP_ERROR_CHECK(bluetooth_cmd.enreg());
-}; /* register_bt() */
-
-
-namespace bt
-{
 
     // TODO esp_bt_controller_config_t bt_cfg - must be parameter?
 //    esp_bt_controller_config_t cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
-
     esp::bt::Controller controller (BT_CONTROLLER_INIT_CONFIG_DEFAULT());
 
 //    // XXX If implemented a copy-constructor with esp_bt_controller_config_t& or esp_bt_controller_config_t&&,
