@@ -74,7 +74,7 @@
 
 
 // Execute the bt command
-esp_err_t bt_exec(int argc, char* argv[])
+esp_err_t bt_exec(int argc, char* argv[], const esp::console::cmd* cmd_cntxt)
 {
     ESP_LOGI(SPP_TAG, "===>> The Bluetooth command execution!!!");
     std::clog << "Passed " << argc << " arguments" << std::endl;
@@ -109,7 +109,6 @@ esp_err_t bt_exec(int argc, char* argv[])
 }; /* bt_exec() */
 
 
-auto global_lambda = [](int argc, char* argv[]) -> esp_err_t { return  bt_exec(argc, argv);};
 
 // Desired syntax:
 // variant 0: regexp's
@@ -161,28 +160,47 @@ void* syntax[] = {
 }; /* namespace bt */
 
 
+extern const esp::console::cmd bt_cmd;
+
+
+auto bt_lambda = [](int argc, char* argv[]) -> esp_err_t { return  bt_exec(argc, argv, &bt_cmd);};
+
+
 //const esp_console_cmd_t bt_cmd = {
-const esp::console::cmd bt_cmd ({
-	.command = "bt"/* | bluetooth"*/,
-        .help = "General Bluetooth command",
-        .hint = nullptr/*"Bluetooth command exec"*/,
-        .func = global_lambda,
-	.argtable = bt::syntax,
-	.func_w_context = nullptr,
-	.context = nullptr
-}); /* bt_cmd */
+const esp::console::cmd bt_cmd ("bt",
+        bt_lambda,
+	bt::syntax,
+        "General Bluetooth command"
+); /* bt_cmd */
+//const esp::console::cmd bt_cmd ({
+//	.command = "bt"/* | bluetooth"*/,
+//        .help = "General Bluetooth command",
+//        .hint = nullptr/*"Bluetooth command exec"*/,
+//        .func = global_lambda,
+//	.argtable = bt::syntax,
+//	.func_w_context = nullptr,
+//	.context = nullptr
+//}); /* bt_cmd */
+
+extern const esp::console::cmd bluetooth_cmd;
+
+auto bluet_lambda = [](int argc, char* argv[]) -> esp_err_t { return  bt_exec(argc, argv, &bluetooth_cmd);};
 
 // full name alias for the bluetooth command
 //const esp_console_cmd_t bluetooth_cmd = {
-const esp::console::cmd bluetooth_cmd ({
-	.command = "bluetooth",
-        .help = nullptr,
-        .hint = nullptr,
-        .func = global_lambda,
-	.argtable = nullptr,
-	.func_w_context = nullptr,
-	.context = nullptr
-}); /* bluetooth_cmd */
+const esp::console::cmd bluetooth_cmd (
+	"bluetooth",
+        bluet_lambda
+); /* bluetooth_cmd */
+//const esp::console::cmd bluetooth_cmd ({
+//	.command = "bluetooth",
+//        .help = nullptr,
+//        .hint = nullptr,
+//        .func = global_lambda,
+//	.argtable = nullptr,
+//	.func_w_context = nullptr,
+//	.context = nullptr
+//}); /* bluetooth_cmd */
 
 
 
