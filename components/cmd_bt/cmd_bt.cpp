@@ -94,9 +94,43 @@ void register_bt_cmd(void)
 namespace bt
 {
 
+    struct syntax_t
+    {
+	void* buffer[4] = {
+	//	help    = arg_litn(NULL, "help", 0, 1, "display this help and exit"),
+	    // origin->>	arg_lit0("hH", "help", /*nullptr*/ "help options for command or subcommand"),
+		arg_rex0("hH", "Help", "classic|le|lowenergy", "<stack>", ARG_REX_ICASE/*Arg::Rex::ICase*/, "help options for command or subcommand"),
+	//	arg_litn(NULL, "help,start,stop", 1, 1, "help or start or stop or status"),
+		//arg_reg0(nullptr, "classic,ble,le", /*nullptr*/ "classic bluetooth or Low Energy BT (BLE)"),
+	//	arg_lit0(nullptr, "classic,ble,le", /*nullptr*/ "classic bluetooth or Low Energy BT (BLE)"),
+		arg_rex0("sS", "stack,Stack", "classic|ble|le|lowenergy", "<stack_type>", ARG_REX_ICASE/*Arg::Rex::ICase*/, "kind of bluetooth stack for operating"),
+		arg_rex0("cC", "command,Command,cmd,Cmd", "start|stop|status", "<command_string>", ARG_REX_ICASE/*Arg::Rex::ICase*/, "command for operating with desired bluetooth stack"),
+		arg_end(20),
+	}; /* void* bt::syntax_t::buffer */
+
+    }; /* syntax_t */
+
+    /// Example core of the command class
+    struct cmd_core
+    {
+	static syntax_t syntax;
+	static cmd_core& declare();
+	static esp_err_t invoke(int argc, char* argv[]);
+    }; /* bt::cmd_core */
+
+    syntax_t cmd_core::syntax;
+
+    cmd_core& cmd_core::declare()
+    {
+	    static cmd_core singleton;
+
+	return singleton;
+    }; /* bt::cmd_core::declare() */
+
 
     // Execute the bt command
-    esp_err_t exec(int argc, char* argv[], const esp::console::cmd* cmd_cntxt)
+//    esp_err_t exec(int argc, char* argv[], const esp::console::cmd* cmd_cntxt)
+    esp_err_t cmd_core::invoke(int argc, char* argv[])
     {
 	ESP_LOGI(SPP_TAG, "===>> The Bluetooth command execution!!!");
 	std::clog << "Passed " << argc << " arguments" << std::endl;
@@ -104,15 +138,24 @@ namespace bt
 	for (int i = 0; i < argc; i++)
 	    std::clog << '\t' << argv[i] << std::endl;
 
-#if 0
-    int nerrors = arg_parse(argc, argv, argtable);
+#if !0
+    int nerrors = arg_parse(argc, argv, syntax.buffer);
     if (nerrors == 0)
-#endif
+#else
 	cmd_cntxt->parse(argc, argv);
 	if (cmd_cntxt->errors() == 0)
+#endif
 	{
 		for (int i = 0; i < argc; i++)
 		    std::clog << '\t' << argv[i] << std::endl;
+
+#if 0
+			void** sntxtble = static_cast<void**>(cmd_cntxt->argtable);
+		for (int i = 0; sntxtble[i] != nullptr && static_cast<arg_hdr*>(sntxtble[i]) != reinterpret_cast<void*>(ARG_TERMINATOR); i++)
+		{
+		    ;
+		}; /* for void** currsntx */
+#endif
 
 #if 0
 		int i;
@@ -172,7 +215,7 @@ namespace bt
     // #define REG_ICASE (REG_EXTENDED << 1)
     // ???
 
-
+#if 0
     void* syntax[] = {
 //	help    = arg_litn(NULL, "help", 0, 1, "display this help and exit"),
     // origin->>	arg_lit0("hH", "help", /*nullptr*/ "help options for command or subcommand"),
@@ -184,14 +227,16 @@ namespace bt
 	arg_rex0("cC", "command,Command,cmd,Cmd", "start|stop|status", "<command_string>", ARG_REX_ICASE/*Arg::Rex::ICase*/, "command for operating with desired bluetooth stack"),
 	arg_end(20),
     }; /* void* bt::syntax */
+#endif
 
 
 
-    auto lambda = [](int argc, char* argv[]) -> esp_err_t { return exec(argc, argv, &cmd); };
+//    auto lambda = [](int argc, char* argv[]) -> esp_err_t { return exec(argc, argv, &cmd); };
 
 
     //const esp_console_cmd_t bt_cmd = {
-    const esp::console::cmd cmd ("bt", lambda, bt::syntax,  "General Bluetooth command");
+//    const esp::console::cmd cmd ("bt", lambda, bt::syntax,  "General Bluetooth command");
+    const esp::console::cmd cmd ("bt", cmd_core::declare(),  "General Bluetooth command");
     //const esp::console::cmd bt_cmd ({
     //	.command = "bt"/* | bluetooth"*/,
     //        .help = "General Bluetooth command",
@@ -202,13 +247,14 @@ namespace bt
     //	.context = nullptr
     //}); /* bt_cmd */
 
-    auto long_lambda = [](int argc, char* argv[]) -> esp_err_t { return  exec(argc, argv, &longcmd);};
+//    auto long_lambda = [](int argc, char* argv[]) -> esp_err_t { return  exec(argc, argv, &longcmd);};
 
     // full name alias for the bluetooth command
     //const esp_console_cmd_t bluetooth_cmd = {
     const esp::console::cmd longcmd (
 	"bluetooth",
-        long_lambda
+//        long_lambda
+	cmd_core::declare()
     ); /* bt::longcmd */
     //const esp::console::cmd bluetooth_cmd ({
     //	.command = "bluetooth",
