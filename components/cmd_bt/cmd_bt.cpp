@@ -89,8 +89,6 @@ void register_bt_cmd(void)
 }; /* register_bt() */
 
 
-
-
 namespace bt
 {
 
@@ -175,8 +173,6 @@ namespace bt
 	return singleton;
     }; /* bt::cmd_core::declare() */
 
-    char ii = 5;
-    char cc = 2;
 //#if 0	// test
 arg::table::syntax test_syntax = (/*{*/
 //    &ii, &ccб /*2*/
@@ -188,64 +184,21 @@ arg::table::syntax test_syntax = (/*{*/
 			//arg_reg0(nullptr, "classic,ble,le", /*nullptr*/ "classic bluetooth or Low Energy BT (BLE)"),
 		//	arg_lit0(nullptr, "classic,ble,le", /*nullptr*/ "classic bluetooth or Low Energy BT (BLE)"),
 			arg_rex0("sS", "stack,Stack", "classic|ble|le|lowenergy", "<stack_type>", ARG_REX_ICASE/*Arg::Rex::ICase*/, "kind of bluetooth stack for operating"),
-			arg_rex0("cC", "command,Command,cmd,Cmd", "start|stop|status", "<command_string>", ARG_REX_ICASE/*Arg::Rex::ICase*/, "command for operating with desired bluetooth stack"),
-			arg_end(20)/*,*/
+			arg_rex0("cC", "command,Command,cmd,Cmd", "start|stop|status", "<command_string>", ARG_REX_ICASE/*Arg::Rex::ICase*/, "command for operating with desired bluetooth stack")/*,*/
+//			arg_end(20)/*,*/
 //#endif
 		//	5
 		/*}*/); /* arg::table::syntax test_syntax */;
 //#end //test
 
 
+//}; /* bt */
 
 
 
 
-//    template <char* name, typename... Args>
-    template <conststr name, std::size_t size>
-    struct cmd_act_template
-    {
-//	arg::table::syntax syntax;	///< syntax definition of the command
-
-	static cmd_act_template& declare();	///< get single command object
-	static esp_err_t invoke(int argc, char* argv[]);    ///< execute command action
-
-    private:
-	///< syntax definition of the command
-	template <typename... Args_t>
- 	cmd_act_template(const char* nm, Args_t*... args);
-	static arg::table::syntax<size> syntax //= {
-//	static arg::table::syntax<sizeof...(Args)> syntax //= {
-//		//	help    = arg_litn(NULL, "help", 0, 1, "display this help and exit"),
-//		    // origin->>	arg_lit0("hH", "help", /*nullptr*/ "help options for command or subcommand"),
-//			arg_rex0("hH", "Help", "classic|le|lowenergy", "<stack>", ARG_REX_ICASE/*Arg::Rex::ICase*/, "help options for command or subcommand"),
-//		//	arg_litn(NULL, "help,start,stop", 1, 1, "help or start or stop or status"),
-//			//arg_reg0(nullptr, "classic,ble,le", /*nullptr*/ "classic bluetooth or Low Energy BT (BLE)"),
-//		//	arg_lit0(nullptr, "classic,ble,le", /*nullptr*/ "classic bluetooth or Low Energy BT (BLE)"),
-//			arg_rex0("sS", "stack,Stack", "classic|ble|le|lowenergy", "<stack_type>", ARG_REX_ICASE/*Arg::Rex::ICase*/, "kind of bluetooth stack for operating"),
-//			arg_rex0("cC", "command,Command,cmd,Cmd", "start|stop|status", "<command_string>", ARG_REX_ICASE/*Arg::Rex::ICase*/, "command for operating with desired bluetooth stack"),
-//			arg_end(20),
-//		}
-	; /* arg::table::syntax cmd_act::syntax */;
-
-    }; /* struct bt::cmd_act_template */
-
-//    template <typename... Args_t>
-//    cmd_act_template(const char* nm, Args_t*...) -> cmd_act_template<nm, sizeof...(Args_t)>;
 
 
-cmd_act_template<"bt", 3> cmd_act("bt",
-	//#if 0
-			//	help    = arg_litn(NULL, "help", 0, 1, "display this help and exit"),
-			    // origin->>	arg_lit0("hH", "help", /*nullptr*/ "help options for command or subcommand"),
-				arg_rex0("hH", "Help", "classic|le|lowenergy", "<stack>", ARG_REX_ICASE/*Arg::Rex::ICase*/, "help options for command or subcommand"),
-			//	arg_litn(NULL, "help,start,stop", 1, 1, "help or start or stop or status"),
-				//arg_reg0(nullptr, "classic,ble,le", /*nullptr*/ "classic bluetooth or Low Energy BT (BLE)"),
-			//	arg_lit0(nullptr, "classic,ble,le", /*nullptr*/ "classic bluetooth or Low Energy BT (BLE)"),
-				arg_rex0("sS", "stack,Stack", "classic|ble|le|lowenergy", "<stack_type>", ARG_REX_ICASE/*Arg::Rex::ICase*/, "kind of bluetooth stack for operating"),
-				arg_rex0("cC", "command,Command,cmd,Cmd", "start|stop|status", "<command_string>", ARG_REX_ICASE/*Arg::Rex::ICase*/, "command for operating with desired bluetooth stack")/*,*/
-//				arg_end(20)/*,*/
-	//#endif
-);
 
 
 #if 0
@@ -264,12 +217,38 @@ cmd_act_template<"bt", 3> cmd_act("bt",
 	}; /* arg::table::syntax cmd_act::syntax */;
 #endif
 
+#pragma GCC diagnostic push
+//#pragma GCC diagnostic warning "-fpermissive"
 
+#pragma GCC diagnostic warning "-Wdeclaration-missing-parameter-type"
+#pragma GCC diagnostic warning "--warn-missing-parameter-type"
+//#pragma GCC diagnostic warning "-Wimplicit-function-declaration"
+//#pragma GCC diagnostic warning "-Wimplicit-int"
+//#pragma GCC diagnostic warning "-Wincompatible-pointer-types"
+//#pragma GCC diagnostic warning "-Wint-conversion"
+//#pragma GCC diagnostic warning "-Wnarrowing"
+//#pragma GCC diagnostic warning "-Wreturn-mismatch"
+//#pragma GCC diagnostic warning "-Wtemplate-body"
+#pragma GCC diagnostic warning "-Wtemplates"
+#pragma GCC diagnostic warning "-Wempty-body"
+
+    namespace exec
+    {
     // Execute the bt command
 //    esp_err_t exec(int argc, char* argv[], const esp::console::cmd* cmd_cntxt)
 //    esp_err_t cmd_core::invoke(int argc, char* argv[])
 //    esp_err_t cmd_act::invoke(int argc, char* argv[])
-    esp_err_t cmd_act_template<"bt, 3">::invoke(int argc, char* argv[])
+//    esp_err_t cmd_act_template<"bt, 3">::invoke(int argc, char* argv[])
+    using namespace ::arg::table;
+	using invoke=::arg::table::act::invoke;
+
+//    template <auto aa>
+//	using ::arg::table::act::invoke<aa>;
+
+	namespace tst = ::arg::table::act;
+
+    template <>
+    esp_err_t tst::invoke<&::bt::test_syntax>(int argc, char* argv[])
 
     {
 	ESP_LOGI(SPP_TAG, "===>> The Bluetooth command execution!!!");
@@ -279,7 +258,7 @@ cmd_act_template<"bt", 3> cmd_act("bt",
 	    std::clog << '\t' << argv[i] << std::endl;
 
 #if !0
-    int nerrors = arg_parse(argc, argv, syntax.keep.data());
+    int nerrors = arg_parse(argc, argv, bt::test_syntax.keep.data());
     if (nerrors == 0)
 #else
 	cmd_cntxt->parse(argc, argv);
@@ -320,10 +299,13 @@ cmd_act_template<"bt", 3> cmd_act("bt",
 	arg_print_errors(stdout, end, "myprog");
 #endif
 	return ESP_OK;
-    }; /* bt::exec() */
+//    }; /* bt::exec() */
+    }; /* bt::exec::invoke() */
+    }; /* namespace bt::exec */
+#pragma GCC diagnostic pop
 
-
-
+//namespace bt
+//{
 
 
     //const esp_console_cmd_t bt_cmd = {
