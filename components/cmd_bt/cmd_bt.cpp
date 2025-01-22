@@ -138,7 +138,7 @@ namespace bt
 #endif
 
 
-
+#if 0
 //    auto lambda = [](int argc, char* argv[]) -> esp_err_t { return exec(argc, argv, &cmd); };
     struct syntax_t
     {
@@ -172,11 +172,11 @@ namespace bt
 
 	return singleton;
     }; /* bt::cmd_core::declare() */
+#endif
 
-//#if 0	// test
-arg::table::syntax test_syntax = (/*{*/
+//arg::table::syntax test_syntax = (/*{*/
+    arg::table::syntax syntax = (
 //    &ii, &ccб /*2*/
-//#if 0
 		//	help    = arg_litn(NULL, "help", 0, 1, "display this help and exit"),
 		    // origin->>	arg_lit0("hH", "help", /*nullptr*/ "help options for command or subcommand"),
 			arg_rex0("hH", "Help", "classic|le|lowenergy", "<stack>", ARG_REX_ICASE/*Arg::Rex::ICase*/, "help options for command or subcommand"),
@@ -186,13 +186,10 @@ arg::table::syntax test_syntax = (/*{*/
 			arg_rex0("sS", "stack,Stack", "classic|ble|le|lowenergy", "<stack_type>", ARG_REX_ICASE/*Arg::Rex::ICase*/, "kind of bluetooth stack for operating"),
 			arg_rex0("cC", "command,Command,cmd,Cmd", "start|stop|status", "<command_string>", ARG_REX_ICASE/*Arg::Rex::ICase*/, "command for operating with desired bluetooth stack")/*,*/
 //			arg_end(20)/*,*/
-//#endif
-		//	5
-		/*}*/); /* arg::table::syntax test_syntax */;
-//#end //test
+//		/*}*/); /* arg::table::syntax test_syntax */;
+		    ); /* arg::table::syntax syntax */;
 
 
-//}; /* bt */
 
 
 
@@ -217,39 +214,20 @@ arg::table::syntax test_syntax = (/*{*/
 	}; /* arg::table::syntax cmd_act::syntax */;
 #endif
 
-#pragma GCC diagnostic push
-//#pragma GCC diagnostic warning "-fpermissive"
 
-#pragma GCC diagnostic warning "-Wdeclaration-missing-parameter-type"
-#pragma GCC diagnostic warning "--warn-missing-parameter-type"
-//#pragma GCC diagnostic warning "-Wimplicit-function-declaration"
-//#pragma GCC diagnostic warning "-Wimplicit-int"
-//#pragma GCC diagnostic warning "-Wincompatible-pointer-types"
-//#pragma GCC diagnostic warning "-Wint-conversion"
-//#pragma GCC diagnostic warning "-Wnarrowing"
-//#pragma GCC diagnostic warning "-Wreturn-mismatch"
-//#pragma GCC diagnostic warning "-Wtemplate-body"
-#pragma GCC diagnostic warning "-Wtemplates"
-#pragma GCC diagnostic warning "-Wempty-body"
+}; /* bt */
 
-    namespace exec
-    {
+
     // Execute the bt command
 //    esp_err_t exec(int argc, char* argv[], const esp::console::cmd* cmd_cntxt)
 //    esp_err_t cmd_core::invoke(int argc, char* argv[])
 //    esp_err_t cmd_act::invoke(int argc, char* argv[])
 //    esp_err_t cmd_act_template<"bt, 3">::invoke(int argc, char* argv[])
-    using namespace ::arg::table;
-	using invoke=::arg::table::act::invoke;
-
-//    template <auto aa>
-//	using ::arg::table::act::invoke<aa>;
-
-	namespace tst = ::arg::table::act;
+//    using namespace ::arg::table;
 
     template <>
-    esp_err_t tst::invoke<&::bt::test_syntax>(int argc, char* argv[])
-
+//    esp_err_t /*::arg::table::*/act/*<&::bt::test_syntax>*/::invoke(int argc, char* argv[])
+    esp_err_t arg::table::act<&::bt::syntax>::invoke(int argc, char* argv[])
     {
 	ESP_LOGI(SPP_TAG, "===>> The Bluetooth command execution!!!");
 	std::clog << "Passed " << argc << " arguments" << std::endl;
@@ -258,7 +236,7 @@ arg::table::syntax test_syntax = (/*{*/
 	    std::clog << '\t' << argv[i] << std::endl;
 
 #if !0
-    int nerrors = arg_parse(argc, argv, bt::test_syntax.keep.data());
+    int nerrors = arg_parse(argc, argv, bt::syntax.keep.data());
     if (nerrors == 0)
 #else
 	cmd_cntxt->parse(argc, argv);
@@ -301,16 +279,18 @@ arg::table::syntax test_syntax = (/*{*/
 	return ESP_OK;
 //    }; /* bt::exec() */
     }; /* bt::exec::invoke() */
-    }; /* namespace bt::exec */
-#pragma GCC diagnostic pop
 
-//namespace bt
-//{
+
+namespace bt
+{
 
 
     //const esp_console_cmd_t bt_cmd = {
 //    const esp::console::cmd cmd ("bt", lambda, bt::syntax,  "General Bluetooth command");
-    const esp::console::cmd cmd ("bt", cmd_core::declare(),  "General Bluetooth command");
+//    const esp::console::cmd cmd ("bt", lambda, bt::syntax,  "General Bluetooth command");
+    const esp::console::cmd cmd ("bt", arg::table::act<&::bt::syntax>::invoke, bt::syntax,  "General Bluetooth command");
+
+//    const esp::console::cmd cmd ("bt", cmd_core::declare(),  "General Bluetooth command");
     //const esp::console::cmd bt_cmd ({
     //	.command = "bt"/* | bluetooth"*/,
     //        .help = "General Bluetooth command",
@@ -328,7 +308,8 @@ arg::table::syntax test_syntax = (/*{*/
     const esp::console::cmd longcmd (
 	"bluetooth",
 //        long_lambda
-	cmd_core::declare()
+	arg::table::act<&::bt::syntax>::invoke,
+	bt::syntax
     ); /* bt::longcmd */
     //const esp::console::cmd bluetooth_cmd ({
     //	.command = "bluetooth",
