@@ -123,60 +123,9 @@ namespace bt
     // #define REG_ICASE (REG_EXTENDED << 1)
     // ???
 
-#if 0
-    void* syntax[] = {
-//	help    = arg_litn(NULL, "help", 0, 1, "display this help and exit"),
-    // origin->>	arg_lit0("hH", "help", /*nullptr*/ "help options for command or subcommand"),
-	arg_rex0("hH", "Help", "classic|le|lowenergy", "<stack>", ARG_REX_ICASE/*Arg::Rex::ICase*/, "help options for command or subcommand"),
-//	arg_litn(NULL, "help,start,stop", 1, 1, "help or start or stop or status"),
-	//arg_reg0(nullptr, "classic,ble,le", /*nullptr*/ "classic bluetooth or Low Energy BT (BLE)"),
-//	arg_lit0(nullptr, "classic,ble,le", /*nullptr*/ "classic bluetooth or Low Energy BT (BLE)"),
-	arg_rex0("sS", "stack,Stack", "classic|ble|le|lowenergy", "<stack_type>", ARG_REX_ICASE/*Arg::Rex::ICase*/, "kind of bluetooth stack for operating"),
-	arg_rex0("cC", "command,Command,cmd,Cmd", "start|stop|status", "<command_string>", ARG_REX_ICASE/*Arg::Rex::ICase*/, "command for operating with desired bluetooth stack"),
-	arg_end(20),
-    }; /* void* bt::syntax */
-#endif
-
-
-#if 0
-//    auto lambda = [](int argc, char* argv[]) -> esp_err_t { return exec(argc, argv, &cmd); };
-    struct syntax_t
-    {
-	void* buffer[4] = {
-	//	help    = arg_litn(NULL, "help", 0, 1, "display this help and exit"),
-	    // origin->>	arg_lit0("hH", "help", /*nullptr*/ "help options for command or subcommand"),
-		arg_rex0("hH", "Help", "classic|le|lowenergy", "<stack>", ARG_REX_ICASE/*Arg::Rex::ICase*/, "help options for command or subcommand"),
-	//	arg_litn(NULL, "help,start,stop", 1, 1, "help or start or stop or status"),
-		//arg_reg0(nullptr, "classic,ble,le", /*nullptr*/ "classic bluetooth or Low Energy BT (BLE)"),
-	//	arg_lit0(nullptr, "classic,ble,le", /*nullptr*/ "classic bluetooth or Low Energy BT (BLE)"),
-		arg_rex0("sS", "stack,Stack", "classic|ble|le|lowenergy", "<stack_type>", ARG_REX_ICASE/*Arg::Rex::ICase*/, "kind of bluetooth stack for operating"),
-		arg_rex0("cC", "command,Command,cmd,Cmd", "start|stop|status", "<command_string>", ARG_REX_ICASE/*Arg::Rex::ICase*/, "command for operating with desired bluetooth stack"),
-		arg_end(20),
-	}; /* void* bt::syntax_t::buffer */
-
-    }; /* syntax_t */
-
-    /// Example core of the command class
-    struct cmd_core
-    {
-	static syntax_t syntax;
-	static cmd_core& declare();
-	static esp_err_t invoke(int argc, char* argv[]);
-    }; /* bt::cmd_core */
-
-    syntax_t cmd_core::syntax;
-
-    cmd_core& cmd_core::declare()
-    {
-	    static cmd_core singleton;
-
-	return singleton;
-    }; /* bt::cmd_core::declare() */
-#endif
 
 //arg::table::syntax test_syntax = (/*{*/
     arg::table::syntax syntax = (
-//    &ii, &ccб /*2*/
 		//	help    = arg_litn(NULL, "help", 0, 1, "display this help and exit"),
 		    // origin->>	arg_lit0("hH", "help", /*nullptr*/ "help options for command or subcommand"),
 			arg_rex0("hH", "Help", "classic|le|lowenergy", "<stack>", ARG_REX_ICASE/*Arg::Rex::ICase*/, "help options for command or subcommand"),
@@ -186,62 +135,38 @@ namespace bt
 			arg_rex0("sS", "stack,Stack", "classic|ble|le|lowenergy", "<stack_type>", ARG_REX_ICASE/*Arg::Rex::ICase*/, "kind of bluetooth stack for operating"),
 			arg_rex0("cC", "command,Command,cmd,Cmd", "start|stop|status", "<command_string>", ARG_REX_ICASE/*Arg::Rex::ICase*/, "command for operating with desired bluetooth stack")/*,*/
 //			arg_end(20)/*,*/
-//		/*}*/); /* arg::table::syntax test_syntax */;
-		    ); /* arg::table::syntax syntax */;
-
-
-
-
-
-
-
-
-
-
-#if 0
-    ///< syntax definition of the command
-//	template <typename... Args_t>
-    arg::table::syntax/*<Args_t...>*/ cmd_act::syntax/*<Args_t...>*/ = {
-	//	help    = arg_litn(NULL, "help", 0, 1, "display this help and exit"),
-	    // origin->>	arg_lit0("hH", "help", /*nullptr*/ "help options for command or subcommand"),
-		arg_rex0("hH", "Help", "classic|le|lowenergy", "<stack>", ARG_REX_ICASE/*Arg::Rex::ICase*/, "help options for command or subcommand"),
-	//	arg_litn(NULL, "help,start,stop", 1, 1, "help or start or stop or status"),
-		//arg_reg0(nullptr, "classic,ble,le", /*nullptr*/ "classic bluetooth or Low Energy BT (BLE)"),
-	//	arg_lit0(nullptr, "classic,ble,le", /*nullptr*/ "classic bluetooth or Low Energy BT (BLE)"),
-		arg_rex0("sS", "stack,Stack", "classic|ble|le|lowenergy", "<stack_type>", ARG_REX_ICASE/*Arg::Rex::ICase*/, "kind of bluetooth stack for operating"),
-		arg_rex0("cC", "command,Command,cmd,Cmd", "start|stop|status", "<command_string>", ARG_REX_ICASE/*Arg::Rex::ICase*/, "command for operating with desired bluetooth stack"),
-//		arg_end(20),
-	}; /* arg::table::syntax cmd_act::syntax */;
-#endif
+		    ); /* bt::syntax */;
 
 
 }; /* bt */
 
+template <>
+esp_err_t arg::table::act<&::bt::syntax>::invoke(int argc, char* argv[])
+{
+    ESP_LOGI(SPP_TAG, "===>> The Bluetooth command execution!!!");
+    std::clog << "Passed " << argc << " arguments" << std::endl;
+    std::clog << "Args is:" << std::endl;
+    for (int i = 0; i < argc; i++)
+	std::clog << '\t' << argv[i] << std::endl;
 
-    // Execute the bt command
-//    esp_err_t exec(int argc, char* argv[], const esp::console::cmd* cmd_cntxt)
-//    esp_err_t cmd_core::invoke(int argc, char* argv[])
-//    esp_err_t cmd_act::invoke(int argc, char* argv[])
-//    esp_err_t cmd_act_template<"bt, 3">::invoke(int argc, char* argv[])
-//    using namespace ::arg::table;
-
-    template <>
-//    esp_err_t /*::arg::table::*/act/*<&::bt::test_syntax>*/::invoke(int argc, char* argv[])
-    esp_err_t arg::table::act<&::bt::syntax>::invoke(int argc, char* argv[])
-    {
-	ESP_LOGI(SPP_TAG, "===>> The Bluetooth command execution!!!");
-	std::clog << "Passed " << argc << " arguments" << std::endl;
-	std::clog << "Args is:" << std::endl;
-	for (int i = 0; i < argc; i++)
-	    std::clog << '\t' << argv[i] << std::endl;
-
-#if !0
+#if 0
     int nerrors = arg_parse(argc, argv, bt::syntax.keep.data());
-    if (nerrors == 0)
+    if (nerrors != 0)
 #else
-	cmd_cntxt->parse(argc, argv);
-	if (cmd_cntxt->errors() == 0)
+//	cmd_cntxt->parse(argc, argv);
+    bt::syntax.parse(argc, argv);
+//    if (cmd_cntxt->err() != 0)
+    if (bt::syntax.err())
 #endif
+    {
+#if ~0
+//    If (nerrors > 0)
+//	arg_print_errors(stdout, std::get<bt::syntax.description.back().index()>(bt::syntax.description.back()), argv[0]);
+	arg_print_errors(stdout, std::get<struct arg_end*>(bt::syntax.description.back()), argv[0]);
+#else
+#endif
+	return bt::syntax.err();
+    }; /* if (bt::syntax.err() != 0) */
 	{
 		for (int i = 0; i < argc; i++)
 		    std::clog << '\t' << argv[i] << std::endl;
@@ -271,43 +196,18 @@ namespace bt
 		printf("file[%d]=%s\n", i, file->filename[i]);
 #endif
 	}
-#if 0
-    else
-//    If (nerrors > 0)
-	arg_print_errors(stdout, end, "myprog");
-#endif
 	return ESP_OK;
-//    }; /* bt::exec() */
-    }; /* bt::exec::invoke() */
-
+    }; /* arg::table::act<&::bt::syntax>::invoke(int, char* []) */
 
 namespace bt
 {
 
-
-    //const esp_console_cmd_t bt_cmd = {
-//    const esp::console::cmd cmd ("bt", lambda, bt::syntax,  "General Bluetooth command");
-//    const esp::console::cmd cmd ("bt", lambda, bt::syntax,  "General Bluetooth command");
     const esp::console::cmd cmd ("bt", arg::table::act<&::bt::syntax>::invoke, bt::syntax,  "General Bluetooth command");
-
-//    const esp::console::cmd cmd ("bt", cmd_core::declare(),  "General Bluetooth command");
-    //const esp::console::cmd bt_cmd ({
-    //	.command = "bt"/* | bluetooth"*/,
-    //        .help = "General Bluetooth command",
-    //        .hint = nullptr/*"Bluetooth command exec"*/,
-    //        .func = global_lambda,
-    //	.argtable = bt::syntax,
-    //	.func_w_context = nullptr,
-    //	.context = nullptr
-    //}); /* bt_cmd */
-
-//    auto long_lambda = [](int argc, char* argv[]) -> esp_err_t { return  exec(argc, argv, &longcmd);};
 
     // full name alias for the bluetooth command
     //const esp_console_cmd_t bluetooth_cmd = {
     const esp::console::cmd longcmd (
 	"bluetooth",
-//        long_lambda
 	arg::table::act<&::bt::syntax>::invoke,
 	bt::syntax
     ); /* bt::longcmd */
@@ -425,4 +325,5 @@ namespace bt
     }; /*  bt::stop() */
 
 }; /* namespace bt */
+
 
