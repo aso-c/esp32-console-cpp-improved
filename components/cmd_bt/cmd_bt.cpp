@@ -125,7 +125,7 @@ namespace bt
 
 
 //arg::table::syntax test_syntax = (/*{*/
-    arg::table::syntax syntax = (
+    arg::table::syntax syntax /*=*/ ( /*{*/
 		//	help    = arg_litn(NULL, "help", 0, 1, "display this help and exit"),
 		    // origin->>	arg_lit0("hH", "help", /*nullptr*/ "help options for command or subcommand"),
 			arg_rex0("hH", "Help", "classic|le|lowenergy", "<stack>", ARG_REX_ICASE/*Arg::Rex::ICase*/, "help options for command or subcommand"),
@@ -135,7 +135,8 @@ namespace bt
 			arg_rex0("sS", "stack,Stack", "classic|ble|le|lowenergy", "<stack_type>", ARG_REX_ICASE/*Arg::Rex::ICase*/, "kind of bluetooth stack for operating"),
 			arg_rex0("cC", "command,Command,cmd,Cmd", "start|stop|status", "<command_string>", ARG_REX_ICASE/*Arg::Rex::ICase*/, "command for operating with desired bluetooth stack")/*,*/
 //			arg_end(20)/*,*/
-		    ); /* bt::syntax */;
+    /*}*/ ); /* bt::syntax */;
+    //arg::table::syntax syntax2 /*=*/ (nullptr, nullptr, nullptr);
 
 
 }; /* bt */
@@ -144,6 +145,9 @@ template <>
 esp_err_t arg::table::act<&::bt::syntax>::invoke(int argc, char* argv[])
 {
     ESP_LOGI(SPP_TAG, "===>> The Bluetooth command execution!!!");
+
+    std::clog << "Syntax description size is: " << bt::syntax.description.size() << std::endl;
+    std::clog << "Syntax data keeped is: " << bt::syntax.keep.size() << std::endl;
     std::clog << "Passed " << argc << " arguments" << std::endl;
     std::clog << "Args is:" << std::endl;
     for (int i = 0; i < argc; i++)
