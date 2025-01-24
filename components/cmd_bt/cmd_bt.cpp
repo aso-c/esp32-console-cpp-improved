@@ -15,9 +15,9 @@
  * CONDITIONS OF ANY KIND, either express or implied.
  *
  * @author: Solomatov A.A. (aso)
- * @version 0.0.5
+ * @version 0.7.0
  * @date Created on: 11 дек. 2024 г.
- *	Updated 25.12.2024
+ *	Updated 24.01.2025
  */
 
 #if 0
@@ -124,8 +124,7 @@ namespace bt
     // ???
 
 
-//arg::table::syntax test_syntax = (/*{*/
-    arg::table::syntax syntax /*=*/ ( /*{*/
+    arg::table::syntax syntax = {
 		//	help    = arg_litn(NULL, "help", 0, 1, "display this help and exit"),
 		    // origin->>	arg_lit0("hH", "help", /*nullptr*/ "help options for command or subcommand"),
 			arg_rex0("hH", "Help", "classic|le|lowenergy", "<stack>", ARG_REX_ICASE/*Arg::Rex::ICase*/, "help options for command or subcommand"),
@@ -135,19 +134,17 @@ namespace bt
 			arg_rex0("sS", "stack,Stack", "classic|ble|le|lowenergy", "<stack_type>", ARG_REX_ICASE/*Arg::Rex::ICase*/, "kind of bluetooth stack for operating"),
 			arg_rex0("cC", "command,Command,cmd,Cmd", "start|stop|status", "<command_string>", ARG_REX_ICASE/*Arg::Rex::ICase*/, "command for operating with desired bluetooth stack")/*,*/
 //			arg_end(20)/*,*/
-    /*}*/ ); /* bt::syntax */;
+    }; /* bt::syntax */;
     //arg::table::syntax syntax2 /*=*/ (nullptr, nullptr, nullptr);
 
 
 }; /* bt */
 
 template <>
-esp_err_t arg::table::act<&::bt::syntax>::invoke(int argc, char* argv[])
+esp_err_t arg::table::act<&::bt::syntax>::invoke_impl(int argc, char* argv[])
 {
     ESP_LOGI(SPP_TAG, "===>> The Bluetooth command execution!!!");
 
-    std::clog << "Syntax description size is: " << bt::syntax.description.size() << std::endl;
-    std::clog << "Syntax data keeped is: " << bt::syntax.keep.size() << std::endl;
     std::clog << "Passed " << argc << " arguments" << std::endl;
     std::clog << "Args is:" << std::endl;
     for (int i = 0; i < argc; i++)
@@ -163,11 +160,12 @@ esp_err_t arg::table::act<&::bt::syntax>::invoke(int argc, char* argv[])
     if (bt::syntax.err())
 #endif
     {
-#if ~0
+#if 0
 //    If (nerrors > 0)
 //	arg_print_errors(stdout, std::get<bt::syntax.description.back().index()>(bt::syntax.description.back()), argv[0]);
 	arg_print_errors(stdout, std::get<struct arg_end*>(bt::syntax.description.back()), argv[0]);
 #else
+	bt::syntax.error(stdout, argv[0]);
 #endif
 	return bt::syntax.err();
     }; /* if (bt::syntax.err() != 0) */
@@ -182,6 +180,11 @@ esp_err_t arg::table::act<&::bt::syntax>::invoke(int argc, char* argv[])
 		    ;
 		}; /* for void** currsntx */
 #endif
+
+		for (auto opt: bt::syntax.description)
+		{
+		    ;
+		};
 
 #if 0
 		int i;
@@ -206,13 +209,13 @@ esp_err_t arg::table::act<&::bt::syntax>::invoke(int argc, char* argv[])
 namespace bt
 {
 
-    const esp::console::cmd cmd ("bt", arg::table::act<&::bt::syntax>::invoke, bt::syntax,  "General Bluetooth command");
+    const esp::console::cmd cmd ("bt", arg::table::act<&::bt::syntax>::invoke_impl, bt::syntax,  "General Bluetooth command");
 
     // full name alias for the bluetooth command
     //const esp_console_cmd_t bluetooth_cmd = {
     const esp::console::cmd longcmd (
 	"bluetooth",
-	arg::table::act<&::bt::syntax>::invoke,
+	arg::table::act<&::bt::syntax>::invoke_impl,
 	bt::syntax
     ); /* bt::longcmd */
     //const esp::console::cmd bluetooth_cmd ({
