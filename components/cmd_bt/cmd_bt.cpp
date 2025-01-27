@@ -123,7 +123,6 @@ namespace bt
     // #define REG_ICASE (REG_EXTENDED << 1)
     // ???
 
-
     arg::table::syntax syntax = {
 		//	help    = arg_litn(NULL, "help", 0, 1, "display this help and exit"),
 		    // origin->>	arg_lit0("hH", "help", /*nullptr*/ "help options for command or subcommand"),
@@ -135,13 +134,31 @@ namespace bt
 			arg_rex0("cC", "command,Command,cmd,Cmd", "start|stop|status", "<command_string>", ARG_REX_ICASE/*Arg::Rex::ICase*/, "command for operating with desired bluetooth stack")/*,*/
 //			arg_end(20)/*,*/
     }; /* bt::syntax */;
-    //arg::table::syntax syntax2 /*=*/ (nullptr, nullptr, nullptr);
+
+    class act: public arg::table::act_t<&syntax>
+    {
+	act():
+	    act_t<&bt::syntax>(invoke_impl)
+	{};
+
+    public:
+
+	/// Execute command procedure with the pointer to the own syntax object
+	static
+	esp_err_t invoke_impl(int argc, char * argv[]);
+
+	/// Run the Help procedure with the pointer to the own syntax object
+	static
+	esp_err_t help_impl(int argc, char* argv[]);
+
+    }; /* class bt::act */
 
 
-}; /* bt */
+//}; /* bt */
 
-template <>
-esp_err_t arg::table::act<&::bt::syntax>::invoke_impl(int argc, char* argv[])
+//template <>
+//esp_err_t arg::table::act<&::bt::syntax>::invoke_impl(int argc, char* argv[])
+esp_err_t act::invoke_impl(int argc, char* argv[])
 {
     ESP_LOGI(SPP_TAG, "===>> The Bluetooth command execution!!!");
 
@@ -150,15 +167,9 @@ esp_err_t arg::table::act<&::bt::syntax>::invoke_impl(int argc, char* argv[])
     for (int i = 0; i < argc; i++)
 	std::clog << '\t' << argv[i] << std::endl;
 
-#if 0
-    int nerrors = arg_parse(argc, argv, bt::syntax.keep.data());
-    if (nerrors != 0)
-#else
 //	cmd_cntxt->parse(argc, argv);
     bt::syntax.parse(argc, argv);
-//    if (cmd_cntxt->err() != 0)
     if (bt::syntax.err())
-#endif
     {
 #if 0
 //    If (nerrors > 0)
@@ -169,9 +180,10 @@ esp_err_t arg::table::act<&::bt::syntax>::invoke_impl(int argc, char* argv[])
 #endif
 	return bt::syntax.err();
     }; /* if (bt::syntax.err() != 0) */
-	{
+#if 0
 		for (int i = 0; i < argc; i++)
 		    std::clog << '\t' << argv[i] << std::endl;
+#endif
 
 #if 0
 			void** sntxtble = static_cast<void**>(cmd_cntxt->argtable);
@@ -181,10 +193,10 @@ esp_err_t arg::table::act<&::bt::syntax>::invoke_impl(int argc, char* argv[])
 		}; /* for void** currsntx */
 #endif
 
-		for (auto opt: bt::syntax.description)
-		{
-		    ;
-		};
+    for (auto opt: bt::syntax.description)
+    {
+	;
+    }; /* for opt: bt::syntax.description */
 
 #if 0
 		int i;
@@ -202,20 +214,20 @@ esp_err_t arg::table::act<&::bt::syntax>::invoke_impl(int argc, char* argv[])
 	    for (i = 0; i < file->count; i++)
 		printf("file[%d]=%s\n", i, file->filename[i]);
 #endif
-	}
+
 	return ESP_OK;
     }; /* arg::table::act<&::bt::syntax>::invoke(int, char* []) */
 
-namespace bt
-{
+//namespace bt
+//{
 
-    const esp::console::cmd cmd ("bt", arg::table::act<&::bt::syntax>::invoke_impl, bt::syntax,  "General Bluetooth command");
+    const esp::console::cmd cmd ("bt", arg::table::act_t<&::bt::syntax>::invoke_impl, bt::syntax,  "General Bluetooth command");
 
     // full name alias for the bluetooth command
     //const esp_console_cmd_t bluetooth_cmd = {
     const esp::console::cmd longcmd (
 	"bluetooth",
-	arg::table::act<&::bt::syntax>::invoke_impl,
+	arg::table::act_t<&::bt::syntax>::invoke_impl,
 	bt::syntax
     ); /* bt::longcmd */
     //const esp::console::cmd bluetooth_cmd ({

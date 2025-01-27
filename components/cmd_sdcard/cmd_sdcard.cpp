@@ -4,8 +4,8 @@
  * 	@file	cmd_sdcard.cpp
  *	@author	Solomatov A.A. (aso)
  *	@date	Created 04.04.2022
- *		Modified 01.10.2024
- *	@version: 0.73
+ *		Modified 27.01.2025
+ *	@version: 0.74
  */
 
 #include <cstdlib>
@@ -32,6 +32,7 @@
 #include <driver/sdmmc_host.h>
 
 #include <argtable>
+#include <argtable-legacy>
 #include <cmd_sdcard>
 #include <sdcard_io>
 #include <fs_ctrl>
