@@ -27,6 +27,8 @@
 #include "nvs.h"
 #include "nvs_flash.h"
 
+#include "argtable"
+
 #include "cmd_decl.h"
 #include <astring.h>
 
@@ -58,7 +60,8 @@ using namespace std;
 #pragma message("ESP32 Improved Console" ", version v." CONFIG_APP_PROJECT_VER "-" CONFIG_APP_PROJECT_FLAVOUR " of " CONFIG_APP_PROJECT_DATE " by " CONFIG_APP_PROJECT_AUTHOR " (" CONFIG_APP_PROJECT_AUTHOR_NICK ")")
 #pragma message("C++ version is: " STRING(__cplusplus) )
 
-static const char* TAG = "example";
+//static const char* TAG = "example";
+static const char* TAG = "improved console";
 #define PROMPT_STR CONFIG_IDF_TARGET
 
 // Hardware configuration detail
@@ -210,12 +213,20 @@ static int get_info(int argc, char **argv)
 }; /* extern C */
 
 
+
+///--[ Registering main infrastructure command - help & info ]---------------------------
+
 /**
  * @brief Fake command only for output version information in a 'help' command
  *
  * Own 'help' command implementation first run default 'help' command,
  * and then prints the version string of a program.
  */
+
+namespace info
+{
+    arg::table::syntax_t syntax{ arg_str1(NULL, NULL, "Build Date:", __DATE__ " " __TIME__ ".") };
+}; /* namespace info */
 
 static void register_info(void)
 {
@@ -243,6 +254,21 @@ static void register_info(void)
 
 
 
+
+/**
+ * @brief Register a 'help' command
+ *
+ * Default 'help' command prints the list of registered commands along with
+ * hints and help strings if no additional argument is given. If an additional
+ * argument is given, the help command will look for a command with the same
+ * name and only print the hints and help strings of that command.
+ *
+ * @return
+ *      - ESP_OK on success
+ *      - ESP_ERR_INVALID_STATE, if esp_console_init wasn't called
+ */
+
+
 /**
  * @brief Register a 'help' command for a console example project
  *
@@ -257,6 +283,9 @@ esp_err_t console_register_help_command(void)
 {
     return (esp_err_t)esp_console_register_help_command();
 }; /* console_example_register_help_command */
+
+//--[ End of registering command - help & info ]-----------------------------------------
+
 
 
 extern "C" void app_main(void)
