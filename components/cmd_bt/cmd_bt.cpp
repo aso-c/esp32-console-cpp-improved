@@ -145,6 +145,7 @@ namespace bt
     public:
 
 //	using arg::table::act_t<&bt::syntax>::define;
+	static act& define() { return instance_impl<act>(); };
 
 	/// Execute command procedure with the pointer to the own syntax object
 	static
@@ -217,14 +218,12 @@ esp_err_t act::invoke_impl(int argc, char* argv[])
 
 //    const esp::console::cmd cmd ("bt", arg::table::act_t<&bt::syntax>::invoke_impl, bt::syntax,  "General Bluetooth command");
     //const esp::console::cmd cmd ("bt", act::invoke_impl, bt::syntax,  "General Bluetooth command");
-    const esp::console::cmd cmd ("bt", act::define<act>(),  "General Bluetooth command");
+//    const esp::console::cmd cmd ("bt", act::define<act>(),  "General Bluetooth command");
+    const esp::console::cmd cmd ("bt", act::define(),  "General Bluetooth command");
 
     // long name alias for the bluetooth command
     //const esp_console_cmd_t bluetooth_cmd = {
-    const esp::console::cmd longcmd ("bluetooth", act::define<act>());
-//	act::invoke_impl,
-//	bt::syntax
-//    ); /* bt::longcmd */
+    const esp::console::cmd longcmd ("bluetooth", act::define());
     //const esp::console::cmd bluetooth_cmd ({
     //	.command = "bluetooth",
     //        .help = nullptr,
