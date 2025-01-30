@@ -129,11 +129,11 @@ namespace bt
 //			arg_end(20)/*,*/
     }; /* bt::syntax */;
 
-    class act: public arg::table::act_t<&syntax>
+    class act: public arg::table::act_cmplx_t<&syntax>
     {
-	friend class arg::table::act_t<&bt::syntax>;
+	friend class arg::table::act_cmplx_t<&bt::syntax>;
 	act():
-	    act_t<&bt::syntax>(invoke_impl)
+	    act_cmplx_t<&bt::syntax>(invoke_impl)
 	{};
 
     public:
@@ -214,12 +214,12 @@ esp_err_t act::invoke_impl(int argc, char* argv[])
     //const esp::console::cmd cmd ("bt", act::invoke_impl, bt::syntax,  "General Bluetooth command");
 //    const esp::console::cmd cmd ("bt", act::define<act>(),  "General Bluetooth command");
 //    const esp::console::cmd cmd ("bt", act::define(),  "General Bluetooth command");
-    const esp::console::cmd_simple<act> cmd ("bt",  "General Bluetooth command");
+    const esp::console::cmd<act> cmd ("bt",  "General Bluetooth command");
 
     // long name alias for the bluetooth command
     //const esp_console_cmd_t bluetooth_cmd = {
 //    const esp::console::cmd longcmd ("bluetooth", act::define());
-    const esp::console::cmd_simple<act> longcmd ("bluetooth");
+    const esp::console::cmd<act> longcmd ("bluetooth");
     //const esp::console::cmd bluetooth_cmd ({
     //	.command = "bluetooth",
     //        .help = nullptr,
