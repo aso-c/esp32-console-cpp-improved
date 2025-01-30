@@ -72,21 +72,15 @@
 
 
 
-namespace bt
-{
-    extern const esp::console::cmd cmd;
-    extern const esp::console::cmd longcmd;
-}; /* namespace bt */
+//namespace bt
+//{
+//    extern const esp::console::cmd cmd;
+//    extern const esp::console::cmd longcmd;
+//}; /* namespace bt */
 
 
 /// Register bluetooth command
-void register_bt_cmd(void)
-{
-//    ESP_ERROR_CHECK(esp_console_cmd_register(&bt_cmd));
-    ESP_ERROR_CHECK(bt::cmd.enreg());
-//    ESP_ERROR_CHECK(esp_console_cmd_register(&bluetooth_cmd));
-    ESP_ERROR_CHECK(bt::longcmd.enreg());
-}; /* register_bt() */
+void register_bt_cmd(void);
 
 
 namespace bt
@@ -219,11 +213,13 @@ esp_err_t act::invoke_impl(int argc, char* argv[])
 //    const esp::console::cmd cmd ("bt", arg::table::act_t<&bt::syntax>::invoke_impl, bt::syntax,  "General Bluetooth command");
     //const esp::console::cmd cmd ("bt", act::invoke_impl, bt::syntax,  "General Bluetooth command");
 //    const esp::console::cmd cmd ("bt", act::define<act>(),  "General Bluetooth command");
-    const esp::console::cmd cmd ("bt", act::define(),  "General Bluetooth command");
+//    const esp::console::cmd cmd ("bt", act::define(),  "General Bluetooth command");
+    const esp::console::cmd_simple<act> cmd ("bt",  "General Bluetooth command");
 
     // long name alias for the bluetooth command
     //const esp_console_cmd_t bluetooth_cmd = {
-    const esp::console::cmd longcmd ("bluetooth", act::define());
+//    const esp::console::cmd longcmd ("bluetooth", act::define());
+    const esp::console::cmd_simple<act> longcmd ("bluetooth");
     //const esp::console::cmd bluetooth_cmd ({
     //	.command = "bluetooth",
     //        .help = nullptr,
@@ -339,4 +335,13 @@ esp_err_t act::invoke_impl(int argc, char* argv[])
 
 }; /* namespace bt */
 
+
+/// Register bluetooth command
+void register_bt_cmd(void)
+{
+//    ESP_ERROR_CHECK(esp_console_cmd_register(&bt_cmd));
+    ESP_ERROR_CHECK(bt::cmd.enreg());
+//    ESP_ERROR_CHECK(esp_console_cmd_register(&bluetooth_cmd));
+    ESP_ERROR_CHECK(bt::longcmd.enreg());
+}; /* register_bt() */
 
