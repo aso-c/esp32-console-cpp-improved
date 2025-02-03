@@ -129,6 +129,30 @@ namespace bt
 //			arg_end(20)/*,*/
     }; /* bt::syntax */;
 
+#if 1
+    struct act: public arg::table::act_t<&syntax>
+    {
+//	friend class arg::table::act_cmplx_t<&bt::syntax>;
+//	act():
+//	    act_cmplx_t<&bt::syntax>(invoke_impl)
+//	{};
+
+#if 0
+//	using arg::table::act_t<&bt::syntax>::define;
+	static act& define() { return instance_impl<act>(); };
+#endif
+
+	/// Execute command procedure with the pointer to the own syntax object
+	static
+	esp_err_t invoke(int argc, char * argv[]);
+
+//	/// Run the Help procedure with the pointer to the own syntax object
+//	static
+//	esp_err_t help_impl(int argc, char* argv[]);
+
+    }; /* class bt::act */
+
+#else
     class act: public arg::table::act_cmplx_t<&syntax>
     {
 	friend class arg::table::act_cmplx_t<&bt::syntax>;
@@ -150,13 +174,14 @@ namespace bt
 	esp_err_t help_impl(int argc, char* argv[]);
 
     }; /* class bt::act */
+#endif
 
-
-//}; /* bt */
 
 //template <>
 //esp_err_t arg::table::act<&::bt::syntax>::invoke_impl(int argc, char* argv[])
-esp_err_t act::invoke_impl(int argc, char* argv[])
+//esp_err_t act::invoke_impl(int argc, char* argv[])
+esp_err_t act::invoke(int argc, char* argv[])
+//esp_err_t act::invoke(int argc, char* argv[])
 {
     ESP_LOGI(SPP_TAG, "===>> The Bluetooth command execution!!!");
 
