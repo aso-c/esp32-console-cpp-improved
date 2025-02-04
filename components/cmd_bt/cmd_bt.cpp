@@ -117,7 +117,7 @@ namespace bt
     // #define REG_ICASE (REG_EXTENDED << 1)
     // ???
 
-    arg::table::syntax_t syntax = {
+    arg::table::syntax::def syntax = {
 		//	help    = arg_litn(NULL, "help", 0, 1, "display this help and exit"),
 		    // origin->>	arg_lit0("hH", "help", /*nullptr*/ "help options for command or subcommand"),
 			arg_rex0("hH", "Help", "classic|le|lowenergy", "<stack>", ARG_REX_ICASE/*Arg::Rex::ICase*/, "help options for command or subcommand"),
@@ -129,18 +129,10 @@ namespace bt
 //			arg_end(20)/*,*/
     }; /* bt::syntax */;
 
-#if 1
+
+    /// definition of the act for the bt/bluetooth command
     struct act: public arg::table::act_t<&syntax>
     {
-//	friend class arg::table::act_cmplx_t<&bt::syntax>;
-//	act():
-//	    act_cmplx_t<&bt::syntax>(invoke_impl)
-//	{};
-
-#if 0
-//	using arg::table::act_t<&bt::syntax>::define;
-	static act& define() { return instance_impl<act>(); };
-#endif
 
 	/// Execute command procedure with the pointer to the own syntax object
 	static
@@ -152,36 +144,8 @@ namespace bt
 
     }; /* class bt::act */
 
-#else
-    class act: public arg::table::act_cmplx_t<&syntax>
-    {
-	friend class arg::table::act_cmplx_t<&bt::syntax>;
-	act():
-	    act_cmplx_t<&bt::syntax>(invoke_impl)
-	{};
 
-    public:
-
-//	using arg::table::act_t<&bt::syntax>::define;
-	static act& define() { return instance_impl<act>(); };
-
-	/// Execute command procedure with the pointer to the own syntax object
-	static
-	esp_err_t invoke_impl(int argc, char * argv[]);
-
-	/// Run the Help procedure with the pointer to the own syntax object
-	static
-	esp_err_t help_impl(int argc, char* argv[]);
-
-    }; /* class bt::act */
-#endif
-
-
-//template <>
-//esp_err_t arg::table::act<&::bt::syntax>::invoke_impl(int argc, char* argv[])
-//esp_err_t act::invoke_impl(int argc, char* argv[])
 esp_err_t act::invoke(int argc, char* argv[])
-//esp_err_t act::invoke(int argc, char* argv[])
 {
     ESP_LOGI(SPP_TAG, "===>> The Bluetooth command execution!!!");
 
@@ -190,12 +154,12 @@ esp_err_t act::invoke(int argc, char* argv[])
     for (int i = 0; i < argc; i++)
 	std::clog << '\t' << argv[i] << std::endl;
 
-    bt::syntax.parse(argc, argv);
-    if (bt::syntax.err())
+    /*bt::*/syntax.parse(argc, argv);
+    if (/*bt::*/syntax.err())
     {
-	bt::syntax.error(stdout, argv[0]);
+	/*bt::*/syntax.error(stdout, argv[0]);
 	return bt::syntax.err();
-    }; /* if (bt::syntax.err() != 0) */
+    }; /* if (syntax.err() != 0) */
 #if 0
 		for (int i = 0; i < argc; i++)
 		    std::clog << '\t' << argv[i] << std::endl;
@@ -209,10 +173,10 @@ esp_err_t act::invoke(int argc, char* argv[])
 		}; /* for void** currsntx */
 #endif
 
-    for (auto opt: bt::syntax.description)
+    for (auto opt: /*bt::*/syntax.description)
     {
 	;
-    }; /* for opt: bt::syntax.description */
+    }; /* for opt: syntax.description */
 
 #if 0
 		int i;
@@ -232,18 +196,13 @@ esp_err_t act::invoke(int argc, char* argv[])
 #endif
 
 	return ESP_OK;
-    }; /* arg::table::act<&::bt::syntax>::invoke(int, char* []) */
+    }; /* act::invoke(int, char* []) */
 
 
-//    const esp::console::cmd cmd ("bt", arg::table::act_t<&bt::syntax>::invoke_impl, bt::syntax,  "General Bluetooth command");
-    //const esp::console::cmd cmd ("bt", act::invoke_impl, bt::syntax,  "General Bluetooth command");
-//    const esp::console::cmd cmd ("bt", act::define<act>(),  "General Bluetooth command");
-//    const esp::console::cmd cmd ("bt", act::define(),  "General Bluetooth command");
+    // short name (main) for the bluetooth command
     const esp::console::cmd<act> cmd ("bt",  "General Bluetooth command");
 
     // long name alias for the bluetooth command
-    //const esp_console_cmd_t bluetooth_cmd = {
-//    const esp::console::cmd longcmd ("bluetooth", act::define());
     const esp::console::cmd<act> longcmd ("bluetooth");
     //const esp::console::cmd bluetooth_cmd ({
     //	.command = "bluetooth",

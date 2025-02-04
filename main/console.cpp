@@ -225,7 +225,7 @@ static int get_info(int argc, char **argv)
 
 namespace info
 {
-    arg::table::syntax_t syntax{ arg_str1(NULL, NULL, "Build Date:", __DATE__ " " __TIME__ ".") };
+    arg::table::syntax::def syntax{ arg_str1(NULL, NULL, "Build Date:", __DATE__ " " __TIME__ ".") };
 }; /* namespace info */
 
 static void register_info(void)
