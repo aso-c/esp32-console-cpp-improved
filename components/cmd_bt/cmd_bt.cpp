@@ -131,7 +131,7 @@ namespace bt
 
 
     /// definition of the act for the bt/bluetooth command
-    struct act: public arg::table::act_t<&syntax>
+    struct act: public arg::table::act_t<syntax>
     {
 
 	/// Execute command procedure with the pointer to the own syntax object
