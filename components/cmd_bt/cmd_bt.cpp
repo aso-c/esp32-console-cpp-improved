@@ -200,10 +200,10 @@ esp_err_t act::invoke(int argc, char* argv[])
 
 
     // short name (main) for the bluetooth command
-    const esp::console::cmd<act> cmd ("bt",  "General Bluetooth command");
+    const esp::console::cmd_t<act> cmd ("bt",  "General Bluetooth command");
 
     // long name alias for the bluetooth command
-    const esp::console::cmd<act> longcmd ("bluetooth");
+    const esp::console::cmd_t<act> longcmd ("bluetooth");
     //const esp::console::cmd bluetooth_cmd ({
     //	.command = "bluetooth",
     //        .help = nullptr,
