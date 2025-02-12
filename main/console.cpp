@@ -192,29 +192,6 @@ static void initialize_console(void)
 
 
 
-/**
- * @brief Info command about a version information of a project
- *
- * Printout version info $ small description,
- * about this project
- *
- * @return
- *      - ESP_OK on success
- *      - ESP_ERR_INVALID_STATE, if esp_console_init wasn't called
- */
-
-/* 'info' pseudo-command */
-extern "C" {
-static int get_info(int argc, char **argv)
-{
-    cout << "ESP Console Example Project, Version: " CONFIG_APP_PROJECT_VER "-" CONFIG_APP_PROJECT_FLAVOUR " of " CONFIG_APP_PROJECT_DATE
-	    << ", builded with C++ version " << __cplusplus  << endl;
-    return ESP_OK;
-}; /* get_info */
-}; /* extern C */
-
-
-
 ///--[ Registering main infrastructure command - help & info ]---------------------------
 
 /**
@@ -223,30 +200,45 @@ static int get_info(int argc, char **argv)
  * Own 'help' command implementation first run default 'help' command,
  * and then prints the version string of a program.
  */
-
 namespace info
 {
     arg::table::syntax::def syntax{ arg_str1(NULL, NULL, "Build Date:", __DATE__ " " __TIME__ ".") };
 
-    /// definition of the act for the bt/bluetooth command
+    /// definition of the act for the 'info' pseudo-command
     struct act: public arg::table::act_t<syntax>
     {
 
-//	/// Execute command procedure with the pointer to the own syntax object
-//	static
-//	esp_err_t invoke(int argc, char * argv[]);
+	/**
+	 * @brief 'info' pseudo-command procedure about a version information of a project
+	 *
+	 * Printout version info & small description,
+	 * about this project
+	 *
+	 * @return
+	 *      - ESP_OK on success
+	 *      - ESP_ERR_INVALID_STATE, if esp_console_init wasn't called
+	 */
+	static
+	esp_err_t invoke(int argc, char * argv[]);
 
     }; /* class bt::act */
 
-//    const esp::console::cmd_t<arg::table::act_t<syntax>> cmd("info",  "General Bluetooth command");
-    const esp::console::cmd cmd("info", get_info, syntax, version_str(), "about this project");
 
+    /// @brief Info pseudo-command procedure about a version information of a project
+    esp_err_t act::invoke(int argc, char * argv[])
+    {
+        cout << "ESP Console Example Project, Version: " CONFIG_APP_PROJECT_VER "-" CONFIG_APP_PROJECT_FLAVOUR " of " CONFIG_APP_PROJECT_DATE
+    	    << ", builded with C++ version " << __cplusplus  << endl;
+        return ESP_OK;
+    }; /* act::invoke() */
+
+    const esp::console::cmd_t<act> cmd("info",  version_str(), "about this project");
 
 }; /* namespace info */
 
 /// for unification only
 inline void register_info(void) {
-    info::cmd.enreg_chked();
+    info::cmd.enreg_check();
 }; /* register_info */
 
 
