@@ -27,7 +27,8 @@
 #include "nvs.h"
 #include "nvs_flash.h"
 
-#include "argtable"
+#include <argtable>
+#include <console>
 
 #include "cmd_decl.h"
 #include <astring.h>
@@ -226,30 +227,26 @@ static int get_info(int argc, char **argv)
 namespace info
 {
     arg::table::syntax::def syntax{ arg_str1(NULL, NULL, "Build Date:", __DATE__ " " __TIME__ ".") };
+
+    /// definition of the act for the bt/bluetooth command
+    struct act: public arg::table::act_t<syntax>
+    {
+
+//	/// Execute command procedure with the pointer to the own syntax object
+//	static
+//	esp_err_t invoke(int argc, char * argv[]);
+
+    }; /* class bt::act */
+
+//    const esp::console::cmd_t<arg::table::act_t<syntax>> cmd("info",  "General Bluetooth command");
+    const esp::console::cmd cmd("info", get_info, syntax, version_str(), "about this project");
+
+
 }; /* namespace info */
 
-static void register_info(void)
-{
-
-	static struct {
-	    struct arg_str *name_space;
-	    struct arg_end *end;
-	} info_args;
-
-
-    info_args.name_space = arg_str1(NULL, NULL, "Build Date:", __DATE__ " " __TIME__ ".");
-    info_args.end = arg_end(2);
-
-    const esp_console_cmd_t cmd = {
-        .command = "info",
-        .help = version_str(),
-        .hint = "about this project",
-        .func = &get_info,
-	.argtable = &info_args,
-	.func_w_context = nullptr,
-	.context = nullptr
-    };
-    ESP_ERROR_CHECK( esp_console_cmd_register(&cmd) );
+/// for unification only
+inline void register_info(void) {
+    info::cmd.enreg_chked();
 }; /* register_info */
 
 
@@ -318,6 +315,7 @@ extern "C" void app_main(void)
     register_bt_cmd();
 
     register_info();
+//    info::cmd.enreg_chked();
 
     /* Prompt to be printed before each line.
      * This can be customized, made dynamic, etc.
