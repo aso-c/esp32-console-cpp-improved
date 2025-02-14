@@ -124,14 +124,6 @@ namespace act
 
 
 
-// Register command procedure
-static void register_cmd(const esp_console_cmd_t& cmd)
-{
-    ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
-}; /* register_cmd */
-
-
-
 SD::Card sdmmc_card;
 SD::MMC::Device device(SD::MMC::bus::width::_4, SD::MMC::Host::pullup::yes);
 Exec::Cmd exec_server;
@@ -153,31 +145,10 @@ namespace pwd
     const esp::console::cmd cmd("pwd", invoke, "Get current directory name");
 }; /* namespace pwd */
 
-//static int pwd_act(int argc, char **argv)
 static int pwd::invoke(int argc, char **argv)
 {
     return act::pwd(astr::makestor<std::vector<char*>>(argc, argv));
 }; /* pwd::invoke */
-
-void register_pwd(void)
-{
-#if 0
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
-    const esp_console_cmd_t cmd = {
-	    .command = "pwd",
-	    .help = "Get current directory name",
-	    .hint = NULL,
-	    .func = pwd_act,
-    };
-#pragma GCC diagnostic pop
-
-    register_cmd(cmd);
-#endif
-
-    pwd::cmd.enreg_check();
-
-}; /* register_pwd */
 
 
 /// mkdir command, pure C wrapper ---------------------------------------------------------------------------
@@ -192,34 +163,9 @@ namespace mk_dir
     const esp::console::cmd cmd("mkdir", syntax, invoke, "Create new directory with name <dir>");
 }; /* namespace mk_dir */
 
-//static int mkdir_act(int argc, char **argv) {
 esp_err_t static mk_dir::invoke(int argc, char **argv) {
     return act::mkdir(astr::makestor<std::vector<char*>>(argc, argv));
 }; /* mkdir::invoke() */
-
-void register_mkdir(void)
-{
-#if 0
-    static void* mkdargs[] = {
-	    arg_str1(NULL, NULL, "<dir>", NULL),
-	    arg_end(1)
-    };
-
-    const esp_console_cmd_t cmd = {
-	    .command = "mkdir",
-	    .help = "Create new directory with name <dir>",
-	    .hint = NULL,
-	    .func = mkdir_act,
-	    .argtable = mkdargs,
-	    .func_w_context = nullptr,
-	    .context = nullptr,
-    };
-
-    register_cmd(cmd);
-#endif
-
-    mk_dir::cmd.enreg_check();
-}; /* register_mkdir */
 
 
 /// rmdir command, pure C wrapper ---------------------------------------------------------------------------
@@ -234,34 +180,9 @@ namespace rm_dir
     const esp::console::cmd cmd("rmdir", syntax, invoke, "Delete empty existing directory <dir>");
 }; /* namespace rm_dir */
 
-//static int rmdir_act(int argc, char **argv) {
 static esp_err_t rm_dir::invoke(int argc, char **argv) {
     return act::rmdir(astr::makestor<std::vector<char*>>(argc, argv));
 }; /* rm_dir::invoke */
-
-void register_rmdir(void)
-{
-#if 0
-    static void* rmdargs[] = {
-	    arg_str1(NULL, NULL, "<dir>", NULL),
-	    arg_end(1)
-    };
-
-    const esp_console_cmd_t cmd = {
-	    .command = "rmdir",
-	    .help = "Delete empty existing directory <dir>",
-	    .hint = NULL,
-	    .func = rmdir_act,
-	    .argtable = rmdargs,
-	    .func_w_context = nullptr,
-	    .context = nullptr,
-    };
-
-    register_cmd(cmd);
-#endif
-
-    rm_dir::cmd.enreg_check();
-}; /* register_rmdir */
 
 
 /// 'cd' command, pure C wrapper ----------------------------------------------------------------------------
@@ -276,34 +197,9 @@ namespace cd
     const esp::console::cmd cmd("cd", syntax, invoke, "Change current directory to a <path>");
 }; /* namespace cd */
 
-//static int cd_act(int argc, char **argv) {
 static esp_err_t cd::invoke(int argc, char **argv) {
     return act::cd(astr::makestor<std::vector<char*>>(argc, argv));
 }; /* cd::invoke() */
-
-void register_cd(void)
-{
-#if 0
-    static void* cdargs[] = {
-	    arg_str1(NULL, NULL, "<dir>", NULL),
-	    arg_end(1)
-    };
-
-    const esp_console_cmd_t cmd = {
-	    .command = "cd",
-	    .help = "Change current directory to <dir>",
-	    .hint = NULL,
-	    .func = cd_act,
-	    .argtable = cdargs,
-	    .func_w_context = nullptr,
-	    .context = nullptr,
-    };
-
-    register_cmd(cmd);
-#endif
-
-    cd::cmd.enreg_check();
-}; /* register_cd */
 
 
 /// 'ls' command, pure C wrapper ----------------------------------------------------------------------------
@@ -318,34 +214,9 @@ namespace ls
     const esp::console::cmd cmd("ls", syntax, invoke, "List contents of a directory or a file according <pattern>");
 }; /* namespace ls */
 
-//static int ls_act(int argc, char **argv) {
 static esp_err_t ls::invoke(int argc, char **argv) {
     return act::ls(astr::makestor<std::vector<char*>>(argc, argv));
 }; /* ls::invoke() */
-
-void register_ls(void)
-{
-#if 0
-    static void* lsargs[] = {
-	    arg_str0(NULL, NULL, "<pattern>", NULL),
-	    arg_end(1)
-    };
-
-    const esp_console_cmd_t cmd = {
-	    .command = "ls",
-	    .help = "List contents of a directory according <pattern>, list non-directory files  is not available now. ((( Sorry.",
-	    .hint = NULL,
-	    .func = ls_act,
-	    .argtable = lsargs,
-	    .func_w_context = nullptr,
-	    .context = nullptr,
-    };
-
-    register_cmd(cmd);
-#endif
-
-    ls::cmd.enreg_check();
-}; /* register_ls */
 
 
 /// 'cp' command, pure C wrapper ----------------------------------------------------------------------------
@@ -359,38 +230,11 @@ namespace cp
     };
     static esp_err_t invoke(int argc, char* argv[]);
     const esp::console::cmd cmd("cp", syntax, invoke, "Copy a file \"<src>\" to \"<dest>\".");
-
 }; /* namespace cp */
 
-//static int cp_act(int argc, char **argv) {
 static esp_err_t cp::invoke(int argc, char* argv[]) {
     return act::cp(astr::makestor<std::vector<char*>>(argc, argv));
 }; /* cp::invoke */
-
-void register_cp(void)
-{
-#if 0
-    static void* cpargs[] = {
-	    arg_str1(NULL, NULL, "<src>", NULL),
-	    arg_str1(NULL, NULL, "<dest>", NULL),
-	    arg_end(2)
-    };
-
-    const esp_console_cmd_t cmd = {
-	    .command = "cp",
-	    .help = "Copy a file \"<src>\" to \"<dest>\".",
-	    .hint = NULL,
-	    .func = cp_act,
-	    .argtable = cpargs,
-	    .func_w_context = nullptr,
-	    .context = nullptr,
-    };
-
-    register_cmd(cmd);
-#endif
-
-    cp::cmd.enreg_check();
-}; /* register_cp */
 
 
 /// 'mv' command, pure C wrapper ----------------------------------------------------------------------------
@@ -406,35 +250,9 @@ namespace mv
     const esp::console::cmd cmd("mv", syntax, invoke, "Rename/move a file \"<src>\" to \"<dest>\".");
 }; /* namespace mv */
 
-//static int mv_act(int argc, char **argv) {
 static esp_err_t mv::invoke(int argc, char* argv[]) {
     return act::mv(astr::makestor<std::vector<char*>>(argc, argv));
 }; /* mv::invoke */
-
-void register_mv(void)
-{
-#if 0
-    static void* cpargs[] = {
-	    arg_str1(NULL, NULL, "<src>", NULL),
-	    arg_str1(NULL, NULL, "<dest>", NULL),
-	    arg_end(2)
-    };
-
-    const esp_console_cmd_t cmd = {
-	    .command = "mv",
-	    .help = "Rename/move a file \"<src>\" to \"<dest>\".",
-	    .hint = NULL,
-	    .func = mv_act,
-	    .argtable = cpargs,
-	    .func_w_context = nullptr,
-	    .context = nullptr,
-    };
-
-    register_cmd(cmd);
-#endif
-
-    mv::cmd.enreg_check();
-}; /* register_mv */
 
 
 /// 'rm' command, pure C wrapper ----------------------------------------------------------------------------
@@ -449,35 +267,9 @@ namespace rm
     const esp::console::cmd cmd("rm", syntax, invoke, "Delete a file or fileset matching the pattern <filename>");
 }; /* namespace rm */
 
-//static int rm_act(int argc, char **argv) {
 static esp_err_t rm::invoke(int argc, char* argv[]) {
     return act::rm(astr::makestor<std::vector<char*>>(argc, argv));
 }; /* rm::invoke() */
-
-void register_rm(void)
-{
-#if 0
-    static void* rmargs[] = {
-	    arg_str1(NULL, NULL, "<filename>", NULL),
-	    arg_end(1)
-    };
-
-    const esp_console_cmd_t cmd = {
-	    .command = "rm",
-	    .help = "Delete a file or fileset matching the pattern <filename>",
-	    .hint = NULL,
-	    .func = rm_act,
-	    .argtable = rmargs,
-	    .func_w_context = nullptr,
-	    .context = nullptr,
-    };
-
-    register_cmd(cmd);
-#endif
-
-    rm::cmd.enreg_check();
-
-}; /* register_rm */
 
 
 /// 'cat' command, pure C wrapper ---------------------------------------------------------------------------
@@ -492,35 +284,9 @@ namespace cat
     const esp::console::cmd cmd("cat", syntax, invoke, "Type contents of the file <filename> to standard output (default - to screen)");
 }; /* namespace cat */
 
-//static int cat_act(int argc, char **argv) {
 static esp_err_t cat::invoke(int argc, char* argv[]) {
     return act::cat(astr::makestor<std::vector<char*>>(argc, argv));
 }; /* cat::invoke() */
-
-void register_cat(void)
-{
-#if 0
-    static void* catargs[] = {
-	    arg_str1(NULL, NULL, "<filename>", NULL),
-	    arg_end(1)
-    };
-
-    const esp_console_cmd_t cmd = {
-	    .command = "cat",
-	    .help = "Type contents of the file <filename> to standard output (default - to screen)",
-	    .hint = NULL,
-	    .func = cat_act,
-	    .argtable = catargs,
-	    .func_w_context = nullptr,
-	    .context = nullptr,
-    };
-
-    register_cmd(cmd);
-#endif
-
-    cat::cmd.enreg_check();
-
-}; /* register_cat */
 
 
 //! 'type' command, pure C wrapper --------------------------------------------------------------------------
@@ -535,51 +301,25 @@ namespace type
     const esp::console::cmd cmd("type", syntax, invoke, "Type from a keyboard to standard output (default - to screen) and storing keyboard typing to the file <filename> (if specified)");
 }; /* namespace type */
 
-//static int type_act(int argc, char **argv) {
 static esp_err_t type::invoke(int argc, char* argv[]) {
     return act::type(astr::makestor<std::vector<char*>>(argc, argv));
 }; /* type::invoke() */
-
-void register_type(void)
-{
-#if 0
-    static void* typeargs[] = {
-	    arg_str0(NULL, NULL, "<filename>", NULL),
-	    arg_end(1)
-    };
-
-    const esp_console_cmd_t cmd = {
-	     .command = "type",
-	    .help = "Type from a keyboard to standard output (default - to screen) and storing keyboard typing to the file <filename> (if specified)",
-	    .hint = NULL,
-	    .func = type_act,
-	    .argtable = typeargs,
-	    .func_w_context = nullptr,
-	    .context = nullptr,
-    };
-
-    register_cmd(cmd);
-#endif
-
-    type::cmd.enreg_check();
-
-}; /* register_type */
 
 
 // register all fs commands -----------------------------------------------------------------------
 void register_fs_cmd_all(void)
 {
 
-    register_pwd();
-    register_cd();
-    register_mkdir();
-    register_rmdir();
-    register_ls();
-    register_cp();
-    register_mv();
-    register_rm();
-    register_cat();
-    register_type();
+    pwd::cmd.enreg_check();
+    cd::cmd.enreg_check();
+    mk_dir::cmd.enreg_check();
+    rm_dir::cmd.enreg_check();
+    ls::cmd.enreg_check();
+    cp::cmd.enreg_check();
+    mv::cmd.enreg_check();
+    rm::cmd.enreg_check();
+    cat::cmd.enreg_check();
+    type::cmd.enreg_check();
 
     //device.host().io_int_enable();
     //sdmmc_card.io.enable_int();
@@ -767,14 +507,25 @@ private:
 //--[ 'sd' command ]-------------------------------------------------------------------------------
 
 
-//extern "C" {
-//// Procedure of the 'sd' command
-//static int sdcard_cmd(int argc, char **argv);
-//}
+namespace sdcard
+{
+    static void *syntax[] = {
+	    arg_rex1(NULL, NULL, "h|help", "h | help", 0/*REG_ICASE*/, "help for command 'sdcard'"),
+	    arg_rem ("|", NULL),
+	    arg_rex1(NULL, NULL, "<subcommand>", NULL, 0/*REG_ICASE*/, "other subcommand of command 'sdcard'"),
+	    arg_strn(NULL, NULL, "<options>", 0, 2, "subcommand options"),
+	    arg_end(2),
+    };
+    static esp_err_t invoke(int argc, char* argv[]);
+    const esp::console::cmd cmd("sdcard", syntax, invoke, "SD card manipulating main command" /*, .hint = "enter subcommand for Sd card operations" */);
+    const esp::console::cmd cmd2("sd", syntax, invoke, "shortcut for 'sdcard' command" /*, .hint = "enter subcommand for Sd card operations" */);
 
-extern "C" {
-// Procedure of the 'sd' command
-static int sdcard_cmd(int argc, char **argv)
+}; /* namespace sdcard */
+
+//extern "C" {
+/// Procedure of the 'sd' command
+//static int sdcard_cmd(int argc, char **argv)
+static esp_err_t sdcard::invoke(int argc, char* argv[])
 {
     cout << "Run the command \"sdcard\'" << endl
 	 << endl;
@@ -786,8 +537,8 @@ static int sdcard_cmd(int argc, char **argv)
 
     return SDctrl::exec(argc, argv);
 
-}; /* sdcard_cmd */
-}; /* extern "C" */
+}; /* sdcard::invoke() */
+//}; /* extern "C" */
 
 
 // Register all SD-card commands
@@ -826,38 +577,9 @@ void register_sdcard_cmd(void)
     SDctrl::cmd().enroll(type_cmd);
     SDctrl::cmd().enroll(help_cmd);
 
-    static void *args[] = {
-	    arg_rex1(NULL, NULL, "h|help", "h | help", 0/*REG_ICASE*/, "help for command 'sdcard'"),
-	    arg_rem ("|", NULL),
-	    arg_rex1(NULL, NULL, "<subcommand>", NULL, 0/*REG_ICASE*/, "other subcommand of command 'sdcard'"),
-	    arg_strn(NULL, NULL, "<options>", 0, 2, "subcommand options"),
-	    arg_end(2),
-    };
 
-    const esp_console_cmd_t cmd = {
-	    .command = "sdcard",
-	    .help = "SD card manipulating main command",
-	    //        .hint = "enter subcommand for Sd card operations",
-	    .hint = NULL,
-	    .func = &sdcard_cmd,
-	    .argtable = &args,
-	    .func_w_context = nullptr,
-	    .context = nullptr,
-    };
-    register_cmd(cmd);
-
-
-    const esp_console_cmd_t cmd2 = {
-	    .command = "sd",
-	    .help = "shortcut for 'sdcard' command",
-	    //        .hint = "enter subcommand for Sd card operations",
-	    .hint = NULL,
-	    .func = &sdcard_cmd,
-	    .argtable = &args,/*NULL*/
-	    .func_w_context = nullptr,
-	    .context = nullptr,
-    };
-    register_cmd(cmd2);
+    sdcard::cmd.enreg_check();
+    sdcard::cmd2.enreg_check();
 
 }; /* register_sdcard_all */
 
