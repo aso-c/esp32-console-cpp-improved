@@ -93,71 +93,78 @@ ostream& (*prn_KMbytes(uint32_t val))(ostream&);
 
 
 
-static void register_free(void);
-static void register_heap(void);
-static void register_version(void);
-static void register_restart(void);
-#if WITH_TASKS_INFO
-static void register_tasks(void);
-#endif
 static void register_log_level(void);
 
-void register_system_common(void)
-{
-    register_free();
-    register_heap();
-    register_version();
-    register_restart();
-#if WITH_TASKS_INFO
-    register_tasks();
-#endif
-    register_log_level();
-}
 
 
 /** 'version' command */
 namespace version
 {
-    struct act: public arg::table::act
-    {
-	/// Execute command procedure without the syntax object (zero syntax)
-	static
-	esp_err_t invoke(int argc, char* argv[]);
-    }; /* struct version::act */
-
-    const esp::console::cmd_t<act> cmd ("version", "Get version of chip and SDK");
-
+    static esp_err_t invoke(int argc, char* argv[]);
+    const esp::console::cmd cmd("version", invoke, "Get version of chip and SDK");
 }; /* namespace version */
 
-static void register_version(void)
+/** 'restart' command */
+namespace restart
 {
-#if 0
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
-    const esp_console_cmd_t cmd = {
-        .command = "version",
-        .help = "Get version of chip and SDK",
-        .hint = NULL,
-        .func = &get_version,
-    };
-#pragma GCC diagnostic pop
-    ESP_ERROR_CHECK( esp_console_cmd_register(&cmd) );
-#endif
+    [[noreturn]]
+    static esp_err_t invoke(int argc, char* argv[]);
+    const esp::console::cmd cmd ("restart", invoke, "Software reset of the chip");
+}; /* namespace restart */
 
+/** 'free' command prints available heap memory */
+namespace freemem
+{
+    /// Execute command procedure without the syntax object (zero syntax)
+    static esp_err_t invoke(int argc, char* argv[]);
+    const esp::console::cmd cmd("free", invoke, "Get the current size of free heap memory");
+}; /* namespace freemem */
+
+/** 'heap' command prints minumum heap size */
+namespace heap
+{
+    /// Execute command procedure without the syntax object (zero syntax)
+    static esp_err_t invoke(int argc, char* argv[]);
+    const esp::console::cmd cmd("heap", invoke, "Get minimum size of free heap memory that was available during program execution");
+}; /* namespace heap */
+
+#if WITH_TASKS_INFO
+/** 'tasks' command prints the list of tasks and related information */
+namespace tasks
+{
+    /// Execute command procedure without the syntax object (zero syntax)
+    static esp_err_t invoke(int argc, char* argv[]);
+    const esp::console::cmd cmd("tasks", invoke, "Get information about running tasks");
+}; /* namespace tasks */
+#endif // WITH_TASKS_INFO
+
+
+
+void register_system_common(void)
+{
+    freemem::cmd.enreg_check();
+    heap::cmd.enreg_check();
     version::cmd.enreg_check();
-}; /* register_version */
+    restart::cmd.enreg_check();
+#if WITH_TASKS_INFO
+    tasks::cmd.enreg_check();
+#endif
+    register_log_level();
+}; /* register_system_common() */
+
+
+
 
 /** 'version' command */
-/// Execute command procedure without the syntax object (zero syntax)
-esp_err_t version::act::invoke(int argc, char* argv[])
-//static int get_version(int argc, char **argv)
+static esp_err_t version::invoke(int argc, char* argv[])
 {
     const char *model;
     esp_chip_info_t info;
     uint32_t flash_size;
     esp_chip_info(&info);
 
-    switch(info.model) {
+    switch(info.model)
+    {
         case CHIP_ESP32:
             model = "ESP32";
             break;
@@ -179,7 +186,7 @@ esp_err_t version::act::invoke(int argc, char* argv[])
         default:
             model = "Unknown";
             break;
-    }
+    }; /* switch info.model */
 
     if (esp_flash_get_size(NULL, &flash_size) != ESP_OK)
     {
@@ -209,183 +216,46 @@ esp_err_t version::act::invoke(int argc, char* argv[])
     cout << "\trevision number: " << (int)info.revision << endl;
 
     return 0;
-}; /* get_version */ /* version::act::invoke() */
+}; /* version::invoke() */
 
 
-
-/** 'version' command */
-namespace restart
-{
-    struct act: public arg::table::act
-    {
-	/// Execute command procedure without the syntax object (zero syntax)
-	[[noreturn]]
-	static
-	esp_err_t invoke(int argc, char* argv[]);
-    }; /* struct restart::act */
-
-    const esp::console::cmd_t<act> cmd ("restart", "Software reset of the chip");
-
-}; /* namespace restart */
-
-static void register_restart(void)
-{
-#if 0
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
-    const esp_console_cmd_t cmd = {
-        .command = "restart",
-        .help = "Software reset of the chip",
-        .hint = NULL,
-        .func = &restart,
-    };
-#pragma GCC diagnostic pop
-    ESP_ERROR_CHECK( esp_console_cmd_register(&cmd) );
-#endif
-    restart::cmd.enreg_check();
-
-}; /* register_restart() */
 
 /** 'restart' command restarts the program */
 [[noreturn]]
-esp_err_t restart::act::invoke(int argc, char* argv[])
-//static int restart(int argc, char **argv)
+static esp_err_t restart::invoke(int argc, char* argv[])
 {
     ESP_LOGI(TAG, "Restarting");
     esp_restart();
-//    return -1;	// stub for supress warning only
-}; /* restart::act::invoke() */
+}; /* restart::invoke() */
 
 
 
 /** 'free' command prints available heap memory */
-namespace freemem
-{
-    struct act: public arg::table::act
-    {
-	/// Execute command procedure without the syntax object (zero syntax)
-	static
-	esp_err_t invoke(int argc, char* argv[]);
-    }; /* struct freemem::act */
-
-    const esp::console::cmd_t<act> cmd ("free", "Get the current size of free heap memory");
-
-}; /* namespace freemem */
-
-static void register_free(void)
-{
-#if 0
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
-    const esp_console_cmd_t cmd = {
-        .command = "free",
-        .help = "Get the current size of free heap memory",
-        .hint = NULL,
-        .func = &free_mem,
-    };
-#pragma GCC diagnostic pop
-    ESP_ERROR_CHECK( esp_console_cmd_register(&cmd) );
-#endif
-    freemem::cmd.enreg_check();
-}; /* register_free */
-
-/** 'free' command prints available heap memory */
-//static
-esp_err_t freemem::act::invoke(int argc, char* argv[])
-//static int free_mem(int argc, char **argv)
+static esp_err_t freemem::invoke(int argc, char* argv[])
 {
     cout << "free memory size: " << prn_KMbytes(esp_get_free_heap_size());
 //    cout << " (" << prettybytes(esp_get_free_heap_size()) << " bytes)" << endl;
     cout << " (" << prettynumber(esp_get_free_heap_size()) << " bytes)" << endl;
-//    return 0;
     return ESP_OK;
-}; /* free_mem */ /* freemem::act::invoke() */
+}; /* freemem::invoke() */
 
 
-
-
-/** 'heap' command prints minumum heap size */
-namespace heap
-{
-    struct act: public arg::table::act
-    {
-	/// Execute command procedure without the syntax object (zero syntax)
-	static
-	esp_err_t invoke(int argc, char* argv[]);
-    }; /* struct heap::act */
-
-    const esp::console::cmd_t<act> cmd ("heap", "Get minimum size of free heap memory that was available during program execution");
-
-}; /* namespace heap */
-
-static void register_heap(void)
-{
-#if 0
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
-    const esp_console_cmd_t heap_cmd = {
-        .command = "heap",
-        .help = "Get minimum size of free heap memory that was available during program execution",
-        .hint = NULL,
-        .func = &heap_size,
-    };
-#pragma GCC diagnostic pop
-    ESP_ERROR_CHECK( esp_console_cmd_register(&heap_cmd) );
-#endif
-    heap::cmd.enreg_check();
-
-}; /* register_heap */
 
 /* 'heap' command prints minumum heap size */
-esp_err_t heap::act::invoke(int argc, char* argv[])
-//static int heap_size(int argc, char **argv)
+esp_err_t static heap::invoke(int argc, char* argv[])
 {
     uint32_t heap_size = heap_caps_get_minimum_free_size(MALLOC_CAP_DEFAULT);
     cout << "min heap size: " << prn_KMbytes(heap_size);
     cout << " (" << prettynumber(heap_size) << " bytes)" << endl;
     return 0;
-}; /* heap_size */ /* heap::act::invoke() */
-
+}; /* heap::invoke() */
 
 
 
 #if WITH_TASKS_INFO
 
 /** 'tasks' command prints the list of tasks and related information */
-namespace tasks
-{
-    struct act: public arg::table::act
-    {
-	/// Execute command procedure without the syntax object (zero syntax)
-	static
-	esp_err_t invoke(int argc, char* argv[]);
-    }; /* struct tasks::act */
-
-    const esp::console::cmd_t<act> cmd ("tasks", "Get information about running tasks");
-
-}; /* namespace tasks */
-
-static void register_tasks(void)
-{
-#if 0
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
-    const esp_console_cmd_t cmd = {
-        .command = "tasks",
-        .help = "Get information about running tasks",
-        .hint = NULL,
-        .func = &tasks_info,
-    };
-#pragma GCC diagnostic pop
-    ESP_ERROR_CHECK( esp_console_cmd_register(&cmd) );
-#endif
-    tasks::cmd.enreg_check();
-}; /* register_tasks() */
-
-/** 'tasks' command prints the list of tasks and related information */
-/// Execute command procedure without the syntax object (zero syntax)
-esp_err_t tasks::act::invoke(int argc, char* argv[])
-//static int tasks_info(int argc, char **argv)
+esp_err_t static tasks::invoke(int argc, char* argv[])
 {
     const size_t bytes_per_task = 40; /* see vTaskList description */
     char *task_list_buffer = (char*)malloc(uxTaskGetNumberOfTasks() * bytes_per_task);
@@ -403,9 +273,13 @@ esp_err_t tasks::act::invoke(int argc, char* argv[])
     fputs(task_list_buffer, stdout);
     free(task_list_buffer);
     return 0;
-}; /* tasks::act::invoke() */
+}; /* tasks::invoke() */
 
 #endif // WITH_TASKS_INFO
+
+
+
+
 
 /** log_level command changes log level via esp_log_level_set */
 
