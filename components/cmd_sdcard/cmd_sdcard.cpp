@@ -145,165 +145,150 @@ namespace pwd
     const esp::console::cmd cmd("pwd", invoke, "Get current directory name");
 }; /* namespace pwd */
 
-static int pwd::invoke(int argc, char **argv)
-{
-    return act::pwd(astr::makestor<std::vector<char*>>(argc, argv));
-}; /* pwd::invoke */
-
 
 /// mkdir command, pure C wrapper ---------------------------------------------------------------------------
 
 namespace mk_dir
 {
-    static void* syntax[] = {
-	    arg_str1(NULL, NULL, "<dir>", NULL),
-	    arg_end(1)
-    };
-    static esp_err_t invoke(int argc, char* argv[]);
-    const esp::console::cmd cmd("mkdir", syntax, invoke, "Create new directory with name <dir>");
-}; /* namespace mk_dir */
 
-esp_err_t static mk_dir::invoke(int argc, char **argv) {
-    return act::mkdir(astr::makestor<std::vector<char*>>(argc, argv));
-}; /* mkdir::invoke() */
+    arg::table::syntax::def syntax = { 1,
+	    arg_str1(NULL, NULL, "<dir>", NULL),
+    };
+    struct act: public arg::table::act_t<syntax>
+    {
+	static esp_err_t invoke(int argc, char* argv[]);
+    }; /* struct mk_dir::act */
+    const esp::console::cmd_t<act> cmd("mkdir", "Create new directory with name <dir>");
+}; /* namespace mk_dir */
 
 
 /// rmdir command, pure C wrapper ---------------------------------------------------------------------------
 
 namespace rm_dir
 {
-    static void* syntax[] = {
+    arg::table::syntax::def syntax = { 1,
 	    arg_str1(NULL, NULL, "<dir>", NULL),
-	    arg_end(1)
     };
-    static esp_err_t invoke(int argc, char* argv[]);
-    const esp::console::cmd cmd("rmdir", syntax, invoke, "Delete empty existing directory <dir>");
+    struct act: public arg::table::act_t<syntax>
+    {
+	static esp_err_t invoke(int argc, char* argv[]);
+    }; /* struct rm_dir::act */
+    const esp::console::cmd_t<act> cmd("rmdir", "Delete empty existing directory <dir>");
 }; /* namespace rm_dir */
-
-static esp_err_t rm_dir::invoke(int argc, char **argv) {
-    return act::rmdir(astr::makestor<std::vector<char*>>(argc, argv));
-}; /* rm_dir::invoke */
 
 
 /// 'cd' command, pure C wrapper ----------------------------------------------------------------------------
 
 namespace cd
 {
-    static void* syntax[] = {
+    arg::table::syntax::def syntax = { 1,
 	    arg_str1(NULL, NULL, "<dir>", NULL),
-	    arg_end(1)
+//	    arg_end(1)
     };
-    static esp_err_t invoke(int argc, char* argv[]);
-    const esp::console::cmd cmd("cd", syntax, invoke, "Change current directory to a <path>");
+    struct act: public arg::table::act_t<syntax>
+    {
+	static esp_err_t invoke(int argc, char* argv[]);
+    }; /* struct cd::act */
+    const esp::console::cmd_t<act> cmd("cd", "Change current directory to a <path>");
 }; /* namespace cd */
-
-static esp_err_t cd::invoke(int argc, char **argv) {
-    return act::cd(astr::makestor<std::vector<char*>>(argc, argv));
-}; /* cd::invoke() */
 
 
 /// 'ls' command, pure C wrapper ----------------------------------------------------------------------------
 
 namespace ls
 {
-    static void* syntax[] = {
+    arg::table::syntax::def syntax = { 1,
 	    arg_str0(NULL, NULL, "<pattern>", NULL),
-	    arg_end(1)
+//	    arg_end(1)
     };
-    static esp_err_t invoke(int argc, char* argv[]);
-    const esp::console::cmd cmd("ls", syntax, invoke, "List contents of a directory or a file according <pattern>");
+    struct act: public arg::table::act_t<syntax>
+    {
+	static esp_err_t invoke(int argc, char* argv[]);
+    }; /* struct ls::act */
+    const esp::console::cmd_t<act> cmd("ls", "List contents of a directory or a file according <pattern>");
 }; /* namespace ls */
-
-static esp_err_t ls::invoke(int argc, char **argv) {
-    return act::ls(astr::makestor<std::vector<char*>>(argc, argv));
-}; /* ls::invoke() */
 
 
 /// 'cp' command, pure C wrapper ----------------------------------------------------------------------------
 
 namespace cp
 {
-    static void* syntax[] = {
+    arg::table::syntax::def syntax = { 2,
 	    arg_str1(NULL, NULL, "<src>", NULL),
 	    arg_str1(NULL, NULL, "<dest>", NULL),
-	    arg_end(2)
+//	    arg_end(2)
     };
-    static esp_err_t invoke(int argc, char* argv[]);
-    const esp::console::cmd cmd("cp", syntax, invoke, "Copy a file \"<src>\" to \"<dest>\".");
+    struct act: public arg::table::act_t<syntax>
+    {
+	static esp_err_t invoke(int argc, char* argv[]);
+    }; /* struct cp::act */
+    const esp::console::cmd_t<act> cmd("cp", "Copy a file \"<src>\" to \"<dest>\".");
 }; /* namespace cp */
-
-static esp_err_t cp::invoke(int argc, char* argv[]) {
-    return act::cp(astr::makestor<std::vector<char*>>(argc, argv));
-}; /* cp::invoke */
 
 
 /// 'mv' command, pure C wrapper ----------------------------------------------------------------------------
 
 namespace mv
 {
-    static void* syntax[] = {
+    arg::table::syntax::def syntax = { 2,
 	    arg_str1(NULL, NULL, "<src>", NULL),
 	    arg_str1(NULL, NULL, "<dest>", NULL),
-	    arg_end(2)
+//	    arg_end(2)
     };
-    static esp_err_t invoke(int argc, char* argv[]);
-    const esp::console::cmd cmd("mv", syntax, invoke, "Rename/move a file \"<src>\" to \"<dest>\".");
+    struct act: public arg::table::act_t<syntax>
+    {
+	static esp_err_t invoke(int argc, char* argv[]);
+    }; /* struct mv::act */
+    const esp::console::cmd_t<act> cmd("mv", "Rename/move a file \"<src>\" to \"<dest>\".");
 }; /* namespace mv */
-
-static esp_err_t mv::invoke(int argc, char* argv[]) {
-    return act::mv(astr::makestor<std::vector<char*>>(argc, argv));
-}; /* mv::invoke */
 
 
 /// 'rm' command, pure C wrapper ----------------------------------------------------------------------------
 
 namespace rm
 {
-    static void* syntax[] = {
+    arg::table::syntax::def syntax = { 1,
 	    arg_str1(NULL, NULL, "<filename>", NULL),
-	    arg_end(1)
+//	    arg_end(1)
     };
-    static esp_err_t invoke(int argc, char* argv[]);
-    const esp::console::cmd cmd("rm", syntax, invoke, "Delete a file or fileset matching the pattern <filename>");
+    struct act: public arg::table::act_t<syntax>
+    {
+	static esp_err_t invoke(int argc, char* argv[]);
+    }; /* struct rm::act */
+    const esp::console::cmd_t<act> cmd("rm", "Delete a file or fileset matching the pattern <filename>");
 }; /* namespace rm */
-
-static esp_err_t rm::invoke(int argc, char* argv[]) {
-    return act::rm(astr::makestor<std::vector<char*>>(argc, argv));
-}; /* rm::invoke() */
 
 
 /// 'cat' command, pure C wrapper ---------------------------------------------------------------------------
 
 namespace cat
 {
-    static void* syntax[] = {
+    arg::table::syntax::def syntax = { 1,
 	    arg_str1(NULL, NULL, "<filename>", NULL),
-	    arg_end(1)
+//	    arg_end(1)
     };
-    static esp_err_t invoke(int argc, char* argv[]);
-    const esp::console::cmd cmd("cat", syntax, invoke, "Type contents of the file <filename> to standard output (default - to screen)");
+    struct act: public arg::table::act_t<syntax>
+    {
+	static esp_err_t invoke(int argc, char* argv[]);
+    }; /* struct cat::act */
+    const esp::console::cmd_t<act> cmd("cat", "Type contents of the file <filename> to standard output (default - to screen)");
 }; /* namespace cat */
-
-static esp_err_t cat::invoke(int argc, char* argv[]) {
-    return act::cat(astr::makestor<std::vector<char*>>(argc, argv));
-}; /* cat::invoke() */
 
 
 //! 'type' command, pure C wrapper --------------------------------------------------------------------------
 
 namespace type
 {
-    static void* syntax[] = {
+    arg::table::syntax::def syntax = { 1,
 	    arg_str0(NULL, NULL, "<filename>", NULL),
-	    arg_end(1)
+//	    arg_end(1)
     };
-    static esp_err_t invoke(int argc, char* argv[]);
-    const esp::console::cmd cmd("type", syntax, invoke, "Type from a keyboard to standard output (default - to screen) and storing keyboard typing to the file <filename> (if specified)");
+    struct act: public arg::table::act_t<syntax>
+    {
+	static esp_err_t invoke(int argc, char* argv[]);
+    }; /* struct type::act */
+    const esp::console::cmd_t<act> cmd("type", "Type from a keyboard to standard output (default - to screen) and storing keyboard typing to the file <filename> (if specified)");
 }; /* namespace type */
-
-static esp_err_t type::invoke(int argc, char* argv[]) {
-    return act::type(astr::makestor<std::vector<char*>>(argc, argv));
-}; /* type::invoke() */
 
 
 // register all fs commands -----------------------------------------------------------------------
@@ -1160,6 +1145,11 @@ esp_err_t act::info(SD::MMC::Device& dev)
 }; /* act::info() */
 
 
+static int pwd::invoke(int argc, char **argv)
+{
+    return act::pwd(astr::makestor<std::vector<char*>>(argc, argv));
+}; /* pwd::invoke */
+
 /// action for pwd command
 esp_err_t act::pwd(std::vector<char*> args)
 {
@@ -1167,6 +1157,10 @@ esp_err_t act::pwd(std::vector<char*> args)
     return ESP_OK;
 }; /* act::pwd() */
 
+
+esp_err_t mk_dir::act::invoke(int argc, char **argv) {
+    return ::act::mkdir(astr::makestor<std::vector<char*>>(argc, argv));
+}; /* mk_dir::act::invoke() */
 
 /// action for 'mkdir' command
 esp_err_t act::mkdir(std::vector<char*> args)
@@ -1191,6 +1185,10 @@ esp_err_t act::mkdir(std::vector<char*> args)
 }; /* act::mkdir() */
 
 
+esp_err_t rm_dir::act::invoke(int argc, char **argv) {
+    return ::act::rmdir(astr::makestor<std::vector<char*>>(argc, argv));
+}; /* rm_dir::act::invoke */
+
 /// action for 'rmdir' command
 esp_err_t act::rmdir(std::vector<char*> args)
 {
@@ -1213,6 +1211,10 @@ esp_err_t act::rmdir(std::vector<char*> args)
     return ESP_ERR_INVALID_ARG;
 }; /* act::rmdir() */
 
+
+esp_err_t cd::act::invoke(int argc, char **argv) {
+    return ::act::cd(astr::makestor<std::vector<char*>>(argc, argv));
+}; /* cd::act::invoke() */
 
 /// action for 'cd' command
 esp_err_t act::cd(std::vector<char*> args)
@@ -1237,6 +1239,10 @@ esp_err_t act::cd(std::vector<char*> args)
 }; /* act::cd() */
 
 
+esp_err_t ls::act::invoke(int argc, char **argv) {
+    return ::act::ls(astr::makestor<std::vector<char*>>(argc, argv));
+}; /* ls::act::invoke() */
+
 /// action for list/dir command
 esp_err_t act::ls(std::vector<char*> args)
 {
@@ -1259,6 +1265,10 @@ esp_err_t act::ls(std::vector<char*> args)
     return ESP_ERR_INVALID_ARG;
 }; /* act::ls() */
 
+
+esp_err_t cp::act::invoke(int argc, char* argv[]) {
+    return ::act::cp(astr::makestor<std::vector<char*>>(argc, argv));
+}; /* cp::act::invoke */
 
 // action for 'copy' command
 esp_err_t act::cp(std::vector<char*> args)
@@ -1287,6 +1297,10 @@ esp_err_t act::cp(std::vector<char*> args)
 }; /* act::cp() */
 
 
+esp_err_t mv::act::invoke(int argc, char* argv[]) {
+    return ::act::mv(astr::makestor<std::vector<char*>>(argc, argv));
+}; /* mv::act::invoke */
+
 /// action for 'rename/move' command
 esp_err_t act::mv(std::vector<char*> args)
 {
@@ -1314,6 +1328,10 @@ esp_err_t act::mv(std::vector<char*> args)
 }; /* act::mv() */
 
 
+esp_err_t rm::act::invoke(int argc, char* argv[]) {
+    return ::act::rm(astr::makestor<std::vector<char*>>(argc, argv));
+}; /* rm::act::invoke() */
+
 /// action for 'rm' command
 esp_err_t act::rm(std::vector<char*> args)
 {
@@ -1338,6 +1356,10 @@ esp_err_t act::rm(std::vector<char*> args)
 }; /* act::rm() */
 
 
+esp_err_t cat::act::invoke(int argc, char* argv[]) {
+    return ::act::cat(astr::makestor<std::vector<char*>>(argc, argv));
+}; /* cat::act::invoke() */
+
 /// action for 'cat' command
 esp_err_t act::cat(std::vector<char*> args)
 {
@@ -1359,6 +1381,10 @@ esp_err_t act::cat(std::vector<char*> args)
     return ESP_ERR_INVALID_ARG;
 }; /* act::cat() */
 
+
+esp_err_t type::act::invoke(int argc, char* argv[]) {
+    return ::act::type(astr::makestor<std::vector<char*>>(argc, argv));
+}; /* type::act::invoke() */
 
 /// action for 'type' command
 esp_err_t act::type(std::vector<char*> args)
