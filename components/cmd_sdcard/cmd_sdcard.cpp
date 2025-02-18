@@ -313,6 +313,37 @@ void register_fs_cmd_all(void)
 
 
 
+//--[ 'sd' command ]-------------------------------------------------------------------------------
+
+
+namespace sdcard
+{
+    arg::table::syntax::def syntax = { 2,
+	    arg_rex1(NULL, NULL, "h|help", "h | help", 0/*REG_ICASE*/, "help for command 'sdcard'"),
+	    arg_rem ("|", NULL),
+	    arg_rex1(NULL, NULL, "<subcommand>", NULL, 0/*REG_ICASE*/, "other subcommand of command 'sdcard'"),
+	    arg_strn(NULL, NULL, "<options>", 0, 2, "subcommand options"),
+//	    arg_end(2),
+    };
+    struct act: public arg::table::act_t<syntax>
+    {
+	/// execution procedure for the sd/sdcard command
+	static esp_err_t invoke(int argc, char* argv[]);
+	/// action for 'mount' command
+	static esp_err_t mnt(int argc, char* argv[]);
+	/// action for 'unmount' command
+	static esp_err_t umnt(int argc, char* argv[]);
+	/// print info about the mounted SD-card
+	static esp_err_t info(SD::MMC::Device& dev);
+    }; /* struct sdcard::act */
+    const esp::console::cmd_t<act> cmd("sdcard", "SD card manipulating main command" /*, .hint = "enter subcommand for Sd card operations" */);
+    const esp::console::cmd_t<act> cmd2("sd", "shortcut for 'sdcard' command" /*, .hint = "enter subcommand for Sd card operations" */);
+
+}; /* namespace sdcard */
+
+
+
+
 //--[ command action wrapper class ]----------------------------------------------------------------
 
 // standart subcommand action wrapper
@@ -489,41 +520,33 @@ private:
 
 
 
+#if 0
 //--[ 'sd' command ]-------------------------------------------------------------------------------
 
 
 namespace sdcard
 {
-    static void *syntax[] = {
+    arg::table::syntax::def syntax = { 2,
 	    arg_rex1(NULL, NULL, "h|help", "h | help", 0/*REG_ICASE*/, "help for command 'sdcard'"),
 	    arg_rem ("|", NULL),
 	    arg_rex1(NULL, NULL, "<subcommand>", NULL, 0/*REG_ICASE*/, "other subcommand of command 'sdcard'"),
 	    arg_strn(NULL, NULL, "<options>", 0, 2, "subcommand options"),
-	    arg_end(2),
+//	    arg_end(2),
     };
-    static esp_err_t invoke(int argc, char* argv[]);
-    const esp::console::cmd cmd("sdcard", syntax, invoke, "SD card manipulating main command" /*, .hint = "enter subcommand for Sd card operations" */);
-    const esp::console::cmd cmd2("sd", syntax, invoke, "shortcut for 'sdcard' command" /*, .hint = "enter subcommand for Sd card operations" */);
+    struct act: public arg::table::act_t<syntax>
+    {
+	/// execution procedure for the sd/sdcard command
+	static esp_err_t invoke(int argc, char* argv[]);
+	/// action for 'mount' command
+	static esp_err_t mnt(int argc, char* argv[]);
+
+    }; /* struct sdcard::act */
+    const esp::console::cmd_t<act> cmd("sdcard", "SD card manipulating main command" /*, .hint = "enter subcommand for Sd card operations" */);
+    const esp::console::cmd_t<act> cmd2("sd", "shortcut for 'sdcard' command" /*, .hint = "enter subcommand for Sd card operations" */);
 
 }; /* namespace sdcard */
+#endif
 
-//extern "C" {
-/// Procedure of the 'sd' command
-//static int sdcard_cmd(int argc, char **argv)
-static esp_err_t sdcard::invoke(int argc, char* argv[])
-{
-    cout << "Run the command \"sdcard\'" << endl
-	 << endl;
-    cout << "argc is   : " << argc << endl;
-    for (int i = 0; i < argc; i++)
-	cout << "argv[" << i << "] is: " << argv[i] << endl;
-    cout << "..............................................."
-	 << endl;
-
-    return SDctrl::exec(argc, argv);
-
-}; /* sdcard::invoke() */
-//}; /* extern "C" */
 
 
 // Register all SD-card commands
@@ -562,7 +585,7 @@ void register_sdcard_cmd(void)
     SDctrl::cmd().enroll(type_cmd);
     SDctrl::cmd().enroll(help_cmd);
 
-
+    //TODO Fimally - this registering must be moved into procedure register_fs_cmd_all() or not
     sdcard::cmd.enreg_check();
     sdcard::cmd2.enreg_check();
 
@@ -1044,17 +1067,37 @@ void** SDctrl::alltables = nullptr;
 
 
 
-//--[ namespace act ]------------------------------------------------------------------------------
+//--[ command execution procedures definition ]------------------------------------------------------------------------
+
+
+/// Execute procedure of the 'sd' command
+esp_err_t sdcard::act::invoke(int argc, char* argv[])
+{
+    cout << "Run the command \"sdcard\'" << endl
+	 << endl;
+    cout << "argc is   : " << argc << endl;
+    for (int i = 0; i < argc; i++)
+	cout << "argv[" << i << "] is: " << argv[i] << endl;
+    cout << "..............................................."
+	 << endl;
+
+    return SDctrl::exec(argc, argv);
+
+}; /* sdcard::act::invoke() */
 
 
 /// action for 'mount' command
-esp_err_t act::mnt(std::vector<char*> args)
+esp_err_t sdcard::act::mnt(int argc, char* argv[])
+//;
+//
+///// action for 'mount' command
+//esp_err_t act::mnt(std::vector<char*> args)
 {
-    esp_err_t res;
+    esp_err_t res = ESP_FAIL;
 
     //device.host().set_card_clk(40000);	// test for low speed
 
-    switch (args.size())
+    switch (argc)
     {
     case 1/*2*/:
 	res = exec_server.mount(device, sdmmc_card); // @suppress("Invalid arguments")
@@ -1062,17 +1105,17 @@ esp_err_t act::mnt(std::vector<char*> args)
 
     case 2/*3*/:
 	cout << "...with one parameter - use device or mount point." << endl;
-	res = exec_server.mount(device, sdmmc_card, args[1/*2*/]); // @suppress("Invalid arguments")
+	res = exec_server.mount(device, sdmmc_card, argv[1/*2*/]); // @suppress("Invalid arguments")
 	break;
 
     case 3/*4*/:
 	cout << "...with two parameters - use device & mount point." << endl;
-	res = exec_server.mount(device, sdmmc_card, atoi(args[1/*2*/]), args[2/*3*/]); // @suppress("Invalid arguments")
+	res = exec_server.mount(device, sdmmc_card, atoi(argv[1/*2*/]), argv[2/*3*/]); // @suppress("Invalid arguments")
 	break;
 
     default:
-	ESP_LOGE("sdcard mount command", "more than two parameters (%d) is not allowed", args.size() - 1/*2*/);
-	res = ESP_FAIL;
+	ESP_LOGE("sdcard mount command", "more than two parameters (%d) is not allowed", argc - 1/*2*/);
+//	res = ESP_FAIL;
     }; /* switch argc */
     cout << endl;
 
@@ -1080,18 +1123,25 @@ esp_err_t act::mnt(std::vector<char*> args)
     {
 	device.host().io.interrupt.enable();
 	sdmmc_card.io.interrupt.enable();
-	device.card->info(); // @suppress("Field cannot be resolved") // @suppress("Method cannot be resolved")
+	device.card->info();
     }; /* if res == ESP_OK */
 
     return res;
+}; /* sdcard::act::mnt() */
+
+/// action for 'mount' command
+esp_err_t act::mnt(std::vector<char*> args) {
+    return sdcard::act::mnt(args.size(), args.data());
 }; /* act::mnt() */
 
 
 /// action for 'unmount' command
-esp_err_t act::umnt(std::vector<char*> args)
+esp_err_t sdcard::act::umnt(int argc, char* argv[])
+///// action for 'unmount' command
+//esp_err_t act::umnt(std::vector<char*> args)
 {
     cout << "\"unmount\" command execution" << endl;
-    switch (args.size())
+    switch (argc)
     {
     case 1/*2*/:
 	cout << "...without parameters - use default values." << endl;
@@ -1104,16 +1154,24 @@ esp_err_t act::umnt(std::vector<char*> args)
 //	break;
 
     default:
-	ESP_LOGE("sdcard umount command", "more than one parameters (%d) - is not allowed", args.size() - 1/*2*/);
+	ESP_LOGE("sdcard umount command", "more than one parameters (%d) - is not allowed", argc - 1/*2*/);
     }; /* switch args.size() */
     cout << endl;
 
     return ESP_ERR_INVALID_ARG;
+}; /* sdcard::act::umnt() */
+
+/// action for 'unmount' command
+esp_err_t act::umnt(std::vector<char*> args)
+{
+    return sdcard::act::umnt(args.size(), args.data());
 }; /* act::umnt() */
 
 
 /// print info about the mounted SD-card
-esp_err_t act::info(SD::MMC::Device& dev)
+esp_err_t sdcard::act::info(SD::MMC::Device& dev)
+///// print info about the mounted SD-card
+//esp_err_t act::info(SD::MMC::Device& dev)
 {
     if (!dev.card)
     {
@@ -1142,201 +1200,253 @@ esp_err_t act::info(SD::MMC::Device& dev)
     err = dev.card->print_cis();
     ESP_LOGE("sdcard info command", "Error %i in the get or print CIS data: %s", err, esp_err_to_name(err));
     return err;
+}; /* sdcard::act::info() */
+
+/// print info about the mounted SD-card
+esp_err_t act::info(SD::MMC::Device& dev)
+{
+    return sdcard::act::info(dev);
 }; /* act::info() */
 
 
-static int pwd::invoke(int argc, char **argv)
+
+/// action for pwd command
+static int pwd::invoke(int argc, char *argv[])
 {
-    return act::pwd(astr::makestor<std::vector<char*>>(argc, argv));
-}; /* pwd::invoke */
+    exec_server.pwd();
+    return ESP_OK;
+}; /* pwd::invoke() */
 
 /// action for pwd command
 esp_err_t act::pwd(std::vector<char*> args)
 {
-    exec_server.pwd();
-    return ESP_OK;
+    return pwd::invoke(args.size(), args.data());
 }; /* act::pwd() */
 
 
-esp_err_t mk_dir::act::invoke(int argc, char **argv) {
-    return ::act::mkdir(astr::makestor<std::vector<char*>>(argc, argv));
-}; /* mk_dir::act::invoke() */
-
 /// action for 'mkdir' command
-esp_err_t act::mkdir(std::vector<char*> args)
+esp_err_t mk_dir::act::invoke(int argc, char *argv[])
 {
+//    return ::act::mkdir(astr::makestor<std::vector<char*>>(argc, argv));
+//}; /* mk_dir::act::invoke() */
+//
+///// action for 'mkdir' command
+//esp_err_t act::mkdir(std::vector<char*> args)
+//{
     cout << "\"mkdir\" command execution" << endl;
-    switch (args.size())
+    switch (argc)
     {
     case 1:
 	return exec_server.mkdir();
 	break;
 
     case 2:
-	return exec_server.mkdir(args[1]);
+	return exec_server.mkdir(argv[1]);
 	break;
 
     default:
-	ESP_LOGE("mkdir command", "too many parameters (%d), don't know what directory to create", args.size());
+	ESP_LOGE("mkdir command", "too many parameters (%d), don't know what directory to create", argc);
     }; /* switch argc */
     cout << endl;
 
     return ESP_ERR_INVALID_ARG;
+}; /* mk_dir::act::invoke() */
+
+/// action for 'mkdir' command
+esp_err_t act::mkdir(std::vector<char*> args) {
+    return mk_dir::act::invoke(args.size(), args.data());
 }; /* act::mkdir() */
 
 
-esp_err_t rm_dir::act::invoke(int argc, char **argv) {
-    return ::act::rmdir(astr::makestor<std::vector<char*>>(argc, argv));
-}; /* rm_dir::act::invoke */
-
 /// action for 'rmdir' command
-esp_err_t act::rmdir(std::vector<char*> args)
+esp_err_t rm_dir::act::invoke(int argc, char *argv[])
 {
+//    return ::act::rmdir(astr::makestor<std::vector<char*>>(argc, argv));
+//}; /* rm_dir::act::invoke */
+//
+///// action for 'rmdir' command
+//esp_err_t act::rmdir(std::vector<char*> args)
+//{
     cout << "\"rmdir\" command execution" << endl;
-    switch (args.size())
+    switch (argc)
     {
     case 1:
 	return exec_server.rmdir();
 	break;
 
     case 2:
-	return exec_server.rmdir(args[1]);
+	return exec_server.rmdir(argv[1]);
 	break;
 
     default:
-	ESP_LOGE("rmdir command", "too many parameters (%d), deleting multiple directories at once is not allowed", args.size());
+	ESP_LOGE("rmdir command", "too many parameters (%d), deleting multiple directories at once is not allowed", argc);
     }; /* switch argc */
     cout << endl;
 
     return ESP_ERR_INVALID_ARG;
+}; /* rm_dir::act::invoke() */
+
+/// action for 'rmdir' command
+esp_err_t act::rmdir(std::vector<char*> args) {
+    return rm_dir::act::invoke(args.size(), args.data());
 }; /* act::rmdir() */
 
 
-esp_err_t cd::act::invoke(int argc, char **argv) {
-    return ::act::cd(astr::makestor<std::vector<char*>>(argc, argv));
-}; /* cd::act::invoke() */
-
 /// action for 'cd' command
-esp_err_t act::cd(std::vector<char*> args)
+esp_err_t cd::act::invoke(int argc, char *argv[])
 {
+//    return ::act::cd(astr::makestor<std::vector<char*>>(argc, argv));
+//}; /* cd::act::invoke() */
+//
+///// action for 'cd' command
+//esp_err_t act::cd(std::vector<char*> args)
+//{
     cout << "\"cd\" command execution" << endl;
-    switch (args.size())
+    switch (argc)
     {
     case 1:
 	return exec_server.cd(device);
 	break;
 
     case 2:
-	return exec_server.cd(device, args[1]);
+	return exec_server.cd(device, argv[1]);
 	break;
 
     default:
-	ESP_LOGE("cd command", "too many parameters (%d), where to go?", args.size());
+	ESP_LOGE("cd command", "too many parameters (%d), where to go?", argc);
     }; /* switch argc */
     cout << endl;
 
     return ESP_ERR_INVALID_ARG;
+}; /* cd::act::invoke() */
+
+/// action for 'cd' command
+esp_err_t act::cd(std::vector<char*> args) {
+    return cd::act::invoke(args.size(), args.data());
 }; /* act::cd() */
 
 
-esp_err_t ls::act::invoke(int argc, char **argv) {
-    return ::act::ls(astr::makestor<std::vector<char*>>(argc, argv));
-}; /* ls::act::invoke() */
-
 /// action for list/dir command
-esp_err_t act::ls(std::vector<char*> args)
+esp_err_t ls::act::invoke(int argc, char *argv[])
 {
+//    return ::act::ls(astr::makestor<std::vector<char*>>(argc, argv));
+//}; /* ls::act::invoke() */
+//
+///// action for list/dir command
+//esp_err_t act::ls(std::vector<char*> args)
+//{
     cout << "\"ls\" command execution" << endl;
-    switch (args.size())
+    switch (argc)
     {
     case 1:
 	return exec_server.ls();
 	break;
 
     case 2:
-	return exec_server.ls(args[1]);
+	return exec_server.ls(argv[1]);
 	break;
 
     default:
-	ESP_LOGE("ls command", "too many parameters (%d), which directory is to be printed?", args.size());
+	ESP_LOGE("ls command", "too many parameters (%d), which directory is to be printed?", argc);
 
     }; /* switch argc */
     cout << endl;
     return ESP_ERR_INVALID_ARG;
+}; /* ls::act::invoke() */
+
+/// action for list/dir command
+esp_err_t act::ls(std::vector<char*> args) {
+    return ls::act::invoke(args.size(), args.data());
 }; /* act::ls() */
 
 
-esp_err_t cp::act::invoke(int argc, char* argv[]) {
-    return ::act::cp(astr::makestor<std::vector<char*>>(argc, argv));
-}; /* cp::act::invoke */
-
 // action for 'copy' command
-esp_err_t act::cp(std::vector<char*> args)
+esp_err_t cp::act::invoke(int argc, char* argv[])
 {
+//    return ::act::cp(astr::makestor<std::vector<char*>>(argc, argv));
+//}; /* cp::act::invoke */
+//
+//// action for 'copy' command
+//esp_err_t act::cp(std::vector<char*> args)
+//{
     cout << "\"cp\" command execution" << endl;
-    switch (args.size())
+    switch (argc)
     {
     case 1:
 	return exec_server.cp();
 	break;
 
     case 2:
-	return exec_server.cp(args[1]);
+	return exec_server.cp(argv[1]);
 	break;
 
     case 3:
-	return exec_server.cp(args[1], args[2]);
+	return exec_server.cp(argv[1], argv[2]);
 	break;
 
     default:
-	ESP_LOGE("cp command", "too many parameters (%d) for copy file(s), don't know to do.", args.size());
+	ESP_LOGE("cp command", "too many parameters (%d) for copy file(s), don't know to do.", argc);
     }; /* switch argc */
 
     cout << endl;
     return ESP_ERR_INVALID_ARG;
+}; /* cp::act::invoke() */
+
+// action for 'copy' command
+esp_err_t act::cp(std::vector<char*> args) {
+    return cp::act::invoke(args.size(), args.data());
 }; /* act::cp() */
 
 
-esp_err_t mv::act::invoke(int argc, char* argv[]) {
-    return ::act::mv(astr::makestor<std::vector<char*>>(argc, argv));
-}; /* mv::act::invoke */
-
 /// action for 'rename/move' command
-esp_err_t act::mv(std::vector<char*> args)
+esp_err_t mv::act::invoke(int argc, char* argv[])
 {
+//    return ::act::mv(astr::makestor<std::vector<char*>>(argc, argv));
+//}; /* mv::act::invoke */
+//
+///// action for 'rename/move' command
+//esp_err_t act::mv(std::vector<char*> args)
+//{
     cout << "\"mv\" command execution" << endl;
-    switch (args.size())
+    switch (argc)
     {
     case 1:
 	return exec_server.mv();
 	break;
 
     case 2:
-	return exec_server.mv(args[1]);
+	return exec_server.mv(argv[1]);
 	break;
 
     case 3:
-	return exec_server.mv(args[1], args[2]);
+	return exec_server.mv(argv[1], argv[2]);
 	break;
 
     default:
-	ESP_LOGE("mv command", "too many parameters (%d) for move/renaming file, don't know to do.", args.size());
+	ESP_LOGE("mv command", "too many parameters (%d) for move/renaming file, don't know to do.", argc);
     }; /* switch argc */
 
     cout << endl;
     return ESP_ERR_INVALID_ARG;
+}; /* mv::act::invoke() */
+
+/// action for 'rename/move' command
+esp_err_t act::mv(std::vector<char*> args) {
+    return mv::act::invoke(args.size(), args.data());
 }; /* act::mv() */
 
 
-esp_err_t rm::act::invoke(int argc, char* argv[]) {
-    return ::act::rm(astr::makestor<std::vector<char*>>(argc, argv));
-}; /* rm::act::invoke() */
-
 /// action for 'rm' command
-esp_err_t act::rm(std::vector<char*> args)
+esp_err_t rm::act::invoke(int argc, char* argv[])
 {
+//    return ::act::rm(astr::makestor<std::vector<char*>>(argc, argv));
+//}; /* rm::act::invoke() */
+//
+///// action for 'rm' command
+//esp_err_t act::rm(std::vector<char*> args)
+//{
     cout << "\"rm\" command execution" << endl;
-    switch (args.size())
+    switch (argc)
     {
     case 1:
 	return exec_server.rm();
@@ -1344,53 +1454,67 @@ esp_err_t act::rm(std::vector<char*> args)
 
     case 2:
 	cout << "...with one parameter - OK, specified the filename to delete." << endl;
-	return exec_server.rm(args[1]);
+	return exec_server.rm(argv[1]);
 	break;
 
     default:
-	ESP_LOGE("rm command", "too many parameters (%d), unable select file to remove.", args.size());
-    }; /* switch args.size() */
+	ESP_LOGE("rm command", "too many parameters (%d), unable select file to remove.", argc);
+    }; /* switch argc */
     cout << endl;
 
     return ESP_ERR_INVALID_ARG;
+}; /* rm::act::invoke() */
+
+/// action for 'rm' command
+esp_err_t act::rm(std::vector<char*> args) {
+    return rm::act::invoke(args.size(), args.data());
 }; /* act::rm() */
 
 
-esp_err_t cat::act::invoke(int argc, char* argv[]) {
-    return ::act::cat(astr::makestor<std::vector<char*>>(argc, argv));
-}; /* cat::act::invoke() */
-
-/// action for 'cat' command
-esp_err_t act::cat(std::vector<char*> args)
+/// action for the 'cat' command
+esp_err_t cat::act::invoke(int argc, char* argv[])
 {
+//    return ::act::cat(astr::makestor<std::vector<char*>>(argc, argv));
+//}; /* cat::act::invoke() */
+//
+///// action for 'cat' command
+//esp_err_t act::cat(std::vector<char*> args)
+//{
     cout << "\"cat\" command execution" << endl;
-    switch (args.size())
+    switch (argc)
     {
     case 1:
 	return exec_server.cat();
 	break;
 
     case 2:
-	return exec_server.cat(args[1]);
+	return exec_server.cat(argv[1]);
 	break;
 
     default:
-	ESP_LOGE("cat command", "too many parameters (%d), unable select file to print.", args.size());
+	ESP_LOGE("cat command", "too many parameters (%d), unable select file to print.", argc);
     }; /* switch argc */
     cout << endl;
     return ESP_ERR_INVALID_ARG;
+}; /* cat::act::invoke() */
+
+/// action for 'cat' command
+esp_err_t act::cat(std::vector<char*> args) {
+    return cat::act::invoke(args.size(), args.data());
 }; /* act::cat() */
 
 
-esp_err_t type::act::invoke(int argc, char* argv[]) {
-    return ::act::type(astr::makestor<std::vector<char*>>(argc, argv));
-}; /* type::act::invoke() */
-
 /// action for 'type' command
-esp_err_t act::type(std::vector<char*> args)
+esp_err_t type::act::invoke(int argc, char* argv[])
 {
+//    return ::act::type(astr::makestor<std::vector<char*>>(argc, argv));
+//}; /* type::act::invoke() */
+//
+///// action for 'type' command
+//esp_err_t act::type(std::vector<char*> args)
+//{
     cout << "\"type\" command execution" << endl;
-    switch (args.size())
+    switch (argc)
     {
     case 1:
 	return exec_server.type();
@@ -1398,15 +1522,20 @@ esp_err_t act::type(std::vector<char*> args)
 
     case 2:
 	cout << "...with one parameter - OK, save type output to file & output to screen." << endl;
-    	return exec_server.type(args[1]);
+    	return exec_server.type(argv[1]);
     	break;
 
     default:
     //	cout << "more than one parameter - unknown set of parameters." << endl;
-	ESP_LOGE("type command", "too many parameters (%d), in which file the output to be saved?", args.size());
+	ESP_LOGE("type command", "too many parameters (%d), in which file the output to be saved?", argc);
     }; /* switch args.size() */
     cout << endl;
     return ESP_ERR_INVALID_ARG;
+}; /* type::act::invoke() */
+
+/// action for 'type' command
+esp_err_t act::type(std::vector<char*> args) {
+    return cat::act::invoke(args.size(), args.data());
 }; /* act::type() */
 
 
