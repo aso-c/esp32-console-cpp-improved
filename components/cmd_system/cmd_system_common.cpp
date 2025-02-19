@@ -14,7 +14,6 @@
 
 
 #include <cstdlib>
-// #include <stdio.h>
 #include <iostream>
 #include <iomanip>
 // #include <fstream>
@@ -22,18 +21,17 @@
 
 
 //#include <thread>
-//#include "esp_log.h"
-//#include "gpio_cxx.hpp"
-
-//#define __WITH_STDIO__
-//#define __WITH_BOOST__
-//#define __MAX_UNFOLDED_OUTPUT__
+#include <utility>
+#include <functional>
+#include <tuple>
 
 
-#include <string.h>
+
 #include <ctype.h>
 #include <inttypes.h>
 #include <unistd.h>
+
+
 #include <esp_log.h>
 #include <esp_console.h>
 #include <esp_chip_info.h>
@@ -45,12 +43,10 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 
+//#include "gpio_cxx.hpp"
+
 #include "cmd_system.h"
 #include "sdkconfig.h"
-
-#include <utility>
-#include <functional>
-#include <tuple>
 
 #include <argtable>
 #include <console>
@@ -278,6 +274,24 @@ esp_err_t static tasks::invoke(int argc, char* argv[])
 #endif // WITH_TASKS_INFO
 
 
+namespace loglevel
+{
+    arg::table::syntax::def syntax = { 2,
+	    /*log_level_args.tag = */arg_str1(NULL, NULL, "<tag|*>", "Log tag to set the level for, or * to set for all tags"),
+	    /*log_level_args.level = */arg_str1(NULL, NULL, "<none|error|warn|debug|verbose>", "Log level to set. Abbreviated words are accepted."),
+//	    log_level_args.end = arg_end(2);
+    };
+    struct act: public arg::table::act_t<syntax>
+    {
+//	static esp_err_t invoke(int argc, char* argv[]);
+	static esp_err_t invoke(int argc, char* argv[]);
+    }; /* struct loglevel::act */
+    const esp::console::cmd_t<act> cmd("log_level", "Set log level for all tags or a specific tag.");
+
+}; /* namespace loglevel */
+
+
+
 
 
 
@@ -289,6 +303,7 @@ static struct {
     struct arg_end *end;
 } log_level_args;
 
+#if 0
 static const char* s_log_level_names[] = {
     "none",
     "error",
@@ -297,6 +312,17 @@ static const char* s_log_level_names[] = {
     "debug",
     "verbose"
 };
+#endif
+
+static const std::array<const char*, 7> log_level_names = {
+	    "none",
+	    "error",
+	    "warn",
+	    "info",
+	    "debug",
+	    "verbose",
+//	    "out_of_range"
+	}; /* log_level_names */
 
 template <typename T>
 inline T next(T& item)
@@ -306,38 +332,65 @@ inline T next(T& item)
 }; /* next() */
 
 
-static int log_level(int argc, char **argv)
+//static int log_level(int argc, char **argv)
+esp_err_t loglevel::act::invoke(int argc, char* argv[])
 {
-    int nerrors = arg_parse(argc, argv, (void **) &log_level_args);
-    if (nerrors != 0) {
-        arg_print_errors(stderr, log_level_args.end, argv[0]);
-        return 1;
-    }
-    assert(log_level_args.tag->count == 1);
-    assert(log_level_args.level->count == 1);
-    const char* tag = log_level_args.tag->sval[0];
-    const char* level_str = log_level_args.level->sval[0];
-    esp_log_level_t level;
-    size_t level_len = strlen(level_str);
-    for (level = ESP_LOG_NONE; level <= ESP_LOG_VERBOSE; next(level))
+	constexpr int tag_idx = 0;
+	constexpr int level_idx = 1;
+
+//    int nerrors = arg_parse(argc, argv, (void **) &log_level_args);
+    syntax.parse(argc, argv);
+//    if (nerrors != 0) {
+//        arg_print_errors(stderr, log_level_args.end, argv[0]);
+//        return 1;
+//    }
+    if (syntax.err())
     {
-        if (memcmp(level_str, s_log_level_names[level], level_len) == 0) {
+       syntax.errors(stderr, argv[0]);
+       return syntax.err();
+    }; /* if syntax.err() */
+//    assert(log_level_args.tag->count == 1);
+    assert(std::get<arg_str*>(syntax.description[tag_idx])->count == 1);
+//    assert(log_level_args.level->count == 1);
+    assert(std::get<arg_str*>(syntax.description[level_idx])->count == 1);
+//    const char* tag = log_level_args.tag->sval[0];
+//    const char* tag = std::get<arg_str*>(syntax.description[tag_idx])->sval[0];
+    const string_view tag = std::get<arg_str*>(syntax.description[tag_idx])->sval[0];
+//    const char* level_str = log_level_args.level->sval[0];
+//    const char* level_str = std::get<arg_str*>(syntax.description[level_idx])->sval[0];
+    const string_view level_str = std::get<arg_str*>(syntax.description[level_idx])->sval[0];
+#if 0
+    esp_log_level_t level;
+    //size_t level_len = strlen(level_str);
+    for (level = ESP_LOG_NONE; level <= ESP_LOG_VERBOSE; next(level))
+//    for (level: esp_log_level_t)
+    {
+//        if (memcmp(level_str, s_log_level_names[level], level_len) == 0) {
+//        if (level_str == s_log_level_names[level]) {
+        if (level_str == log_level_names[level]) {
             break;
         }
     }; /* for level = ESP_LOG_NONE; level <= ESP_LOG_VERBOSE; next(level) */
-    if (level > ESP_LOG_VERBOSE) {
-        printf("Invalid log level '%s', choose from none|error|warn|info|debug|verbose\n", level_str);
+#endif
+    auto level_ptgt = std::find(log_level_names.begin(), log_level_names.end(), level_str);
+//    if (level > ESP_LOG_VERBOSE) {
+    if (level_ptgt == log_level_names.end()) {
+//        printf("Invalid log level '%s', choose from none|error|warn|info|debug|verbose\n", level_str.data());
+        ESP_LOGE("log_level command", "Invalid log level '%s', choose from none|error|warn|info|debug|verbose\n", level_str.data());
         return 1;
-    }
+    }; /* if level_nmtgt == log_level_names.end() */
+
+    esp_log_level_t level = static_cast<esp_log_level_t>(std::distance(log_level_names.begin(), level_ptgt));
     if (level > CONFIG_LOG_MAXIMUM_LEVEL) {
-        printf("Can't set log level to %s, max level limited in menuconfig to %s. "
+//        printf("Can't set log level to %s, max level limited in menuconfig to %s. "
+        ESP_LOGE("log_level command", "Can't set log level to %s, max level limited in menuconfig to %s. "
                "Please increase CONFIG_LOG_MAXIMUM_LEVEL in menuconfig.\n",
-               s_log_level_names[level], s_log_level_names[CONFIG_LOG_MAXIMUM_LEVEL]);
+	       log_level_names[level]/*s_log_level_names[level]*/, log_level_names[CONFIG_LOG_MAXIMUM_LEVEL]/*s_log_level_names[CONFIG_LOG_MAXIMUM_LEVEL]*/);
         return 1;
     }
-    esp_log_level_set(tag, level);
-    return 0;
-}
+    esp_log_level_set(tag.data(), level);
+    return ESP_OK;
+}; /* loglevel::act::invoke() */
 
 static void register_log_level(void)
 {
@@ -345,6 +398,7 @@ static void register_log_level(void)
     log_level_args.level = arg_str1(NULL, NULL, "<none|error|warn|debug|verbose>", "Log level to set. Abbreviated words are accepted.");
     log_level_args.end = arg_end(2);
 
+#if 0
     const esp_console_cmd_t cmd = {
         .command = "log_level",
         .help = "Set log level for all tags or a specific tag.",
@@ -355,7 +409,9 @@ static void register_log_level(void)
 	.context = nullptr
     };
     ESP_ERROR_CHECK( esp_console_cmd_register(&cmd) );
-}
+#endif
+    loglevel::cmd.enreg_check();
+}; /* register_log_level() */
 
 
 /*

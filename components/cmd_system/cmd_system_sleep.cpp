@@ -67,7 +67,7 @@ static int deep_sleep(int argc, char **argv)
 #if SOC_PM_SUPPORT_EXT1_WAKEUP
     if (deep_sleep_args.wakeup_gpio_num->count) {
         int io_num = deep_sleep_args.wakeup_gpio_num->ival[0];
-        if (!esp_sleep_is_valid_wakeup_gpio(io_num)) {
+        if (!esp_sleep_is_valid_wakeup_gpio(static_cast<gpio_num_t>(io_num))) {
             ESP_LOGE(TAG, "GPIO %d is not an RTC IO", io_num);
             return 1;
         }
@@ -82,7 +82,7 @@ static int deep_sleep(int argc, char **argv)
         ESP_LOGI(TAG, "Enabling wakeup on GPIO%d, wakeup on %s level",
                  io_num, level ? "HIGH" : "LOW");
 
-        ESP_ERROR_CHECK( esp_sleep_enable_ext1_wakeup(1ULL << io_num, level) );
+        ESP_ERROR_CHECK( esp_sleep_enable_ext1_wakeup(1ULL << io_num, static_cast<esp_sleep_ext1_wakeup_mode_t>(level)) );
         ESP_LOGE(TAG, "GPIO wakeup from deep sleep currently unsupported on ESP32-C3");
     }
 #endif // SOC_PM_SUPPORT_EXT1_WAKEUP
@@ -110,6 +110,8 @@ static void register_deep_sleep(void)
 #endif
     deep_sleep_args.end = arg_end(num_args);
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
     const esp_console_cmd_t cmd = {
         .command = "deep_sleep",
         .help = "Enter deep sleep mode. "
@@ -122,9 +124,10 @@ static void register_deep_sleep(void)
         .hint = NULL,
         .func = &deep_sleep,
         .argtable = &deep_sleep_args
-    };
+    }; /* const esp_console_cmd_t cmd */
     ESP_ERROR_CHECK( esp_console_cmd_register(&cmd) );
-}
+#pragma GCC diagnostic pop
+}; /* register_deep_sleep() */
 
 /** 'light_sleep' command puts the chip into light sleep mode */
 
@@ -163,14 +166,14 @@ static int light_sleep(int argc, char **argv)
         ESP_LOGI(TAG, "Enabling wakeup on GPIO%d, wakeup on %s level",
                  io_num, level ? "HIGH" : "LOW");
 
-        ESP_ERROR_CHECK( gpio_wakeup_enable(io_num, level ? GPIO_INTR_HIGH_LEVEL : GPIO_INTR_LOW_LEVEL) );
+        ESP_ERROR_CHECK( gpio_wakeup_enable(static_cast<gpio_num_t>(io_num), level ? GPIO_INTR_HIGH_LEVEL : GPIO_INTR_LOW_LEVEL) );
     }
     if (io_count > 0) {
         ESP_ERROR_CHECK( esp_sleep_enable_gpio_wakeup() );
     }
     if (CONFIG_ESP_CONSOLE_UART_NUM >= 0 && CONFIG_ESP_CONSOLE_UART_NUM <= UART_NUM_1) {
         ESP_LOGI(TAG, "Enabling UART wakeup (press ENTER to exit light sleep)");
-        ESP_ERROR_CHECK( uart_set_wakeup_threshold(CONFIG_ESP_CONSOLE_UART_NUM, 3) );
+        ESP_ERROR_CHECK( uart_set_wakeup_threshold(static_cast<uart_port_t>(CONFIG_ESP_CONSOLE_UART_NUM), 3) );
         ESP_ERROR_CHECK( esp_sleep_enable_uart_wakeup(CONFIG_ESP_CONSOLE_UART_NUM) );
     }
     fflush(stdout);
@@ -209,6 +212,8 @@ static void register_light_sleep(void)
         arg_intn(NULL, "io_level", "<0|1>", 0, 8, "GPIO level to trigger wakeup");
     light_sleep_args.end = arg_end(3);
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
     const esp_console_cmd_t cmd = {
         .command = "light_sleep",
         .help = "Enter light sleep mode. "
@@ -219,6 +224,7 @@ static void register_light_sleep(void)
         .hint = NULL,
         .func = &light_sleep,
         .argtable = &light_sleep_args
-    };
+    }; /* const esp_console_cmd_t cmd */
     ESP_ERROR_CHECK( esp_console_cmd_register(&cmd) );
-}
+#pragma GCC diagnostic push
+}; /* register_light_sleep(void) */

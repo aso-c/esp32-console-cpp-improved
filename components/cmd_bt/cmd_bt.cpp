@@ -157,7 +157,7 @@ esp_err_t act::invoke(int argc, char* argv[])
     /*bt::*/syntax.parse(argc, argv);
     if (/*bt::*/syntax.err())
     {
-	/*bt::*/syntax.error(stdout, argv[0]);
+	/*bt::*/syntax.errors(stdout, argv[0]);
 	return bt::syntax.err();
     }; /* if (syntax.err() != 0) */
 #if 0

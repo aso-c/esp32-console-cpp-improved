@@ -4,8 +4,8 @@
  * 	@file	cmd_sdcard.cpp
  *	@author	Solomatov A.A. (aso)
  *	@date	Created 04.04.2022
- *		Modified 27.01.2025
- *	@version: 0.74
+ *		Modified 18.02.2025
+ *	@version: 0.75
  */
 
 #include <cstdlib>
@@ -137,8 +137,7 @@ Exec::Cmd exec_server;
 ///////////////////////////////
 
 
-/// The pwd command, pure C wrapper -------------------------------------------------------------------------
-
+/// The pwd command -----------------------------------------------------------------------------------------
 namespace pwd
 {
     static esp_err_t invoke(int argc, char* argv[]);
@@ -146,8 +145,7 @@ namespace pwd
 }; /* namespace pwd */
 
 
-/// mkdir command, pure C wrapper ---------------------------------------------------------------------------
-
+/// mkdir command -------------------------------------------------------------------------------------------
 namespace mk_dir
 {
 
@@ -162,7 +160,7 @@ namespace mk_dir
 }; /* namespace mk_dir */
 
 
-/// rmdir command, pure C wrapper ---------------------------------------------------------------------------
+/// rmdir command -------------------------------------------------------------------------------------------
 
 namespace rm_dir
 {
@@ -177,13 +175,11 @@ namespace rm_dir
 }; /* namespace rm_dir */
 
 
-/// 'cd' command, pure C wrapper ----------------------------------------------------------------------------
-
+/// 'cd' command --------------------------------------------------------------------------------------------
 namespace cd
 {
     arg::table::syntax::def syntax = { 1,
 	    arg_str1(NULL, NULL, "<dir>", NULL),
-//	    arg_end(1)
     };
     struct act: public arg::table::act_t<syntax>
     {
@@ -193,13 +189,12 @@ namespace cd
 }; /* namespace cd */
 
 
-/// 'ls' command, pure C wrapper ----------------------------------------------------------------------------
+/// 'ls' command --------------------------------------------------------------------------------------------
 
 namespace ls
 {
     arg::table::syntax::def syntax = { 1,
 	    arg_str0(NULL, NULL, "<pattern>", NULL),
-//	    arg_end(1)
     };
     struct act: public arg::table::act_t<syntax>
     {
@@ -210,13 +205,11 @@ namespace ls
 
 
 /// 'cp' command, pure C wrapper ----------------------------------------------------------------------------
-
 namespace cp
 {
     arg::table::syntax::def syntax = { 2,
 	    arg_str1(NULL, NULL, "<src>", NULL),
 	    arg_str1(NULL, NULL, "<dest>", NULL),
-//	    arg_end(2)
     };
     struct act: public arg::table::act_t<syntax>
     {
@@ -226,14 +219,13 @@ namespace cp
 }; /* namespace cp */
 
 
-/// 'mv' command, pure C wrapper ----------------------------------------------------------------------------
+/// 'mv' command --------------------------------------------------------------------------------------------
 
 namespace mv
 {
     arg::table::syntax::def syntax = { 2,
 	    arg_str1(NULL, NULL, "<src>", NULL),
 	    arg_str1(NULL, NULL, "<dest>", NULL),
-//	    arg_end(2)
     };
     struct act: public arg::table::act_t<syntax>
     {
@@ -244,7 +236,6 @@ namespace mv
 
 
 /// 'rm' command, pure C wrapper ----------------------------------------------------------------------------
-
 namespace rm
 {
     arg::table::syntax::def syntax = { 1,
@@ -259,8 +250,7 @@ namespace rm
 }; /* namespace rm */
 
 
-/// 'cat' command, pure C wrapper ---------------------------------------------------------------------------
-
+/// 'cat' command -------------------------------------------------------------------------------------------
 namespace cat
 {
     arg::table::syntax::def syntax = { 1,
@@ -275,8 +265,7 @@ namespace cat
 }; /* namespace cat */
 
 
-//! 'type' command, pure C wrapper --------------------------------------------------------------------------
-
+//! 'type' command ------------------------------------------------------------------------------------------
 namespace type
 {
     arg::table::syntax::def syntax = { 1,
@@ -291,7 +280,7 @@ namespace type
 }; /* namespace type */
 
 
-// register all fs commands -----------------------------------------------------------------------
+//! register all fs commands ----------------------------------------------------------------------
 void register_fs_cmd_all(void)
 {
 
@@ -323,7 +312,6 @@ namespace sdcard
 	    arg_rem ("|", NULL),
 	    arg_rex1(NULL, NULL, "<subcommand>", NULL, 0/*REG_ICASE*/, "other subcommand of command 'sdcard'"),
 	    arg_strn(NULL, NULL, "<options>", 0, 2, "subcommand options"),
-//	    arg_end(2),
     };
     struct act: public arg::table::act_t<syntax>
     {
@@ -338,7 +326,6 @@ namespace sdcard
     }; /* struct sdcard::act */
     const esp::console::cmd_t<act> cmd("sdcard", "SD card manipulating main command" /*, .hint = "enter subcommand for Sd card operations" */);
     const esp::console::cmd_t<act> cmd2("sd", "shortcut for 'sdcard' command" /*, .hint = "enter subcommand for Sd card operations" */);
-
 }; /* namespace sdcard */
 
 
@@ -1088,10 +1075,6 @@ esp_err_t sdcard::act::invoke(int argc, char* argv[])
 
 /// action for 'mount' command
 esp_err_t sdcard::act::mnt(int argc, char* argv[])
-//;
-//
-///// action for 'mount' command
-//esp_err_t act::mnt(std::vector<char*> args)
 {
     esp_err_t res = ESP_FAIL;
 
@@ -1137,8 +1120,6 @@ esp_err_t act::mnt(std::vector<char*> args) {
 
 /// action for 'unmount' command
 esp_err_t sdcard::act::umnt(int argc, char* argv[])
-///// action for 'unmount' command
-//esp_err_t act::umnt(std::vector<char*> args)
 {
     cout << "\"unmount\" command execution" << endl;
     switch (argc)
@@ -1170,8 +1151,6 @@ esp_err_t act::umnt(std::vector<char*> args)
 
 /// print info about the mounted SD-card
 esp_err_t sdcard::act::info(SD::MMC::Device& dev)
-///// print info about the mounted SD-card
-//esp_err_t act::info(SD::MMC::Device& dev)
 {
     if (!dev.card)
     {
@@ -1227,12 +1206,6 @@ esp_err_t act::pwd(std::vector<char*> args)
 /// action for 'mkdir' command
 esp_err_t mk_dir::act::invoke(int argc, char *argv[])
 {
-//    return ::act::mkdir(astr::makestor<std::vector<char*>>(argc, argv));
-//}; /* mk_dir::act::invoke() */
-//
-///// action for 'mkdir' command
-//esp_err_t act::mkdir(std::vector<char*> args)
-//{
     cout << "\"mkdir\" command execution" << endl;
     switch (argc)
     {
@@ -1261,12 +1234,6 @@ esp_err_t act::mkdir(std::vector<char*> args) {
 /// action for 'rmdir' command
 esp_err_t rm_dir::act::invoke(int argc, char *argv[])
 {
-//    return ::act::rmdir(astr::makestor<std::vector<char*>>(argc, argv));
-//}; /* rm_dir::act::invoke */
-//
-///// action for 'rmdir' command
-//esp_err_t act::rmdir(std::vector<char*> args)
-//{
     cout << "\"rmdir\" command execution" << endl;
     switch (argc)
     {
@@ -1295,12 +1262,6 @@ esp_err_t act::rmdir(std::vector<char*> args) {
 /// action for 'cd' command
 esp_err_t cd::act::invoke(int argc, char *argv[])
 {
-//    return ::act::cd(astr::makestor<std::vector<char*>>(argc, argv));
-//}; /* cd::act::invoke() */
-//
-///// action for 'cd' command
-//esp_err_t act::cd(std::vector<char*> args)
-//{
     cout << "\"cd\" command execution" << endl;
     switch (argc)
     {
@@ -1329,12 +1290,6 @@ esp_err_t act::cd(std::vector<char*> args) {
 /// action for list/dir command
 esp_err_t ls::act::invoke(int argc, char *argv[])
 {
-//    return ::act::ls(astr::makestor<std::vector<char*>>(argc, argv));
-//}; /* ls::act::invoke() */
-//
-///// action for list/dir command
-//esp_err_t act::ls(std::vector<char*> args)
-//{
     cout << "\"ls\" command execution" << endl;
     switch (argc)
     {
@@ -1363,12 +1318,6 @@ esp_err_t act::ls(std::vector<char*> args) {
 // action for 'copy' command
 esp_err_t cp::act::invoke(int argc, char* argv[])
 {
-//    return ::act::cp(astr::makestor<std::vector<char*>>(argc, argv));
-//}; /* cp::act::invoke */
-//
-//// action for 'copy' command
-//esp_err_t act::cp(std::vector<char*> args)
-//{
     cout << "\"cp\" command execution" << endl;
     switch (argc)
     {
@@ -1401,12 +1350,6 @@ esp_err_t act::cp(std::vector<char*> args) {
 /// action for 'rename/move' command
 esp_err_t mv::act::invoke(int argc, char* argv[])
 {
-//    return ::act::mv(astr::makestor<std::vector<char*>>(argc, argv));
-//}; /* mv::act::invoke */
-//
-///// action for 'rename/move' command
-//esp_err_t act::mv(std::vector<char*> args)
-//{
     cout << "\"mv\" command execution" << endl;
     switch (argc)
     {
@@ -1439,12 +1382,6 @@ esp_err_t act::mv(std::vector<char*> args) {
 /// action for 'rm' command
 esp_err_t rm::act::invoke(int argc, char* argv[])
 {
-//    return ::act::rm(astr::makestor<std::vector<char*>>(argc, argv));
-//}; /* rm::act::invoke() */
-//
-///// action for 'rm' command
-//esp_err_t act::rm(std::vector<char*> args)
-//{
     cout << "\"rm\" command execution" << endl;
     switch (argc)
     {
@@ -1474,12 +1411,6 @@ esp_err_t act::rm(std::vector<char*> args) {
 /// action for the 'cat' command
 esp_err_t cat::act::invoke(int argc, char* argv[])
 {
-//    return ::act::cat(astr::makestor<std::vector<char*>>(argc, argv));
-//}; /* cat::act::invoke() */
-//
-///// action for 'cat' command
-//esp_err_t act::cat(std::vector<char*> args)
-//{
     cout << "\"cat\" command execution" << endl;
     switch (argc)
     {
@@ -1507,12 +1438,6 @@ esp_err_t act::cat(std::vector<char*> args) {
 /// action for 'type' command
 esp_err_t type::act::invoke(int argc, char* argv[])
 {
-//    return ::act::type(astr::makestor<std::vector<char*>>(argc, argv));
-//}; /* type::act::invoke() */
-//
-///// action for 'type' command
-//esp_err_t act::type(std::vector<char*> args)
-//{
     cout << "\"type\" command execution" << endl;
     switch (argc)
     {
