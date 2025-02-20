@@ -12,11 +12,12 @@
    CONDITIONS OF ANY KIND, either express or implied.
 */
 
-#include <stdio.h>
-#include <string.h>
-#include <ctype.h>
-#include <inttypes.h>
+#include <cstdio>
+#include <cstring>
+#include <cctype>
+#include <cinttypes>
 #include <unistd.h>
+
 #include "esp_log.h"
 #include "esp_console.h"
 #include "esp_chip_info.h"
@@ -27,7 +28,82 @@
 #include "cmd_system.h"
 #include "sdkconfig.h"
 
+#include <argtable>
+#include <console>
+
+
 static const char *TAG = "cmd_system_sleep";
+
+namespace sys
+{
+    namespace sleep
+    {
+	arg::table::syntax::def syntax = {
+#if 0
+//---------------------------------------------------
+	    deep_sleep_args.wakeup_time =
+	        arg_int0("t", "time", "<t>", "Wake up time, ms");
+	#if SOC_PM_SUPPORT_EXT0_WAKEUP || SOC_PM_SUPPORT_EXT1_WAKEUP
+	    deep_sleep_args.wakeup_gpio_num =
+	        arg_int0(NULL, "io", "<n>",
+	                 "If specified, wakeup using GPIO with given number");
+	    deep_sleep_args.wakeup_gpio_level =
+	        arg_int0(NULL, "io_level", "<0|1>", "GPIO level to trigger wakeup");
+	    num_args += 2;
+	#endif
+	    deep_sleep_args.end = arg_end(num_args);
+//---------------------------------------------------
+	    static struct {
+	        struct arg_int *wakeup_time;
+	    #if SOC_PM_SUPPORT_EXT0_WAKEUP || SOC_PM_SUPPORT_EXT1_WAKEUP
+	        struct arg_int *wakeup_gpio_num;
+	        struct arg_int *wakeup_gpio_level;
+	    #endif
+	        struct arg_end *end;
+	    } deep_sleep_args;
+//---------------------------------------------------
+	    static struct {
+	        struct arg_int *wakeup_time;
+	        struct arg_int *wakeup_gpio_num;
+	        struct arg_int *wakeup_gpio_level;
+	        struct arg_end *end;
+	    } light_sleep_args;
+//---------------------------------------------------
+	    light_sleep_args.wakeup_time =
+	        arg_int0("t", "time", "<t>", "Wake up time, ms");
+	    light_sleep_args.wakeup_gpio_num =
+	        arg_intn(NULL, "io", "<n>", 0, 8,
+	                 "If specified, wakeup using GPIO with given number");
+	    light_sleep_args.wakeup_gpio_level =
+	        arg_intn(NULL, "io_level", "<0|1>", 0, 8, "GPIO level to trigger wakeup");
+	    light_sleep_args.end = arg_end(3);
+//---------------------------------------------------
+#endif
+	    5,
+	    arg_rex0("hH", "help,usage", "help", nullptr/*"<sleep_mode>"*/, ARG_REX_ICASE/*Arg::Rex::ICase*/, "Help/usage (short help) about this command"),
+	    arg_rex1(nullptr, nullptr, "light|deep", "<sleep_mode>", ARG_REX_ICASE/*Arg::Rex::ICase*/, "Setting required sleep mode"),
+	    arg_int0("t", "time", "<t>", "Wake up time, ms"),
+	    arg_intn(NULL, "io", "<n>", 0, 8,
+			"If specified, wakeup using GPIO with given number"),
+	    arg_intn(NULL, "io_level", "<0|1>", 0, 8, "GPIO level to trigger wakeup"),
+//	    5
+//	    light_sleep_args.end = arg_end(3);
+	}; /* syntax */
+
+	struct act: public arg::table::act_t<syntax>
+	{
+	    static esp_err_t invoke(int argc, char* argv[]);
+	}; /* struct type::act */
+	const esp::console::cmd_t<act> cmd("sleep", "Enter the sleep mode - light sleep or a deep sleep. "
+	        "Wakeup is possible by the timer or GPIO (optionally for deep sleep mode). "
+	        "For light sleep - multiple GPIO pins can be specified using pairs of "
+	        "'io' and 'io_level' arguments, "
+		"and will also wake up on UART input. "
+		"For details - use help <light|deep> form."
+		"'light_sleep' and a 'deep_sleep' - is a shortcuts for 'sleep light' or a 'sleep deep' commands."/*,
+		"sleep mode: deep | light"*/);
+    }; /* namespace sys::sleep */
+}; /* namespace sys */
 
 static void register_deep_sleep(void);
 static void register_light_sleep(void);
@@ -36,7 +112,8 @@ void register_system_sleep(void)
 {
     register_deep_sleep();
     register_light_sleep();
-}
+    sys::sleep::cmd.enreg_check();
+}; /* register_system_sleep() */
 
 
 /** 'deep_sleep' command puts the chip into deep sleep mode */
@@ -228,3 +305,9 @@ static void register_light_sleep(void)
     ESP_ERROR_CHECK( esp_console_cmd_register(&cmd) );
 #pragma GCC diagnostic push
 }; /* register_light_sleep(void) */
+
+
+esp_err_t sys::sleep::act::invoke(int argc, char* argv[])
+{
+    return ESP_OK;
+}; /* sys_sleep::act::invoke() */

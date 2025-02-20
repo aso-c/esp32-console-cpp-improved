@@ -17,13 +17,9 @@
  * @author: Solomatov A.A. (aso)
  * @version 0.7.0
  * @date Created on: 11 дек. 2024 г.
- *	Updated 24.01.2025
+ *	Updated 19.02.2025
  */
 
-#if 0
-#include <errno.h>
-#include <stdlib.h>
-#endif	// if 0
 
 #include <iostream>
 #include <iomanip>
@@ -33,6 +29,7 @@
 #include <stdbool.h>
 #include <cstdio>
 #include <cinttypes>
+//#include <cerrno>
 
 #include <nvs.h>
 #include <nvs_flash.h>
