@@ -202,7 +202,7 @@ static void initialize_console(void)
  */
 namespace info
 {
-    arg::table::syntax::def syntax{ arg_str1(NULL, NULL, "Build Date:", __DATE__ " " __TIME__ ".") };
+    arg::table::syntax syntax{ arg_str1(NULL, NULL, "Build Date:", __DATE__ " " __TIME__ ".") };
 
     /// definition of the act for the 'info' pseudo-command
     struct act: public arg::table::act_t<syntax>

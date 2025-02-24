@@ -149,7 +149,7 @@ namespace pwd
 namespace mk_dir
 {
 
-    arg::table::syntax::def syntax = { 1,
+    arg::table::syntax syntax = { 1,
 	    arg_str1(NULL, NULL, "<dir>", NULL),
     };
     struct act: public arg::table::act_t<syntax>
@@ -164,7 +164,7 @@ namespace mk_dir
 
 namespace rm_dir
 {
-    arg::table::syntax::def syntax = { 1,
+    arg::table::syntax syntax = { 1,
 	    arg_str1(NULL, NULL, "<dir>", NULL),
     };
     struct act: public arg::table::act_t<syntax>
@@ -178,7 +178,7 @@ namespace rm_dir
 /// 'cd' command --------------------------------------------------------------------------------------------
 namespace cd
 {
-    arg::table::syntax::def syntax = { 1,
+    arg::table::syntax syntax = { 1,
 	    arg_str1(NULL, NULL, "<dir>", NULL),
     };
     struct act: public arg::table::act_t<syntax>
@@ -193,7 +193,7 @@ namespace cd
 
 namespace ls
 {
-    arg::table::syntax::def syntax = { 1,
+    arg::table::syntax syntax = { 1,
 	    arg_str0(NULL, NULL, "<pattern>", NULL),
     };
     struct act: public arg::table::act_t<syntax>
@@ -207,7 +207,7 @@ namespace ls
 /// 'cp' command, pure C wrapper ----------------------------------------------------------------------------
 namespace cp
 {
-    arg::table::syntax::def syntax = { 2,
+    arg::table::syntax syntax = { 2,
 	    arg_str1(NULL, NULL, "<src>", NULL),
 	    arg_str1(NULL, NULL, "<dest>", NULL),
     };
@@ -223,7 +223,7 @@ namespace cp
 
 namespace mv
 {
-    arg::table::syntax::def syntax = { 2,
+    arg::table::syntax syntax = { 2,
 	    arg_str1(NULL, NULL, "<src>", NULL),
 	    arg_str1(NULL, NULL, "<dest>", NULL),
     };
@@ -238,7 +238,7 @@ namespace mv
 /// 'rm' command, pure C wrapper ----------------------------------------------------------------------------
 namespace rm
 {
-    arg::table::syntax::def syntax = { 1,
+    arg::table::syntax syntax = { 1,
 	    arg_str1(NULL, NULL, "<filename>", NULL),
 //	    arg_end(1)
     };
@@ -253,7 +253,7 @@ namespace rm
 /// 'cat' command -------------------------------------------------------------------------------------------
 namespace cat
 {
-    arg::table::syntax::def syntax = { 1,
+    arg::table::syntax syntax = { 1,
 	    arg_str1(NULL, NULL, "<filename>", NULL),
 //	    arg_end(1)
     };
@@ -268,7 +268,7 @@ namespace cat
 //! 'type' command ------------------------------------------------------------------------------------------
 namespace type
 {
-    arg::table::syntax::def syntax = { 1,
+    arg::table::syntax syntax = { 1,
 	    arg_str0(NULL, NULL, "<filename>", NULL),
 //	    arg_end(1)
     };
@@ -307,7 +307,7 @@ void register_fs_cmd_all(void)
 
 namespace sdcard
 {
-    arg::table::syntax::def syntax = { 2,
+    arg::table::syntax syntax = { 2,
 	    arg_rex1(NULL, NULL, "h|help", "h | help", 0/*REG_ICASE*/, "help for command 'sdcard'"),
 	    arg_rem ("|", NULL),
 	    arg_rex1(NULL, NULL, "<subcommand>", NULL, 0/*REG_ICASE*/, "other subcommand of command 'sdcard'"),

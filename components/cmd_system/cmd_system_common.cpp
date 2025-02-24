@@ -137,7 +137,7 @@ namespace tasks
 /** log_level command changes log level via esp_log_level_set */
 namespace loglevel
 {
-    arg::table::syntax::def syntax = { 2,
+    arg::table::syntax syntax = { 2,
 		arg_str1(NULL, NULL, "<tag|*>", "Log tag to set the level for, or * to set for all tags"),
 		arg_str1(NULL, NULL, "<none|error|warn|debug|verbose>", "Log level to set. Abbreviated words are accepted."),
     }; /* loglevel::syntax */
@@ -314,12 +314,10 @@ esp_err_t loglevel::act::invoke(int argc, char* argv[])
        syntax.errors(stderr, argv[0]);
        return syntax.err();
     }; /* if syntax.err() */
-//    assert(std::get<arg_str*>(syntax.description[tag_idx])->count == 1);
-    assert(std::get<arg::table::item::str>(syntax.description[tag_idx])->count == 1);
-//    assert(std::get<arg_str*>(syntax.description[level_idx])->count == 1);
-    assert(std::get<arg::table::item::str>(syntax.description[level_idx])->count == 1);
-    const string_view tag = std::get<arg::table::item::str>(syntax.description[tag_idx])->sval[0];
-    const string_view level_str = std::get<arg::table::item::str>(syntax.description[level_idx])->sval[0];
+    assert(std::get<arg::table::str>(syntax.description[tag_idx])->count == 1);
+    assert(std::get<arg::table::str>(syntax.description[level_idx])->count == 1);
+    const string_view tag = std::get<arg::table::str>(syntax.description[tag_idx])->sval[0];
+    const string_view level_str = std::get<arg::table::str>(syntax.description[level_idx])->sval[0];
     auto level_ptgt = std::find(log_level_names.begin(), log_level_names.end(), level_str);
     if (level_ptgt == log_level_names.end()) {
         ESP_LOGE("log_level command", "Invalid log level '%s', choose from none|error|warn|info|debug|verbose\n", level_str.data());

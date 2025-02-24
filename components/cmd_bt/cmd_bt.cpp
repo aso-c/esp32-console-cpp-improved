@@ -114,7 +114,7 @@ namespace bt
     // #define REG_ICASE (REG_EXTENDED << 1)
     // ???
 
-    arg::table::syntax::def syntax = {
+    arg::table::syntax syntax = {
 		//	help    = arg_litn(NULL, "help", 0, 1, "display this help and exit"),
 		    // origin->>	arg_lit0("hH", "help", /*nullptr*/ "help options for command or subcommand"),
 			arg_rex0("hH", "Help", "classic|le|lowenergy", "<stack>", ARG_REX_ICASE/*Arg::Rex::ICase*/, "help options for command or subcommand"),
