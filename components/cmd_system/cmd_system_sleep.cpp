@@ -174,9 +174,7 @@ namespace sys
 void register_system_sleep(void)
 {
     sys::sleep::cmd.enreg_check();
-//    register_deep_sleep();
     sys::sleep::deep::cmd.enreg_check();
-//    register_light_sleep();
     sys::sleep::light::cmd.enreg_check();
 }; /* register_system_sleep() */
 
@@ -216,24 +214,30 @@ esp_err_t sys::sleep::deep::act::invoke(int argc, char* argv[])
 //        return 1;
 //    }
 //    if (deep_sleep_args.wakeup_time->count) {
-    if (std::get<arg::table::integer>(syntax.description[time_idx])->count) {
-        uint64_t timeout = 1000ULL * std::get<arg::table::integer>(syntax.description[time_idx])->ival[0];
+//    if (std::get<arg::table::integer>(syntax.description[time_idx])->count) {
+    if (std::get<arg::table::integer>(syntax[time_idx])->count) {
+//        uint64_t timeout = 1000ULL * std::get<arg::table::integer>(syntax.description[time_idx])->ival[0];
+        uint64_t timeout = 1000ULL * std::get<arg::table::integer>(syntax[time_idx])->ival[0];
         ESP_LOGI(TAG, "Enabling timer wakeup, timeout=%lluus", timeout);
-        ESP_ERROR_CHECK( esp_sleep_enable_timer_wakeup(timeout) );
+        ESP_ERROR_CHECK(esp_sleep_enable_timer_wakeup(timeout));
     }; /* if std::get<arg::table::integer>(syntax.description[time_idx])->count */
 
 //#if SOC_PM_SUPPORT_EXT1_WAKEUP
 //    if (deep_sleep_args.wakeup_gpio_num->count) {
-    if (/*deep_sleep_args.wakeup_gpio_num->count*/  std::get<arg::table::integer>(syntax.description[num_idx])->count) {
-        int io_num = /*deep_sleep_args.wakeup_gpio_num*/std::get<arg::table::integer>(syntax.description[num_idx])->ival[0];
+//    if (/*deep_sleep_args.wakeup_gpio_num->count*/  std::get<arg::table::integer>(syntax.description[num_idx])->count) {
+    if (std::get<arg::table::integer>(syntax[num_idx])->count) {
+//        int io_num = /*deep_sleep_args.wakeup_gpio_num*/std::get<arg::table::integer>(syntax.description[num_idx])->ival[0];
+        int io_num = std::get<arg::table::integer>(syntax[num_idx])->ival[0];
         if (!esp_sleep_is_valid_wakeup_gpio(static_cast<gpio_num_t>(io_num))) {
             ESP_LOGE(TAG, "GPIO %d is not an RTC IO", io_num);
             return 1;
         }; /* if !esp_sleep_is_valid_wakeup_gpio(static_cast<gpio_num_t>(io_num)) */
         int level = 0;
 //        if (deep_sleep_args.wakeup_gpio_level->count) {
-        if (/*deep_sleep_args.wakeup_gpio_level*/std::get<arg::table::integer>(syntax.description[level_idx])->count) {
-            level = /*deep_sleep_args.wakeup_gpio_level*/std::get<arg::table::integer>(syntax.description[level_idx])->ival[0];
+//        if (/*deep_sleep_args.wakeup_gpio_level*/std::get<arg::table::integer>(syntax.description[level_idx])->count) {
+        if (std::get<arg::table::integer>(syntax[level_idx])->count) {
+//            level = /*deep_sleep_args.wakeup_gpio_level*/std::get<arg::table::integer>(syntax.description[level_idx])->ival[0];
+            level = std::get<arg::table::integer>(syntax[level_idx])->ival[0];
             if (level != 0 && level != 1) {
                 ESP_LOGE(TAG, "Invalid wakeup level: %d", level);
                 return 1;
