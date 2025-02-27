@@ -129,6 +129,17 @@ namespace sys
 	    {
 		static esp_err_t invoke(int argc, char* argv[]);
 	    }; /* struct type::act */
+#if 0
+	    static struct {
+	        struct arg_int *wakeup_time;
+#if SOC_PM_SUPPORT_EXT0_WAKEUP || SOC_PM_SUPPORT_EXT1_WAKEUP
+	        struct arg_int *wakeup_gpio_num;
+	        struct arg_int *wakeup_gpio_level;
+#endif
+	        struct arg_end *end;
+	    } deep_sleep_args;
+	    #endif
+#endif
 	    const esp::console::cmd_t<act> cmd("deep_sleep", "Enter deep sleep mode. "
 #if SOC_PM_SUPPORT_EXT0_WAKEUP || SOC_PM_SUPPORT_EXT1_WAKEUP
 						"Two wakeup modes are supported: timer and GPIO. "
@@ -151,9 +162,20 @@ namespace sys
 		        arg_intn(NULL, "io_level", "<0|1>", 0, 8, "GPIO level to trigger wakeup")
 //		    light_sleep_args.end = arg_end(3);
 	    }; /* syntax */
+#if 0
+	    static struct {
+	        struct arg_int *wakeup_time;
+	        struct arg_int *wakeup_gpio_num;
+	        struct arg_int *wakeup_gpio_level;
+	        struct arg_end *end;
+	    } light_sleep_args;
+#endif
+
 	    struct act: public arg::table::act_t<syntax>
 	    {
 		static esp_err_t invoke(int argc, char* argv[]);
+
+		static auto& wakeup_time() { return syntax[0].asint(); };
 	    }; /* struct type::act */
 	    const esp::console::cmd_t<act> cmd("light_sleep", "Enter light sleep mode. "
 							"Two wakeup modes are supported: timer and GPIO. "
@@ -215,12 +237,15 @@ esp_err_t sys::sleep::deep::act::invoke(int argc, char* argv[])
 //    }
 //    if (deep_sleep_args.wakeup_time->count) {
 //    if (std::get<arg::table::integer>(syntax.description[time_idx])->count) {
-    if (std::get<arg::table::integer>(syntax[time_idx])->count) {
+//    if (syntax[time_idx].get<struct arg_int>().count) {
+    if (syntax[time_idx].asint().count) {
 //        uint64_t timeout = 1000ULL * std::get<arg::table::integer>(syntax.description[time_idx])->ival[0];
-        uint64_t timeout = 1000ULL * std::get<arg::table::integer>(syntax[time_idx])->ival[0];
+//        uint64_t timeout = 1000ULL * std::get<arg::table::integer>(syntax[time_idx])->ival[0];
+        uint64_t timeout = 1000ULL * syntax[time_idx].asint().ival[0];
         ESP_LOGI(TAG, "Enabling timer wakeup, timeout=%lluus", timeout);
         ESP_ERROR_CHECK(esp_sleep_enable_timer_wakeup(timeout));
-    }; /* if std::get<arg::table::integer>(syntax.description[time_idx])->count */
+//    }; /* if std::get<arg::table::integer>(syntax.description[time_idx])->count */
+    }; /* if (syntax[time_idx].asint().count) */
 
 //#if SOC_PM_SUPPORT_EXT1_WAKEUP
 //    if (deep_sleep_args.wakeup_gpio_num->count) {
