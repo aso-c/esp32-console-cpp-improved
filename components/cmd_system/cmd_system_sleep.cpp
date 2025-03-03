@@ -124,11 +124,7 @@ namespace sys
 		        arg_int0(NULL, "io_level", "<0|1>", "GPIO level to trigger wakeup"),
 #endif	//  SOC_PM_SUPPORT_EXT0_WAKEUP || SOC_PM_SUPPORT_EXT1_WAKEUP
 //		    /*deep_sleep_args.end =*/ arg_end(num_args)
-	    }; /* syntax */
-	    struct act: public arg::table::act_t<syntax>
-	    {
-		static esp_err_t invoke(int argc, char* argv[]);
-	    }; /* struct type::act */
+	    }; /* sys::sleep::deep::syntax */
 #if 0
 	    static struct {
 	        struct arg_int *wakeup_time;
@@ -138,8 +134,28 @@ namespace sys
 #endif
 	        struct arg_end *end;
 	    } deep_sleep_args;
-	    #endif
 #endif
+
+	    struct act: public arg::table::act_t<syntax>
+	    {
+		static esp_err_t invoke(int argc, char* argv[]);
+
+		struct wakeup
+		{
+//		    static auto& time() { return syntax[0].asint(); };
+		    static inline auto& time = syntax[0].asint();
+#if SOC_PM_SUPPORT_EXT0_WAKEUP || SOC_PM_SUPPORT_EXT1_WAKEUP
+		    struct gpio
+		    {
+//			static auto& num() { return syntax[1].asint(); };
+			static inline auto& num = syntax[1].asint();
+//			static auto& level() { return syntax[2].asint(); };
+			static inline auto& level = syntax[2].asint();
+		    }; /*  struct sys::sleep::deep::act::wakeup::gpio  */
+#endif
+		}; /* struct sys::sleep::deep::act::wakeup  */
+
+	    }; /* struct sys::sleep::deep::act */
 	    const esp::console::cmd_t<act> cmd("deep_sleep", "Enter deep sleep mode. "
 #if SOC_PM_SUPPORT_EXT0_WAKEUP || SOC_PM_SUPPORT_EXT1_WAKEUP
 						"Two wakeup modes are supported: timer and GPIO. "
@@ -150,18 +166,17 @@ namespace sys
 			);
 	}; /* namespace sys::sleep::deep */
 
+
+
 	namespace light
 	{
 	    arg::table::syntax syntax = {
-//		    light_sleep_args.wakeup_time =
 		        arg_int0("t", "time", "<t>", "Wake up time, ms"),
-//		    light_sleep_args.wakeup_gpio_num =
 		        arg_intn(NULL, "io", "<n>", 0, 8,
 		                 "If specified, wakeup using GPIO with given number"),
-//		    light_sleep_args.wakeup_gpio_level =
 		        arg_intn(NULL, "io_level", "<0|1>", 0, 8, "GPIO level to trigger wakeup")
 //		    light_sleep_args.end = arg_end(3);
-	    }; /* syntax */
+	    }; /* sys::sleep::syntax */
 #if 0
 	    static struct {
 	        struct arg_int *wakeup_time;
@@ -175,8 +190,20 @@ namespace sys
 	    {
 		static esp_err_t invoke(int argc, char* argv[]);
 
-		static auto& wakeup_time() { return syntax[0].asint(); };
-	    }; /* struct type::act */
+		struct wakeup
+		{
+//		    static auto& time() { return syntax[0].asint(); };
+//		    static inline auto& timep = arg::table::item::get<struct arg_int>/*std::get<std::shared_ptr<arg_int>>*/(syntax[0]);
+		    static inline auto& time = syntax[0].asint();
+		    struct gpio
+		    {
+//			static auto& num() { return syntax[1].asint(); };
+			static inline auto& num = syntax[1].asint();
+//			static auto& level() { return syntax[2].asint(); };
+			static inline auto& level = syntax[2].asint();
+		    }; /* struct sys::sleep::light::act::wakeup::gpio */
+		}; /* struct sys::sleep::light::act::wakeup */
+	    }; /* struct sys::sleep::light::act */
 	    const esp::console::cmd_t<act> cmd("light_sleep", "Enter light sleep mode. "
 							"Two wakeup modes are supported: timer and GPIO. "
 							"Multiple GPIO pins can be specified using pairs of "
@@ -218,11 +245,13 @@ static struct {
 //static int deep_sleep(int argc, char **argv)
 esp_err_t sys::sleep::deep::act::invoke(int argc, char* argv[])
 {
+#if 0
 	constexpr int time_idx = 0;
 #if SOC_PM_SUPPORT_EXT0_WAKEUP || SOC_PM_SUPPORT_EXT1_WAKEUP
 	constexpr int num_idx = 1;
 	constexpr int  level_idx = 2;
 #endif
+#endif // if 0
 
 //    int nerrors = arg_parse(argc, argv, (void **) &deep_sleep_args);
     syntax.parse(argc, argv);
@@ -231,50 +260,44 @@ esp_err_t sys::sleep::deep::act::invoke(int argc, char* argv[])
        syntax.errors(stderr, argv[0]);
        return syntax.err();
     }; /* if syntax.err() */
-//    if (nerrors != 0) {
-//        arg_print_errors(stderr, deep_sleep_args.end, argv[0]);
-//        return 1;
-//    }
-//    if (deep_sleep_args.wakeup_time->count) {
-//    if (std::get<arg::table::integer>(syntax.description[time_idx])->count) {
-//    if (syntax[time_idx].get<struct arg_int>().count) {
-    if (syntax[time_idx].asint().count) {
-//        uint64_t timeout = 1000ULL * std::get<arg::table::integer>(syntax.description[time_idx])->ival[0];
-//        uint64_t timeout = 1000ULL * std::get<arg::table::integer>(syntax[time_idx])->ival[0];
-        uint64_t timeout = 1000ULL * syntax[time_idx].asint().ival[0];
+//    if (syntax[time_idx].asint().count) {
+    if (wakeup::time.count) {
+//        uint64_t timeout = 1000ULL * syntax[time_idx].asint().ival[0];
+        uint64_t timeout = 1000ULL * wakeup::time.ival[0];
         ESP_LOGI(TAG, "Enabling timer wakeup, timeout=%lluus", timeout);
         ESP_ERROR_CHECK(esp_sleep_enable_timer_wakeup(timeout));
-//    }; /* if std::get<arg::table::integer>(syntax.description[time_idx])->count */
     }; /* if (syntax[time_idx].asint().count) */
 
-//#if SOC_PM_SUPPORT_EXT1_WAKEUP
-//    if (deep_sleep_args.wakeup_gpio_num->count) {
-//    if (/*deep_sleep_args.wakeup_gpio_num->count*/  std::get<arg::table::integer>(syntax.description[num_idx])->count) {
-    if (std::get<arg::table::integer>(syntax[num_idx])->count) {
-//        int io_num = /*deep_sleep_args.wakeup_gpio_num*/std::get<arg::table::integer>(syntax.description[num_idx])->ival[0];
-        int io_num = std::get<arg::table::integer>(syntax[num_idx])->ival[0];
+#if SOC_PM_SUPPORT_EXT1_WAKEUP
+    //if (std::get<arg::table::integer>(syntax[num_idx])->count) {
+    if (wakeup::gpio::num.count)
+    {
+//        int io_num = std::get<arg::table::integer>(syntax[num_idx])->ival[0];
+        int io_num = wakeup::gpio::num.ival[0];
         if (!esp_sleep_is_valid_wakeup_gpio(static_cast<gpio_num_t>(io_num))) {
             ESP_LOGE(TAG, "GPIO %d is not an RTC IO", io_num);
             return 1;
         }; /* if !esp_sleep_is_valid_wakeup_gpio(static_cast<gpio_num_t>(io_num)) */
         int level = 0;
-//        if (deep_sleep_args.wakeup_gpio_level->count) {
-//        if (/*deep_sleep_args.wakeup_gpio_level*/std::get<arg::table::integer>(syntax.description[level_idx])->count) {
-        if (std::get<arg::table::integer>(syntax[level_idx])->count) {
-//            level = /*deep_sleep_args.wakeup_gpio_level*/std::get<arg::table::integer>(syntax.description[level_idx])->ival[0];
-            level = std::get<arg::table::integer>(syntax[level_idx])->ival[0];
-            if (level != 0 && level != 1) {
+//        if (std::get<arg::table::integer>(syntax[level_idx])->count)
+        if (wakeup::gpio::level.count)
+        {
+//            level = std::get<arg::table::integer>(syntax[level_idx])->ival[0];
+            level = wakeup::gpio::level.ival[0];
+//            if (level != 0 && level != 1) {
+            if (!(level == 0 || level == 1))
+            {
                 ESP_LOGE(TAG, "Invalid wakeup level: %d", level);
                 return 1;
-            }
-        }
+            }; /* if !(level == 0 || level == 1) */
+        }; /* if wakeup::gpio::level().count */
         ESP_LOGI(TAG, "Enabling wakeup on GPIO%d, wakeup on %s level",
                  io_num, level ? "HIGH" : "LOW");
 
         ESP_ERROR_CHECK( esp_sleep_enable_ext1_wakeup(1ULL << io_num, static_cast<esp_sleep_ext1_wakeup_mode_t>(level)) );
         ESP_LOGE(TAG, "GPIO wakeup from deep sleep currently unsupported on ESP32-C3");
-    }
-//#endif // SOC_PM_SUPPORT_EXT1_WAKEUP
+    }; /* if wakeup::gpio::num().count */
+#endif // SOC_PM_SUPPORT_EXT1_WAKEUP
 
 #if CONFIG_IDF_TARGET_ESP32
     rtc_gpio_isolate(GPIO_NUM_12);
@@ -322,46 +345,65 @@ static void register_deep_sleep(void)
 #endif
 
 /** 'light_sleep' command puts the chip into light sleep mode */
-
+#if 0
 static struct {
     struct arg_int *wakeup_time;
     struct arg_int *wakeup_gpio_num;
     struct arg_int *wakeup_gpio_level;
     struct arg_end *end;
 } light_sleep_args;
+#endif
 
 //static int light_sleep(int argc, char **argv)
+/** invoke the 'light_sleep' command, that puts the chip into light sleep mode */
 esp_err_t sys::sleep::light::act::invoke(int argc, char* argv[])
 {
-    int nerrors = arg_parse(argc, argv, (void **) &light_sleep_args);
-    if (nerrors != 0) {
-        arg_print_errors(stderr, light_sleep_args.end, argv[0]);
-        return 1;
-    }
+//    int nerrors = arg_parse(argc, argv, (void **) &light_sleep_args);
+    syntax.parse(argc, argv);
+//    if (nerrors != 0) {
+//        arg_print_errors(stderr, light_sleep_args.end, argv[0]);
+//        return 1;
+//    }
+    if (syntax.err())
+    {
+       syntax.errors(stderr, argv[0]);
+       return syntax.err();
+    }; /* if syntax.err() */
     esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
-    if (light_sleep_args.wakeup_time->count) {
-        uint64_t timeout = 1000ULL * light_sleep_args.wakeup_time->ival[0];
+//    if (light_sleep_args.wakeup_time->count) {
+    if (wakeup::time.count) {
+//        uint64_t timeout = 1000ULL * light_sleep_args.wakeup_time->ival[0];
+        uint64_t timeout = 1000ULL * wakeup::time.ival[0];
         ESP_LOGI(TAG, "Enabling timer wakeup, timeout=%lluus", timeout);
         ESP_ERROR_CHECK( esp_sleep_enable_timer_wakeup(timeout) );
-    }
-    int io_count = light_sleep_args.wakeup_gpio_num->count;
-    if (io_count != light_sleep_args.wakeup_gpio_level->count) {
+    }; /* if (wakeup::time->count) */
+//    int io_count = light_sleep_args.wakeup_gpio_num->count;
+    int io_count = wakeup::gpio::num.count;
+//    if (io_count != light_sleep_args.wakeup_gpio_level->count) {
+    if (io_count != wakeup::gpio::level.count)
+    {
         ESP_LOGE(TAG, "Should have same number of 'io' and 'io_level' arguments");
         return 1;
-    }
-    for (int i = 0; i < io_count; ++i) {
-        int io_num = light_sleep_args.wakeup_gpio_num->ival[i];
-        int level = light_sleep_args.wakeup_gpio_level->ival[i];
+    }; /* if io_count != wakeup::gpio::level->count */
+
+    for (int i = 0; i < io_count; ++i)
+    {
+//        int io_num = light_sleep_args.wakeup_gpio_num->ival[i];
+        int io_num = wakeup::gpio::num.ival[i];
+//        int level = light_sleep_args.wakeup_gpio_level->ival[i];
+        int level = wakeup::gpio::level.ival[i];
         if (level != 0 && level != 1) {
             ESP_LOGE(TAG, "Invalid wakeup level: %d", level);
             return 1;
-        }
+        }; /* if level != 0 && level != 1 */
         ESP_LOGI(TAG, "Enabling wakeup on GPIO%d, wakeup on %s level",
                  io_num, level ? "HIGH" : "LOW");
 
         ESP_ERROR_CHECK( gpio_wakeup_enable(static_cast<gpio_num_t>(io_num), level ? GPIO_INTR_HIGH_LEVEL : GPIO_INTR_LOW_LEVEL) );
-    }
-    if (io_count > 0) {
+    }; /* for int i = 0; i < io_count; ++i */
+
+    if (io_count > 0)
+    {
         ESP_ERROR_CHECK( esp_sleep_enable_gpio_wakeup() );
     }
     if (CONFIG_ESP_CONSOLE_UART_NUM >= 0 && CONFIG_ESP_CONSOLE_UART_NUM <= UART_NUM_1) {
@@ -388,8 +430,8 @@ esp_err_t sys::sleep::light::act::invoke(int argc, char* argv[])
         cause_str = "unknown";
         printf("%d\n", cause);
         // cout << cause << endl;	// Intended for migration to C++ 
-
     }
+
     ESP_LOGI(TAG, "Woke up from: %s", cause_str);
     return 0;
 }; /* sys::sleep::light::act::invoke() */

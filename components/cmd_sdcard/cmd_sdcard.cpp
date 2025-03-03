@@ -1165,7 +1165,7 @@ esp_err_t sdcard::act::info(SD::MMC::Device& dev)
 
     ESP_LOGI(TAG, "SD card info:");
         ESP_LOGI(TAG, "\tBus width (log2): %d", sdmmc_card.self->log_bus_width);
-        ESP_LOGI(TAG, "\tFreq (kHz): %'d", sdmmc_card.self->max_freq_khz);
+        ESP_LOGI(TAG, "\tFreq (kHz): %" PRIu32, sdmmc_card.self->max_freq_khz);
         ESP_LOGI(TAG, "\tDDR: %d", sdmmc_card.self->is_ddr);
         ESP_LOGI(TAG, "\tCID: Date %d, MFG_ID %d, Name %s, OEM ID %d, Rev %d, Serial %d", sdmmc_card.self->cid.date, sdmmc_card.self->cid.mfg_id, sdmmc_card.self->cid.name, sdmmc_card.self->cid.oem_id, sdmmc_card.self->cid.revision, sdmmc_card.self->cid.serial);
         ESP_LOGI(TAG, "\tCSD: Capacity %'d, Card Common Class %d, CSD version %d, MMC version %d, read block len %d, sector size %d, tr speed %'d", sdmmc_card.self->csd.capacity, sdmmc_card.self->csd.card_command_class, sdmmc_card.self->csd.csd_ver, sdmmc_card.self->csd.mmc_ver, sdmmc_card.self->csd.read_block_len, sdmmc_card.self->csd.sector_size, sdmmc_card.self->csd.tr_speed);
