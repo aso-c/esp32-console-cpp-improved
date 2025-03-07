@@ -193,6 +193,12 @@ static esp_err_t version::invoke(int argc, char* argv[])
         case CHIP_ESP32C2:
             model = "ESP32-C2";
             break;
+        case CHIP_ESP32P4:
+            model = "ESP32-P4";
+            break;
+        case CHIP_ESP32C5:
+            model = "ESP32-C5";
+            break;
         default:
             model = "Unknown";
             break;
@@ -248,7 +254,6 @@ static esp_err_t freemem::invoke(int argc, char* argv[])
     cout << " (" << prettynumber(esp_get_free_heap_size()) << " bytes)" << endl;
     return ESP_OK;
 }; /* freemem::invoke() */
-
 
 
 /* 'heap' command prints minumum heap size */

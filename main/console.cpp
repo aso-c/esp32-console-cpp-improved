@@ -1,4 +1,4 @@
-/* Console example
+/* Console Improved project
 
    This example code is in the Public Domain (or CC0 licensed, at your option.)
 
@@ -14,23 +14,30 @@
 
 
 //#include <cstdio>
-//#include <cstring>
+#include <cstring>
+//#include <cunisd>
 #include "esp_system.h"
 #include "esp_log.h"
 #include "esp_console.h"
-#include "esp_vfs_dev.h"
-#include "driver/uart.h"
-#include "driver/uart_vfs.h"
+//#include "esp_vfs_dev.h"
+//#include "driver/uart.h"
+//-//#include "driver/uart_vfs.h"
 #include "linenoise/linenoise.h"
 #include "argtable3/argtable3.h"
 #include "esp_vfs_fat.h"
 #include "nvs.h"
 #include "nvs_flash.h"
+#include "soc/soc_caps.h"	// --?
+#include "cmd_system.h"	// --?
+#include "cmd_wifi.h"	// --?
+#include "cmd_nvs.h"	// --?
+#include "console_settings.h"
+//#include "cmd_decl.h"
 
 #include <argtable>
 #include <console>
 
-#include "cmd_decl.h"
+//#include "cmd_decl.h"
 #include <astring.h>
 
 //using namespace idf;
@@ -78,7 +85,7 @@ void initialize_hardware(void)
  * The easiest way to do this is to use FATFS filesystem on top of
  * wear_levelling library.
  */
-#if CONFIG_STORE_HISTORY
+#if CONFIG_CONSOLE_STORE_HISTORY
 
 #define MOUNT_PATH "/data"
 #define HISTORY_PATH MOUNT_PATH "/history.txt"
@@ -89,8 +96,9 @@ static void initialize_filesystem(void)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
     const esp_vfs_fat_mount_config_t mount_config = {
-            .format_if_mount_failed = true,
             .max_files = 4,
+            .format_if_mount_failed = true,
+//            .max_files = 4,
     };
 #pragma GCC diagnostic pop
     esp_err_t err = esp_vfs_fat_spiflash_mount_rw_wl(MOUNT_PATH, "storage", &mount_config, &wl_handle);
@@ -99,7 +107,9 @@ static void initialize_filesystem(void)
         return;
     }
 }
-#endif // CONFIG_STORE_HISTORY
+#else
+#define HISTORY_PATH NULL
+#endif // CONFIG_CONSOLE_STORE_HISTORY
 
 static void initialize_nvs(void)
 {
@@ -111,6 +121,7 @@ static void initialize_nvs(void)
     ESP_ERROR_CHECK(err);
 }
 
+#if 0
 static void initialize_console(void)
 {
     /* Drain stdout before reconfiguring it */
@@ -135,10 +146,8 @@ static void initialize_console(void)
             .data_bits = UART_DATA_8_BITS,
             .parity = UART_PARITY_DISABLE,
             .stop_bits = UART_STOP_BITS_1,
-//#if CONFIG_IDF_TARGET_ESP32 || CONFIG_IDF_TARGET_ESP32S2
 #if SOC_UART_SUPPORT_REF_TICK
         .source_clk = UART_SCLK_REF_TICK,
-//#else
 #elif SOC_UART_SUPPORT_XTAL_CLK
         .source_clk = UART_SCLK_XTAL,
 #endif
@@ -189,16 +198,14 @@ static void initialize_console(void)
     linenoiseHistoryLoad(HISTORY_PATH);
 #endif
 }
-
+#endif //static void initialize_console(void)
 
 
 ///--[ Registering main infrastructure command - help & info ]---------------------------
 
 /**
- * @brief Fake command only for output version information in a 'help' command
+ * @brief Namespace of the fake command only for output version information in a 'help' command
  *
- * Own 'help' command implementation first run default 'help' command,
- * and then prints the version string of a program.
  */
 namespace info
 {
@@ -273,7 +280,7 @@ esp_err_t console_register_help_command(void)
     return (esp_err_t)esp_console_register_help_command();
 }; /* console_example_register_help_command */
 
-//--[ End of registering command - help & info ]-----------------------------------------
+//--[ End of command registering - help & info ]-----------------------------------------
 
 
 
@@ -283,22 +290,38 @@ extern "C" void app_main(void)
 
     initialize_nvs();
 
-#if CONFIG_STORE_HISTORY
+#if CONFIG_CONSOLE_STORE_HISTORY
     initialize_filesystem();
     ESP_LOGI(TAG, "Command history enabled");
 #else
     ESP_LOGI(TAG, "Command history disabled");
 #endif
 
-    initialize_console();
+    /* Initialize console output periheral (UART, USB_OTG, USB_JTAG) */
+    initialize_console_peripheral();
+
+    /* Initialize linenoise library and esp_console*/
+    initialize_console_library(HISTORY_PATH);
+
+    /* Prompt to be printed before each line.
+     * This can be customized, made dynamic, etc.
+     */
+    const char *prompt = setup_prompt(PROMPT_STR ">");
 
     /* Register commands */
     //esp_console_register_help_command();
     console_register_help_command();
-//    register_system();
     register_system_common();
+#if 0	// No - acessible sleep mode must selected in the cmd_system component
+#if SOC_LIGHT_SLEEP_SUPPORTED
+    register_system_light_sleep();
+#endif
+#if SOC_DEEP_SLEEP_SUPPORTED
+    register_system_deep_sleep();
+#endif
+#endif	// if 0
     register_system_sleep();
-#if SOC_WIFI_SUPPORTED
+#if (CONFIG_ESP_WIFI_ENABLED || CONFIG_ESP_HOST_WIFI_ENABLED)
     register_wifi();
 #endif
     register_nvs();
@@ -315,7 +338,7 @@ extern "C" void app_main(void)
     const char* prompt = LOG_COLOR_I PROMPT_STR "> " LOG_RESET_COLOR;
 
     cout << endl
-	<< "This is an example of ESP-IDF console component." << endl
+	<< "This is a ESP-IDF improved console project, that using appropriate component." << endl
 	<<   "Version " << CONFIG_APP_PROJECT_VER << '-' << CONFIG_APP_PROJECT_FLAVOUR
 	<< " of " << CONFIG_APP_PROJECT_DATE << ',' << " modified by "
 	<< CONFIG_APP_PROJECT_AUTHOR << '.' << endl
@@ -326,13 +349,13 @@ extern "C" void app_main(void)
 	<< "Press Enter or Ctrl+C will terminate the console environment." << endl;
 
     /* Figure out if the terminal supports escape sequences */
-    int probe_status = linenoiseProbe();
-    if (probe_status) { /* zero indicates success */
+    if (linenoiseIsDumbMode()) {
         cout << endl
 	    << "Your terminal application does not support escape sequences." << endl
 	    << "Line editing and history features are disabled." << endl
 	    << "On Windows, try using Putty instead." << endl;
 
+#if 0
         linenoiseSetDumbMode(1);
 #if CONFIG_LOG_COLORS
         /* Since the terminal doesn't support escape sequences,
@@ -340,6 +363,7 @@ extern "C" void app_main(void)
          */
         prompt = PROMPT_STR "> ";
 #endif //CONFIG_LOG_COLORS
+#endif
     }
 
     /* Main loop */
@@ -348,16 +372,24 @@ extern "C" void app_main(void)
          * The line is returned when ENTER is pressed.
          */
         char* line = linenoise(prompt);
+
+#if CONFIG_CONSOLE_IGNORE_EMPTY_LINES
+        if (line == NULL) { /* Ignore empty lines */
+            continue;;
+        }
+#else
         if (line == NULL) { /* Break on EOF or error */
             break;
         }
+#endif // CONFIG_CONSOLE_IGNORE_EMPTY_LINES
+
         /* Add the command to the history if not empty*/
         if (strlen(line) > 0) {
             linenoiseHistoryAdd(line);
-#if CONFIG_STORE_HISTORY
+#if CONFIG_CONSOLE_STORE_HISTORY
             /* Save command history to filesystem */
             linenoiseHistorySave(HISTORY_PATH);
-#endif
+#endif // CONFIG_CONSOLE_STORE_HISTORY
         }
 
         /* Try to run the command */

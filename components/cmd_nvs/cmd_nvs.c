@@ -270,44 +270,44 @@ static esp_err_t get_value_from_nvs(const char *key, const char *str_type)
         int8_t value;
         err = nvs_get_i8(nvs, key, &value);
         if (err == ESP_OK) {
-            printf("%"PRIi8"\n", value);
+            printf("%" PRIi8 "\n", value);
         }
     } else if (type == NVS_TYPE_U8) {
         uint8_t value;
         err = nvs_get_u8(nvs, key, &value);
         if (err == ESP_OK) {
-            printf("%"PRIu8"\n", value);
+            printf("%" PRIu8 "\n", value);
         }
     } else if (type == NVS_TYPE_I16) {
         int16_t value;
         err = nvs_get_i16(nvs, key, &value);
         if (err == ESP_OK) {
-            printf("%"PRIi16"\n", value);
+            printf("%" PRIi16 "\n", value);
         }
     } else if (type == NVS_TYPE_U16) {
         uint16_t value;
         if ((err = nvs_get_u16(nvs, key, &value)) == ESP_OK) {
-            printf("%"PRIu16"\n", value);
+            printf("%" PRIu16 "\n", value);
         }
     } else if (type == NVS_TYPE_I32) {
         int32_t value;
         if ((err = nvs_get_i32(nvs, key, &value)) == ESP_OK) {
-            printf(/*"%ld\n"*/"%"PRIi32"\n", value);
+            printf("%" PRIi32 "\n", value);
         }
     } else if (type == NVS_TYPE_U32) {
         uint32_t value;
         if ((err = nvs_get_u32(nvs, key, &value)) == ESP_OK) {
-            printf("%"PRIu32"\n", value);
+            printf("%" PRIu32 "\n", value);
         }
     } else if (type == NVS_TYPE_I64) {
         int64_t value;
         if ((err = nvs_get_i64(nvs, key, &value)) == ESP_OK) {
-            printf("%"PRIi64"\n", value);
+            printf("%" PRIi64 "\n", value);
         }
     } else if (type == NVS_TYPE_U64) {
         uint64_t value;
         if ( (err = nvs_get_u64(nvs, key, &value)) == ESP_OK) {
-            printf("%"PRIu64"\n", value);
+            printf("%" PRIu64 "\n", value);
         }
     } else if (type == NVS_TYPE_STR) {
         size_t len;

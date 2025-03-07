@@ -104,10 +104,10 @@ namespace sys
 		"'light_sleep' and a 'deep_sleep' - is a shortcuts for 'sleep light' or a 'sleep deep' commands."/*,
 		"sleep mode: deep | light"*/);
 
-
 	/** 'deep_sleep' command puts the chip into deep sleep mode */
 	namespace deep
 	{
+#if SOC_DEEP_SLEEP_SUPPORTED
 	    arg::table::syntax syntax = {
 #if !(SOC_PM_SUPPORT_EXT0_WAKEUP || SOC_PM_SUPPORT_EXT1_WAKEUP)
 		    1,
@@ -164,12 +164,14 @@ namespace sys
 #endif	// SOC_PM_SUPPORT_EXT0_WAKEUP || SOC_PM_SUPPORT_EXT1_WAKEUP
 			"If no wakeup option is specified, will sleep indefinitely."
 			);
+#endif // SOC_DEEP_SLEEP_SUPPORTED
 	}; /* namespace sys::sleep::deep */
 
 
 
 	namespace light
 	{
+#if SOC_LIGHT_SLEEP_SUPPORTED
 	    arg::table::syntax syntax = {
 		        arg_int0("t", "time", "<t>", "Wake up time, ms"),
 		        arg_intn(NULL, "io", "<n>", 0, 8,
@@ -209,6 +211,7 @@ namespace sys
 							"Multiple GPIO pins can be specified using pairs of "
 							"'io' and 'io_level' arguments. "
 							"Will also wake up on UART input.");
+#endif // SOC_LIGHT_SLEEP_SUPPORTED
 	}; /* namespace sys::sleep::light */
     }; /* namespace sys::sleep */
 }; /* namespace sys */
@@ -222,12 +225,19 @@ namespace sys
 
 void register_system_sleep(void)
 {
+//#if SOC_DEEP_SLEEP_SUPPORTED || SOC_LIGHT_SLEEP_SUPPORTED
     sys::sleep::cmd.enreg_check();
+//#endif // SOC_DEEP_SLEEP_SUPPORTED || SOC_LIGHT_SLEEP_SUPPORTED
+#if SOC_DEEP_SLEEP_SUPPORTED
     sys::sleep::deep::cmd.enreg_check();
+#endif // SOC_DEEP_SLEEP_SUPPORTED
+#if SOC_LIGHT_SLEEP_SUPPORTED
     sys::sleep::light::cmd.enreg_check();
+#endif // SOC_LIGHT_SLEEP_SUPPORTED
 }; /* register_system_sleep() */
 
 
+#if SOC_DEEP_SLEEP_SUPPORTED
 /** 'deep_sleep' command puts the chip into deep sleep mode */
 
 #if 0
@@ -343,7 +353,9 @@ static void register_deep_sleep(void)
 #pragma GCC diagnostic pop
 }; /* register_deep_sleep() */
 #endif
+#endif // SOC_DEEP_SLEEP_SUPPORTED
 
+#if SOC_LIGHT_SLEEP_SUPPORTED
 /** 'light_sleep' command puts the chip into light sleep mode */
 #if 0
 static struct {
@@ -437,7 +449,7 @@ esp_err_t sys::sleep::light::act::invoke(int argc, char* argv[])
 }; /* sys::sleep::light::act::invoke() */
 
 #if 0
-static void register_light_sleep(void)
+void register_system_light_sleep(void)
 {
     light_sleep_args.wakeup_time =
         arg_int0("t", "time", "<t>", "Wake up time, ms");
@@ -465,6 +477,7 @@ static void register_light_sleep(void)
 #pragma GCC diagnostic push
 }; /* register_light_sleep(void) */
 #endif
+#endif // SOC_LIGHT_SLEEP_SUPPORTED
 
 esp_err_t sys::sleep::act::invoke(int argc, char* argv[])
 {

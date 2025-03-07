@@ -20,6 +20,10 @@ void register_system_common(void);
 
 // Register deep and light sleep functions
 void register_system_sleep(void);
+#if 0 // nafig it's splitted function?
+void register_system_deep_sleep(void);
+void register_system_light_sleep(void);
+#endif // if 0
 
 /*
  * @brief Get string with version information of project current state
