@@ -20,11 +20,6 @@
  *	    Updated: 25.12.2024
  */
 
-#if 0
-#include <errno.h>
-#include <stdlib.h>
-#endif	// if 0
-
 #include <stdint.h>
 #include <string.h>
 #include <stdbool.h>
@@ -57,8 +52,14 @@
 #define SPP_TAG "BLUETOOTH_СTRL_MODULE"
 
 /// if SSP is enabled
-constexpr bool SSP_enabled = (CONFIG_EXAMPLE_SSP_ENABLED == true);
-
+//constexpr bool SSP_enabled = (CONFIG_EXAMPLE_SSP_ENABLED == true);
+//constexpr bool SSP_enabled = defined(CONFIG_EXAMPLE_SSP_ENABLED);
+//if (constexpr CONFIG_EXAMPLE_SSP_ENABLED)
+#if defined(CONFIG_EXAMPLE_SSP_ENABLED)
+    constexpr bool SSP_enabled = true;
+#else
+    constexpr bool SSP_enabled = false;
+#endif
 /// if SSP received data is dispayed?
 constexpr bool SSP_Show_Data = true;
 
@@ -167,7 +168,8 @@ static void esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
 		    param->data_ind.len, param->data_ind.handle);
 	    if (param->data_ind.len < 128)
 	    {
-		esp_log_buffer_hex("", param->data_ind.data, param->data_ind.len);
+//		esp_log_buffer_hex("", param->data_ind.data, param->data_ind.len);
+		ESP_LOG_BUFFER_HEX("", param->data_ind.data, param->data_ind.len);
 	    }; /* if param->data_ind.len < 128 */
 	} /* if constexpr (SSP_Show_Data) */
 	else

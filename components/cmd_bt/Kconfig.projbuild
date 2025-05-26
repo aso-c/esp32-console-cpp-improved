@@ -7,4 +7,10 @@ menu "BT SPP Server Configuration"
         help
             This enables the Secure Simple Pairing. If disable this option,
             Bluedroid will only support Legacy Pairing
+
+    config BT_LOCAL_DEVICE_NAME
+        string "Bluetooth Local Device Name"
+        default "ESP_Console_SPP_ACCEPTOR"
+        help
+            Use this option to set local device name.
 endmenu

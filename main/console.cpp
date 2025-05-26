@@ -14,7 +14,8 @@
 
 
 //#include <cstdio>
-#include <cstring>
+//#include <cstring>
+#include <string>
 //#include <cunisd>
 #include "esp_system.h"
 #include "esp_log.h"
@@ -32,7 +33,7 @@
 #include "cmd_wifi.h"	// --?
 #include "cmd_nvs.h"	// --?
 #include "console_settings.h"
-//#include "cmd_decl.h"
+#include "cmd_decl.h"
 
 #include <argtable>
 #include <console>
@@ -306,7 +307,8 @@ extern "C" void app_main(void)
     /* Prompt to be printed before each line.
      * This can be customized, made dynamic, etc.
      */
-    const char *prompt = setup_prompt(PROMPT_STR ">");
+//    const char *prompt = setup_prompt(PROMPT_STR ">");
+    std::string prompt = setup_prompt(PROMPT_STR ">");
 
     /* Register commands */
     //esp_console_register_help_command();
@@ -335,7 +337,7 @@ extern "C" void app_main(void)
     /* Prompt to be printed before each line.
      * This can be customized, made dynamic, etc.
      */
-    const char* prompt = LOG_COLOR_I PROMPT_STR "> " LOG_RESET_COLOR;
+//    const char* prompt = LOG_COLOR_I PROMPT_STR "> " LOG_RESET_COLOR;
 
     cout << endl
 	<< "This is a ESP-IDF improved console project, that using appropriate component." << endl
@@ -371,7 +373,7 @@ extern "C" void app_main(void)
         /* Get a line using linenoise.
          * The line is returned when ENTER is pressed.
          */
-        char* line = linenoise(prompt);
+        char* line = linenoise(prompt.data());
 
 #if CONFIG_CONSOLE_IGNORE_EMPTY_LINES
         if (line == NULL) { /* Ignore empty lines */
@@ -384,7 +386,8 @@ extern "C" void app_main(void)
 #endif // CONFIG_CONSOLE_IGNORE_EMPTY_LINES
 
         /* Add the command to the history if not empty*/
-        if (strlen(line) > 0) {
+//        if (strlen(line) > 0) {
+        if (std::string_view(line).length() > 0) {
             linenoiseHistoryAdd(line);
 #if CONFIG_CONSOLE_STORE_HISTORY
             /* Save command history to filesystem */

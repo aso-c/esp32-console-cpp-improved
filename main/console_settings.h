@@ -4,6 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#ifdef __cplusplus
+
+extern "C"
+{
+#endif
 
 /**
  * @brief Initialize console peripheral type
@@ -37,3 +42,7 @@ void initialize_console_library(const char *history_path);
  *     - pointer to initialized prompt
  */
 char *setup_prompt(const char *prompt_str);
+
+#ifdef __cplusplus
+}
+#endif

@@ -196,8 +196,13 @@ static esp_err_t version::invoke(int argc, char* argv[])
         case CHIP_ESP32P4:
             model = "ESP32-P4";
             break;
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 4, 0)
         case CHIP_ESP32C5:
             model = "ESP32-C5";
+            break;
+#endif
+        case CHIP_ESP32C6:
+            model = "ESP32-C6";
             break;
         default:
             model = "Unknown";
