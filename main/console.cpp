@@ -307,11 +307,9 @@ extern "C" void app_main(void)
     /* Prompt to be printed before each line.
      * This can be customized, made dynamic, etc.
      */
-//    const char *prompt = setup_prompt(PROMPT_STR ">");
     std::string prompt = setup_prompt(PROMPT_STR ">");
 
     /* Register commands */
-    //esp_console_register_help_command();
     console_register_help_command();
     register_system_common();
 #if 0	// No - acessible sleep mode must selected in the cmd_system component
