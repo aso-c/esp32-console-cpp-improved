@@ -125,7 +125,7 @@ namespace act
 
 
 SD::Card sdmmc_card;
-SD::MMC::Device device(SD::MMC::Slot(SD::MMC::slot::flag::pullup, SD::MMC::bus::width::_4));
+SD::MMC::Device device(SD::MMC::Slot(SD::MMC::Slot::flag::pullup, SD::MMC::bus::width::_4));
 Exec::Cmd exec_server;
 
 
@@ -1158,7 +1158,7 @@ esp_err_t sdcard::act::info(SD::MMC::Device& dev)
 	return ESP_ERR_NOT_FOUND;
     }; //* if !dev.card */
     dev.card->info();
-    cout << "Pullup is: " << ((dev.slot.flags() & SD::MMC::slot::flag::pullup)? "Enabled": "Absent") << endl;
+    cout << "Pullup is: " << ((dev.slot.flags() & SD::MMC::Slot::flag::pullup)? "Enabled": "Absent") << endl;
     cout << "###############################################" << endl;
 
 #define TAG "SD Command Service"
