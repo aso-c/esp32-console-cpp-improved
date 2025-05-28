@@ -1,44 +1,54 @@
-/* Console Improved project
+/*!
+ * @file console.cpp
+ *
+ * @brief Improved Console project
+ *
+ * @detail Improve the Advanced Console ESP Example project for using any extended features
+ * and dicover & testing additional modules provided the ESP-IDF SDK.
+ * Main project file.
+ *
+ * @section LICENCE
+ *
+ * This code is in the Public Domain (or CC0 licensed, at your option.)
+ *
+ * Unless required by applicable law or agreed to in writing, this
+ * software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied.
+ *
+ * @author: Solomatov A.A. (aso)
+ * @version 2.2.11
+ * @date Created on: 26 янв. 2022 г.
+ *	Updated 28.05.2025
+ */
 
-   This example code is in the Public Domain (or CC0 licensed, at your option.)
-
-   Unless required by applicable law or agreed to in writing, this
-   software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-   CONDITIONS OF ANY KIND, either express or implied.
-*/
 
 #include <cstdlib>
 #include <iostream>
-//#include <thread>
-//#include "gpio_cxx.hpp"
 
 
-//#include <cstdio>
-//#include <cstring>
 #include <string>
-//#include <cunisd>
-#include "esp_system.h"
-#include "esp_log.h"
-#include "esp_console.h"
+#include <cstdint>
+#include <esp_system.h>
+#include <esp_log.h>
+#include <esp_console.h>
 //#include "esp_vfs_dev.h"
 //#include "driver/uart.h"
 //-//#include "driver/uart_vfs.h"
-#include "linenoise/linenoise.h"
-#include "argtable3/argtable3.h"
-#include "esp_vfs_fat.h"
-#include "nvs.h"
-#include "nvs_flash.h"
-#include "soc/soc_caps.h"	// --?
+#include <linenoise/linenoise.h>
+#include <argtable3/argtable3.h>
+#include <esp_vfs_fat.h>
+#include <nvs.h>
+#include <nvs_flash.h>
+#include <soc/soc_caps.h>	// --?
 #include "cmd_system.h"	// --?
 #include "cmd_wifi.h"	// --?
 #include "cmd_nvs.h"	// --?
-#include "console_settings.h"
+#include "console_init"
 #include "cmd_decl.h"
 
 #include <argtable>
 #include <console>
 
-//#include "cmd_decl.h"
 #include <astring.h>
 
 //using namespace idf;
@@ -69,8 +79,7 @@ using namespace std;
 #pragma message("ESP32 Improved Console" ", version v." CONFIG_APP_PROJECT_VER "-" CONFIG_APP_PROJECT_FLAVOUR " of " CONFIG_APP_PROJECT_DATE " by " CONFIG_APP_PROJECT_AUTHOR " (" CONFIG_APP_PROJECT_AUTHOR_NICK ")")
 #pragma message("C++ version is: " STRING(__cplusplus) )
 
-//static const char* TAG = "example";
-static const char* TAG = "improved console";
+static const char TAG[] = "improved console";
 #define PROMPT_STR CONFIG_IDF_TARGET
 
 // Hardware configuration detail

@@ -1,13 +1,28 @@
-/*
+/*!
+ * @file console_init
+ *
+ * @brief Console inoitialization
+ *
+ * @detail Inoitialization console in the Improved Console project
+ * Header file.
+ *
  * SPDX-FileCopyrightText: 2024 Espressif Systems (Shanghai) CO LTD
+ * SPDX-FileCopyrightText: 2025 Solomatov A.A. (aso)
  *
  * SPDX-License-Identifier: Apache-2.0
+ *
+ * @author: Solomatov A.A. (aso)
+ * @version 0.1
+ * @date Created on: 28.05.2025.
+ *	Updated 28.05.2025
  */
 
-#ifdef __cplusplus
 
-extern "C"
-{
+
+
+
+#ifndef __cplusplus
+#error "The consile_init file is used in C++ projects only."
 #endif
 
 /**
@@ -42,7 +57,3 @@ void initialize_console_library(const char *history_path);
  *     - pointer to initialized prompt
  */
 char *setup_prompt(const char *prompt_str);
-
-#ifdef __cplusplus
-}
-#endif
