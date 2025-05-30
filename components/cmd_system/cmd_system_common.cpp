@@ -152,14 +152,14 @@ namespace loglevel
 
 void register_system_common(void)
 {
-    freemem::cmd.enreg_check();
-    heap::cmd.enreg_check();
-    version::cmd.enreg_check();
-    restart::cmd.enreg_check();
+    freemem::cmd.enreg_chk();
+    heap::cmd.enreg_chk();
+    version::cmd.enreg_chk();
+    restart::cmd.enreg_chk();
 #if WITH_TASKS_INFO
-    tasks::cmd.enreg_check();
+    tasks::cmd.enreg_chk();
 #endif
-    loglevel::cmd.enreg_check();
+    loglevel::cmd.enreg_chk();
 }; /* register_system_common() */
 
 

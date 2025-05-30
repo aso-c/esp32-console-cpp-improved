@@ -284,16 +284,16 @@ namespace type
 void register_fs_cmd_all(void)
 {
 
-    pwd::cmd.enreg_check();
-    cd::cmd.enreg_check();
-    mk_dir::cmd.enreg_check();
-    rm_dir::cmd.enreg_check();
-    ls::cmd.enreg_check();
-    cp::cmd.enreg_check();
-    mv::cmd.enreg_check();
-    rm::cmd.enreg_check();
-    cat::cmd.enreg_check();
-    type::cmd.enreg_check();
+    pwd::cmd.enreg_chk();
+    cd::cmd.enreg_chk();
+    mk_dir::cmd.enreg_chk();
+    rm_dir::cmd.enreg_chk();
+    ls::cmd.enreg_chk();
+    cp::cmd.enreg_chk();
+    mv::cmd.enreg_chk();
+    rm::cmd.enreg_chk();
+    cat::cmd.enreg_chk();
+    type::cmd.enreg_chk();
 
     //device.host().io_int_enable();
     //sdmmc_card.io.enable_int();
@@ -573,8 +573,8 @@ void register_sdcard_cmd(void)
     SDctrl::cmd().enroll(help_cmd);
 
     //TODO Fimally - this registering must be moved into procedure register_fs_cmd_all() or not
-    sdcard::cmd.enreg_check();
-    sdcard::cmd2.enreg_check();
+    sdcard::cmd.enreg_chk();
+    sdcard::cmd2.enreg_chk();
 
 }; /* register_sdcard_all */
 

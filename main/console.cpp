@@ -16,7 +16,7 @@
  * CONDITIONS OF ANY KIND, either express or implied.
  *
  * @author: Solomatov A.A. (aso)
- * @version 2.2.12
+ * @version 2.2.12.2
  * @date Created on: 26 янв. 2022 г.
  *	Updated 30.05.2025
  */
@@ -173,14 +173,6 @@ namespace info
 
 }; /* namespace info */
 
-#if 0 // -- register_info(void)
-/// for unification only
-inline void register_info(void) {
-    info::cmd.enreg_check();
-}; /* register_info */
-#endif // if 0 // -- register_info(void)
-
-
 
 
 /**
@@ -188,19 +180,9 @@ inline void register_info(void) {
  */
 namespace help
 {
-    arg::table::syntax syntax{ //arg_str1(NULL, NULL, "Build Date:", __DATE__ " " __TIME__ ".")
-	    /*help_args.help_cmd =*/ arg_str0(NULL, NULL, "<string>", "Name of command"),
-	        /*help_args.verbose_level =*/ arg_intn("v", "verbose", "<0|1>", 0, 1,
-	                                           "If specified, list console commands with given verbose level"),
-//	        help_args.end = arg_end(2);
-    };
-
-#if 0
-    help_args.help_cmd = arg_str0(NULL, NULL, "<string>", "Name of command");
-        help_args.verbose_level = arg_intn("v", "verbose", "<0|1>", 0, 1,
-                                           "If specified, list console commands with given verbose level");
-        help_args.end = arg_end(2);
-#endif
+    arg::table::syntax syntax{ arg_str0(NULL, NULL, "<string>", "Name of command"),
+				arg_intn("v", "verbose", "<0|1>", 0, 1,
+						"If specified, list console commands with given verbose level"), };
 
     /// definition of the act for the 'info' pseudo-command
     struct act: public arg::table::act_t<syntax>
@@ -225,8 +207,7 @@ namespace help
     {
 //        cout << "ESP Console Example Project, Version: " CONFIG_APP_PROJECT_VER "-" CONFIG_APP_PROJECT_FLAVOUR " of " CONFIG_APP_PROJECT_DATE
 //    	    << ", builded with C++ version " << __cplusplus  << endl;
-        return ESP_OK;
-//        return (esp_err_t)esp_console_register_help_command();
+	return ESP_OK;
     }; /* help::act::invoke() */
 
     struct cmd_def: public esp::console::cmd_t<act>
@@ -235,16 +216,15 @@ namespace help
 	    esp::console::cmd_t<act>(name, help_str)
 	{};
 
-	esp_err_t enreg() const { return (esp_err_t)esp_console_register_help_command(); };	///< register the Help command. May be make it virtual?
-	void enreg_check() const {ESP_ERROR_CHECK(enreg());};	///< register current command with error checking
+	/**
+	 * @brief Register a 'help' command
+	 */
+	esp_err_t enreg() const override;
 
-    };
+    }; /* struct help::cmd_def */
 
-//    const esp::console::cmd_t<act> cmd("help",  "Print the summary of all registered commands if no arguments "
-//						"are given, otherwise print summary of given command.");
     const cmd_def cmd("help",  "Print the summary of all registered commands if no arguments "
 						"are given, otherwise print summary of given command.");
-
 }; /* namespace help */
 
 /**
@@ -262,11 +242,13 @@ namespace help
  *      - ESP_OK on success
  *      - ESP_ERR_INVALID_STATE, if esp_console_init wasn't called
  */
-esp_err_t console_register_help_command(void)
+//esp_err_t console_register_help_command(void)
+esp_err_t help::cmd_def::enreg() const
 {
     //info::cmd.enreg_check();
-    return help::cmd.enreg();
-    //return (esp_err_t)esp_console_register_help_command();
+//    return help::cmd.enreg();
+    return (esp_err_t)esp_console_register_help_command();
+//    override { return (esp_err_t)esp_console_register_help_command(); };
 }; /* console_example_register_help_command */
 
 //--[ End of command registering - help & info ]-----------------------------------------
@@ -300,8 +282,8 @@ extern "C" void app_main(void)
 //    std::string prompt = simple_prompt_gen(parts | std::ranges::views::join | std::ranges::to<const std::string>());
 
     /* Register commands */
-    console_register_help_command();
-    //help::cmd.enreg_check();
+    //console_register_help_command();
+    help::cmd.enreg_tst();
     register_system_common();
     register_system_sleep();
 #if (CONFIG_ESP_WIFI_ENABLED || CONFIG_ESP_HOST_WIFI_ENABLED)
@@ -312,8 +294,7 @@ extern "C" void app_main(void)
     register_sdcard_cmd();
     register_bt_cmd();
 
-    //register_info();
-    info::cmd.enreg_check();
+    info::cmd.enreg_tst();
 
     cout << endl
 	<< "This is a ESP-IDF improved console project, that using appropriate component." << endl

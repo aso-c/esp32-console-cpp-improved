@@ -226,13 +226,13 @@ namespace sys
 void register_system_sleep(void)
 {
 //#if SOC_DEEP_SLEEP_SUPPORTED || SOC_LIGHT_SLEEP_SUPPORTED
-    sys::sleep::cmd.enreg_check();
+    sys::sleep::cmd.enreg_chk();
 //#endif // SOC_DEEP_SLEEP_SUPPORTED || SOC_LIGHT_SLEEP_SUPPORTED
 #if SOC_DEEP_SLEEP_SUPPORTED
-    sys::sleep::deep::cmd.enreg_check();
+    sys::sleep::deep::cmd.enreg_chk();
 #endif // SOC_DEEP_SLEEP_SUPPORTED
 #if SOC_LIGHT_SLEEP_SUPPORTED
-    sys::sleep::light::cmd.enreg_check();
+    sys::sleep::light::cmd.enreg_chk();
 #endif // SOC_LIGHT_SLEEP_SUPPORTED
 }; /* register_system_sleep() */
 
