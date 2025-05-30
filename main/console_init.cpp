@@ -12,9 +12,9 @@
  * SPDX-License-Identifier: Apache-2.0
  *
  * @author: Solomatov A.A. (aso)
- * @version 0.1
+ * @version 0.2
  * @date Created on: 28.05.2025.
- *	Updated 28.05.2025
+ *	Updated 30.05.2025
  */
 
 
@@ -172,23 +172,3 @@ void initialize_console_library(const char *history_path)
         linenoiseSetDumbMode(1);
     }
 }; /* initialize_console_library(history_path) */
-
-char *setup_prompt(const char *prompt_str)
-{
-    /* set command line prompt */
-    const char *prompt_temp = "esp>";
-    if (prompt_str) {
-        prompt_temp = prompt_str;
-    }
-    snprintf(prompt, CONSOLE_PROMPT_MAX_LEN - 1, LOG_COLOR_I "%s " LOG_RESET_COLOR, prompt_temp);
-
-    if (linenoiseIsDumbMode()) {
-#if CONFIG_LOG_COLORS
-        /* Since the terminal doesn't support escape sequences,
-         * don't use color codes in the s_prompt.
-         */
-        snprintf(prompt, CONSOLE_PROMPT_MAX_LEN - 1, "%s ", prompt_temp);
-#endif //CONFIG_LOG_COLORS
-    }
-    return prompt;
-}

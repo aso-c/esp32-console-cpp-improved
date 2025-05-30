@@ -12,9 +12,9 @@
  * SPDX-License-Identifier: Apache-2.0
  *
  * @author: Solomatov A.A. (aso)
- * @version 0.1
+ * @version 0.2
  * @date Created on: 28.05.2025.
- *	Updated 28.05.2025
+ *	Updated 30.05.2025
  */
 
 
@@ -56,7 +56,6 @@ void initialize_console_library(const char *history_path);
  * @return
  *     - pointer to initialized prompt
  */
-char *setup_prompt(const char *prompt_str);
 
 constexpr std::string simple_prompt_gen(const std::string_view prompt_str /*= "esp>"*/)
 {
@@ -73,13 +72,6 @@ constexpr std::string colored_prompt_gen(const std::string_view prompt_str /*= "
 
 inline std::string/*_view*/ create_prompt(const std::string_view prompt_str = "esp>")
 {
-    /* set command line prompt */
-//    const char prompt_temp[] = "esp>";
-//    if (prompt_str) {
-//        prompt_temp = prompt_str;
-//    }
-    //snprintf(prompt, CONSOLE_PROMPT_MAX_LEN - 1, LOG_COLOR_I "%s " LOG_RESET_COLOR, prompt_temp);
-
 	const std::string simpleprompt (std::string(prompt_str) + " ");
 
 #if CONFIG_LOG_COLORS
@@ -87,15 +79,11 @@ inline std::string/*_view*/ create_prompt(const std::string_view prompt_str = "e
         /* Since the terminal doesn't support escape sequences,
          * don't use color codes in the s_prompt.
          */
-        //snprintf(prompt, CONSOLE_PROMPT_MAX_LEN - 1, "%s ", prompt_temp);
         return simple_prompt_gen(prompt_str);
-//        return  simpleprompt;
 
     }; /* if (linenoiseIsDumbMode()) */
 #endif //CONFIG_LOG_COLORS
 
-//	const std::string prompt = std::string(LOG_COLOR_I) + simpleprompt + LOG_RESET_COLOR;
     return colored_prompt_gen((prompt_str));
-//    return prompt;
 }; /* create_prompt(prompt_str) */
 

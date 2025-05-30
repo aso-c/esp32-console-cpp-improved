@@ -16,9 +16,9 @@
  * CONDITIONS OF ANY KIND, either express or implied.
  *
  * @author: Solomatov A.A. (aso)
- * @version 2.2.11
+ * @version 2.2.12
  * @date Created on: 26 янв. 2022 г.
- *	Updated 28.05.2025
+ *	Updated 30.05.2025
  */
 
 
@@ -130,93 +130,13 @@ static void initialize_nvs(void)
         err = nvs_flash_init();
     }
     ESP_ERROR_CHECK(err);
-}
-
-#if 0
-static void initialize_console(void)
-{
-    /* Drain stdout before reconfiguring it */
-    fflush(stdout);
-    fsync(fileno(stdout));
-
-    /* Disable buffering on stdin */
-    setvbuf(stdin, NULL, _IONBF, 0);
-
-    /* Minicom, screen, idf_monitor send CR when ENTER key is pressed */
-    uart_vfs_dev_port_set_rx_line_endings(CONFIG_ESP_CONSOLE_UART_NUM, ESP_LINE_ENDINGS_CR);
-    /* Move the caret to the beginning of the next line on '\n' */
-    uart_vfs_dev_port_set_tx_line_endings(CONFIG_ESP_CONSOLE_UART_NUM, ESP_LINE_ENDINGS_CRLF);
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
-    /* Configure UART. Note that REF_TICK is used so that the baud rate remains
-     * correct while APB frequency is changing in light sleep mode.
-     */
-    const uart_config_t uart_config = {
-            .baud_rate = CONFIG_ESP_CONSOLE_UART_BAUDRATE,
-            .data_bits = UART_DATA_8_BITS,
-            .parity = UART_PARITY_DISABLE,
-            .stop_bits = UART_STOP_BITS_1,
-#if SOC_UART_SUPPORT_REF_TICK
-        .source_clk = UART_SCLK_REF_TICK,
-#elif SOC_UART_SUPPORT_XTAL_CLK
-        .source_clk = UART_SCLK_XTAL,
-#endif
-    };
-#pragma GCC diagnostic pop
-    /* Install UART driver for interrupt-driven reads and writes */
-    ESP_ERROR_CHECK( uart_driver_install(static_cast<uart_port_t>(CONFIG_ESP_CONSOLE_UART_NUM),
-            256, 0, 0, NULL, 0) );
-    ESP_ERROR_CHECK( uart_param_config(static_cast<uart_port_t>(CONFIG_ESP_CONSOLE_UART_NUM), &uart_config) );
-
-    /* Tell VFS to use UART driver */
-    uart_vfs_dev_use_driver(CONFIG_ESP_CONSOLE_UART_NUM);
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
-    /* Initialize the console */
-    esp_console_config_t console_config = {
-            .max_cmdline_length = 256,
-            .max_cmdline_args = 8,
-#if CONFIG_LOG_COLORS
-            .hint_color = atoi(LOG_COLOR_CYAN)
-#endif
-    };
-#pragma GCC diagnostic pop
-    ESP_ERROR_CHECK( esp_console_init(&console_config) );
-
-    /* Configure linenoise line completion library */
-    /* Enable multiline editing. If not set, long commands will scroll within
-     * single line.
-     */
-    linenoiseSetMultiLine(1);
-
-    /* Tell linenoise where to get command completions and hints */
-    linenoiseSetCompletionCallback(&esp_console_get_completion);
-    linenoiseSetHintsCallback((linenoiseHintsCallback*) &esp_console_get_hint);
-
-    /* Set command history size */
-    linenoiseHistorySetMaxLen(100);
-
-    /* Set command maximum length */
-    linenoiseSetMaxLineLen(console_config.max_cmdline_length);
-
-    /* Don't return empty lines */
-    linenoiseAllowEmpty(false);
-
-#if CONFIG_STORE_HISTORY
-    /* Load command history from filesystem */
-    linenoiseHistoryLoad(HISTORY_PATH);
-#endif
-}
-#endif //static void initialize_console(void)
+}; /* initialize_nvs() */
 
 
 ///--[ Registering main infrastructure command - help & info ]---------------------------
 
 /**
  * @brief Namespace of the fake command only for output version information in a 'help' command
- *
  */
 namespace info
 {
@@ -225,7 +145,6 @@ namespace info
     /// definition of the act for the 'info' pseudo-command
     struct act: public arg::table::act_t<syntax>
     {
-
 	/**
 	 * @brief 'info' pseudo-command procedure about a version information of a project
 	 *
@@ -239,7 +158,7 @@ namespace info
 	static
 	esp_err_t invoke(int argc, char * argv[]);
 
-    }; /* class bt::act */
+    }; /* class info::act */
 
 
     /// @brief Info pseudo-command procedure about a version information of a project
@@ -248,19 +167,85 @@ namespace info
         cout << "ESP Console Example Project, Version: " CONFIG_APP_PROJECT_VER "-" CONFIG_APP_PROJECT_FLAVOUR " of " CONFIG_APP_PROJECT_DATE
     	    << ", builded with C++ version " << __cplusplus  << endl;
         return ESP_OK;
-    }; /* act::invoke() */
+    }; /* info::act::invoke() */
 
     const esp::console::cmd_t<act> cmd("info",  version_str(), "about this project");
 
 }; /* namespace info */
 
+#if 0 // -- register_info(void)
 /// for unification only
 inline void register_info(void) {
     info::cmd.enreg_check();
 }; /* register_info */
+#endif // if 0 // -- register_info(void)
 
 
 
+
+/**
+ * @brief Namespace of help command
+ */
+namespace help
+{
+    arg::table::syntax syntax{ //arg_str1(NULL, NULL, "Build Date:", __DATE__ " " __TIME__ ".")
+	    /*help_args.help_cmd =*/ arg_str0(NULL, NULL, "<string>", "Name of command"),
+	        /*help_args.verbose_level =*/ arg_intn("v", "verbose", "<0|1>", 0, 1,
+	                                           "If specified, list console commands with given verbose level"),
+//	        help_args.end = arg_end(2);
+    };
+
+#if 0
+    help_args.help_cmd = arg_str0(NULL, NULL, "<string>", "Name of command");
+        help_args.verbose_level = arg_intn("v", "verbose", "<0|1>", 0, 1,
+                                           "If specified, list console commands with given verbose level");
+        help_args.end = arg_end(2);
+#endif
+
+    /// definition of the act for the 'info' pseudo-command
+    struct act: public arg::table::act_t<syntax>
+    {
+	/**
+	 * @brief 'help' command - now is emulate envelope over the standard help command
+	 *
+	 * Printout help about commands of this project
+	 *
+	 * @return
+	 *      - ESP_OK on success
+	 *      - ESP_ERR_INVALID_STATE, if esp_console_init wasn't called
+	 */
+	static
+	esp_err_t invoke(int argc, char * argv[]);
+
+    }; /* class bt::act */
+
+
+    /// @brief Stub for the 'Help' command - now will is not used
+    esp_err_t act::invoke(int argc, char * argv[])
+    {
+//        cout << "ESP Console Example Project, Version: " CONFIG_APP_PROJECT_VER "-" CONFIG_APP_PROJECT_FLAVOUR " of " CONFIG_APP_PROJECT_DATE
+//    	    << ", builded with C++ version " << __cplusplus  << endl;
+        return ESP_OK;
+//        return (esp_err_t)esp_console_register_help_command();
+    }; /* help::act::invoke() */
+
+    struct cmd_def: public esp::console::cmd_t<act>
+    {
+	cmd_def(const char name[], const char help_str[] = nullptr):
+	    esp::console::cmd_t<act>(name, help_str)
+	{};
+
+	esp_err_t enreg() const { return (esp_err_t)esp_console_register_help_command(); };	///< register the Help command. May be make it virtual?
+	void enreg_check() const {ESP_ERROR_CHECK(enreg());};	///< register current command with error checking
+
+    };
+
+//    const esp::console::cmd_t<act> cmd("help",  "Print the summary of all registered commands if no arguments "
+//						"are given, otherwise print summary of given command.");
+    const cmd_def cmd("help",  "Print the summary of all registered commands if no arguments "
+						"are given, otherwise print summary of given command.");
+
+}; /* namespace help */
 
 /**
  * @brief Register a 'help' command
@@ -269,15 +254,6 @@ inline void register_info(void) {
  * hints and help strings if no additional argument is given. If an additional
  * argument is given, the help command will look for a command with the same
  * name and only print the hints and help strings of that command.
- *
- * @return
- *      - ESP_OK on success
- *      - ESP_ERR_INVALID_STATE, if esp_console_init wasn't called
- */
-
-
-/**
- * @brief Register a 'help' command for a console example project
  *
  * Own 'help' command implementation first run default 'help' command,
  * and then prints the version string of a program.
@@ -288,7 +264,9 @@ inline void register_info(void) {
  */
 esp_err_t console_register_help_command(void)
 {
-    return (esp_err_t)esp_console_register_help_command();
+    //info::cmd.enreg_check();
+    return help::cmd.enreg();
+    //return (esp_err_t)esp_console_register_help_command();
 }; /* console_example_register_help_command */
 
 //--[ End of command registering - help & info ]-----------------------------------------
@@ -317,25 +295,14 @@ extern "C" void app_main(void)
     /* Prompt to be printed before each line.
      * This can be customized, made dynamic, etc.
      */
-    //std::string prompt = setup_prompt(PROMPT_STR ">");
-    //std::string_view prompt = create_prompt(PROMPT_STR ">");
-//    std::string prompt = simple_prompt_gen(STRLIT(PROMPT_STR) + ">");
-    //std::string prompt = simple_prompt_gen(PROMPT_STR + ">"s);
+    std::string prompt = create_prompt(PROMPT_STR + ">"s);
 //        const /*auto*/ std::string parts[] = {/*STRLIT(*/PROMPT_STR/*)*/, ">"s };
 //    std::string prompt = simple_prompt_gen(parts | std::ranges::views::join | std::ranges::to<const std::string>());
-    std::string prompt = create_prompt(PROMPT_STR + ">"s);
 
     /* Register commands */
     console_register_help_command();
+    //help::cmd.enreg_check();
     register_system_common();
-#if 0	// No - acessible sleep mode must selected in the cmd_system component
-#if SOC_LIGHT_SLEEP_SUPPORTED
-    register_system_light_sleep();
-#endif
-#if SOC_DEEP_SLEEP_SUPPORTED
-    register_system_deep_sleep();
-#endif
-#endif	// if 0
     register_system_sleep();
 #if (CONFIG_ESP_WIFI_ENABLED || CONFIG_ESP_HOST_WIFI_ENABLED)
     register_wifi();
@@ -345,13 +312,8 @@ extern "C" void app_main(void)
     register_sdcard_cmd();
     register_bt_cmd();
 
-    register_info();
-//    info::cmd.enreg_chked();
-
-    /* Prompt to be printed before each line.
-     * This can be customized, made dynamic, etc.
-     */
-//    const char* prompt = LOG_COLOR_I PROMPT_STR "> " LOG_RESET_COLOR;
+    //register_info();
+    info::cmd.enreg_check();
 
     cout << endl
 	<< "This is a ESP-IDF improved console project, that using appropriate component." << endl
@@ -365,22 +327,13 @@ extern "C" void app_main(void)
 	<< "Press Enter or Ctrl+C will terminate the console environment." << endl;
 
     /* Figure out if the terminal supports escape sequences */
-    if (linenoiseIsDumbMode()) {
+    if (linenoiseIsDumbMode())
+    {
         cout << endl
 	    << "Your terminal application does not support escape sequences." << endl
 	    << "Line editing and history features are disabled." << endl
 	    << "On Windows, try using Putty instead." << endl;
-
-#if 0
-        linenoiseSetDumbMode(1);
-#if CONFIG_LOG_COLORS
-        /* Since the terminal doesn't support escape sequences,
-         * don't use color codes in the prompt.
-         */
-        prompt = PROMPT_STR "> ";
-#endif //CONFIG_LOG_COLORS
-#endif
-    }
+    }; /* if linenoiseIsDumbMode() */
 
     /* Main loop */
     while(true)
