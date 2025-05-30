@@ -25,9 +25,12 @@
 #include <cstdlib>
 #include <iostream>
 
-
+#include <ranges>
 #include <string>
+#include <tuple>
 #include <cstdint>
+
+
 #include <esp_system.h>
 #include <esp_log.h>
 #include <esp_console.h>
@@ -74,8 +77,6 @@ using namespace std;
 #endif // CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG
 
 
-#define __INN_STR__(str) #str
-#define STRING(str) __INN_STR__(str)
 #pragma message("ESP32 Improved Console" ", version v." CONFIG_APP_PROJECT_VER "-" CONFIG_APP_PROJECT_FLAVOUR " of " CONFIG_APP_PROJECT_DATE " by " CONFIG_APP_PROJECT_AUTHOR " (" CONFIG_APP_PROJECT_AUTHOR_NICK ")")
 #pragma message("C++ version is: " STRING(__cplusplus) )
 
@@ -316,7 +317,13 @@ extern "C" void app_main(void)
     /* Prompt to be printed before each line.
      * This can be customized, made dynamic, etc.
      */
-    std::string prompt = setup_prompt(PROMPT_STR ">");
+    //std::string prompt = setup_prompt(PROMPT_STR ">");
+    //std::string_view prompt = create_prompt(PROMPT_STR ">");
+//    std::string prompt = simple_prompt_gen(STRLIT(PROMPT_STR) + ">");
+    //std::string prompt = simple_prompt_gen(PROMPT_STR + ">"s);
+//        const /*auto*/ std::string parts[] = {/*STRLIT(*/PROMPT_STR/*)*/, ">"s };
+//    std::string prompt = simple_prompt_gen(parts | std::ranges::views::join | std::ranges::to<const std::string>());
+    std::string prompt = create_prompt(PROMPT_STR + ">"s);
 
     /* Register commands */
     console_register_help_command();
@@ -376,7 +383,8 @@ extern "C" void app_main(void)
     }
 
     /* Main loop */
-    while(true) {
+    while(true)
+    {
         /* Get a line using linenoise.
          * The line is returned when ENTER is pressed.
          */
@@ -429,7 +437,7 @@ extern "C" void app_main(void)
 
         /* linenoise allocates line buffer on the heap, so need to free it */
         linenoiseFree(line);
-    }
+    }; /* while(true) */
 
     ESP_LOGE(TAG, "Error or end-of-input, terminating console");
     esp_console_deinit();

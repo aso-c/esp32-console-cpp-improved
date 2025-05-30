@@ -22,6 +22,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <string>
+
 #include <esp_system.h>
 #include <esp_log.h>
 #include <esp_console.h>
@@ -46,7 +48,7 @@ constexpr size_t CONSOLE_PROMPT_MAX_LEN = 32;
 
 char prompt[CONSOLE_PROMPT_MAX_LEN]; // Prompt to be printed before each line
 
-void initialize_console_peripheral(void)
+void initialize_console_peripheral()
 {
     /* Drain stdout before reconfiguring it */
     fflush(stdout);
@@ -79,26 +81,6 @@ void initialize_console_peripheral(void)
     }; /* const uart_config_t uart_config */
 #pragma GCC diagnostic pop
 
-#if 0
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
-    /* Configure UART. Note that REF_TICK is used so that the baud rate remains
-     * correct while APB frequency is changing in light sleep mode.
-     */
-    const uart_config_t uart_config = {
-            .baud_rate = CONFIG_ESP_CONSOLE_UART_BAUDRATE,
-            .data_bits = UART_DATA_8_BITS,
-            .parity = UART_PARITY_DISABLE,
-            .stop_bits = UART_STOP_BITS_1,
-#if SOC_UART_SUPPORT_REF_TICK
-        .source_clk = UART_SCLK_REF_TICK,
-#elif SOC_UART_SUPPORT_XTAL_CLK
-        .source_clk = UART_SCLK_XTAL,
-#endif
-    };
-#pragma GCC diagnostic pop
-
-#endif
     /* Install UART driver for interrupt-driven reads and writes */
     ESP_ERROR_CHECK( uart_driver_install(static_cast<uart_port_t>(CONFIG_ESP_CONSOLE_UART_NUM), 256, 0, 0, NULL, 0) );
     ESP_ERROR_CHECK( uart_param_config(static_cast<uart_port_t>(CONFIG_ESP_CONSOLE_UART_NUM), &uart_config) );
@@ -143,7 +125,7 @@ void initialize_console_peripheral(void)
 
     /* Disable buffering on stdin */
     setvbuf(stdin, NULL, _IONBF, 0);
-}
+}; /* initialize_console_peripheral() */
 
 void initialize_console_library(const char *history_path)
 {
@@ -189,7 +171,7 @@ void initialize_console_library(const char *history_path)
     if (probe_status) {         /* zero indicates success */
         linenoiseSetDumbMode(1);
     }
-}
+}; /* initialize_console_library(history_path) */
 
 char *setup_prompt(const char *prompt_str)
 {
